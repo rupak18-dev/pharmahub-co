@@ -123,6 +123,92 @@ export interface Settings {
   lowStockDefault: number;
 }
 
+export type PaymentMode = "cash" | "card" | "upi";
+
+export interface SaleItem {
+  medicineId: string;
+  batchId: string;
+  medicineName: string;
+  batchNumber: string;
+  quantity: number;
+  unitPrice: number; // pre-tax
+  discountPct: number;
+  gstRate: number;
+  lineTotal: number; // post-discount, post-tax
+}
+
+export type SaleStatus = "completed" | "voided";
+
+export interface Sale {
+  id: string;
+  invoiceNo: string;
+  customerName?: string;
+  customerPhone?: string;
+  items: SaleItem[];
+  subtotal: number;
+  discountTotal: number;
+  gstTotal: number;
+  roundOff: number;
+  grandTotal: number;
+  paymentMode: PaymentMode;
+  tender: number;
+  change: number;
+  status: SaleStatus;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+  voidedAt?: string;
+  voidedBy?: string;
+}
+
+export type POStatus = "draft" | "placed" | "received" | "cancelled";
+
+export interface POItem {
+  medicineId: string;
+  medicineName: string;
+  quantity: number;
+  expectedPrice: number;
+}
+
+export interface PurchaseOrder {
+  id: string;
+  poNumber: string;
+  supplierId: string;
+  expectedDate?: string;
+  items: POItem[];
+  status: POStatus;
+  notes?: string;
+  createdBy: string;
+  createdAt: string;
+}
+
+export interface GRNItem {
+  medicineId: string;
+  batchId: string; // created batch id
+  medicineName: string;
+  batchNumber: string;
+  mfgDate: string;
+  expiryDate: string;
+  mrp: number;
+  purchasePrice: number;
+  sellingPrice: number;
+  quantity: number;
+}
+
+export interface GRN {
+  id: string;
+  grnNumber: string;
+  supplierId: string;
+  invoiceNumber?: string;
+  invoiceDate?: string;
+  poId?: string;
+  items: GRNItem[];
+  totalValue: number;
+  createdBy: string;
+  createdByName: string;
+  createdAt: string;
+}
+
 export interface DB {
   version: number;
   profiles: Profile[];
@@ -133,6 +219,10 @@ export interface DB {
   batches: Batch[];
   stockMovements: StockMovement[];
   activityLogs: ActivityLog[];
+  sales: Sale[];
+  purchaseOrders: PurchaseOrder[];
+  grns: GRN[];
+  notificationsRead: string[];
   settings: Settings;
   permissions: PermissionMatrix;
 }
