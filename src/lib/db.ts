@@ -251,7 +251,7 @@ function seed(): DB {
   ];
 
   return {
-    version: 1,
+    version: 2,
     profiles: [owner, pharm, cashier, inv],
     categories: [catAnalg, catAntib, catCardio, catVit],
     manufacturers: [mfr1, mfr2, mfr3],
@@ -260,6 +260,10 @@ function seed(): DB {
     batches,
     stockMovements,
     activityLogs,
+    sales: [],
+    purchaseOrders: [],
+    grns: [],
+    notificationsRead: [],
     settings: {
       currency: "₹",
       gstDefault: 12,
@@ -289,7 +293,16 @@ function load(): DB {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      cache = JSON.parse(raw) as DB;
+      const loaded = JSON.parse(raw) as Partial<DB>;
+      // Migrate missing fields from older versions
+      cache = {
+        ...seed(),
+        ...loaded,
+        sales: loaded.sales ?? [],
+        purchaseOrders: loaded.purchaseOrders ?? [],
+        grns: loaded.grns ?? [],
+        notificationsRead: loaded.notificationsRead ?? [],
+      } as DB;
       return cache;
     }
   } catch {
