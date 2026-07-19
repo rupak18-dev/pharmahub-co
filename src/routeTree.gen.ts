@@ -27,6 +27,7 @@ import { Route as AuthenticatedDashboardBatchesRouteImport } from './routes/_aut
 import { Route as AuthenticatedDashboardAuditRouteImport } from './routes/_authenticated.dashboard.audit'
 import { Route as AuthenticatedDashboardAiRouteImport } from './routes/_authenticated.dashboard.ai'
 import { Route as AuthenticatedDashboardAdminRouteImport } from './routes/_authenticated.dashboard.admin'
+import { Route as AuthenticatedDashboardSalesSaleIdRouteImport } from './routes/_authenticated.dashboard.sales.$saleId'
 import { Route as AuthenticatedDashboardMedicinesManufacturersRouteImport } from './routes/_authenticated.dashboard.medicines.manufacturers'
 import { Route as AuthenticatedDashboardMedicinesCategoriesRouteImport } from './routes/_authenticated.dashboard.medicines.categories'
 import { Route as AuthenticatedDashboardBatchesBatchIdRouteImport } from './routes/_authenticated.dashboard.batches.$batchId'
@@ -132,6 +133,12 @@ const AuthenticatedDashboardAdminRoute =
     path: '/admin',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
+const AuthenticatedDashboardSalesSaleIdRoute =
+  AuthenticatedDashboardSalesSaleIdRouteImport.update({
+    id: '/$saleId',
+    path: '/$saleId',
+    getParentRoute: () => AuthenticatedDashboardSalesRoute,
+  } as any)
 const AuthenticatedDashboardMedicinesManufacturersRoute =
   AuthenticatedDashboardMedicinesManufacturersRouteImport.update({
     id: '/manufacturers',
@@ -167,11 +174,12 @@ export interface FileRoutesByFullPath {
   '/dashboard/notifications': typeof AuthenticatedDashboardNotificationsRoute
   '/dashboard/purchases': typeof AuthenticatedDashboardPurchasesRoute
   '/dashboard/reports': typeof AuthenticatedDashboardReportsRoute
-  '/dashboard/sales': typeof AuthenticatedDashboardSalesRoute
+  '/dashboard/sales': typeof AuthenticatedDashboardSalesRouteWithChildren
   '/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/dashboard/batches/$batchId': typeof AuthenticatedDashboardBatchesBatchIdRoute
   '/dashboard/medicines/categories': typeof AuthenticatedDashboardMedicinesCategoriesRoute
   '/dashboard/medicines/manufacturers': typeof AuthenticatedDashboardMedicinesManufacturersRoute
+  '/dashboard/sales/$saleId': typeof AuthenticatedDashboardSalesSaleIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -189,11 +197,12 @@ export interface FileRoutesByTo {
   '/dashboard/notifications': typeof AuthenticatedDashboardNotificationsRoute
   '/dashboard/purchases': typeof AuthenticatedDashboardPurchasesRoute
   '/dashboard/reports': typeof AuthenticatedDashboardReportsRoute
-  '/dashboard/sales': typeof AuthenticatedDashboardSalesRoute
+  '/dashboard/sales': typeof AuthenticatedDashboardSalesRouteWithChildren
   '/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/dashboard/batches/$batchId': typeof AuthenticatedDashboardBatchesBatchIdRoute
   '/dashboard/medicines/categories': typeof AuthenticatedDashboardMedicinesCategoriesRoute
   '/dashboard/medicines/manufacturers': typeof AuthenticatedDashboardMedicinesManufacturersRoute
+  '/dashboard/sales/$saleId': typeof AuthenticatedDashboardSalesSaleIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -213,11 +222,12 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/notifications': typeof AuthenticatedDashboardNotificationsRoute
   '/_authenticated/dashboard/purchases': typeof AuthenticatedDashboardPurchasesRoute
   '/_authenticated/dashboard/reports': typeof AuthenticatedDashboardReportsRoute
-  '/_authenticated/dashboard/sales': typeof AuthenticatedDashboardSalesRoute
+  '/_authenticated/dashboard/sales': typeof AuthenticatedDashboardSalesRouteWithChildren
   '/_authenticated/dashboard/users': typeof AuthenticatedDashboardUsersRoute
   '/_authenticated/dashboard/batches/$batchId': typeof AuthenticatedDashboardBatchesBatchIdRoute
   '/_authenticated/dashboard/medicines/categories': typeof AuthenticatedDashboardMedicinesCategoriesRoute
   '/_authenticated/dashboard/medicines/manufacturers': typeof AuthenticatedDashboardMedicinesManufacturersRoute
+  '/_authenticated/dashboard/sales/$saleId': typeof AuthenticatedDashboardSalesSaleIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -242,6 +252,7 @@ export interface FileRouteTypes {
     | '/dashboard/batches/$batchId'
     | '/dashboard/medicines/categories'
     | '/dashboard/medicines/manufacturers'
+    | '/dashboard/sales/$saleId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -264,6 +275,7 @@ export interface FileRouteTypes {
     | '/dashboard/batches/$batchId'
     | '/dashboard/medicines/categories'
     | '/dashboard/medicines/manufacturers'
+    | '/dashboard/sales/$saleId'
   id:
     | '__root__'
     | '/'
@@ -287,6 +299,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/batches/$batchId'
     | '/_authenticated/dashboard/medicines/categories'
     | '/_authenticated/dashboard/medicines/manufacturers'
+    | '/_authenticated/dashboard/sales/$saleId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -425,6 +438,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardAdminRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
+    '/_authenticated/dashboard/sales/$saleId': {
+      id: '/_authenticated/dashboard/sales/$saleId'
+      path: '/$saleId'
+      fullPath: '/dashboard/sales/$saleId'
+      preLoaderRoute: typeof AuthenticatedDashboardSalesSaleIdRouteImport
+      parentRoute: typeof AuthenticatedDashboardSalesRoute
+    }
     '/_authenticated/dashboard/medicines/manufacturers': {
       id: '/_authenticated/dashboard/medicines/manufacturers'
       path: '/manufacturers'
@@ -482,6 +502,21 @@ const AuthenticatedDashboardMedicinesRouteWithChildren =
     AuthenticatedDashboardMedicinesRouteChildren,
   )
 
+interface AuthenticatedDashboardSalesRouteChildren {
+  AuthenticatedDashboardSalesSaleIdRoute: typeof AuthenticatedDashboardSalesSaleIdRoute
+}
+
+const AuthenticatedDashboardSalesRouteChildren: AuthenticatedDashboardSalesRouteChildren =
+  {
+    AuthenticatedDashboardSalesSaleIdRoute:
+      AuthenticatedDashboardSalesSaleIdRoute,
+  }
+
+const AuthenticatedDashboardSalesRouteWithChildren =
+  AuthenticatedDashboardSalesRoute._addFileChildren(
+    AuthenticatedDashboardSalesRouteChildren,
+  )
+
 interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardAdminRoute: typeof AuthenticatedDashboardAdminRoute
   AuthenticatedDashboardAiRoute: typeof AuthenticatedDashboardAiRoute
@@ -493,7 +528,7 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardNotificationsRoute: typeof AuthenticatedDashboardNotificationsRoute
   AuthenticatedDashboardPurchasesRoute: typeof AuthenticatedDashboardPurchasesRoute
   AuthenticatedDashboardReportsRoute: typeof AuthenticatedDashboardReportsRoute
-  AuthenticatedDashboardSalesRoute: typeof AuthenticatedDashboardSalesRoute
+  AuthenticatedDashboardSalesRoute: typeof AuthenticatedDashboardSalesRouteWithChildren
   AuthenticatedDashboardUsersRoute: typeof AuthenticatedDashboardUsersRoute
 }
 
@@ -512,7 +547,8 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
       AuthenticatedDashboardNotificationsRoute,
     AuthenticatedDashboardPurchasesRoute: AuthenticatedDashboardPurchasesRoute,
     AuthenticatedDashboardReportsRoute: AuthenticatedDashboardReportsRoute,
-    AuthenticatedDashboardSalesRoute: AuthenticatedDashboardSalesRoute,
+    AuthenticatedDashboardSalesRoute:
+      AuthenticatedDashboardSalesRouteWithChildren,
     AuthenticatedDashboardUsersRoute: AuthenticatedDashboardUsersRoute,
   }
 
