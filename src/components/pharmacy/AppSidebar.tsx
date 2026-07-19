@@ -52,25 +52,25 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Commerce",
     items: [
-      { key: "purchases", title: "Purchases", url: "/dashboard/purchases", icon: ShoppingCart, phase: 2 },
-      { key: "sales", title: "Sales & POS", url: "/dashboard/sales", icon: Receipt, phase: 2 },
+      { key: "purchases", title: "Purchases", url: "/dashboard/purchases", icon: ShoppingCart },
+      { key: "sales", title: "Sales & POS", url: "/dashboard/sales", icon: Receipt },
     ],
   },
   {
     label: "Compliance",
     items: [
-      { key: "expiry", title: "Expiry", url: "/dashboard/expiry", icon: CalendarClock, phase: 3 },
-      { key: "audit", title: "Stock Audit", url: "/dashboard/audit", icon: ClipboardCheck, phase: 3 },
-      { key: "reports", title: "Reports", url: "/dashboard/reports", icon: BarChart3, phase: 3 },
+      { key: "expiry", title: "Expiry", url: "/dashboard/expiry", icon: CalendarClock },
+      { key: "audit", title: "Stock Audit", url: "/dashboard/audit", icon: ClipboardCheck },
+      { key: "reports", title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
     ],
   },
   {
     label: "System",
     items: [
       { key: "users", title: "Users & Roles", url: "/dashboard/users", icon: Users },
-      { key: "notifications", title: "Notifications", url: "/dashboard/notifications", icon: Bell, phase: 4 },
-      { key: "ai", title: "AI Insights", url: "/dashboard/ai", icon: Sparkles, phase: 4 },
-      { key: "admin", title: "System Admin", url: "/dashboard/admin", icon: Settings, phase: 4 },
+      { key: "notifications", title: "Notifications", url: "/dashboard/notifications", icon: Bell },
+      { key: "ai", title: "AI Insights", url: "/dashboard/ai", icon: Sparkles },
+      { key: "admin", title: "System Admin", url: "/dashboard/admin", icon: Settings },
     ],
   },
 ];
