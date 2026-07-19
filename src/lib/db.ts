@@ -251,7 +251,7 @@ function seed(): DB {
   ];
 
   return {
-    version: 1,
+    version: 2,
     profiles: [owner, pharm, cashier, inv],
     categories: [catAnalg, catAntib, catCardio, catVit],
     manufacturers: [mfr1, mfr2, mfr3],
@@ -260,6 +260,10 @@ function seed(): DB {
     batches,
     stockMovements,
     activityLogs,
+    sales: [],
+    purchaseOrders: [],
+    grns: [],
+    notificationsRead: [],
     settings: {
       currency: "₹",
       gstDefault: 12,
