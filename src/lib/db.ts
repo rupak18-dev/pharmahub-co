@@ -293,7 +293,16 @@ function load(): DB {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      cache = JSON.parse(raw) as DB;
+      const loaded = JSON.parse(raw) as Partial<DB>;
+      // Migrate missing fields from older versions
+      cache = {
+        ...seed(),
+        ...loaded,
+        sales: loaded.sales ?? [],
+        purchaseOrders: loaded.purchaseOrders ?? [],
+        grns: loaded.grns ?? [],
+        notificationsRead: loaded.notificationsRead ?? [],
+      } as DB;
       return cache;
     }
   } catch {
