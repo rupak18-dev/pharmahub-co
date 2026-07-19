@@ -1,89 +1,104 @@
+# Phase 2–4: Complete remaining modules
 
-# PharmacyOS — Phase 1 Plan
+The Phase 1 modules you already have (Medicines, Batches, Inventory, Users, Dashboard) will not be changed. This plan fleshes out every placeholder route in one pass, wired to the existing localStorage `db` and `applyStockMovement` helpers so nothing is mocked twice.
 
-Scope for this pass is **Phase 1 only**. Later phases (Sales/POS, Purchases, Expiry, Audit, Reports, Notifications, AI, Admin) will each get their own plan once Phase 1 is signed off, held to the same visual bar.
+## 1. Sales / POS — `/dashboard/sales`
 
-Stack matches the request: React + TypeScript (TanStack Start template already in place) + Tailwind + shadcn/ui + React Hook Form + Zod + Recharts. All data is in-memory/localStorage behind a service layer so a MongoDB backend can drop in later.
+- Two-pane POS layout: left = medicine search + cart, right = live totals.
+- Search by name/brand/barcode; adding a line auto-picks batch via **FEFO** (earliest expiry with stock > 0), shows batch #, expiry, MRP.
+- Per-line: qty, price override (if permitted), discount %, GST auto from medicine.
+- Cart totals: subtotal, discount, GST breakup, round-off, grand total.
+- Checkout dialog: customer name/phone (optional), payment mode (Cash/Card/UPI), tender + change calc.
+- On confirm: create `Sale` + `SaleItems`, call `applyStockMovement("out", …)` per line (updates batch stock, writes `stockMovements` + `activityLogs`), print-friendly receipt view.
+- "Today's sales" list with drill-in; void sale (Admin/Owner) reverses stock.
 
-## 1. Design system foundation
+New types: `Sale`, `SaleItem`, `PaymentMode`. New route: `sales.$saleId.tsx` for receipt.
 
-- Set primary to medical teal `#0F766E` and status tokens (success/warn/danger/muted) in `src/styles.css` as semantic tokens.
-- Inter for UI; JetBrains Mono for numeric table cells (batch #, qty, price).
-- Shared building blocks: `PageHeader`, `DataTable` (search + sort + filter + pagination + empty state, stacks to cards on mobile), `StatusBadge`, `KpiCard`, `ConfirmDialog`, `FormShell`.
-- Consistent spacing scale, card, and button treatments used across marketing pages and app.
+## 2. Purchases / GRN — `/dashboard/purchases`
 
-## 2. Routes
+- Tabbed: **Purchase Orders** and **Goods Received (GRN)**.
+- PO: supplier, expected date, line items (medicine + qty + expected price), status (draft/placed/received/cancelled).
+- GRN form: pick PO (optional), supplier, invoice #, invoice date; per line enter batch #, mfg/expiry, MRP, purchase price, selling price, qty received.
+- Submit creates `Batch` records and `applyStockMovement("in", …)` for each line; links to PO if any.
+- List view with filters; drill-in shows all created batches from that GRN.
 
-Public (same design system as app):
-- `/` — landing page (hero, feature highlights: batch tracking, expiry alerts, GST billing, RBAC; CTA to sign up / sign in; footer).
-- `/login`, `/signup`, `/forgot-password` — centered card layouts, Zod validation, error/confirmation states.
+New types: `PurchaseOrder`, `POItem`, `GRN`, `GRNItem`.
 
-Authenticated shell under `/dashboard`:
-- `/dashboard` (overview)
-- `/dashboard/medicines`, `/dashboard/medicines/categories`, `/dashboard/medicines/manufacturers`
-- `/dashboard/batches`, `/dashboard/batches/$batchId` (history)
-- `/dashboard/inventory` (stock in/out/adjustments, valuation, dead/fast/slow, reorder alerts)
-- `/dashboard/users` (roles + permission matrix — visible to Owner/Admin only)
+## 3. Expiry — `/dashboard/expiry`
 
-Sidebar shows all 13 modules grouped, but Phase 2–4 modules render a "Coming in Phase X" placeholder screen (still styled to spec) so nav is complete from day one. Sidebar collapses to a Sheet drawer on mobile.
+- Three tabs: **Near expiry** (within settings.nearExpiryDays), **Expired (with stock)**, **Disposed**.
+- Columns: medicine, batch #, expiry, days remaining, current stock, value at cost.
+- Bulk-select → **Dispose** action: sets batch status `disposed`, writes `applyStockMovement("adjustment", -currentStock, reason="Disposed – expired")`.
+- Export CSV of the current tab.
 
-## 3. Mock auth + RBAC
+## 4. Audit — `/dashboard/audit`
 
-- `authStore` (Zustand or React context + localStorage): current user, role, login/logout/signup/forgot-password (all local, no network).
-- Seeded roles: Owner, Admin, Pharmacist, Cashier, Store Keeper, Inventory Manager with the permission matrix from the brief.
-- `usePermission(module, action)` hook drives sidebar visibility, route guards, and button disabling.
-- Route guard component redirects unauthenticated users to `/login` and unauthorized users to `/dashboard` with a toast.
+- Full `activityLogs` viewer with filters: user, entity type, action, date range, free-text search.
+- Sticky-header dense table; click row → side panel with `details` JSON pretty-printed.
+- Export CSV. Owner/Admin only (respect `audit.view`).
 
-## 4. Data/service layer (swap point for MongoDB later)
+## 5. Reports — `/dashboard/reports`
 
-- `src/services/*` exposes async CRUD functions per collection (medicines, batches, categories, manufacturers, suppliers, stock_movements, activity_logs, profiles, roles, notifications, settings).
-- Backed by a single `db` object persisted to localStorage; seeded with realistic demo data on first load.
-- TanStack Query wraps every service call so components already use `useQuery`/`useMutation` — swapping to `fetch('/api/...')` later is a one-file change per service.
-- Every stock-changing action funnels through a single `applyStockMovement()` helper that writes to `stock_movements` and `activity_logs` atomically.
+Card grid of on-demand reports rendered inline (recharts already in the stack via shadcn charts, otherwise plain tables):
+- Sales summary (day/week/month) – revenue, invoices, avg basket.
+- Top 10 medicines by revenue and by units.
+- Stock valuation by category / manufacturer.
+- GST summary (output tax collected, by rate).
+- Purchase summary by supplier.
+- Slow/dead stock report.
+- Each report: date-range picker + Export CSV.
 
-## 5. Phase 1 module features
+## 6. Notifications — `/dashboard/notifications`
 
-**Dashboard**
-- KPI cards: Today's Sales, Today's Purchases, Revenue, Profit, Stock Value (values from mock data; sales/purchase KPIs read 0 until Phase 2 but are wired).
-- Alert widgets (clickable → filtered lists): Low Stock, Out of Stock, Near Expiry (<90d), Expired.
-- Recent Activity feed (last 20 from `activity_logs`).
-- AI Insights panel — static placeholder card.
+- Derived (not stored) alert feed computed from live db state:
+  - Low stock (per reorder threshold), Out of stock, Near expiry, Expired-with-stock, Recently disposed, Recent voids.
+- Grouped by severity; each item deep-links to the relevant module (batch, medicine, expiry tab).
+- "Mark as read" stored in `db.notificationsRead: string[]` (id = hash of alert type + entity + day).
 
-**Medicine Management**
-- Master table with search, filter (category, manufacturer, active), sort, pagination.
-- Add/Edit drawer form: name, generic, brand, category, manufacturer, HSN, GST rate, storage, barcode (auto-gen + manual override), image upload (stored as data URL for now).
-- Deactivate with confirm dialog.
-- Simple CRUD screens for Categories and Manufacturers.
+Adds one field to `DB` + `settings`-adjacent state.
 
-**Batch Management**
-- Add Batch form tied to a medicine: batch #, mfg/expiry dates, MRP, purchase/selling price, supplier, qty received.
-- Per-medicine batch list with computed status (Active / Near Expiry / Expired / Sold Out), color-coded.
-- Batch detail page with lifecycle timeline from `stock_movements`.
+## 7. AI Insights — `/dashboard/ai`
 
-**Inventory Management**
-- Stock In / Stock Out / Adjustment forms (reason required on adjustments and outs).
-- Barcode scan via `@zxing/browser` (camera) to look up medicine/batch.
-- Inventory Valuation table (sum of `current_stock × purchase_price`).
-- Dead Stock (configurable no-movement days), Fast/Slow Moving rankings (based on seeded/mocked movements).
-- Auto Reorder alert list driven by per-medicine reorder threshold.
+- Frontend-only heuristic insights (no external calls yet), clearly labelled "Heuristic preview – ML in a later phase":
+  - Demand trend: 7-day vs prior-7-day movement per medicine → top gainers/losers.
+  - Reorder suggestions: medicines projected to hit zero within N days at current burn rate.
+  - Expiry risk: batches whose remaining days < projected days-to-sell.
+  - Anomaly flag: sales > 3× rolling avg.
+- Cards with sparkline (simple inline SVG) + "Apply" shortcut to create a draft PO for a suggestion.
 
-**User & Role Management**
-- Users list (invite/deactivate — local only).
-- Permission matrix UI: role × module × [View, Create, Update, Delete, Approve, Export] checkbox grid, Owner locked.
+## 8. Admin / Settings — `/dashboard/admin`
 
-## 6. Responsiveness & quality bar
+Tabbed settings page (Owner/Admin only):
+- **Organization**: org name, currency, timezone, GST default, address (edits `db.settings` + owner profile).
+- **Thresholds**: nearExpiryDays, deadStockDays, lowStockDefault.
+- **Roles & permissions**: link to existing users matrix.
+- **Data**: Export full DB as JSON, Import JSON (with confirm), Reset demo data, Clear activity logs.
+- **About**: version, build info.
 
-- Every list becomes stacked cards below `md`.
-- POS-ready layouts deferred to Phase 2 but sidebar/topbar chrome already handles mobile.
-- Every destructive action goes through `ConfirmDialog`.
-- Every list has search, filter, sort, pagination, and a styled empty state.
-- Landing, auth, and app screens share tokens/components so the product feels unified.
+## 9. Shared additions
 
-## Technical notes
+- `src/lib/types.ts`: add `Sale`, `SaleItem`, `PurchaseOrder`, `POItem`, `GRN`, `GRNItem`, `PaymentMode`; extend `DB` with `sales`, `purchaseOrders`, `grns`, `notificationsRead`.
+- `src/lib/db.ts`: migration bump + defaults for new arrays.
+- `src/lib/stock.ts`: add `pickBatchesFEFO(medicineId, qty)` helper used by POS and disposal.
+- `src/lib/csv.ts`: tiny CSV exporter used by Audit, Expiry, Reports.
+- `src/components/pharmacy/DataTable.tsx`: extract the sticky-header dense table pattern already used in Medicines/Batches so new pages reuse it.
+- Sidebar (`AppSidebar.tsx`): unchanged links, but remove the "Phase X" placeholder badges once each page ships.
+- Permission matrix: no schema change — modules `sales`, `purchases`, `expiry`, `audit`, `reports`, `notifications`, `ai`, `admin` already exist; every new action respects `usePermission()`.
 
-- TanStack Router file-based routes under `src/routes/`; `_authenticated/` layout gates all `/dashboard/*` routes.
-- Home `/` is rewritten from the placeholder to the real landing page.
-- No backend, no Supabase, no edge functions in Phase 1 — all logic client-side behind the service layer.
-- Barcode/QR generation via `bwip-js`; scanning via `@zxing/browser`.
-- Charts via `recharts` (already fits Dashboard needs).
-- After Phase 1 is approved and verified end-to-end, I'll return with a Phase 2 plan (Purchases, Sales/POS with FEFO/FIFO, Returns).
+## Out of scope (call out explicitly)
+
+- Real backend / MongoDB wiring — still local `db` service, structured for a drop-in swap.
+- Real ML models, email/SMS delivery, and payment-gateway integration — the UI and data shapes are in place, but external services land later.
+- Barcode scanner hardware integration (input field accepts scans via keyboard wedge, which works today).
+
+## Delivery order
+
+1. Shared types/db migration + FEFO helper + CSV helper + DataTable extract.
+2. Sales / POS (highest user value).
+3. Purchases / GRN.
+4. Expiry + Audit (share table/export patterns).
+5. Reports.
+6. Notifications + AI Insights.
+7. Admin / Settings.
+
+Each step ends with a typecheck; sidebar badges are cleared as pages ship.
