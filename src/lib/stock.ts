@@ -87,3 +87,32 @@ export function logActivity(input: {
     if (d.activityLogs.length > 500) d.activityLogs.length = 500;
   });
 }
+
+// FEFO: earliest-expiry-first batch picker. Returns picks that sum up to <= qty available.
+export function pickBatchesFEFO(
+  batches: Batch[],
+  medicineId: string,
+  qty: number,
+): { batchId: string; quantity: number }[] {
+  const now = Date.now();
+  const candidates = batches
+    .filter(
+      (b) =>
+        b.medicineId === medicineId &&
+        b.currentStock > 0 &&
+        b.status !== "disposed" &&
+        new Date(b.expiryDate).getTime() > now,
+    )
+    .sort(
+      (a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
+    );
+  const picks: { batchId: string; quantity: number }[] = [];
+  let remaining = qty;
+  for (const b of candidates) {
+    if (remaining <= 0) break;
+    const take = Math.min(b.currentStock, remaining);
+    picks.push({ batchId: b.id, quantity: take });
+    remaining -= take;
+  }
+  return picks;
+}
