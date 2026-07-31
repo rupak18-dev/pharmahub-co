@@ -9,37 +9,36 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
-import { Route as AuthenticatedDashboardUsersRouteImport } from './routes/_authenticated.dashboard.users'
-import { Route as AuthenticatedDashboardSalesRouteImport } from './routes/_authenticated.dashboard.sales'
-import { Route as AuthenticatedDashboardReportsRouteImport } from './routes/_authenticated.dashboard.reports'
-import { Route as AuthenticatedDashboardPurchasesRouteImport } from './routes/_authenticated.dashboard.purchases'
-import { Route as AuthenticatedDashboardNotificationsRouteImport } from './routes/_authenticated.dashboard.notifications'
-import { Route as AuthenticatedDashboardMedicinesRouteImport } from './routes/_authenticated.dashboard.medicines'
-import { Route as AuthenticatedDashboardInventoryRouteImport } from './routes/_authenticated.dashboard.inventory'
-import { Route as AuthenticatedDashboardExpiryRouteImport } from './routes/_authenticated.dashboard.expiry'
-import { Route as AuthenticatedDashboardBatchesRouteImport } from './routes/_authenticated.dashboard.batches'
-import { Route as AuthenticatedDashboardAuditRouteImport } from './routes/_authenticated.dashboard.audit'
-import { Route as AuthenticatedDashboardAiRouteImport } from './routes/_authenticated.dashboard.ai'
 import { Route as AuthenticatedDashboardAdminRouteImport } from './routes/_authenticated.dashboard.admin'
-import { Route as AuthenticatedDashboardSalesSaleIdRouteImport } from './routes/_authenticated.dashboard.sales.$saleId'
-import { Route as AuthenticatedDashboardMedicinesManufacturersRouteImport } from './routes/_authenticated.dashboard.medicines.manufacturers'
-import { Route as AuthenticatedDashboardMedicinesCategoriesRouteImport } from './routes/_authenticated.dashboard.medicines.categories'
+import { Route as AuthenticatedDashboardAiRouteImport } from './routes/_authenticated.dashboard.ai'
+import { Route as AuthenticatedDashboardAuditRouteImport } from './routes/_authenticated.dashboard.audit'
+import { Route as AuthenticatedDashboardBatchesRouteImport } from './routes/_authenticated.dashboard.batches'
+import { Route as AuthenticatedDashboardExpiryRouteImport } from './routes/_authenticated.dashboard.expiry'
+import { Route as AuthenticatedDashboardInventoryRouteImport } from './routes/_authenticated.dashboard.inventory'
+import { Route as AuthenticatedDashboardMedicinesRouteImport } from './routes/_authenticated.dashboard.medicines'
+import { Route as AuthenticatedDashboardNotificationsRouteImport } from './routes/_authenticated.dashboard.notifications'
+import { Route as AuthenticatedDashboardPurchasesRouteImport } from './routes/_authenticated.dashboard.purchases'
+import { Route as AuthenticatedDashboardReportsRouteImport } from './routes/_authenticated.dashboard.reports'
+import { Route as AuthenticatedDashboardSalesRouteImport } from './routes/_authenticated.dashboard.sales'
+import { Route as AuthenticatedDashboardUsersRouteImport } from './routes/_authenticated.dashboard.users'
 import { Route as AuthenticatedDashboardBatchesBatchIdRouteImport } from './routes/_authenticated.dashboard.batches.$batchId'
+import { Route as AuthenticatedDashboardMedicinesCategoriesRouteImport } from './routes/_authenticated.dashboard.medicines.categories'
+import { Route as AuthenticatedDashboardMedicinesManufacturersRouteImport } from './routes/_authenticated.dashboard.medicines.manufacturers'
+import { Route as AuthenticatedDashboardSalesSaleIdRouteImport } from './routes/_authenticated.dashboard.sales.$saleId'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
+const AuthenticatedRoute = AuthenticatedRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
@@ -47,13 +46,14 @@ const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
   path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRoute = AuthenticatedRouteImport.update({
-  id: '/_authenticated',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -61,64 +61,10 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedDashboardUsersRoute =
-  AuthenticatedDashboardUsersRouteImport.update({
-    id: '/users',
-    path: '/users',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardSalesRoute =
-  AuthenticatedDashboardSalesRouteImport.update({
-    id: '/sales',
-    path: '/sales',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardReportsRoute =
-  AuthenticatedDashboardReportsRouteImport.update({
-    id: '/reports',
-    path: '/reports',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardPurchasesRoute =
-  AuthenticatedDashboardPurchasesRouteImport.update({
-    id: '/purchases',
-    path: '/purchases',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardNotificationsRoute =
-  AuthenticatedDashboardNotificationsRouteImport.update({
-    id: '/notifications',
-    path: '/notifications',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardMedicinesRoute =
-  AuthenticatedDashboardMedicinesRouteImport.update({
-    id: '/medicines',
-    path: '/medicines',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardInventoryRoute =
-  AuthenticatedDashboardInventoryRouteImport.update({
-    id: '/inventory',
-    path: '/inventory',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardExpiryRoute =
-  AuthenticatedDashboardExpiryRouteImport.update({
-    id: '/expiry',
-    path: '/expiry',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardBatchesRoute =
-  AuthenticatedDashboardBatchesRouteImport.update({
-    id: '/batches',
-    path: '/batches',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
-const AuthenticatedDashboardAuditRoute =
-  AuthenticatedDashboardAuditRouteImport.update({
-    id: '/audit',
-    path: '/audit',
+const AuthenticatedDashboardAdminRoute =
+  AuthenticatedDashboardAdminRouteImport.update({
+    id: '/admin',
+    path: '/admin',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
 const AuthenticatedDashboardAiRoute =
@@ -127,23 +73,71 @@ const AuthenticatedDashboardAiRoute =
     path: '/ai',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
-const AuthenticatedDashboardAdminRoute =
-  AuthenticatedDashboardAdminRouteImport.update({
-    id: '/admin',
-    path: '/admin',
+const AuthenticatedDashboardAuditRoute =
+  AuthenticatedDashboardAuditRouteImport.update({
+    id: '/audit',
+    path: '/audit',
     getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
-const AuthenticatedDashboardSalesSaleIdRoute =
-  AuthenticatedDashboardSalesSaleIdRouteImport.update({
-    id: '/$saleId',
-    path: '/$saleId',
-    getParentRoute: () => AuthenticatedDashboardSalesRoute,
+const AuthenticatedDashboardBatchesRoute =
+  AuthenticatedDashboardBatchesRouteImport.update({
+    id: '/batches',
+    path: '/batches',
+    getParentRoute: () => AuthenticatedDashboardRoute,
   } as any)
-const AuthenticatedDashboardMedicinesManufacturersRoute =
-  AuthenticatedDashboardMedicinesManufacturersRouteImport.update({
-    id: '/manufacturers',
-    path: '/manufacturers',
-    getParentRoute: () => AuthenticatedDashboardMedicinesRoute,
+const AuthenticatedDashboardExpiryRoute =
+  AuthenticatedDashboardExpiryRouteImport.update({
+    id: '/expiry',
+    path: '/expiry',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardInventoryRoute =
+  AuthenticatedDashboardInventoryRouteImport.update({
+    id: '/inventory',
+    path: '/inventory',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardMedicinesRoute =
+  AuthenticatedDashboardMedicinesRouteImport.update({
+    id: '/medicines',
+    path: '/medicines',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardNotificationsRoute =
+  AuthenticatedDashboardNotificationsRouteImport.update({
+    id: '/notifications',
+    path: '/notifications',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardPurchasesRoute =
+  AuthenticatedDashboardPurchasesRouteImport.update({
+    id: '/purchases',
+    path: '/purchases',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardReportsRoute =
+  AuthenticatedDashboardReportsRouteImport.update({
+    id: '/reports',
+    path: '/reports',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardSalesRoute =
+  AuthenticatedDashboardSalesRouteImport.update({
+    id: '/sales',
+    path: '/sales',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardUsersRoute =
+  AuthenticatedDashboardUsersRouteImport.update({
+    id: '/users',
+    path: '/users',
+    getParentRoute: () => AuthenticatedDashboardRoute,
+  } as any)
+const AuthenticatedDashboardBatchesBatchIdRoute =
+  AuthenticatedDashboardBatchesBatchIdRouteImport.update({
+    id: '/$batchId',
+    path: '/$batchId',
+    getParentRoute: () => AuthenticatedDashboardBatchesRoute,
   } as any)
 const AuthenticatedDashboardMedicinesCategoriesRoute =
   AuthenticatedDashboardMedicinesCategoriesRouteImport.update({
@@ -151,11 +145,17 @@ const AuthenticatedDashboardMedicinesCategoriesRoute =
     path: '/categories',
     getParentRoute: () => AuthenticatedDashboardMedicinesRoute,
   } as any)
-const AuthenticatedDashboardBatchesBatchIdRoute =
-  AuthenticatedDashboardBatchesBatchIdRouteImport.update({
-    id: '/$batchId',
-    path: '/$batchId',
-    getParentRoute: () => AuthenticatedDashboardBatchesRoute,
+const AuthenticatedDashboardMedicinesManufacturersRoute =
+  AuthenticatedDashboardMedicinesManufacturersRouteImport.update({
+    id: '/manufacturers',
+    path: '/manufacturers',
+    getParentRoute: () => AuthenticatedDashboardMedicinesRoute,
+  } as any)
+const AuthenticatedDashboardSalesSaleIdRoute =
+  AuthenticatedDashboardSalesSaleIdRouteImport.update({
+    id: '/$saleId',
+    path: '/$saleId',
+    getParentRoute: () => AuthenticatedDashboardSalesRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -312,25 +312,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -340,11 +326,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/dashboard': {
@@ -354,74 +354,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/dashboard/users': {
-      id: '/_authenticated/dashboard/users'
-      path: '/users'
-      fullPath: '/dashboard/users'
-      preLoaderRoute: typeof AuthenticatedDashboardUsersRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/sales': {
-      id: '/_authenticated/dashboard/sales'
-      path: '/sales'
-      fullPath: '/dashboard/sales'
-      preLoaderRoute: typeof AuthenticatedDashboardSalesRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/reports': {
-      id: '/_authenticated/dashboard/reports'
-      path: '/reports'
-      fullPath: '/dashboard/reports'
-      preLoaderRoute: typeof AuthenticatedDashboardReportsRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/purchases': {
-      id: '/_authenticated/dashboard/purchases'
-      path: '/purchases'
-      fullPath: '/dashboard/purchases'
-      preLoaderRoute: typeof AuthenticatedDashboardPurchasesRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/notifications': {
-      id: '/_authenticated/dashboard/notifications'
-      path: '/notifications'
-      fullPath: '/dashboard/notifications'
-      preLoaderRoute: typeof AuthenticatedDashboardNotificationsRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/medicines': {
-      id: '/_authenticated/dashboard/medicines'
-      path: '/medicines'
-      fullPath: '/dashboard/medicines'
-      preLoaderRoute: typeof AuthenticatedDashboardMedicinesRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/inventory': {
-      id: '/_authenticated/dashboard/inventory'
-      path: '/inventory'
-      fullPath: '/dashboard/inventory'
-      preLoaderRoute: typeof AuthenticatedDashboardInventoryRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/expiry': {
-      id: '/_authenticated/dashboard/expiry'
-      path: '/expiry'
-      fullPath: '/dashboard/expiry'
-      preLoaderRoute: typeof AuthenticatedDashboardExpiryRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/batches': {
-      id: '/_authenticated/dashboard/batches'
-      path: '/batches'
-      fullPath: '/dashboard/batches'
-      preLoaderRoute: typeof AuthenticatedDashboardBatchesRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
-    }
-    '/_authenticated/dashboard/audit': {
-      id: '/_authenticated/dashboard/audit'
-      path: '/audit'
-      fullPath: '/dashboard/audit'
-      preLoaderRoute: typeof AuthenticatedDashboardAuditRouteImport
+    '/_authenticated/dashboard/admin': {
+      id: '/_authenticated/dashboard/admin'
+      path: '/admin'
+      fullPath: '/dashboard/admin'
+      preLoaderRoute: typeof AuthenticatedDashboardAdminRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/ai': {
@@ -431,26 +368,82 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardAiRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
-    '/_authenticated/dashboard/admin': {
-      id: '/_authenticated/dashboard/admin'
-      path: '/admin'
-      fullPath: '/dashboard/admin'
-      preLoaderRoute: typeof AuthenticatedDashboardAdminRouteImport
+    '/_authenticated/dashboard/audit': {
+      id: '/_authenticated/dashboard/audit'
+      path: '/audit'
+      fullPath: '/dashboard/audit'
+      preLoaderRoute: typeof AuthenticatedDashboardAuditRouteImport
       parentRoute: typeof AuthenticatedDashboardRoute
     }
-    '/_authenticated/dashboard/sales/$saleId': {
-      id: '/_authenticated/dashboard/sales/$saleId'
-      path: '/$saleId'
-      fullPath: '/dashboard/sales/$saleId'
-      preLoaderRoute: typeof AuthenticatedDashboardSalesSaleIdRouteImport
-      parentRoute: typeof AuthenticatedDashboardSalesRoute
+    '/_authenticated/dashboard/batches': {
+      id: '/_authenticated/dashboard/batches'
+      path: '/batches'
+      fullPath: '/dashboard/batches'
+      preLoaderRoute: typeof AuthenticatedDashboardBatchesRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
     }
-    '/_authenticated/dashboard/medicines/manufacturers': {
-      id: '/_authenticated/dashboard/medicines/manufacturers'
-      path: '/manufacturers'
-      fullPath: '/dashboard/medicines/manufacturers'
-      preLoaderRoute: typeof AuthenticatedDashboardMedicinesManufacturersRouteImport
-      parentRoute: typeof AuthenticatedDashboardMedicinesRoute
+    '/_authenticated/dashboard/expiry': {
+      id: '/_authenticated/dashboard/expiry'
+      path: '/expiry'
+      fullPath: '/dashboard/expiry'
+      preLoaderRoute: typeof AuthenticatedDashboardExpiryRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/inventory': {
+      id: '/_authenticated/dashboard/inventory'
+      path: '/inventory'
+      fullPath: '/dashboard/inventory'
+      preLoaderRoute: typeof AuthenticatedDashboardInventoryRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/medicines': {
+      id: '/_authenticated/dashboard/medicines'
+      path: '/medicines'
+      fullPath: '/dashboard/medicines'
+      preLoaderRoute: typeof AuthenticatedDashboardMedicinesRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/notifications': {
+      id: '/_authenticated/dashboard/notifications'
+      path: '/notifications'
+      fullPath: '/dashboard/notifications'
+      preLoaderRoute: typeof AuthenticatedDashboardNotificationsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/purchases': {
+      id: '/_authenticated/dashboard/purchases'
+      path: '/purchases'
+      fullPath: '/dashboard/purchases'
+      preLoaderRoute: typeof AuthenticatedDashboardPurchasesRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/reports': {
+      id: '/_authenticated/dashboard/reports'
+      path: '/reports'
+      fullPath: '/dashboard/reports'
+      preLoaderRoute: typeof AuthenticatedDashboardReportsRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/sales': {
+      id: '/_authenticated/dashboard/sales'
+      path: '/sales'
+      fullPath: '/dashboard/sales'
+      preLoaderRoute: typeof AuthenticatedDashboardSalesRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/users': {
+      id: '/_authenticated/dashboard/users'
+      path: '/users'
+      fullPath: '/dashboard/users'
+      preLoaderRoute: typeof AuthenticatedDashboardUsersRouteImport
+      parentRoute: typeof AuthenticatedDashboardRoute
+    }
+    '/_authenticated/dashboard/batches/$batchId': {
+      id: '/_authenticated/dashboard/batches/$batchId'
+      path: '/$batchId'
+      fullPath: '/dashboard/batches/$batchId'
+      preLoaderRoute: typeof AuthenticatedDashboardBatchesBatchIdRouteImport
+      parentRoute: typeof AuthenticatedDashboardBatchesRoute
     }
     '/_authenticated/dashboard/medicines/categories': {
       id: '/_authenticated/dashboard/medicines/categories'
@@ -459,12 +452,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardMedicinesCategoriesRouteImport
       parentRoute: typeof AuthenticatedDashboardMedicinesRoute
     }
-    '/_authenticated/dashboard/batches/$batchId': {
-      id: '/_authenticated/dashboard/batches/$batchId'
-      path: '/$batchId'
-      fullPath: '/dashboard/batches/$batchId'
-      preLoaderRoute: typeof AuthenticatedDashboardBatchesBatchIdRouteImport
-      parentRoute: typeof AuthenticatedDashboardBatchesRoute
+    '/_authenticated/dashboard/medicines/manufacturers': {
+      id: '/_authenticated/dashboard/medicines/manufacturers'
+      path: '/manufacturers'
+      fullPath: '/dashboard/medicines/manufacturers'
+      preLoaderRoute: typeof AuthenticatedDashboardMedicinesManufacturersRouteImport
+      parentRoute: typeof AuthenticatedDashboardMedicinesRoute
+    }
+    '/_authenticated/dashboard/sales/$saleId': {
+      id: '/_authenticated/dashboard/sales/$saleId'
+      path: '/$saleId'
+      fullPath: '/dashboard/sales/$saleId'
+      preLoaderRoute: typeof AuthenticatedDashboardSalesSaleIdRouteImport
+      parentRoute: typeof AuthenticatedDashboardSalesRoute
     }
   }
 }
@@ -579,3 +579,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
