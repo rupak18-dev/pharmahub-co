@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useDb } from "@/hooks/useDb";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { 
   ArrowLeft, 
   Pill, 
@@ -39,7 +39,16 @@ import {
   Legend
 } from "recharts";
 
+interface MedicineIdSearch {
+  activeTab?: string;
+}
+
 export const Route = createFileRoute("/_authenticated/dashboard/medicines/$medicineId")({
+  validateSearch: (search: Record<string, unknown>): MedicineIdSearch => {
+    return {
+      activeTab: search.activeTab as string | undefined,
+    };
+  },
   head: ({ params }) => ({ meta: [{ title: `Details - ${params.medicineId} · PharmacyOS` }] }),
   component: MedicineDetailsPage,
 });
@@ -48,7 +57,14 @@ function MedicineDetailsPage() {
   const { medicineId } = Route.useParams();
   const data = useDb((d) => d);
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState("profile");
+  const searchParams = Route.useSearch();
+  const [activeTab, setActiveTab] = useState(searchParams.activeTab || "profile");
+
+  useEffect(() => {
+    if (searchParams.activeTab) {
+      setActiveTab(searchParams.activeTab);
+    }
+  }, [searchParams.activeTab]);
 
   const med = useMemo(() => {
     return data.medicines.find((m) => m.id === medicineId);
@@ -268,8 +284,10 @@ function MedicineDetailsPage() {
         </div>
       </div>
 
-      {/* TABS CONTROLLER */}
-      <Tabs defaultValue="profile" onValueChange={setActiveTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={(val) => {
+        setActiveTab(val);
+        navigate({ search: (prev) => ({ ...prev, activeTab: val }) });
+      }} className="w-full">
         <TabsList className="flex w-full items-center gap-1 overflow-x-auto whitespace-nowrap border-b border-border/60 bg-muted/30 p-1 rounded-xl scrollbar-none select-none">
           <TabsTrigger value="profile" className="rounded-lg text-xs font-bold px-4 shrink-0">1. Clinical Profile</TabsTrigger>
           <TabsTrigger value="stock" className="rounded-lg text-xs font-bold px-4 shrink-0">2. Stock & Warehousing</TabsTrigger>

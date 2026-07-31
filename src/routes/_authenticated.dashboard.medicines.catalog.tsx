@@ -139,6 +139,63 @@ function MedicinesCatalogPage() {
   const [catFilter, setCatFilter] = useState<string>("all");
   const [brandFilter, setBrandFilter] = useState<string>("all");
   const [genericFilter, setGenericFilter] = useState<string>("all");
+
+  useEffect(() => {
+    if (searchParams.filter === "generic") {
+      setGenericFilter("only");
+      setBrandFilter("all");
+      setCatFilter("all");
+    } else if (searchParams.filter === "branded") {
+      setBrandFilter("only");
+      setGenericFilter("all");
+      setCatFilter("all");
+    } else if (searchParams.filter === "otc") {
+      const otcCat = categories.find((c) =>
+        c.name.toLowerCase().includes("otc") ||
+        c.name.toLowerCase().includes("fmcg")
+      );
+      if (otcCat) {
+        setCatFilter(otcCat.id);
+        setBrandFilter("all");
+        setGenericFilter("all");
+      }
+    }
+  }, [searchParams.filter, categories]);
+
+  useEffect(() => {
+    if (searchParams.addNew === "true") {
+      setEditing(null);
+      setSheetOpen(true);
+      navigate({ search: (prev) => ({ ...prev, addNew: undefined }) });
+    }
+  }, [searchParams.addNew, navigate]);
+
+  useEffect(() => {
+    if (searchParams.focusSearch === "true") {
+      const input = document.getElementById("catalog-search-input");
+      if (input) {
+        input.focus();
+      }
+      navigate({ search: (prev) => ({ ...prev, focusSearch: undefined }) });
+    }
+  }, [searchParams.focusSearch, navigate]);
+
+  useEffect(() => {
+    if (searchParams.tab && filtered.length > 0) {
+      const firstMed = filtered[0];
+      let activeTabVal = "profile";
+      if (searchParams.tab === "alternatives") activeTabVal = "alternatives";
+      else if (searchParams.tab === "info" || searchParams.tab === "salt") activeTabVal = "profile";
+      else if (searchParams.tab === "images" || searchParams.tab === "api") activeTabVal = "billing";
+
+      navigate({
+        to: `/dashboard/medicines/${firstMed.id}`,
+        search: { activeTab: activeTabVal }
+      });
+      navigate({ search: (prev) => ({ ...prev, tab: undefined }) });
+    }
+  }, [searchParams.tab, filtered, navigate]);
+
   const [supplierFilter, setSupplierFilter] = useState<string>("all");
   const [rackFilter, setRackFilter] = useState<string>("all");
   const [stockStatusFilter, setStockStatusFilter] = useState<string>("all");
