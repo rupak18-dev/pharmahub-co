@@ -70,6 +70,22 @@ export interface Medicine {
   reorderThreshold: number;
   isActive: boolean;
   createdAt: string;
+  
+  // Enterprise fields
+  saltComposition?: string;
+  strength?: string;
+  dosageForm?: string;
+  packSize?: string;
+  gtin?: string;
+  drugSchedule?: string;
+  dosageInfo?: string;
+  usageInstructions?: string;
+  contraindications?: string;
+  sideEffects?: string;
+  maxStockLevel?: number;
+  ptr?: number;
+  rackLocation?: string;
+  reservedQuantity?: number;
 }
 
 export type BatchStatus = "active" | "near_expiry" | "expired" | "disposed" | "sold_out";
