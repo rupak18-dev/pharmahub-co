@@ -17,40 +17,6 @@ function daysFromNow(days: number): string {
 function seed(): DB {
   const now = new Date().toISOString();
 
-  const owner = {
-    id: uid(),
-    name: "Alex Morgan",
-    email: "owner@pharmacyos.demo",
-    role: "Owner" as const,
-    active: true,
-    orgName: "PharmacyOS Demo",
-    createdAt: now,
-  };
-  const pharm = {
-    id: uid(),
-    name: "Priya Shah",
-    email: "pharmacist@pharmacyos.demo",
-    role: "Pharmacist" as const,
-    active: true,
-    createdAt: now,
-  };
-  const cashier = {
-    id: uid(),
-    name: "Sam Chen",
-    email: "cashier@pharmacyos.demo",
-    role: "Cashier" as const,
-    active: true,
-    createdAt: now,
-  };
-  const inv = {
-    id: uid(),
-    name: "Diego Ruiz",
-    email: "inventory@pharmacyos.demo",
-    role: "Inventory Manager" as const,
-    active: true,
-    createdAt: now,
-  };
-
   const catAnalg = { id: uid(), name: "Analgesics" };
   const catAntib = { id: uid(), name: "Antibiotics" };
   const catCardio = { id: uid(), name: "Cardiovascular" };
@@ -235,24 +201,15 @@ function seed(): DB {
     movementType: "in" as const,
     quantity: b.quantityReceived,
     reason: "Initial stock received",
-    createdBy: owner.id,
+    createdBy: "system",
     createdAt: now,
   }));
 
-  const activityLogs = [
-    {
-      id: uid(),
-      userId: owner.id,
-      userName: owner.name,
-      action: "Seeded demo data",
-      entityType: "system",
-      createdAt: now,
-    },
-  ];
+  const activityLogs: DB["activityLogs"] = [];
 
   return {
     version: 2,
-    profiles: [owner, pharm, cashier, inv],
+    profiles: [], // No dummy profiles. Production database initialized clean.
     categories: [catAnalg, catAntib, catCardio, catVit],
     manufacturers: [mfr1, mfr2, mfr3],
     suppliers: [sup1, sup2],
@@ -294,10 +251,17 @@ function load(): DB {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const loaded = JSON.parse(raw) as Partial<DB>;
-      // Migrate missing fields from older versions
+      // Strip any legacy dummy profiles ending in @pharmacyos.demo or placeholder names
+      const cleanProfiles = (loaded.profiles ?? []).filter(
+        (p) =>
+          !p.email.endsWith("@pharmacyos.demo") &&
+          !["Alex Morgan", "Priya Shah", "Sam Chen", "Diego Ruiz"].includes(p.name),
+      );
+
       cache = {
         ...seed(),
         ...loaded,
+        profiles: cleanProfiles,
         sales: loaded.sales ?? [],
         purchaseOrders: loaded.purchaseOrders ?? [],
         grns: loaded.grns ?? [],
