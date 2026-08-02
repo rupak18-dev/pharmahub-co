@@ -54,7 +54,7 @@ import { format, addDays } from "date-fns";
 import type { GRN, GRNItem, Batch, Medicine } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/dashboard/purchases")({
-  head: () => ({ meta: [{ title: "Purchases · eVitalRx Style · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "PharmacyOS · Purchases" }] }),
   component: PurchasesPage,
 });
 /** Clickable info icon that shows a small popover with description text */
@@ -646,41 +646,7 @@ export function PurchasesPage() {
 
 
 
-          {/* Primary Action Button: Proceed to Pay for Admin, Save Bill for Owner/Manager */}
-          {canCreate && (
-            <Button
-              size="sm"
-              onClick={() => {
-                if (items.length === 0) {
-                  toast.warning("Please select items to proceed");
-                  return;
-                }
-                if (activeRole === "Admin") {
-                  handleProceedToPayment();
-                } else {
-                  handleDirectSaveBill();
-                }
-              }}
-              className={`h-8 px-4 text-xs font-semibold flex items-center gap-1.5 shadow ${
-                activeRole === "Admin"
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-              }`}
-            >
-              {activeRole === "Admin" ? (
-                <>
-                  <CreditCard className="h-3.5 w-3.5" />
-                  <span>Proceed to Pay</span>
-                  <ArrowRight className="h-3.5 w-3.5 opacity-80" />
-                </>
-              ) : (
-                <>
-                  <CheckCircle2 className="h-3.5 w-3.5" />
-                  <span>Save Bill</span>
-                </>
-              )}
-            </Button>
-          )}
+
 
 
         </div>
