@@ -2,12 +2,13 @@ import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   LayoutDashboard,
+  LayoutGrid,
   Pill,
-  Layers,
   Boxes,
-  ShoppingCart,
+  Warehouse,
+  ShoppingBag,
   Receipt,
-  CalendarClock,
+  AlertTriangle,
   ClipboardCheck,
   Users,
   BarChart3,
@@ -22,10 +23,12 @@ import {
   FileText,
   Image as ImageIcon,
   Globe,
+  Layers,
 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -35,8 +38,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { BrandMark } from "./BrandMark";
 import { usePermission } from "@/hooks/usePermission";
+import { useAuth } from "@/lib/auth";
 import type { ModuleKey } from "@/lib/types";
 import type { LucideIcon } from "lucide-react";
 
@@ -61,14 +66,19 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Commerce",
     items: [
-      { key: "purchases", title: "Purchases", url: "/dashboard/purchases", icon: ShoppingCart },
+      { key: "purchases", title: "Purchases", url: "/dashboard/purchases", icon: ShoppingBag },
       { key: "sales", title: "Sales & POS", url: "/dashboard/sales", icon: Receipt },
     ],
   },
   {
     label: "Compliance",
     items: [
-      { key: "expiry", title: "Expiry", url: "/dashboard/expiry", icon: CalendarClock },
+      {
+        key: "expiry",
+        title: "Expiry Alert Center",
+        url: "/dashboard/expiry",
+        icon: AlertTriangle,
+      },
       { key: "audit", title: "Stock Audit", url: "/dashboard/audit", icon: ClipboardCheck },
       { key: "reports", title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
     ],
@@ -89,6 +99,14 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const has = usePermission();
+  const { user } = useAuth();
+  const initials =
+    user?.name
+      ?.split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2) ?? "U";
   const [medsOpen, setMedsOpen] = useState(true);
 
   const isActive = (url: string) =>
@@ -196,6 +214,26 @@ export function AppSidebar() {
           );
         })}
       </SidebarContent>
+      <SidebarFooter className="border-t border-sidebar-border p-2">
+        <div className="flex items-center gap-2 rounded-md px-2 py-1.5">
+          <div className="relative shrink-0">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-[#22C55E] ring-2 ring-background" />
+          </div>
+          {!collapsed && (
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium text-sidebar-foreground">
+                {user?.name ?? "User"}
+              </div>
+              <div className="truncate text-xs text-sidebar-foreground/60">{user?.role ?? ""}</div>
+            </div>
+          )}
+        </div>
+      </SidebarFooter>
     </Sidebar>
   );
 }

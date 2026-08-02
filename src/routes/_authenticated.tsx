@@ -120,6 +120,7 @@ function AuthenticatedLayout() {
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background px-4 sm:px-6 shadow-sm">
             <SidebarTrigger />
+            <BrandMark size="sm" showText={false} className="hidden sm:block" />
             <div className="sm:hidden">
               <BrandMark size="sm" showText={false} />
             </div>

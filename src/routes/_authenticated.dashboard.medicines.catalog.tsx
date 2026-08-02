@@ -412,7 +412,7 @@ function MedicinesCatalogPage() {
     setConfirmDeactivate(null);
   };
 
-  const currency = data.settings.currency;
+  const currency = useDb((d) => d.settings.currency);
 
   return (
     <div className="space-y-6 pb-12 bg-white min-h-screen p-6 rounded-2xl shadow-sm border border-border/40">
