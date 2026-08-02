@@ -89,6 +89,7 @@ export function logActivity(input: {
 }
 
 // FEFO: earliest-expiry-first batch picker. Returns picks that sum up to <= qty available.
+// Batches flagged with `fefo: true` (Expiry Management) jump ahead of the expiry sort.
 export function pickBatchesFEFO(
   batches: Batch[],
   medicineId: string,
@@ -103,9 +104,10 @@ export function pickBatchesFEFO(
         b.status !== "disposed" &&
         new Date(b.expiryDate).getTime() > now,
     )
-    .sort(
-      (a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime(),
-    );
+    .sort((a, b) => {
+      if (!!a.fefo !== !!b.fefo) return a.fefo ? -1 : 1;
+      return new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime();
+    });
   const picks: { batchId: string; quantity: number }[] = [];
   let remaining = qty;
   for (const b of candidates) {
