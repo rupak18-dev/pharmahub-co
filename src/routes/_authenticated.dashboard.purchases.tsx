@@ -7,7 +7,6 @@ import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { usePermission } from "@/hooks/usePermission";
 import { applyStockMovement } from "@/lib/stock";
-import { purchaseGuard, PURCHASE_GUARD_DAYS } from "@/lib/expiry";
 import { PageHeader } from "@/components/pharmacy/PageHeader";
 import { EmptyState } from "@/components/pharmacy/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -15,19 +14,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import type { GRN, GRNItem, POItem, PurchaseOrder, POStatus, Batch } from "@/lib/types";
@@ -37,11 +26,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/purchases")({
   component: PurchasesPage,
 });
 
-interface POLineDraft {
-  medicineId: string;
-  quantity: number;
-  expectedPrice: number;
-}
+interface POLineDraft { medicineId: string; quantity: number; expectedPrice: number }
 interface GRNLineDraft {
   medicineId: string;
   batchNumber: string;
@@ -69,9 +54,7 @@ function PurchasesPage() {
   const [poSupplier, setPoSupplier] = useState("");
   const [poDate, setPoDate] = useState("");
   const [poNotes, setPoNotes] = useState("");
-  const [poLines, setPoLines] = useState<POLineDraft[]>([
-    { medicineId: "", quantity: 1, expectedPrice: 0 },
-  ]);
+  const [poLines, setPoLines] = useState<POLineDraft[]>([{ medicineId: "", quantity: 1, expectedPrice: 0 }]);
 
   // GRN dialog state
   const [grnOpen, setGrnOpen] = useState(false);
@@ -177,14 +160,6 @@ function PurchasesPage() {
       (l) => l.medicineId && l.batchNumber && l.expiryDate && l.quantity > 0,
     );
     if (!validLines.length) return toast.error("Add at least one complete line");
-
-    const blocked = validLines.filter((l) => purchaseGuard(l.expiryDate).level === "block");
-    if (blocked.length) {
-      const names = blocked.map((l) => l.batchNumber).join(", ");
-      return toast.error(
-        `Purchase guard blocked ${names} — batches expiring within 7 days (or already expired) cannot be received.`,
-      );
-    }
 
     const grnNumber = `GRN-${Date.now().toString().slice(-6)}`;
     const now = new Date().toISOString();
@@ -304,10 +279,7 @@ function PurchasesPage() {
             )}
           </div>
           {pos.length === 0 ? (
-            <EmptyState
-              title="No purchase orders"
-              description="Create a PO to track expected deliveries."
-            />
+            <EmptyState title="No purchase orders" description="Create a PO to track expected deliveries." />
           ) : (
             <div className="overflow-hidden rounded-lg border border-border bg-card">
               <table className="w-full text-sm">
@@ -337,11 +309,7 @@ function PurchasesPage() {
                       </td>
                       <td className="px-4 py-3 text-right">
                         {p.status !== "cancelled" && p.status !== "received" && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setPoStatus(p.id, "cancelled")}
-                          >
+                          <Button variant="ghost" size="sm" onClick={() => setPoStatus(p.id, "cancelled")}>
                             Cancel
                           </Button>
                         )}
@@ -363,10 +331,7 @@ function PurchasesPage() {
             )}
           </div>
           {grns.length === 0 ? (
-            <EmptyState
-              title="No GRNs recorded"
-              description="Record incoming stock and PharmacyOS will create batches automatically."
-            />
+            <EmptyState title="No GRNs recorded" description="Record incoming stock and PharmacyOS will create batches automatically." />
           ) : (
             <div className="overflow-hidden rounded-lg border border-border bg-card">
               <table className="w-full text-sm">
@@ -385,15 +350,12 @@ function PurchasesPage() {
                   {grns.map((g) => (
                     <tr key={g.id} className="hover:bg-muted/30">
                       <td className="px-4 py-3 font-mono font-medium">{g.grnNumber}</td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {format(new Date(g.createdAt), "PP")}
-                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{format(new Date(g.createdAt), "PP")}</td>
                       <td className="px-4 py-3">{supplierName(g.supplierId)}</td>
                       <td className="px-4 py-3 text-muted-foreground">{g.invoiceNumber ?? "—"}</td>
                       <td className="px-4 py-3 text-right font-mono">{g.items.length}</td>
                       <td className="px-4 py-3 text-right font-mono font-semibold">
-                        {currency}
-                        {g.totalValue.toLocaleString()}
+                        {currency}{g.totalValue.toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{g.createdByName}</td>
                     </tr>
@@ -406,31 +368,17 @@ function PurchasesPage() {
       </Tabs>
 
       {/* PO Dialog */}
-      <Dialog
-        open={poOpen}
-        onOpenChange={(o) => {
-          setPoOpen(o);
-          if (!o) resetPo();
-        }}
-      >
+      <Dialog open={poOpen} onOpenChange={(o) => { setPoOpen(o); if (!o) resetPo(); }}>
         <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>New purchase order</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>New purchase order</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Supplier</Label>
                 <Select value={poSupplier} onValueChange={setPoSupplier}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select supplier" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select supplier" /></SelectTrigger>
                   <SelectContent>
-                    {suppliers.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
+                    {suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -442,73 +390,24 @@ function PurchasesPage() {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Line items</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    setPoLines((l) => [...l, { medicineId: "", quantity: 1, expectedPrice: 0 }])
-                  }
-                >
+                <Button variant="outline" size="sm" onClick={() => setPoLines((l) => [...l, { medicineId: "", quantity: 1, expectedPrice: 0 }])}>
                   <Plus className="mr-1 h-3 w-3" /> Add line
                 </Button>
               </div>
               <div className="space-y-2">
                 {poLines.map((line, i) => (
                   <div key={i} className="grid grid-cols-[1fr_80px_100px_32px] gap-2">
-                    <Select
-                      value={line.medicineId}
-                      onValueChange={(v) =>
-                        setPoLines((prev) =>
-                          prev.map((l, ix) => (ix === i ? { ...l, medicineId: v } : l)),
-                        )
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Medicine" />
-                      </SelectTrigger>
+                    <Select value={line.medicineId} onValueChange={(v) => setPoLines((prev) => prev.map((l, ix) => ix === i ? { ...l, medicineId: v } : l))}>
+                      <SelectTrigger><SelectValue placeholder="Medicine" /></SelectTrigger>
                       <SelectContent>
-                        {medicines
-                          .filter((m) => m.isActive)
-                          .map((m) => (
-                            <SelectItem key={m.id} value={m.id}>
-                              {m.name}
-                            </SelectItem>
-                          ))}
+                        {medicines.filter((m) => m.isActive).map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
-                    <Input
-                      type="number"
-                      min={1}
-                      value={line.quantity}
-                      onChange={(e) =>
-                        setPoLines((prev) =>
-                          prev.map((l, ix) =>
-                            ix === i ? { ...l, quantity: Number(e.target.value) || 0 } : l,
-                          ),
-                        )
-                      }
-                      placeholder="Qty"
-                    />
-                    <Input
-                      type="number"
-                      min={0}
-                      step="0.01"
-                      value={line.expectedPrice}
-                      onChange={(e) =>
-                        setPoLines((prev) =>
-                          prev.map((l, ix) =>
-                            ix === i ? { ...l, expectedPrice: Number(e.target.value) || 0 } : l,
-                          ),
-                        )
-                      }
-                      placeholder="Price"
-                    />
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-9 w-9"
-                      onClick={() => setPoLines((prev) => prev.filter((_, ix) => ix !== i))}
-                    >
+                    <Input type="number" min={1} value={line.quantity} onChange={(e) => setPoLines((prev) => prev.map((l, ix) => ix === i ? { ...l, quantity: Number(e.target.value) || 0 } : l))} placeholder="Qty" />
+                    <Input type="number" min={0} step="0.01" value={line.expectedPrice} onChange={(e) => setPoLines((prev) => prev.map((l, ix) => ix === i ? { ...l, expectedPrice: Number(e.target.value) || 0 } : l))} placeholder="Price" />
+                    <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setPoLines((prev) => prev.filter((_, ix) => ix !== i))}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -521,66 +420,41 @@ function PurchasesPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setPoOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setPoOpen(false)}>Cancel</Button>
             <Button onClick={submitPo}>Create PO</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
       {/* GRN Dialog */}
-      <Dialog
-        open={grnOpen}
-        onOpenChange={(o) => {
-          setGrnOpen(o);
-          if (!o) resetGrn();
-        }}
-      >
+      <Dialog open={grnOpen} onOpenChange={(o) => { setGrnOpen(o); if (!o) resetGrn(); }}>
         <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Receive goods</DialogTitle>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Receive goods</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1.5">
                 <Label>Link to PO (optional)</Label>
-                <Select
-                  value={grnPoId || "none"}
-                  onValueChange={(v) => {
-                    const val = v === "none" ? "" : v;
-                    setGrnPoId(val);
-                    const po = pos.find((p) => p.id === val);
-                    if (po) setGrnSupplier(po.supplierId);
-                  }}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="—" />
-                  </SelectTrigger>
+                <Select value={grnPoId || "none"} onValueChange={(v) => {
+                  const val = v === "none" ? "" : v;
+                  setGrnPoId(val);
+                  const po = pos.find((p) => p.id === val);
+                  if (po) setGrnSupplier(po.supplierId);
+                }}>
+                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">— No PO —</SelectItem>
-                    {pos
-                      .filter((p) => p.status === "placed")
-                      .map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.poNumber} · {supplierName(p.supplierId)}
-                        </SelectItem>
-                      ))}
+                    {pos.filter((p) => p.status === "placed").map((p) => (
+                      <SelectItem key={p.id} value={p.id}>{p.poNumber} · {supplierName(p.supplierId)}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
                 <Label>Supplier</Label>
                 <Select value={grnSupplier} onValueChange={setGrnSupplier}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
                   <SelectContent>
-                    {suppliers.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name}
-                      </SelectItem>
-                    ))}
+                    {suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -591,175 +465,48 @@ function PurchasesPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Invoice date</Label>
-              <Input
-                type="date"
-                value={grnInvoiceDate}
-                onChange={(e) => setGrnInvoiceDate(e.target.value)}
-                className="max-w-xs"
-              />
+              <Input type="date" value={grnInvoiceDate} onChange={(e) => setGrnInvoiceDate(e.target.value)} className="max-w-xs" />
             </div>
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Batches received</Label>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setGrnLines((l) => [...l, blankGRNLine()])}
-                >
+                <Button variant="outline" size="sm" onClick={() => setGrnLines((l) => [...l, blankGRNLine()])}>
                   <Plus className="mr-1 h-3 w-3" /> Add batch
                 </Button>
               </div>
               <div className="max-h-[360px] space-y-2 overflow-y-auto">
-                {grnLines.map((line, i) => {
-                  const guard = line.expiryDate ? purchaseGuard(line.expiryDate) : null;
-                  return (
-                    <div key={i} className="rounded-md border border-border p-3">
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        <Select
-                          value={line.medicineId}
-                          onValueChange={(v) =>
-                            setGrnLines((prev) =>
-                              prev.map((l, ix) => (ix === i ? { ...l, medicineId: v } : l)),
-                            )
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Medicine" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {medicines
-                              .filter((m) => m.isActive)
-                              .map((m) => (
-                                <SelectItem key={m.id} value={m.id}>
-                                  {m.name}
-                                </SelectItem>
-                              ))}
-                          </SelectContent>
-                        </Select>
-                        <Input
-                          placeholder="Batch #"
-                          value={line.batchNumber}
-                          onChange={(e) =>
-                            setGrnLines((prev) =>
-                              prev.map((l, ix) =>
-                                ix === i ? { ...l, batchNumber: e.target.value } : l,
-                              ),
-                            )
-                          }
-                        />
-                        <Input
-                          type="date"
-                          placeholder="Mfg"
-                          value={line.mfgDate}
-                          onChange={(e) =>
-                            setGrnLines((prev) =>
-                              prev.map((l, ix) =>
-                                ix === i ? { ...l, mfgDate: e.target.value } : l,
-                              ),
-                            )
-                          }
-                        />
-                        <Input
-                          type="date"
-                          placeholder="Expiry"
-                          value={line.expiryDate}
-                          onChange={(e) =>
-                            setGrnLines((prev) =>
-                              prev.map((l, ix) =>
-                                ix === i ? { ...l, expiryDate: e.target.value } : l,
-                              ),
-                            )
-                          }
-                        />
-                      </div>
-                      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
-                        <Input
-                          type="number"
-                          min={1}
-                          placeholder="Qty"
-                          value={line.quantity || ""}
-                          onChange={(e) =>
-                            setGrnLines((prev) =>
-                              prev.map((l, ix) =>
-                                ix === i ? { ...l, quantity: Number(e.target.value) || 0 } : l,
-                              ),
-                            )
-                          }
-                        />
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="MRP"
-                          value={line.mrp || ""}
-                          onChange={(e) =>
-                            setGrnLines((prev) =>
-                              prev.map((l, ix) =>
-                                ix === i ? { ...l, mrp: Number(e.target.value) || 0 } : l,
-                              ),
-                            )
-                          }
-                        />
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="Purchase ₹"
-                          value={line.purchasePrice || ""}
-                          onChange={(e) =>
-                            setGrnLines((prev) =>
-                              prev.map((l, ix) =>
-                                ix === i ? { ...l, purchasePrice: Number(e.target.value) || 0 } : l,
-                              ),
-                            )
-                          }
-                        />
-                        <Input
-                          type="number"
-                          step="0.01"
-                          placeholder="Selling ₹"
-                          value={line.sellingPrice || ""}
-                          onChange={(e) =>
-                            setGrnLines((prev) =>
-                              prev.map((l, ix) =>
-                                ix === i ? { ...l, sellingPrice: Number(e.target.value) || 0 } : l,
-                              ),
-                            )
-                          }
-                        />
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setGrnLines((prev) => prev.filter((_, ix) => ix !== i))}
-                        >
-                          <Trash2 className="h-4 w-4 text-destructive" />
-                        </Button>
-                      </div>
-                      {guard && (
-                        <div className="mt-2">
-                          {guard.level === "block" ? (
-                            <p className="rounded-md border border-destructive/30 bg-destructive/10 px-2 py-1 text-xs font-medium text-destructive">
-                              {guard.daysLeft < 0
-                                ? `Already expired (${Math.abs(guard.daysLeft)}d ago) — receiving blocked`
-                                : `Expires in ${guard.daysLeft}d — within 7-day block window. Receiving blocked.`}
-                            </p>
-                          ) : guard.level === "warning" ? (
-                            <p className="rounded-md border border-warning/40 bg-warning/10 px-2 py-1 text-xs font-medium text-warning-foreground">
-                              Expires in {guard.daysLeft}d — inside the {PURCHASE_GUARD_DAYS}-day
-                              purchase guard. Lot will be flagged near-expiry at receiving.
-                            </p>
-                          ) : null}
-                        </div>
-                      )}
+                {grnLines.map((line, i) => (
+                  <div key={i} className="rounded-md border border-border p-3">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      <Select value={line.medicineId} onValueChange={(v) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, medicineId: v } : l))}>
+                        <SelectTrigger><SelectValue placeholder="Medicine" /></SelectTrigger>
+                        <SelectContent>
+                          {medicines.filter((m) => m.isActive).map((m) => (
+                            <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Input placeholder="Batch #" value={line.batchNumber} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, batchNumber: e.target.value } : l))} />
+                      <Input type="date" placeholder="Mfg" value={line.mfgDate} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, mfgDate: e.target.value } : l))} />
+                      <Input type="date" placeholder="Expiry" value={line.expiryDate} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, expiryDate: e.target.value } : l))} />
                     </div>
-                  );
-                })}
+                    <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                      <Input type="number" min={1} placeholder="Qty" value={line.quantity || ""} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, quantity: Number(e.target.value) || 0 } : l))} />
+                      <Input type="number" step="0.01" placeholder="MRP" value={line.mrp || ""} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, mrp: Number(e.target.value) || 0 } : l))} />
+                      <Input type="number" step="0.01" placeholder="Purchase ₹" value={line.purchasePrice || ""} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, purchasePrice: Number(e.target.value) || 0 } : l))} />
+                      <Input type="number" step="0.01" placeholder="Selling ₹" value={line.sellingPrice || ""} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, sellingPrice: Number(e.target.value) || 0 } : l))} />
+                      <Button variant="ghost" size="sm" onClick={() => setGrnLines((prev) => prev.filter((_, ix) => ix !== i))}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setGrnOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setGrnOpen(false)}>Cancel</Button>
             <Button onClick={submitGrn}>Confirm receipt</Button>
           </DialogFooter>
         </DialogContent>

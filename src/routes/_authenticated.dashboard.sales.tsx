@@ -7,7 +7,6 @@ import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { usePermission } from "@/hooks/usePermission";
 import { applyStockMovement, pickBatchesFEFO } from "@/lib/stock";
-import { daysUntil, getAlternatives } from "@/lib/expiry";
 import { PageHeader } from "@/components/pharmacy/PageHeader";
 import { EmptyState } from "@/components/pharmacy/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -29,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { format } from "date-fns";
-import type { Batch, Sale, SaleItem, PaymentMode } from "@/lib/types";
+import type { Sale, SaleItem, PaymentMode } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/dashboard/sales")({
   head: () => ({ meta: [{ title: "Sales & POS · PharmacyOS" }] }),
@@ -49,8 +48,6 @@ function SalesPage() {
   const batches = useDb((d) => d.batches);
   const sales = useDb((d) => d.sales);
   const currency = useDb((d) => d.settings.currency);
-  const nearExpiryDays = useDb((d) => d.settings.nearExpiryDays);
-  const autoSwap = useDb((d) => d.settings.autoSwap ?? false);
 
   const [tab, setTab] = useState("pos");
   const [query, setQuery] = useState("");
@@ -98,27 +95,7 @@ function SalesPage() {
     return b?.sellingPrice ?? 0;
   };
 
-  const fefoBatchOf = (medicineId: string) => {
-    const picks = pickBatchesFEFO(batches, medicineId, 1);
-    return picks.length ? batches.find((b) => b.id === picks[0].batchId) : undefined;
-  };
-
-  const swapFor = (medicineId: string) => {
-    const expired = batches.find(
-      (b) =>
-        b.medicineId === medicineId &&
-        b.currentStock > 0 &&
-        b.status !== "disposed" &&
-        daysUntil(b.expiryDate) <= 0,
-    );
-    if (!expired) return null;
-    const alts = getAlternatives(expired, batches, medicines);
-    const suggested = alts.find((a) => a.batch.suggestAtPos) ?? (autoSwap ? alts[0] : null);
-    return suggested ?? null;
-  };
-
   const addToCart = (medicineId: string) => {
-    const flagged = fefoBatchOf(medicineId)?.discountPct ?? 0;
     setCart((prev) => {
       const found = prev.find((l) => l.medicineId === medicineId);
       const available = stockByMed.get(medicineId) ?? 0;
@@ -135,10 +112,7 @@ function SalesPage() {
         toast.error("Out of stock");
         return prev;
       }
-      if (flagged > 0) {
-        toast.info(`${flagged}% quick-sale discount auto-applied from expiry flag`);
-      }
-      return [...prev, { medicineId, quantity: 1, discountPct: flagged }];
+      return [...prev, { medicineId, quantity: 1, discountPct: 0 }];
     });
   };
 
@@ -146,13 +120,7 @@ function SalesPage() {
     let subtotal = 0;
     let discountTotal = 0;
     let gstTotal = 0;
-    const details: Array<{
-      line: CartLine;
-      unitPrice: number;
-      gst: number;
-      net: number;
-      lineTotal: number;
-    }> = [];
+    const details: Array<{ line: CartLine; unitPrice: number; gst: number; net: number; lineTotal: number }> = [];
     cart.forEach((line) => {
       const med = medicines.find((m) => m.id === line.medicineId);
       if (!med) return;
@@ -332,9 +300,7 @@ function SalesPage() {
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="pos" disabled={!canCreate}>
-            Point of sale
-          </TabsTrigger>
+          <TabsTrigger value="pos" disabled={!canCreate}>Point of sale</TabsTrigger>
           <TabsTrigger value="history">Sales history</TabsTrigger>
         </TabsList>
 
@@ -356,75 +322,28 @@ function SalesPage() {
                   {results.map((m) => {
                     const stock = stockByMed.get(m.id) ?? 0;
                     const price = priceFor(m.id);
-                    const pick = fefoBatchOf(m.id);
-                    const daysLeft = pick ? daysUntil(pick.expiryDate) : null;
-                    const swap = swapFor(m.id);
-                    const near = daysLeft !== null && daysLeft <= nearExpiryDays && daysLeft >= 0;
                     return (
-                      <div
+                      <button
                         key={m.id}
-                        className="group overflow-hidden rounded-md border border-border bg-background transition hover:border-primary"
+                        onClick={() => addToCart(m.id)}
+                        disabled={stock <= 0}
+                        className="group flex items-center justify-between gap-3 rounded-md border border-border bg-background p-3 text-left transition hover:border-primary hover:bg-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <button
-                          onClick={() => addToCart(m.id)}
-                          disabled={stock <= 0}
-                          className="flex w-full items-center justify-between gap-3 p-3 text-left transition group-hover:bg-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">{m.name}</p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {m.brandName ?? m.genericName ?? "—"} · Stock {stock}
-                            </p>
-                            {pick && (near || pick.fefo) && (
-                              <p className="mt-1 flex flex-wrap items-center gap-1">
-                                {pick.fefo && (
-                                  <span className="rounded bg-warning/15 px-1 py-0.5 text-[10px] font-medium text-warning-foreground">
-                                    FEFO first
-                                  </span>
-                                )}
-                                {near && (
-                                  <span
-                                    className={`rounded px-1 py-0.5 text-[10px] font-medium ${
-                                      daysLeft! <= 3
-                                        ? "bg-destructive/10 text-destructive"
-                                        : "bg-warning/15 text-warning-foreground"
-                                    }`}
-                                  >
-                                    Batch expires in {daysLeft}d
-                                  </span>
-                                )}
-                              </p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-mono text-sm font-semibold">
-                              {currency}
-                              {price.toFixed(2)}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground">GST {m.gstRate}%</p>
-                          </div>
-                        </button>
-                        {swap && (
-                          <button
-                            onClick={() => addToCart(swap.medicine?.id ?? "")}
-                            className="flex w-full items-center justify-between border-t border-amber-500/20 bg-amber-500/5 px-3 py-1.5 text-left text-xs hover:bg-amber-500/10"
-                          >
-                            <span className="text-warning-foreground">
-                              Out of fresh stock — suggest swap to{" "}
-                              <span className="font-medium">{swap.medicine?.name}</span>
-                            </span>
-                            <span className="shrink-0 font-medium text-warning-foreground">
-                              Add →
-                            </span>
-                          </button>
-                        )}
-                      </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium">{m.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {m.brandName ?? m.genericName ?? "—"} · Stock {stock}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-mono text-sm font-semibold">{currency}{price.toFixed(2)}</p>
+                          <p className="text-[10px] text-muted-foreground">GST {m.gstRate}%</p>
+                        </div>
+                      </button>
                     );
                   })}
                   {!results.length && (
-                    <p className="col-span-full py-6 text-center text-sm text-muted-foreground">
-                      No medicines match.
-                    </p>
+                    <p className="col-span-full py-6 text-center text-sm text-muted-foreground">No medicines match.</p>
                   )}
                 </div>
               </div>
@@ -465,16 +384,8 @@ function SalesPage() {
                             <td className="px-3 py-2">
                               <p className="font-medium">{med.name}</p>
                               <p className="text-xs text-muted-foreground">GST {med.gstRate}%</p>
-                              <CartBatchInfo
-                                medicineId={line.medicineId}
-                                batches={batches}
-                                currency={currency}
-                              />
                             </td>
-                            <td className="px-3 py-2 text-right font-mono">
-                              {currency}
-                              {detail.unitPrice.toFixed(2)}
-                            </td>
+                            <td className="px-3 py-2 text-right font-mono">{currency}{detail.unitPrice.toFixed(2)}</td>
                             <td className="px-3 py-2">
                               <div className="flex items-center justify-center gap-1">
                                 <Button
@@ -528,28 +439,16 @@ function SalesPage() {
                                   setCart((prev) =>
                                     prev.map((l) =>
                                       l.medicineId === line.medicineId
-                                        ? {
-                                            ...l,
-                                            discountPct: Math.min(
-                                              100,
-                                              Math.max(0, Number(e.target.value) || 0),
-                                            ),
-                                          }
+                                        ? { ...l, discountPct: Math.min(100, Math.max(0, Number(e.target.value) || 0)) }
                                         : l,
                                     ),
                                   )
                                 }
                                 className="h-8 text-right font-mono"
                               />
-                              {line.discountPct > 0 && (
-                                <p className="mt-0.5 text-[10px] text-warning-foreground">
-                                  flagged
-                                </p>
-                              )}
                             </td>
                             <td className="px-3 py-2 text-right font-mono font-semibold">
-                              {currency}
-                              {detail.lineTotal.toFixed(2)}
+                              {currency}{detail.lineTotal.toFixed(2)}
                             </td>
                             <td className="px-3 py-2">
                               <Button
@@ -557,9 +456,7 @@ function SalesPage() {
                                 size="icon"
                                 className="h-7 w-7"
                                 onClick={() =>
-                                  setCart((prev) =>
-                                    prev.filter((l) => l.medicineId !== line.medicineId),
-                                  )
+                                  setCart((prev) => prev.filter((l) => l.medicineId !== line.medicineId))
                                 }
                               >
                                 <Trash2 className="h-3.5 w-3.5 text-destructive" />
@@ -579,52 +476,30 @@ function SalesPage() {
               <dl className="space-y-1.5 text-sm">
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Subtotal</dt>
-                  <dd className="font-mono">
-                    {currency}
-                    {totals.subtotal.toFixed(2)}
-                  </dd>
+                  <dd className="font-mono">{currency}{totals.subtotal.toFixed(2)}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">Discount</dt>
-                  <dd className="font-mono text-destructive">
-                    -{currency}
-                    {totals.discountTotal.toFixed(2)}
-                  </dd>
+                  <dd className="font-mono text-destructive">-{currency}{totals.discountTotal.toFixed(2)}</dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-muted-foreground">GST</dt>
-                  <dd className="font-mono">
-                    {currency}
-                    {totals.gstTotal.toFixed(2)}
-                  </dd>
+                  <dd className="font-mono">{currency}{totals.gstTotal.toFixed(2)}</dd>
                 </div>
                 <div className="flex justify-between text-xs">
                   <dt className="text-muted-foreground">Round off</dt>
-                  <dd className="font-mono">
-                    {currency}
-                    {totals.roundOff.toFixed(2)}
-                  </dd>
+                  <dd className="font-mono">{currency}{totals.roundOff.toFixed(2)}</dd>
                 </div>
                 <div className="mt-2 flex justify-between border-t border-border pt-2 text-base font-semibold">
                   <dt>Grand total</dt>
-                  <dd className="font-mono">
-                    {currency}
-                    {totals.grandTotal.toFixed(2)}
-                  </dd>
+                  <dd className="font-mono">{currency}{totals.grandTotal.toFixed(2)}</dd>
                 </div>
               </dl>
-              <Button
-                className="w-full"
-                size="lg"
-                disabled={!cart.length || !canCreate}
-                onClick={() => setCheckoutOpen(true)}
-              >
+              <Button className="w-full" size="lg" disabled={!cart.length || !canCreate} onClick={() => setCheckoutOpen(true)}>
                 <Receipt className="mr-2 h-4 w-4" /> Checkout
               </Button>
               {!canCreate && (
-                <p className="text-center text-xs text-muted-foreground">
-                  You don't have permission to create sales.
-                </p>
+                <p className="text-center text-xs text-muted-foreground">You don't have permission to create sales.</p>
               )}
             </aside>
           </div>
@@ -653,10 +528,7 @@ function SalesPage() {
           </div>
 
           {sales.length === 0 ? (
-            <EmptyState
-              title="No sales yet"
-              description="Complete a sale in the POS tab to see it here."
-            />
+            <EmptyState title="No sales yet" description="Complete a sale in the POS tab to see it here." />
           ) : (
             <div className="overflow-hidden rounded-lg border border-border bg-card">
               <table className="w-full text-sm">
@@ -674,34 +546,22 @@ function SalesPage() {
                 </thead>
                 <tbody className="divide-y divide-border">
                   {sales.map((s) => (
-                    <tr
-                      key={s.id}
-                      className={s.status === "voided" ? "opacity-50" : "hover:bg-muted/30"}
-                    >
+                    <tr key={s.id} className={s.status === "voided" ? "opacity-50" : "hover:bg-muted/30"}>
                       <td className="px-4 py-3 font-mono font-medium">
-                        <Link
-                          to="/dashboard/sales/$saleId"
-                          params={{ saleId: s.id }}
-                          className="hover:underline"
-                        >
+                        <Link to="/dashboard/sales/$saleId" params={{ saleId: s.id }} className="hover:underline">
                           {s.invoiceNo}
                         </Link>
                         {s.status === "voided" && (
-                          <span className="ml-2 rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] text-destructive">
-                            VOID
-                          </span>
+                          <span className="ml-2 rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] text-destructive">VOID</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {format(new Date(s.createdAt), "MMM d, HH:mm")}
-                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{format(new Date(s.createdAt), "MMM d, HH:mm")}</td>
                       <td className="px-4 py-3">{s.customerName ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{s.createdByName}</td>
                       <td className="px-4 py-3 capitalize">{s.paymentMode}</td>
                       <td className="px-4 py-3 text-right font-mono">{s.items.length}</td>
                       <td className="px-4 py-3 text-right font-mono font-semibold">
-                        {currency}
-                        {s.grandTotal.toLocaleString()}
+                        {currency}{s.grandTotal.toLocaleString()}
                       </td>
                       <td className="px-4 py-3 text-right">
                         {canVoid && s.status === "completed" && (
@@ -728,29 +588,18 @@ function SalesPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="cust-name">Customer name</Label>
-                <Input
-                  id="cust-name"
-                  value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
-                  placeholder="Walk-in"
-                />
+                <Input id="cust-name" value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Walk-in" />
               </div>
               <div className="space-y-1.5">
                 <Label htmlFor="cust-phone">Phone</Label>
-                <Input
-                  id="cust-phone"
-                  value={customerPhone}
-                  onChange={(e) => setCustomerPhone(e.target.value)}
-                />
+                <Input id="cust-phone" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Payment mode</Label>
                 <Select value={payment} onValueChange={(v) => setPayment(v as PaymentMode)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="cash">Cash</SelectItem>
                     <SelectItem value="card">Card</SelectItem>
@@ -772,58 +621,24 @@ function SalesPage() {
             <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Grand total</span>
-                <span className="font-mono font-semibold">
-                  {currency}
-                  {totals.grandTotal.toFixed(2)}
-                </span>
+                <span className="font-mono font-semibold">{currency}{totals.grandTotal.toFixed(2)}</span>
               </div>
               {payment === "cash" && tender && (
                 <div className="mt-1 flex justify-between">
                   <span className="text-muted-foreground">Change</span>
                   <span className="font-mono font-semibold">
-                    {currency}
-                    {Math.max(0, Number(tender) - totals.grandTotal).toFixed(2)}
+                    {currency}{Math.max(0, Number(tender) - totals.grandTotal).toFixed(2)}
                   </span>
                 </div>
               )}
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setCheckoutOpen(false)}>
-              Cancel
-            </Button>
+            <Button variant="outline" onClick={() => setCheckoutOpen(false)}>Cancel</Button>
             <Button onClick={confirmCheckout}>Confirm sale</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  );
-}
-
-function CartBatchInfo({
-  medicineId,
-  batches,
-  currency,
-}: {
-  medicineId: string;
-  batches: Batch[];
-  currency: string;
-}) {
-  const picks = pickBatchesFEFO(batches, medicineId, 1);
-  if (!picks.length) return null;
-  const b = batches.find((x) => x.id === picks[0].batchId);
-  if (!b) return null;
-  const days = daysUntil(b.expiryDate);
-  const near = days >= 0 && days <= 60;
-  return (
-    <p
-      className={`mt-0.5 flex items-center gap-1 text-[10px] ${
-        near ? "text-warning-foreground" : "text-muted-foreground"
-      }`}
-    >
-      Billing batch <span className="font-mono">{b.batchNumber}</span> · expires{" "}
-      {days <= 0 ? "today" : `in ${days}d`}
-      {b.discountPct ? ` · ${currency}${b.sellingPrice.toFixed(2)} at ${b.discountPct}% off` : ""}
-    </p>
   );
 }
