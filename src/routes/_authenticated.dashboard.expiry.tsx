@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Download, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -16,7 +16,7 @@ import { downloadCsv } from "@/lib/csv";
 import { format, differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/expiry")({
-  head: () => ({ meta: [{ title: "Expiry · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Expiry Â· PharmaHub" }] }),
   component: ExpiryPage,
 });
 
@@ -33,7 +33,7 @@ function ExpiryPage() {
 
   const medName = useMemo(() => {
     const m = new Map(medicines.map((x) => [x.id, x.name]));
-    return (id: string) => m.get(id) ?? "—";
+    return (id: string) => m.get(id) ?? "â€”";
   }, [medicines]);
 
   const now = Date.now();
@@ -79,7 +79,7 @@ function ExpiryPage() {
         batchId: b.id,
         movementType: "adjustment",
         quantity: -b.currentStock,
-        reason: "Disposed – expired",
+        reason: "Disposed â€“ expired",
         userId: user.id,
         userName: user.name,
       });

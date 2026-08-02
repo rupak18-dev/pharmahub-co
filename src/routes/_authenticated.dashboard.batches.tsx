@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/dashboard/batches")({
-  head: () => ({ meta: [{ title: "Batches · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Batches Â· PharmaHub" }] }),
   component: BatchesPage,
 });
 
@@ -135,7 +135,7 @@ function BatchesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Batches"
-        description="Every unit is tracked by batch — including MRP, cost, expiry and supplier."
+        description="Every unit is tracked by batch â€” including MRP, cost, expiry and supplier."
         actions={
           has("batches", "create") && (
             <Button size="sm" onClick={() => setSheetOpen(true)}>
@@ -150,7 +150,7 @@ function BatchesPage() {
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             className="pl-9"
-            placeholder="Search by batch number or medicine…"
+            placeholder="Search by batch number or medicineâ€¦"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -215,7 +215,7 @@ function BatchesPage() {
                         {batch.batchNumber}
                       </Link>
                     </td>
-                    <td className="px-4 py-3">{med?.name ?? "—"}</td>
+                    <td className="px-4 py-3">{med?.name ?? "â€”"}</td>
                     <td className="px-4 py-3 font-mono text-muted-foreground">
                       {format(new Date(batch.expiryDate), "dd MMM yyyy")}
                     </td>

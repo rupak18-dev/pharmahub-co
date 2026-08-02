@@ -1,7 +1,7 @@
-import type { DB } from "./types";
+﻿import type { DB } from "./types";
 import { DEFAULT_PERMISSIONS } from "./permissions";
 
-const STORAGE_KEY = "pharmacyos_db_v1";
+const STORAGE_KEY = "PharmaHub_db_v2";
 
 const uid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -20,16 +20,16 @@ function seed(): DB {
   const owner = {
     id: uid(),
     name: "Alex Morgan",
-    email: "owner@pharmacyos.demo",
+    email: "owner@PharmaHub.demo",
     role: "Owner" as const,
     active: true,
-    orgName: "PharmacyOS Demo",
+    orgName: "PharmaHub Demo",
     createdAt: now,
   };
   const pharm = {
     id: uid(),
     name: "Priya Shah",
-    email: "pharmacist@pharmacyos.demo",
+    email: "pharmacist@PharmaHub.demo",
     role: "Pharmacist" as const,
     active: true,
     createdAt: now,
@@ -37,7 +37,7 @@ function seed(): DB {
   const cashier = {
     id: uid(),
     name: "Sam Chen",
-    email: "cashier@pharmacyos.demo",
+    email: "cashier@PharmaHub.demo",
     role: "Cashier" as const,
     active: true,
     createdAt: now,
@@ -45,7 +45,7 @@ function seed(): DB {
   const inv = {
     id: uid(),
     name: "Diego Ruiz",
-    email: "inventory@pharmacyos.demo",
+    email: "inventory@PharmaHub.demo",
     role: "Inventory Manager" as const,
     active: true,
     createdAt: now,
@@ -84,7 +84,7 @@ function seed(): DB {
       mfr: mfr1.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25°C",
+      storage: "Store below 25Â°C",
       reorder: 100,
       salt: "Paracetamol IP 500mg",
       strength: "500 mg",
@@ -108,7 +108,7 @@ function seed(): DB {
       mfr: mfr1.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25°C",
+      storage: "Store below 25Â°C",
       reorder: 80,
       salt: "Amoxicillin Trihydrate IP 250mg",
       strength: "250 mg",
@@ -132,7 +132,7 @@ function seed(): DB {
       mfr: mfr2.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25°C",
+      storage: "Store below 25Â°C",
       reorder: 50,
       salt: "Azithromycin Dihydrate IP 500mg",
       strength: "500 mg",
@@ -156,7 +156,7 @@ function seed(): DB {
       mfr: mfr2.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25°C",
+      storage: "Store below 25Â°C",
       reorder: 60,
       salt: "Atorvastatin Calcium IP 10mg",
       strength: "10 mg",
@@ -180,7 +180,7 @@ function seed(): DB {
       mfr: mfr1.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25°C",
+      storage: "Store below 25Â°C",
       reorder: 90,
       salt: "Metformin Hydrochloride IP 500mg",
       strength: "500 mg",
@@ -228,7 +228,7 @@ function seed(): DB {
       mfr: mfr3.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25°C",
+      storage: "Store below 25Â°C",
       reorder: 75,
       salt: "Ibuprofen IP 400mg",
       strength: "400 mg",
@@ -245,6 +245,33 @@ function seed(): DB {
       rack: "A-15",
     },
   ];
+
+  for (let i = 0; i < 43; i++) {
+    meds.push({
+      name: `Test Medicine ${i + 1} 500mg`,
+      generic: `Generic Alpha ${i + 1}`,
+      brand: `PharmaBrand ${i % 5}`,
+      cat: [catAnalg.id, catAntib.id, catCardio.id, catVit.id][i % 4],
+      mfr: [mfr1.id, mfr2.id, mfr3.id][i % 3],
+      hsn: "3004",
+      gst: 12,
+      storage: "Store below 25Â°C",
+      reorder: 50,
+      salt: `Active Ingredient ${i + 1}`,
+      strength: "500 mg",
+      dosageForm: i % 3 === 0 ? "Syrup" : "Tablet",
+      packSize: "10 units",
+      gtin: `08901234567${100 + i}`,
+      drugSchedule: "Schedule H",
+      dosageInfo: "Standard adult dosage",
+      usageInstructions: "Take with water after meals",
+      contraindications: "None reported",
+      sideEffects: "Mild nausea",
+      maxStock: 500,
+      ptr: 15.0 + (i % 30),
+      rack: `R-${i % 10}`,
+    });
+  }
 
   const medicines = meds.map((m) => ({
     id: uid(),
@@ -444,7 +471,7 @@ function seed(): DB {
     grns: [],
     notificationsRead: [],
     settings: {
-      currency: "₹",
+      currency: "â‚¹",
       gstDefault: 12,
       nearExpiryDays: 90,
       deadStockDays: 90,

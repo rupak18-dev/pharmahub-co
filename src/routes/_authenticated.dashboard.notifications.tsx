@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { AlertTriangle, PackageX, CalendarClock, Skull, CheckCheck } from "lucide-react";
 import { useDb } from "@/hooks/useDb";
@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/notifications")({
-  head: () => ({ meta: [{ title: "Notifications · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Notifications Â· PharmaHub" }] }),
   component: NotificationsPage,
 });
 
@@ -70,7 +70,7 @@ function NotificationsPage() {
           id: `expired-${b.id}`,
           severity: "critical",
           icon: Skull,
-          title: `${med?.name ?? "Batch"} · ${b.batchNumber} expired`,
+          title: `${med?.name ?? "Batch"} Â· ${b.batchNumber} expired`,
           detail: `${b.currentStock} units still in stock.`,
           href: "/dashboard/expiry",
         });
@@ -79,7 +79,7 @@ function NotificationsPage() {
           id: `near-${b.id}`,
           severity: "warning",
           icon: CalendarClock,
-          title: `${med?.name ?? "Batch"} · ${b.batchNumber} expiring in ${days}d`,
+          title: `${med?.name ?? "Batch"} Â· ${b.batchNumber} expiring in ${days}d`,
           detail: `${b.currentStock} units.`,
           href: "/dashboard/expiry",
         });
@@ -87,7 +87,7 @@ function NotificationsPage() {
       void now;
     });
 
-    // Sort: critical → warning → info
+    // Sort: critical â†’ warning â†’ info
     const order = { critical: 0, warning: 1, info: 2 } as const;
     return list.sort((a, b) => order[a.severity] - order[b.severity]);
   }, [data]);
@@ -131,8 +131,8 @@ function NotificationsPage() {
       ) : (
         <div className="space-y-6">
           <p className="text-sm text-muted-foreground">
-            <span className="font-semibold text-foreground">{unread.length}</span> unread ·{" "}
-            {grouped.critical.length} critical · {grouped.warning.length} warnings
+            <span className="font-semibold text-foreground">{unread.length}</span> unread Â·{" "}
+            {grouped.critical.length} critical Â· {grouped.warning.length} warnings
           </p>
           {(["critical", "warning", "info"] as const).map((sev) => {
             const list = grouped[sev];

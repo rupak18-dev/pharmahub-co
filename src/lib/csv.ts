@@ -1,4 +1,4 @@
-export function toCsv(rows: Array<Record<string, unknown>>, headers?: string[]): string {
+﻿export function toCsv(rows: Array<Record<string, unknown>>, headers?: string[]): string {
   if (!rows.length) return headers ? headers.join(",") : "";
   const keys = headers ?? Object.keys(rows[0]);
   const esc = (v: unknown) => {

@@ -1,8 +1,8 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+﻿import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { db } from "./db";
 import type { Profile, RoleName } from "./types";
 
-const SESSION_KEY = "pharmacyos_session_v1";
+const SESSION_KEY = "PharmaHub_session_v1";
 
 interface AuthContextValue {
   user: Profile | null;
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const requestPasswordReset = async () => {
-    // Mock — always succeed
+    // Mock â€” always succeed
     await new Promise((r) => setTimeout(r, 400));
   };
 

@@ -1,4 +1,4 @@
-import { Link, useRouterState } from "@tanstack/react-router";
+﻿import { Link, useRouterState } from "@tanstack/react-router";
 import { useState } from "react";
 import {
   LayoutDashboard,
@@ -53,7 +53,7 @@ const groups: { label: string; items: NavItem[] }[] = [
     label: "Operations",
     items: [
       { key: "dashboard", title: "Dashboard", url: "/dashboard", icon: LayoutDashboard },
-      { key: "medicines", title: "Medicines", url: "/dashboard/medicines/catalog", icon: Pill },
+      { key: "medicines", title: "Medicines", url: "/dashboard/medicines", icon: Pill },
       { key: "batches", title: "Batches", url: "/dashboard/batches", icon: Layers },
       { key: "inventory", title: "Inventory", url: "/dashboard/inventory", icon: Boxes },
     ],
@@ -89,26 +89,8 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const pathname = useRouterState({ select: (r) => r.location.pathname });
   const has = usePermission();
-  const [medsOpen, setMedsOpen] = useState(true);
-
   const isActive = (url: string) =>
     url === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(url);
-
-  const subItems = [
-    { title: "Medicine Search", url: "/dashboard/medicines/catalog", search: "?focusSearch=true", icon: Search },
-    { title: "Master Catalog", url: "/dashboard/medicines/catalog", search: "", icon: Pill },
-    { title: "Add New Medicine", url: "/dashboard/medicines/catalog", search: "?addNew=true", icon: Plus },
-    { title: "Medicine Categories", url: "/dashboard/medicines/categories", search: "", icon: Layers },
-    { title: "Generic Medicines", url: "/dashboard/medicines/catalog", search: "?filter=generic", icon: Compass },
-    { title: "Branded Medicines", url: "/dashboard/medicines/catalog", search: "?filter=branded", icon: Compass },
-    { title: "OTC & FMCG", url: "/dashboard/medicines/catalog", search: "?filter=otc", icon: Compass },
-    { title: "Alternative Medicines", url: "/dashboard/medicines/catalog", search: "?tab=alternatives", icon: Sparkles },
-    { title: "Salt / Composition Search", url: "/dashboard/medicines/catalog", search: "?tab=salt", icon: Search },
-    { title: "Drug Information", url: "/dashboard/medicines/catalog", search: "?tab=info", icon: FileText },
-    { title: "Medicine Images", url: "/dashboard/medicines/catalog", search: "?tab=images", icon: ImageIcon },
-    { title: "API Content Info", url: "/dashboard/medicines/catalog", search: "?tab=api", icon: Globe },
-    { title: "Medicine Availability APIs", url: "/dashboard/medicines/catalog", search: "?tab=api", icon: Globe },
-  ];
 
   return (
     <Sidebar collapsible="icon">
@@ -127,55 +109,17 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   {visible.map((item) => {
-                    const isMeds = item.key === "medicines";
-                    
-                    if (isMeds && !collapsed) {
-                      return (
-                        <SidebarMenuItem key={item.key}>
-                          <button
-                            onClick={() => setMedsOpen(!medsOpen)}
-                            className={`flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                              isActive(item.url) ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground"
-                            }`}
-                          >
-                            <item.icon className="h-4 w-4 shrink-0 text-primary" />
-                            <span className="flex-1 text-left truncate">{item.title}</span>
-                            {medsOpen ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
-                          </button>
-                          
-                          {medsOpen && (
-                            <ul className="mt-1 ml-4 pl-2 border-l border-sidebar-border space-y-1">
-                              {subItems.map((sub, idx) => (
-                                <li key={idx}>
-                                  <Link
-                                    to={sub.url}
-                                    search={() => {
-                                      if (sub.search.startsWith("?")) {
-                                        const params = new URLSearchParams(sub.search);
-                                        return Object.fromEntries(params.entries());
-                                      }
-                                      return {};
-                                    }}
-                                    className={`block rounded-md px-3 py-1.5 text-xs transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                                      pathname === sub.url ? "font-semibold text-primary" : "text-muted-foreground"
-                                    }`}
-                                  >
-                                    {sub.title}
-                                  </Link>
-                                </li>
-                              ))}
-                            </ul>
-                          )}
-                        </SidebarMenuItem>
-                      );
-                    }
-
                     return (
                       <SidebarMenuItem key={item.key}>
                         <SidebarMenuButton
                           asChild
                           isActive={isActive(item.url)}
                           tooltip={item.title}
+                          className={
+                            isActive(item.url)
+                              ? "bg-[#007A87] text-white hover:bg-[#007A87] hover:text-white! [&_svg]:text-white"
+                              : "hover:bg-[#007A87]/10 hover:text-[#007A87] [&_svg]:hover:text-[#007A87]"
+                          }
                         >
                           <Link to={item.url}>
                             <item.icon className="h-4 w-4" />
@@ -196,6 +140,21 @@ export function AppSidebar() {
           );
         })}
       </SidebarContent>
+
+      {/* Decorative foliage outline illustration at the bottom-left corner */}
+      {!collapsed && (
+        <div className="absolute bottom-0 left-0 w-full h-32 overflow-hidden pointer-events-none opacity-25 z-0 select-none">
+          <svg className="absolute bottom-0 left-0 w-36 h-36 text-emerald-600/30" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1">
+            <path d="M-10,110 C20,90 30,50 40,20" />
+            <path d="M40,20 C42,18 45,15 48,15 C45,22 41,25 40,20" fill="currentColor" />
+            <path d="M10,80 C15,70 25,72 20,83 C15,83 12,82 10,80" fill="currentColor" />
+            <path d="M22,65 C25,52 35,55 30,68 C25,68 23,67 22,65" fill="currentColor" />
+            <path d="M30,45 C35,32 45,35 40,48 C35,48 32,47 30,45" fill="currentColor" />
+            <path d="M15,77 Q5,65 -5,68" />
+            <path d="M26,60 Q18,48 10,50" />
+          </svg>
+        </div>
+      )}
     </Sidebar>
   );
 }

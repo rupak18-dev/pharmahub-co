@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+﻿import type { ReactNode } from "react";
 import { BrandMark } from "./BrandMark";
 import { Link } from "@tanstack/react-router";
 
@@ -31,7 +31,7 @@ export function AuthShell({
         </div>
         <div className="mt-8 text-center text-xs text-muted-foreground">
           <Link to="/" className="hover:text-foreground">
-            ← Back to home
+            â† Back to home
           </Link>
         </div>
       </div>

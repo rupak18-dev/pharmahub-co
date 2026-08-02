@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/dashboard/medicines/manufacturers")({
-  head: () => ({ meta: [{ title: "Manufacturers · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Manufacturers Â· PharmaHub" }] }),
   component: ManufacturersPage,
 });
 
@@ -144,7 +144,7 @@ function ManufacturersPage() {
               {mfrs.map((m) => (
                 <tr key={m.id} className="hover:bg-muted/30">
                   <td className="px-4 py-3 font-medium">{m.name}</td>
-                  <td className="px-4 py-3 text-muted-foreground">{m.contactInfo || "—"}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{m.contactInfo || "â€”"}</td>
                   <td className="px-4 py-3 text-right font-mono">
                     {meds.filter((x) => x.manufacturerId === m.id).length}
                   </td>

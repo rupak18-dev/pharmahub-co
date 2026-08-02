@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+﻿import { useNavigate } from "@tanstack/react-router";
 import { LogOut, User as UserIcon, Repeat, Store } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -28,12 +28,12 @@ export function UserMenu() {
   const { user, signOut, switchRole } = useAuth();
   const navigate = useNavigate();
   const [activeBranch, setActiveBranch] = useState(() => {
-    return localStorage.getItem("pharmacyos_branch") || "main";
+    return localStorage.getItem("PharmaHub_branch") || "main";
   });
 
   const handleBranchChange = (branchId: string) => {
     setActiveBranch(branchId);
-    localStorage.setItem("pharmacyos_branch", branchId);
+    localStorage.setItem("PharmaHub_branch", branchId);
     const branchName = BRANCHES.find(b => b.id === branchId)?.name;
     toast.success(`Switched branch to ${branchName}`);
   };
@@ -76,7 +76,7 @@ export function UserMenu() {
             {ALL_ROLES.map((r) => (
               <DropdownMenuItem key={r} onClick={() => switchRole(r)}>
                 <UserIcon className="mr-2 h-4 w-4" /> {r}
-                {r === user.role && <span className="ml-auto text-xs">✓</span>}
+                {r === user.role && <span className="ml-auto text-xs">âœ“</span>}
               </DropdownMenuItem>
             ))}
           </DropdownMenuSubContent>
@@ -89,7 +89,7 @@ export function UserMenu() {
             {BRANCHES.map((b) => (
               <DropdownMenuItem key={b.id} onClick={() => handleBranchChange(b.id)}>
                 <Store className="mr-2 h-4 w-4" /> {b.name}
-                {b.id === activeBranch && <span className="ml-auto text-xs">✓</span>}
+                {b.id === activeBranch && <span className="ml-auto text-xs">âœ“</span>}
               </DropdownMenuItem>
             ))}
           </DropdownMenuSubContent>

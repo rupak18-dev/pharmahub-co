@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+﻿import { Link } from "@tanstack/react-router";
 import { PlusCircle, ShoppingCart, Truck, FileText, UserPlus, BarChart2 } from "lucide-react";
 
 export function QuickActions() {

@@ -1,4 +1,4 @@
-import { DB } from "@/lib/types";
+﻿import { DB } from "@/lib/types";
 import { formatDistanceToNow, format } from "date-fns";
 import { Link } from "@tanstack/react-router";
 import { ShoppingBag, PackageOpen, AlertTriangle, Clock, Users, Activity } from "lucide-react";
@@ -56,7 +56,7 @@ export function DashboardWidgets({ db }: DashboardWidgetsProps) {
                 <li key={sale.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
                   <div>
                     <p className="text-sm font-medium text-foreground">{sale.invoiceNo}</p>
-                    <p className="text-xs text-muted-foreground">{sale.customerName || 'Walk-in'} • {format(new Date(sale.createdAt), "MMM d, h:mm a")}</p>
+                    <p className="text-xs text-muted-foreground">{sale.customerName || 'Walk-in'} â€¢ {format(new Date(sale.createdAt), "MMM d, h:mm a")}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-bold">{currency}{sale.grandTotal.toFixed(2)}</p>
@@ -92,7 +92,7 @@ export function DashboardWidgets({ db }: DashboardWidgetsProps) {
                   <li key={po.id} className="flex items-center justify-between px-4 py-3 hover:bg-muted/30 transition-colors">
                     <div>
                       <p className="text-sm font-medium text-foreground">{po.poNumber}</p>
-                      <p className="text-xs text-muted-foreground">{supplier?.name || 'Unknown'} • ETA: {po.expectedDate ? format(new Date(po.expectedDate), "MMM d") : 'N/A'}</p>
+                      <p className="text-xs text-muted-foreground">{supplier?.name || 'Unknown'} â€¢ ETA: {po.expectedDate ? format(new Date(po.expectedDate), "MMM d") : 'N/A'}</p>
                     </div>
                     <div className="text-right">
                       <p className="text-sm font-bold">{currency}{total.toFixed(2)}</p>
@@ -125,7 +125,7 @@ export function DashboardWidgets({ db }: DashboardWidgetsProps) {
                 <li key={log.id} className="flex items-start gap-3 px-4 py-3 hover:bg-muted/30 transition-colors">
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-medium text-foreground line-clamp-1">{log.action}</p>
-                    <p className="text-xs text-muted-foreground truncate">{log.userName} • {log.entityType}</p>
+                    <p className="text-xs text-muted-foreground truncate">{log.userName} â€¢ {log.entityType}</p>
                   </div>
                   <span className="shrink-0 text-xs text-muted-foreground whitespace-nowrap">
                     {formatDistanceToNow(new Date(log.createdAt), { addSuffix: true })}

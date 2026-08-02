@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Download } from "lucide-react";
 import { useDb } from "@/hooks/useDb";
@@ -11,7 +11,7 @@ import { downloadCsv } from "@/lib/csv";
 import { subDays } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/reports")({
-  head: () => ({ meta: [{ title: "Reports · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Reports Â· PharmaHub" }] }),
   component: ReportsPage,
 });
 
@@ -53,7 +53,7 @@ function ReportsPage() {
     cur.revenue += it.lineTotal;
     topByRev.set(it.medicineId, cur);
   }));
-  const top10Revenue = Array.from(topByRev, ([id, v]) => ({ name: medMap.get(id) ?? "—", ...v }))
+  const top10Revenue = Array.from(topByRev, ([id, v]) => ({ name: medMap.get(id) ?? "â€”", ...v }))
     .sort((a, b) => b.revenue - a.revenue).slice(0, 10);
   const top10Units = [...top10Revenue].sort((a, b) => b.units - a.units).slice(0, 10);
 
@@ -96,7 +96,7 @@ function ReportsPage() {
     supPurch.set(g.supplierId, cur);
   });
   const supRows = Array.from(supPurch, ([id, v]) => ({
-    supplier: supMap.get(id) ?? "—",
+    supplier: supMap.get(id) ?? "â€”",
     grns: v.grns,
     value: Math.round(v.value),
   })).sort((a, b) => b.value - a.value);
@@ -115,7 +115,7 @@ function ReportsPage() {
     .filter((b) => b.currentStock > 0 && b.status !== "disposed")
     .filter((b) => nowT - (lastOut.get(b.id) ?? new Date(b.createdAt).getTime()) > deadMs)
     .map((b) => ({
-      medicine: medMap.get(b.medicineId) ?? "—",
+      medicine: medMap.get(b.medicineId) ?? "â€”",
       batch: b.batchNumber,
       stock: b.currentStock,
       valueAtCost: Math.round(b.currentStock * b.purchasePrice),

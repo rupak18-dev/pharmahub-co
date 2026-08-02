@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Plus, Minus, Trash2, Search, Receipt, X } from "lucide-react";
 import { toast } from "sonner";
@@ -31,7 +31,7 @@ import { format } from "date-fns";
 import type { Sale, SaleItem, PaymentMode } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/dashboard/sales")({
-  head: () => ({ meta: [{ title: "Sales & POS · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Sales & POS Â· PharmaHub" }] }),
   component: SalesPage,
 });
 
@@ -225,7 +225,7 @@ function SalesPage() {
         id: db.uid(),
         userId: user.id,
         userName: user.name,
-        action: `Sale ${invoiceNo} · ${currency}${grand.toLocaleString()}`,
+        action: `Sale ${invoiceNo} Â· ${currency}${grand.toLocaleString()}`,
         entityType: "sale",
         entityId: sale.id,
         details: { invoiceNo, grandTotal: grand, items: items.length },
@@ -311,7 +311,7 @@ function SalesPage() {
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
-                    placeholder="Search medicines by name, brand, generic, or barcode…"
+                    placeholder="Search medicines by name, brand, generic, or barcodeâ€¦"
                     value={query}
                     onChange={(e) => setQuery(e.target.value)}
                     className="pl-9"
@@ -332,7 +332,7 @@ function SalesPage() {
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium">{m.name}</p>
                           <p className="truncate text-xs text-muted-foreground">
-                            {m.brandName ?? m.genericName ?? "—"} · Stock {stock}
+                            {m.brandName ?? m.genericName ?? "â€”"} Â· Stock {stock}
                           </p>
                         </div>
                         <div className="text-right">
@@ -556,7 +556,7 @@ function SalesPage() {
                         )}
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{format(new Date(s.createdAt), "MMM d, HH:mm")}</td>
-                      <td className="px-4 py-3">{s.customerName ?? "—"}</td>
+                      <td className="px-4 py-3">{s.customerName ?? "â€”"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{s.createdByName}</td>
                       <td className="px-4 py-3 capitalize">{s.paymentMode}</td>
                       <td className="px-4 py-3 text-right font-mono">{s.items.length}</td>

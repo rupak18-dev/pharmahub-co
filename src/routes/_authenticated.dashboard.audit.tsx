@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Download, Search } from "lucide-react";
 import { useDb } from "@/hooks/useDb";
@@ -13,7 +13,7 @@ import { format } from "date-fns";
 import type { ActivityLog } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/dashboard/audit")({
-  head: () => ({ meta: [{ title: "Audit log · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Audit log Â· PharmaHub" }] }),
   component: AuditPage,
 });
 
@@ -76,7 +76,7 @@ function AuditPage() {
       <div className="grid gap-3 sm:grid-cols-[1fr_200px_200px]">
         <div className="relative">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search action, user, details…" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
+          <Input placeholder="Search action, user, detailsâ€¦" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
         </div>
         <Select value={entity} onValueChange={setEntity}>
           <SelectTrigger><SelectValue /></SelectTrigger>
@@ -128,7 +128,7 @@ function AuditPage() {
             <div className="mt-4 space-y-3 text-sm">
               <Field label="Action" value={selected.action} />
               <Field label="User" value={selected.userName} />
-              <Field label="Entity" value={`${selected.entityType}${selected.entityId ? ` · ${selected.entityId}` : ""}`} />
+              <Field label="Entity" value={`${selected.entityType}${selected.entityId ? ` Â· ${selected.entityId}` : ""}`} />
               <Field label="When" value={format(new Date(selected.createdAt), "PPpp")} />
               {selected.details && (
                 <div>

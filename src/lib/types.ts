@@ -1,4 +1,4 @@
-export type RoleName =
+﻿export type RoleName =
   | "Owner"
   | "Admin"
   | "Pharmacist"

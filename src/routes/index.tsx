@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+﻿import { createFileRoute, Link } from "@tanstack/react-router";
 import {
   Layers,
   CalendarClock,
@@ -15,12 +15,21 @@ import { BrandMark } from "@/components/pharmacy/BrandMark";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PharmacyOS — Modern Pharmacy Management Software" },
+      { title: "PharmaHub â€” Modern Pharmacy Management Software" },
       {
         name: "description",
         content:
-          "Run your pharmacy end-to-end: batch tracking with FEFO, expiry alerts, GST-ready billing, and role-based access — all in one clean, fast system.",
+          "Run your pharmacy end-to-end: batch tracking with FEFO, expiry alerts, GST-ready billing, and role-based access â€” all in one clean, fast system.",
       },
+      { property: "og:title", content: "PharmaHub â€” Modern Pharmacy Management Software" },
+      {
+        property: "og:description",
+        content:
+          "Run your pharmacy end-to-end: batch tracking with FEFO, expiry alerts, GST-ready billing, and role-based access.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://PharmaHub.demo/" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Landing,
@@ -45,7 +54,7 @@ const features = [
   {
     icon: ShieldCheck,
     title: "Role-based access",
-    body: "Owner, Admin, Pharmacist, Cashier, Store Keeper, Inventory Manager — each sees only what they should.",
+    body: "Owner, Admin, Pharmacist, Cashier, Store Keeper, Inventory Manager â€” each sees only what they should.",
   },
   {
     icon: BarChart3,
@@ -83,7 +92,7 @@ function Landing() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
+      <main className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,var(--color-accent),transparent_60%)]" />
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
@@ -94,7 +103,7 @@ function Landing() {
               The operating system for <span className="text-primary">modern pharmacies</span>.
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              PharmacyOS keeps every batch, expiry, and invoice under one roof — so your staff move
+              PharmaHub keeps every batch, expiry, and invoice under one roof â€” so your staff move
               faster, your shelves stay clean, and your books stay accurate.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -108,7 +117,7 @@ function Landing() {
               </Button>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              Try the demo instantly — pre-seeded with medicines, batches, and roles.
+              Try the demo instantly â€” pre-seeded with medicines, batches, and roles.
             </p>
           </div>
 
@@ -119,14 +128,14 @@ function Landing() {
                 <span className="h-2.5 w-2.5 rounded-full bg-warning/70" />
                 <span className="h-2.5 w-2.5 rounded-full bg-success/70" />
               </div>
-              <span className="text-xs text-muted-foreground">pharmacyos.app / dashboard</span>
+              <span className="text-xs text-muted-foreground">PharmaHub.app / dashboard</span>
             </div>
             <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6">
               {[
-                { l: "Stock value", v: "₹4.82L", tone: "text-primary" },
+                { l: "Stock value", v: "â‚¹4.82L", tone: "text-primary" },
                 { l: "Near expiry", v: "37", tone: "text-warning-foreground" },
                 { l: "Low stock", v: "12", tone: "text-warning-foreground" },
-                { l: "Today's sales", v: "₹18,420", tone: "text-success" },
+                { l: "Today's sales", v: "â‚¹18,420", tone: "text-success" },
               ].map((k) => (
                 <div key={k.l} className="rounded-lg border border-border bg-background p-3">
                   <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
@@ -140,7 +149,7 @@ function Landing() {
             </div>
           </div>
         </div>
-      </section>
+      </main>
 
       <section id="features" className="border-t border-border bg-muted/30">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
@@ -149,7 +158,7 @@ function Landing() {
               Everything a pharmacy actually needs.
             </h2>
             <p className="mt-4 text-muted-foreground">
-              No consumer fluff. PharmacyOS is designed like real back-office software — dense,
+              No consumer fluff. PharmaHub is designed like real back-office software â€” dense,
               accurate, and fast.
             </p>
           </div>
@@ -175,7 +184,7 @@ function Landing() {
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
             <div>
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-                From goods received to invoice — one clean thread.
+                From goods received to invoice â€” one clean thread.
               </h2>
               <p className="mt-4 text-muted-foreground">
                 Every stock movement is logged. Every batch has a lifecycle. Every user has a role.
@@ -199,11 +208,11 @@ function Landing() {
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
               <div className="space-y-3 font-mono text-xs">
                 {[
-                  { t: "GRN #2041 received", s: "Amoxicillin 250mg · +200 units" },
-                  { t: "Batch B1004A activated", s: "Exp 2027-04-12 · MRP ₹85" },
-                  { t: "Sale INV-01829", s: "3 items · ₹412.00 · GST ₹44" },
+                  { t: "GRN #2041 received", s: "Amoxicillin 250mg Â· +200 units" },
+                  { t: "Batch B1004A activated", s: "Exp 2027-04-12 Â· MRP â‚¹85" },
+                  { t: "Sale INV-01829", s: "3 items Â· â‚¹412.00 Â· GST â‚¹44" },
                   { t: "Near-expiry alert", s: "6 batches within 30 days" },
-                  { t: "Reorder suggested", s: "Paracetamol 500mg · below 100" },
+                  { t: "Reorder suggested", s: "Paracetamol 500mg Â· below 100" },
                 ].map((e, i) => (
                   <div
                     key={i}
@@ -245,7 +254,7 @@ function Landing() {
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <BrandMark size="sm" />
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} PharmacyOS. All rights reserved.
+            Â© {new Date().getFullYear()} PharmaHub. All rights reserved.
           </p>
           <div className="flex gap-4 text-xs text-muted-foreground">
             <a href="#" className="hover:text-foreground">Privacy</a>

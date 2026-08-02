@@ -1,4 +1,4 @@
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+﻿import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   Link,
@@ -79,14 +79,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PharmacyOS — Modern Pharmacy Management System" },
+      { title: "PharmaHub â€” Modern Pharmacy Management System" },
       {
         name: "description",
         content:
-          "PharmacyOS is a full-featured pharmacy management platform for batch tracking, expiry alerts, GST billing, and role-based operations.",
+          "PharmaHub is a full-featured pharmacy management platform for batch tracking, expiry alerts, GST billing, and role-based operations.",
       },
-      { name: "author", content: "PharmacyOS" },
-      { property: "og:title", content: "PharmacyOS — Modern Pharmacy Management System" },
+      { name: "author", content: "PharmaHub" },
+      { property: "og:title", content: "PharmaHub â€” Modern Pharmacy Management System" },
       {
         property: "og:description",
         content:

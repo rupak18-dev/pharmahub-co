@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -11,7 +11,14 @@ import { useAuth } from "@/lib/auth";
 import { useEffect } from "react";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in · PharmacyOS" }] }),
+  head: () => ({
+    meta: [
+      { title: "Sign in Â· PharmaHub" },
+      { name: "description", content: "Sign in to your PharmaHub dashboard to manage your pharmacy." },
+      { property: "og:title", content: "Sign in Â· PharmaHub" },
+      { property: "og:description", content: "Sign in to your PharmaHub dashboard to manage your pharmacy." },
+    ],
+  }),
   component: LoginPage,
 });
 
@@ -49,7 +56,7 @@ function LoginPage() {
       description="Welcome back. Enter your credentials to continue."
       footer={
         <span className="text-muted-foreground">
-          New to PharmacyOS?{" "}
+          New to PharmaHub?{" "}
           <Link to="/signup" className="font-medium text-primary hover:underline">
             Create an account
           </Link>
@@ -89,15 +96,15 @@ function LoginPage() {
           )}
         </div>
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Signing in…" : "Sign in"}
+          {isSubmitting ? "Signing inâ€¦" : "Sign in"}
         </Button>
         <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
           <div className="font-semibold text-foreground">Demo accounts</div>
           <div className="mt-1 space-y-0.5 font-mono">
-            <div>owner@pharmacyos.demo</div>
-            <div>pharmacist@pharmacyos.demo</div>
-            <div>cashier@pharmacyos.demo</div>
-            <div>inventory@pharmacyos.demo</div>
+            <div>owner@PharmaHub.demo</div>
+            <div>pharmacist@PharmaHub.demo</div>
+            <div>cashier@PharmaHub.demo</div>
+            <div>inventory@PharmaHub.demo</div>
           </div>
           <div className="mt-1">Any password works in demo mode.</div>
         </div>

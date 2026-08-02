@@ -1,11 +1,11 @@
-import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+﻿import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Printer } from "lucide-react";
 import { useDb } from "@/hooks/useDb";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/sales/$saleId")({
-  head: () => ({ meta: [{ title: "Invoice · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Invoice Â· PharmaHub" }] }),
   component: ReceiptPage,
   notFoundComponent: () => (
     <div className="p-8 text-center text-sm text-muted-foreground">Sale not found.</div>
@@ -16,7 +16,7 @@ function ReceiptPage() {
   const { saleId } = Route.useParams();
   const sale = useDb((d) => d.sales.find((s) => s.id === saleId));
   const currency = useDb((d) => d.settings.currency);
-  const orgName = useDb((d) => d.profiles.find((p) => p.role === "Owner")?.orgName ?? "PharmacyOS");
+  const orgName = useDb((d) => d.profiles.find((p) => p.role === "Owner")?.orgName ?? "PharmaHub");
 
   if (!sale) throw notFound();
 

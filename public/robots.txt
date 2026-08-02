@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Allow: /login
+Allow: /signup
+Allow: /forgot-password
+Disallow: /dashboard/
+
+Sitemap: https://pharmacyos.demo/sitemap.xml

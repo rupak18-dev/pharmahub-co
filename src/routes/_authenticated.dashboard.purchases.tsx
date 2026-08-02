@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+﻿import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Plus, Trash2, PackagePlus } from "lucide-react";
 import { toast } from "sonner";
@@ -22,7 +22,7 @@ import { format } from "date-fns";
 import type { GRN, GRNItem, POItem, PurchaseOrder, POStatus, Batch } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/dashboard/purchases")({
-  head: () => ({ meta: [{ title: "Purchases · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Purchases Â· PharmaHub" }] }),
   component: PurchasesPage,
 });
 
@@ -145,7 +145,7 @@ function PurchasesPage() {
         id: db.uid(),
         userId: user.id,
         userName: user.name,
-        action: `Purchase order ${p?.poNumber ?? id} → ${status}`,
+        action: `Purchase order ${p?.poNumber ?? id} â†’ ${status}`,
         entityType: "purchase_order",
         entityId: id,
         createdAt: new Date().toISOString(),
@@ -226,7 +226,7 @@ function PurchasesPage() {
         id: db.uid(),
         userId: user.id,
         userName: user.name,
-        action: `GRN ${grnNumber} · ${items.length} batches`,
+        action: `GRN ${grnNumber} Â· ${items.length} batches`,
         entityType: "grn",
         entityId: grn.id,
         details: { totalValue },
@@ -247,14 +247,14 @@ function PurchasesPage() {
       });
     });
 
-    toast.success(`${grnNumber} received · ${items.length} new batches`);
+    toast.success(`${grnNumber} received Â· ${items.length} new batches`);
     setGrnOpen(false);
     resetGrn();
   };
 
   const supplierName = useMemo(() => {
     const m = new Map(suppliers.map((s) => [s.id, s.name]));
-    return (id: string) => m.get(id) ?? "—";
+    return (id: string) => m.get(id) ?? "â€”";
   }, [suppliers]);
 
   return (
@@ -299,7 +299,7 @@ function PurchasesPage() {
                       <td className="px-4 py-3 font-mono font-medium">{p.poNumber}</td>
                       <td className="px-4 py-3">{supplierName(p.supplierId)}</td>
                       <td className="px-4 py-3 text-muted-foreground">
-                        {p.expectedDate ? format(new Date(p.expectedDate), "PP") : "—"}
+                        {p.expectedDate ? format(new Date(p.expectedDate), "PP") : "â€”"}
                       </td>
                       <td className="px-4 py-3 text-right font-mono">{p.items.length}</td>
                       <td className="px-4 py-3">
@@ -331,7 +331,7 @@ function PurchasesPage() {
             )}
           </div>
           {grns.length === 0 ? (
-            <EmptyState title="No GRNs recorded" description="Record incoming stock and PharmacyOS will create batches automatically." />
+            <EmptyState title="No GRNs recorded" description="Record incoming stock and PharmaHub will create batches automatically." />
           ) : (
             <div className="overflow-hidden rounded-lg border border-border bg-card">
               <table className="w-full text-sm">
@@ -352,7 +352,7 @@ function PurchasesPage() {
                       <td className="px-4 py-3 font-mono font-medium">{g.grnNumber}</td>
                       <td className="px-4 py-3 text-muted-foreground">{format(new Date(g.createdAt), "PP")}</td>
                       <td className="px-4 py-3">{supplierName(g.supplierId)}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{g.invoiceNumber ?? "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground">{g.invoiceNumber ?? "â€”"}</td>
                       <td className="px-4 py-3 text-right font-mono">{g.items.length}</td>
                       <td className="px-4 py-3 text-right font-mono font-semibold">
                         {currency}{g.totalValue.toLocaleString()}
@@ -440,11 +440,11 @@ function PurchasesPage() {
                   const po = pos.find((p) => p.id === val);
                   if (po) setGrnSupplier(po.supplierId);
                 }}>
-                  <SelectTrigger><SelectValue placeholder="—" /></SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="â€”" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">— No PO —</SelectItem>
+                    <SelectItem value="none">â€” No PO â€”</SelectItem>
                     {pos.filter((p) => p.status === "placed").map((p) => (
-                      <SelectItem key={p.id} value={p.id}>{p.poNumber} · {supplierName(p.supplierId)}</SelectItem>
+                      <SelectItem key={p.id} value={p.id}>{p.poNumber} Â· {supplierName(p.supplierId)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -494,8 +494,8 @@ function PurchasesPage() {
                     <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-5">
                       <Input type="number" min={1} placeholder="Qty" value={line.quantity || ""} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, quantity: Number(e.target.value) || 0 } : l))} />
                       <Input type="number" step="0.01" placeholder="MRP" value={line.mrp || ""} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, mrp: Number(e.target.value) || 0 } : l))} />
-                      <Input type="number" step="0.01" placeholder="Purchase ₹" value={line.purchasePrice || ""} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, purchasePrice: Number(e.target.value) || 0 } : l))} />
-                      <Input type="number" step="0.01" placeholder="Selling ₹" value={line.sellingPrice || ""} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, sellingPrice: Number(e.target.value) || 0 } : l))} />
+                      <Input type="number" step="0.01" placeholder="Purchase â‚¹" value={line.purchasePrice || ""} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, purchasePrice: Number(e.target.value) || 0 } : l))} />
+                      <Input type="number" step="0.01" placeholder="Selling â‚¹" value={line.sellingPrice || ""} onChange={(e) => setGrnLines((prev) => prev.map((l, ix) => ix === i ? { ...l, sellingPrice: Number(e.target.value) || 0 } : l))} />
                       <Button variant="ghost" size="sm" onClick={() => setGrnLines((prev) => prev.filter((_, ix) => ix !== i))}>
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>

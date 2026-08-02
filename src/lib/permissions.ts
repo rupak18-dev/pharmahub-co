@@ -1,4 +1,4 @@
-import type { ModuleKey, PermissionAction, PermissionMatrix, RoleName } from "./types";
+﻿import type { ModuleKey, PermissionAction, PermissionMatrix, RoleName } from "./types";
 
 export const ALL_ROLES: RoleName[] = [
   "Owner",
