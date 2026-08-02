@@ -37,6 +37,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -602,21 +607,19 @@ export function PurchasesPage() {
           <div className="flex items-center rounded-lg bg-muted p-0.5 text-xs">
             <button
               onClick={() => setViewTab("entry")}
-              className={`px-3 py-1 font-semibold rounded-md transition-all ${
-                viewTab === "entry"
+              className={`px-3 py-1 font-semibold rounded-md transition-all ${viewTab === "entry"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Purchase Entry
             </button>
             <button
               onClick={() => setViewTab("history")}
-              className={`px-3 py-1 font-semibold rounded-md transition-all ${
-                viewTab === "history"
+              className={`px-3 py-1 font-semibold rounded-md transition-all ${viewTab === "history"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:text-foreground"
-              }`}
+                }`}
             >
               Purchase History
             </button>
@@ -750,18 +753,16 @@ export function PurchasesPage() {
                     <button
                       onClick={() => setLifaMode("LIFA")}
                       title="Incl. Tax: Prices include GST (tax is built into the price)"
-                      className={`px-1.5 py-0.5 rounded font-semibold ${
-                        lifaMode === "LIFA" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                      }`}
+                      className={`px-1.5 py-0.5 rounded font-semibold ${lifaMode === "LIFA" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                        }`}
                     >
                       Incl. Tax
                     </button>
                     <button
                       onClick={() => setLifaMode("LILA")}
                       title="Excl. Tax: Prices do not include GST (tax is added separately)"
-                      className={`px-1.5 py-0.5 rounded font-semibold ${
-                        lifaMode === "LILA" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                      }`}
+                      className={`px-1.5 py-0.5 rounded font-semibold ${lifaMode === "LILA" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                        }`}
                     >
                       Excl. Tax
                     </button>
@@ -1014,11 +1015,10 @@ export function PurchasesPage() {
             <div className="border-t border-border bg-card px-4 py-3 flex items-center justify-end shadow-sm">
               <Button
                 onClick={activeRole === "Admin" ? handleProceedToPayment : handleDirectSaveBill}
-                className={`h-9 px-6 text-sm font-semibold flex items-center gap-2 shadow-sm ${
-                  activeRole === "Admin"
+                className={`h-9 px-6 text-sm font-semibold flex items-center gap-2 shadow-sm ${activeRole === "Admin"
                     ? "bg-emerald-600 hover:bg-emerald-700 text-white"
                     : "bg-blue-600 hover:bg-blue-700 text-white"
-                }`}
+                  }`}
               >
                 {activeRole === "Admin" ? (
                   <>
@@ -1193,11 +1193,10 @@ export function PurchasesPage() {
                       key={m.id}
                       type="button"
                       onClick={() => setPaymentMethod(m.id as any)}
-                      className={`p-2.5 rounded-lg border text-center flex flex-col items-center justify-center gap-1 transition-all ${
-                        isSel
+                      className={`p-2.5 rounded-lg border text-center flex flex-col items-center justify-center gap-1 transition-all ${isSel
                           ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
                           : "border-border hover:bg-muted text-muted-foreground"
-                      }`}
+                        }`}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="text-[11px]">{m.label}</span>
