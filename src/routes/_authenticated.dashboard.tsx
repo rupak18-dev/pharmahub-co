@@ -6,9 +6,4 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 function DashboardLayout() {
   return <Outlet />;
-  component: DashboardLayout,
-});
-
-function DashboardLayout() {
-  return <Outlet />;
 }

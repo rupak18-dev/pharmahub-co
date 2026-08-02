@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { usePermission } from "@/hooks/usePermission";
 import { applyStockMovement, pickBatchesFEFO } from "@/lib/stock";
-import { daysUntil, getAlternatives } from "@/lib/expiry";
+import { daysUntil } from "@/lib/expiry";
 import { PageHeader } from "@/components/pharmacy/PageHeader";
 import { EmptyState } from "@/components/pharmacy/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -50,7 +50,6 @@ function SalesPage() {
   const sales = useDb((d) => d.sales);
   const currency = useDb((d) => d.settings.currency);
   const nearExpiryDays = useDb((d) => d.settings.nearExpiryDays);
-  const autoSwap = useDb((d) => d.settings.autoSwap ?? false);
 
   const [tab, setTab] = useState("pos");
   const [query, setQuery] = useState("");
@@ -103,19 +102,6 @@ function SalesPage() {
     return picks.length ? batches.find((b) => b.id === picks[0].batchId) : undefined;
   };
 
-  const swapFor = (medicineId: string) => {
-    const expired = batches.find(
-      (b) =>
-        b.medicineId === medicineId &&
-        b.currentStock > 0 &&
-        b.status !== "disposed" &&
-        daysUntil(b.expiryDate) <= 0,
-    );
-    if (!expired) return null;
-    const alts = getAlternatives(expired, batches, medicines);
-    const suggested = alts.find((a) => a.batch.suggestAtPos) ?? (autoSwap ? alts[0] : null);
-    return suggested ?? null;
-  };
 
   const addToCart = (medicineId: string) => {
     const flagged = fefoBatchOf(medicineId)?.discountPct ?? 0;
@@ -325,10 +311,7 @@ function SalesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Sales & POS"
-        description="Fast counter billing with automatic FEFO batch selection."
-      />
+      <PageHeader title="Sales & POS" />
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="bg-muted p-1">
@@ -367,7 +350,6 @@ function SalesPage() {
                     const price = priceFor(m.id);
                     const pick = fefoBatchOf(m.id);
                     const daysLeft = pick ? daysUntil(pick.expiryDate) : null;
-                    const swap = swapFor(m.id);
                     const near = daysLeft !== null && daysLeft <= nearExpiryDays && daysLeft >= 0;
                     return (
                       <div
@@ -386,7 +368,7 @@ function SalesPage() {
                           <p className="font-mono text-sm font-extrabold text-foreground group-hover:text-emerald-950 dark:group-hover:text-emerald-200">{currency}{price.toFixed(2)}</p>
                           <p className="text-[10px] font-bold text-muted-foreground group-hover:text-emerald-800 dark:group-hover:text-emerald-300">GST {m.gstRate}%</p>
                         </div>
-                      </button>
+                        </div>
                     );
                   })}
                   {!results.length && (
