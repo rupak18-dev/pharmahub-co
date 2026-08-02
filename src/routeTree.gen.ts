@@ -15,7 +15,6 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as SignupRouteImport } from './routes/signup'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated.dashboard'
-import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authenticated.dashboard.index'
 import { Route as AuthenticatedDashboardAdminRouteImport } from './routes/_authenticated.dashboard.admin'
 import { Route as AuthenticatedDashboardAiRouteImport } from './routes/_authenticated.dashboard.ai'
 import { Route as AuthenticatedDashboardAuditRouteImport } from './routes/_authenticated.dashboard.audit'
@@ -62,12 +61,6 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedDashboardIndexRoute =
-  AuthenticatedDashboardIndexRouteImport.update({
-    id: '/',
-    path: '/',
-    getParentRoute: () => AuthenticatedDashboardRoute,
-  } as any)
 const AuthenticatedDashboardAdminRoute =
   AuthenticatedDashboardAdminRouteImport.update({
     id: '/admin',
@@ -183,7 +176,6 @@ export interface FileRoutesByFullPath {
   '/dashboard/reports': typeof AuthenticatedDashboardReportsRoute
   '/dashboard/sales': typeof AuthenticatedDashboardSalesRouteWithChildren
   '/dashboard/users': typeof AuthenticatedDashboardUsersRoute
-  '/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/dashboard/batches/$batchId': typeof AuthenticatedDashboardBatchesBatchIdRoute
   '/dashboard/medicines/categories': typeof AuthenticatedDashboardMedicinesCategoriesRoute
   '/dashboard/medicines/manufacturers': typeof AuthenticatedDashboardMedicinesManufacturersRoute
@@ -194,6 +186,7 @@ export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
+  '/dashboard': typeof AuthenticatedDashboardRouteWithChildren
   '/dashboard/admin': typeof AuthenticatedDashboardAdminRoute
   '/dashboard/ai': typeof AuthenticatedDashboardAiRoute
   '/dashboard/audit': typeof AuthenticatedDashboardAuditRoute
@@ -206,7 +199,6 @@ export interface FileRoutesByTo {
   '/dashboard/reports': typeof AuthenticatedDashboardReportsRoute
   '/dashboard/sales': typeof AuthenticatedDashboardSalesRouteWithChildren
   '/dashboard/users': typeof AuthenticatedDashboardUsersRoute
-  '/dashboard': typeof AuthenticatedDashboardIndexRoute
   '/dashboard/batches/$batchId': typeof AuthenticatedDashboardBatchesBatchIdRoute
   '/dashboard/medicines/categories': typeof AuthenticatedDashboardMedicinesCategoriesRoute
   '/dashboard/medicines/manufacturers': typeof AuthenticatedDashboardMedicinesManufacturersRoute
@@ -232,7 +224,6 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/reports': typeof AuthenticatedDashboardReportsRoute
   '/_authenticated/dashboard/sales': typeof AuthenticatedDashboardSalesRouteWithChildren
   '/_authenticated/dashboard/users': typeof AuthenticatedDashboardUsersRoute
-  '/_authenticated/dashboard/': typeof AuthenticatedDashboardIndexRoute
   '/_authenticated/dashboard/batches/$batchId': typeof AuthenticatedDashboardBatchesBatchIdRoute
   '/_authenticated/dashboard/medicines/categories': typeof AuthenticatedDashboardMedicinesCategoriesRoute
   '/_authenticated/dashboard/medicines/manufacturers': typeof AuthenticatedDashboardMedicinesManufacturersRoute
@@ -258,7 +249,6 @@ export interface FileRouteTypes {
     | '/dashboard/reports'
     | '/dashboard/sales'
     | '/dashboard/users'
-    | '/dashboard/'
     | '/dashboard/batches/$batchId'
     | '/dashboard/medicines/categories'
     | '/dashboard/medicines/manufacturers'
@@ -269,6 +259,7 @@ export interface FileRouteTypes {
     | '/forgot-password'
     | '/login'
     | '/signup'
+    | '/dashboard'
     | '/dashboard/admin'
     | '/dashboard/ai'
     | '/dashboard/audit'
@@ -281,7 +272,6 @@ export interface FileRouteTypes {
     | '/dashboard/reports'
     | '/dashboard/sales'
     | '/dashboard/users'
-    | '/dashboard'
     | '/dashboard/batches/$batchId'
     | '/dashboard/medicines/categories'
     | '/dashboard/medicines/manufacturers'
@@ -306,7 +296,6 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/reports'
     | '/_authenticated/dashboard/sales'
     | '/_authenticated/dashboard/users'
-    | '/_authenticated/dashboard/'
     | '/_authenticated/dashboard/batches/$batchId'
     | '/_authenticated/dashboard/medicines/categories'
     | '/_authenticated/dashboard/medicines/manufacturers'
@@ -364,13 +353,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/dashboard'
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
-    }
-    '/_authenticated/dashboard/': {
-      id: '/_authenticated/dashboard/'
-      path: '/'
-      fullPath: '/dashboard/'
-      preLoaderRoute: typeof AuthenticatedDashboardIndexRouteImport
-      parentRoute: typeof AuthenticatedDashboardRoute
     }
     '/_authenticated/dashboard/admin': {
       id: '/_authenticated/dashboard/admin'
@@ -548,7 +530,6 @@ interface AuthenticatedDashboardRouteChildren {
   AuthenticatedDashboardReportsRoute: typeof AuthenticatedDashboardReportsRoute
   AuthenticatedDashboardSalesRoute: typeof AuthenticatedDashboardSalesRouteWithChildren
   AuthenticatedDashboardUsersRoute: typeof AuthenticatedDashboardUsersRoute
-  AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
 }
 
 const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
@@ -569,7 +550,6 @@ const AuthenticatedDashboardRouteChildren: AuthenticatedDashboardRouteChildren =
     AuthenticatedDashboardSalesRoute:
       AuthenticatedDashboardSalesRouteWithChildren,
     AuthenticatedDashboardUsersRoute: AuthenticatedDashboardUsersRoute,
-    AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   }
 
 const AuthenticatedDashboardRouteWithChildren =

@@ -3034,7 +3034,7 @@ export function ExpiryOverview({
           <div className="hidden md:block">
             <div
               onScroll={(e) => setTableScrolled(e.currentTarget.scrollTop > 0)}
-              className="max-h-[65vh] overflow-auto rounded-xl border border-border"
+              className="overflow-x-auto rounded-xl border border-border"
             >
               <table className="w-full text-left text-xs">
                 <thead
