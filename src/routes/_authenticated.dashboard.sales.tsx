@@ -7,7 +7,7 @@ import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { usePermission } from "@/hooks/usePermission";
 import { applyStockMovement, pickBatchesFEFO } from "@/lib/stock";
-import { daysUntil, getAlternatives } from "@/lib/expiry";
+import { daysUntil } from "@/lib/expiry";
 import { PageHeader } from "@/components/pharmacy/PageHeader";
 import { EmptyState } from "@/components/pharmacy/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -32,7 +32,7 @@ import { format } from "date-fns";
 import type { Batch, Sale, SaleItem, PaymentMode } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/dashboard/sales")({
-  head: () => ({ meta: [{ title: "Sales & POS · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "PharmacyOS · Sales & POS" }] }),
   component: SalesPage,
 });
 
@@ -51,7 +51,6 @@ function SalesPage() {
   const sales = useDb((d) => d.sales);
   const currency = useDb((d) => d.settings.currency);
   const nearExpiryDays = useDb((d) => d.settings.nearExpiryDays);
-  const autoSwap = useDb((d) => d.settings.autoSwap ?? false);
 
   const [tab, setTab] = useState("pos");
   const [query, setQuery] = useState("");
@@ -104,19 +103,6 @@ function SalesPage() {
     return picks.length ? batches.find((b) => b.id === picks[0].batchId) : undefined;
   };
 
-  const swapFor = (medicineId: string) => {
-    const expired = batches.find(
-      (b) =>
-        b.medicineId === medicineId &&
-        b.currentStock > 0 &&
-        b.status !== "disposed" &&
-        daysUntil(b.expiryDate) <= 0,
-    );
-    if (!expired) return null;
-    const alts = getAlternatives(expired, batches, medicines);
-    const suggested = alts.find((a) => a.batch.suggestAtPos) ?? (autoSwap ? alts[0] : null);
-    return suggested ?? null;
-  };
 
   const addToCart = (medicineId: string) => {
     const flagged = fefoBatchOf(medicineId)?.discountPct ?? 0;
@@ -328,23 +314,29 @@ function SalesPage() {
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title="Sales & POS"
-        description="Fast counter billing with automatic FEFO batch selection."
-      />
+      <PageHeader title="Sales & POS" />
 
       <Tabs value={tab} onValueChange={setTab}>
-        <TabsList>
-          <TabsTrigger value="pos" disabled={!canCreate}>
+        <TabsList className="bg-muted p-1">
+          <TabsTrigger
+            value="pos"
+            disabled={!canCreate}
+            className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-bold shadow-sm transition-all"
+          >
             Point of sale
           </TabsTrigger>
-          <TabsTrigger value="history">Sales history</TabsTrigger>
+          <TabsTrigger
+            value="history"
+            className="data-[state=active]:bg-emerald-600 data-[state=active]:text-white font-bold shadow-sm transition-all"
+          >
+            Sales history
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="pos" className="mt-4">
           <div className="grid gap-4 lg:grid-cols-[1fr_360px]">
             <div className="space-y-4">
-              <div className="rounded-lg border border-border bg-card p-4">
+              <div className="rounded-lg bg-card p-4">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -355,73 +347,31 @@ function SalesPage() {
                     autoFocus
                   />
                 </div>
-                <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <div className="mt-3 grid gap-1.5 sm:grid-cols-2">
                   {results.map((m) => {
                     const stock = stockByMed.get(m.id) ?? 0;
                     const price = priceFor(m.id);
                     const pick = fefoBatchOf(m.id);
                     const daysLeft = pick ? daysUntil(pick.expiryDate) : null;
-                    const swap = swapFor(m.id);
                     const near = daysLeft !== null && daysLeft <= nearExpiryDays && daysLeft >= 0;
                     return (
                       <div
                         key={m.id}
-                        className="group overflow-hidden rounded-md border border-border bg-background transition hover:border-primary"
+                        onClick={() => addToCart(m.id)}
+                        disabled={stock <= 0}
+                        className="group flex items-center justify-between gap-3 rounded-lg border border-transparent bg-muted/20 px-3.5 py-2.5 text-left transition-all duration-150 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 hover:border-emerald-500/50 hover:shadow-xs focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <button
-                          onClick={() => addToCart(m.id)}
-                          disabled={stock <= 0}
-                          className="flex w-full items-center justify-between gap-3 p-3 text-left transition group-hover:bg-accent/40 disabled:cursor-not-allowed disabled:opacity-50"
-                        >
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium">{m.name}</p>
-                            <p className="truncate text-xs text-muted-foreground">
-                              {m.brandName ?? m.genericName ?? "—"} · Stock {stock}
-                            </p>
-                            {pick && (near || pick.fefo) && (
-                              <p className="mt-1 flex flex-wrap items-center gap-1">
-                                {pick.fefo && (
-                                  <span className="rounded bg-warning/15 px-1 py-0.5 text-[10px] font-medium text-warning-foreground">
-                                    FEFO first
-                                  </span>
-                                )}
-                                {near && (
-                                  <span
-                                    className={`rounded px-1 py-0.5 text-[10px] font-medium ${
-                                      daysLeft! <= 3
-                                        ? "bg-destructive/10 text-destructive"
-                                        : "bg-warning/15 text-warning-foreground"
-                                    }`}
-                                  >
-                                    Batch expires in {daysLeft}d
-                                  </span>
-                                )}
-                              </p>
-                            )}
-                          </div>
-                          <div className="text-right">
-                            <p className="font-mono text-sm font-semibold">
-                              {currency}
-                              {price.toFixed(2)}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground">GST {m.gstRate}%</p>
-                          </div>
-                        </button>
-                        {swap && (
-                          <button
-                            onClick={() => addToCart(swap.medicine?.id ?? "")}
-                            className="flex w-full items-center justify-between border-t border-amber-500/20 bg-amber-500/5 px-3 py-1.5 text-left text-xs hover:bg-amber-500/10"
-                          >
-                            <span className="text-warning-foreground">
-                              Out of fresh stock — suggest swap to{" "}
-                              <span className="font-medium">{swap.medicine?.name}</span>
-                            </span>
-                            <span className="shrink-0 font-medium text-warning-foreground">
-                              Add →
-                            </span>
-                          </button>
-                        )}
-                      </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-bold text-foreground group-hover:text-emerald-950 dark:group-hover:text-emerald-200">{m.name}</p>
+                          <p className="truncate text-xs font-semibold text-muted-foreground group-hover:text-emerald-800 dark:group-hover:text-emerald-300">
+                            {m.brandName ?? m.genericName ?? "—"} · Stock {stock}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-mono text-sm font-extrabold text-foreground group-hover:text-emerald-950 dark:group-hover:text-emerald-200">{currency}{price.toFixed(2)}</p>
+                          <p className="text-[10px] font-bold text-muted-foreground group-hover:text-emerald-800 dark:group-hover:text-emerald-300">GST {m.gstRate}%</p>
+                        </div>
+                        </div>
                     );
                   })}
                   {!results.length && (
@@ -532,12 +482,12 @@ function SalesPage() {
                                     prev.map((l) =>
                                       l.medicineId === line.medicineId
                                         ? {
-                                            ...l,
-                                            discountPct: Math.min(
-                                              100,
-                                              Math.max(0, Number(e.target.value) || 0),
-                                            ),
-                                          }
+                                          ...l,
+                                          discountPct: Math.min(
+                                            100,
+                                            Math.max(0, Number(e.target.value) || 0),
+                                          ),
+                                        }
                                         : l,
                                     ),
                                   )
@@ -578,42 +528,45 @@ function SalesPage() {
             </div>
 
             <aside className="sticky top-4 h-fit space-y-3 rounded-lg border border-border bg-card p-4">
-              <h3 className="text-sm font-semibold">Order summary</h3>
+              <h3 className="text-sm font-semibold flex items-center gap-2">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs" />
+                <span>Order summary</span>
+              </h3>
               <dl className="space-y-1.5 text-sm">
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Subtotal</dt>
-                  <dd className="font-mono">
-                    {currency}
-                    {totals.subtotal.toFixed(2)}
-                  </dd>
+                <div className="flex justify-between items-center">
+                  <dt className="text-muted-foreground flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-amber-500" />
+                    <span>Subtotal</span>
+                  </dt>
+                  <dd className="font-mono">{currency}{totals.subtotal.toFixed(2)}</dd>
                 </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Discount</dt>
-                  <dd className="font-mono text-destructive">
-                    -{currency}
-                    {totals.discountTotal.toFixed(2)}
-                  </dd>
+                <div className="flex justify-between items-center">
+                  <dt className="text-muted-foreground flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-rose-500" />
+                    <span>Discount</span>
+                  </dt>
+                  <dd className="font-mono text-destructive">-{currency}{totals.discountTotal.toFixed(2)}</dd>
                 </div>
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">GST</dt>
-                  <dd className="font-mono">
-                    {currency}
-                    {totals.gstTotal.toFixed(2)}
-                  </dd>
+                <div className="flex justify-between items-center">
+                  <dt className="text-muted-foreground flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-indigo-500" />
+                    <span>GST</span>
+                  </dt>
+                  <dd className="font-mono">{currency}{totals.gstTotal.toFixed(2)}</dd>
                 </div>
-                <div className="flex justify-between text-xs">
-                  <dt className="text-muted-foreground">Round off</dt>
-                  <dd className="font-mono">
-                    {currency}
-                    {totals.roundOff.toFixed(2)}
-                  </dd>
+                <div className="flex justify-between items-center text-xs">
+                  <dt className="text-muted-foreground flex items-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-slate-400" />
+                    <span>Round off</span>
+                  </dt>
+                  <dd className="font-mono">{currency}{totals.roundOff.toFixed(2)}</dd>
                 </div>
-                <div className="mt-2 flex justify-between border-t border-border pt-2 text-base font-semibold">
-                  <dt>Grand total</dt>
-                  <dd className="font-mono">
-                    {currency}
-                    {totals.grandTotal.toFixed(2)}
-                  </dd>
+                <div className="mt-2 flex justify-between items-center border-t border-border pt-2 text-base font-semibold">
+                  <dt className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                    <span>Grand total</span>
+                  </dt>
+                  <dd className="font-mono">{currency}{totals.grandTotal.toFixed(2)}</dd>
                 </div>
               </dl>
               <Button
@@ -635,9 +588,12 @@ function SalesPage() {
 
         <TabsContent value="history" className="mt-4">
           <div className="mb-4 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-lg border border-border bg-card p-3">
-              <p className="text-xs text-muted-foreground">Today's revenue</p>
-              <p className="mt-1 font-mono text-xl font-semibold">
+            <div className="rounded-lg border border-border bg-card p-3 shadow-xs">
+              <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-xs" />
+                <span>Today's revenue</span>
+              </p>
+              <p className="mt-1 font-mono text-xl font-bold text-foreground">
                 {currency}
                 {todaysSales
                   .filter((s) => s.status === "completed")
@@ -645,13 +601,19 @@ function SalesPage() {
                   .toLocaleString()}
               </p>
             </div>
-            <div className="rounded-lg border border-border bg-card p-3">
-              <p className="text-xs text-muted-foreground">Today's invoices</p>
-              <p className="mt-1 font-mono text-xl font-semibold">{todaysSales.length}</p>
+            <div className="rounded-lg border border-border bg-card p-3 shadow-xs">
+              <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-xs" />
+                <span>Today's invoices</span>
+              </p>
+              <p className="mt-1 font-mono text-xl font-bold text-foreground">{todaysSales.length}</p>
             </div>
-            <div className="rounded-lg border border-border bg-card p-3">
-              <p className="text-xs text-muted-foreground">Total sales</p>
-              <p className="mt-1 font-mono text-xl font-semibold">{sales.length}</p>
+            <div className="rounded-lg border border-border bg-card p-3 shadow-xs">
+              <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
+                <span className="w-2.5 h-2.5 rounded-full bg-purple-500 shadow-xs" />
+                <span>Total sales</span>
+              </p>
+              <p className="mt-1 font-mono text-xl font-bold text-foreground">{sales.length}</p>
             </div>
           </div>
 
@@ -722,80 +684,106 @@ function SalesPage() {
         </TabsContent>
       </Tabs>
 
+      {/* User-Friendly Payment & Checkout Dialog */}
       <Dialog open={checkoutOpen} onOpenChange={setCheckoutOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Checkout</DialogTitle>
+        <DialogContent className="max-w-lg sm:max-w-xl p-6">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-xl sm:text-2xl font-bold flex items-center gap-2">
+              <span>Complete Payment & Sale</span>
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label htmlFor="cust-name">Customer name</Label>
+
+          <div className="space-y-5 py-2">
+            {/* Customer Details */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="cust-name" className="text-sm font-semibold">
+                  Customer Name
+                </Label>
                 <Input
                   id="cust-name"
                   value={customerName}
                   onChange={(e) => setCustomerName(e.target.value)}
                   placeholder="Walk-in"
+                  className="h-10 text-sm"
                 />
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="cust-phone">Phone</Label>
+              <div className="space-y-2">
+                <Label htmlFor="cust-phone" className="text-sm font-semibold">
+                  Mobile Number
+                </Label>
                 <Input
                   id="cust-phone"
                   value={customerPhone}
                   onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="Phone number"
+                  className="h-10 text-sm"
                 />
               </div>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="space-y-1.5">
-                <Label>Payment mode</Label>
+
+            {/* Payment Method & Amount Given */}
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label className="text-sm font-semibold">Payment Method</Label>
                 <Select value={payment} onValueChange={(v) => setPayment(v as PaymentMode)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-10 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="cash">Cash</SelectItem>
-                    <SelectItem value="card">Card</SelectItem>
-                    <SelectItem value="upi">UPI</SelectItem>
+                    <SelectItem value="cash">💵 Cash</SelectItem>
+                    <SelectItem value="upi">📱 UPI</SelectItem>
+                    <SelectItem value="card">💳 Card</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-1.5">
-                <Label htmlFor="tender">Tender</Label>
+
+              <div className="space-y-2">
+                <Label htmlFor="tender" className="text-sm font-semibold">
+                  {payment === "cash" ? "Cash Received" : "Amount Received"}
+                </Label>
                 <Input
                   id="tender"
                   type="number"
                   value={tender}
                   onChange={(e) => setTender(e.target.value)}
                   placeholder={String(totals.grandTotal)}
+                  className="h-10 text-sm font-mono"
                 />
               </div>
             </div>
-            <div className="rounded-md border border-border bg-muted/30 p-3 text-sm">
-              <div className="flex justify-between">
-                <span className="text-muted-foreground">Grand total</span>
-                <span className="font-mono font-semibold">
-                  {currency}
-                  {totals.grandTotal.toFixed(2)}
+
+            {/* Total Amount & Balance Return Box */}
+            <div className="rounded-xl border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/30 p-4 space-y-3">
+              <div className="flex justify-between items-center text-base">
+                <span className="font-bold text-foreground">Total Bill Amount:</span>
+                <span className="font-mono text-xl sm:text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">
+                  {currency}{totals.grandTotal.toFixed(2)}
                 </span>
               </div>
-              {payment === "cash" && tender && (
-                <div className="mt-1 flex justify-between">
-                  <span className="text-muted-foreground">Change</span>
-                  <span className="font-mono font-semibold">
-                    {currency}
-                    {Math.max(0, Number(tender) - totals.grandTotal).toFixed(2)}
+
+              {payment === "cash" && (
+                <div className="flex justify-between items-center text-sm border-t border-emerald-500/20 pt-2.5">
+                  <span className="text-muted-foreground font-semibold">Return Change to Customer:</span>
+                  <span className="font-mono font-bold text-base sm:text-lg text-foreground">
+                    {currency}{Math.max(0, Number(tender || totals.grandTotal) - totals.grandTotal).toFixed(2)}
                   </span>
                 </div>
               )}
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setCheckoutOpen(false)}>
+
+          <DialogFooter className="gap-3 pt-2">
+            <Button variant="outline" className="h-10 text-sm font-medium" onClick={() => setCheckoutOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={confirmCheckout}>Confirm sale</Button>
+            <Button
+              onClick={confirmCheckout}
+              className="h-10 bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-5 text-sm flex items-center gap-2 shadow-sm"
+            >
+              <Receipt className="h-4 w-4" />
+              <span>Complete Sale & Print Bill</span>
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -820,9 +808,8 @@ function CartBatchInfo({
   const near = days >= 0 && days <= 60;
   return (
     <p
-      className={`mt-0.5 flex items-center gap-1 text-[10px] ${
-        near ? "text-warning-foreground" : "text-muted-foreground"
-      }`}
+      className={`mt-0.5 flex items-center gap-1 text-[10px] ${near ? "text-warning-foreground" : "text-muted-foreground"
+        }`}
     >
       Billing batch <span className="font-mono">{b.batchNumber}</span> · expires{" "}
       {days <= 0 ? "today" : `in ${days}d`}
