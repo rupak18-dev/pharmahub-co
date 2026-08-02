@@ -1,5 +1,5 @@
 import { Outlet, createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/pharmacy/AppSidebar";
 import { UserMenu } from "@/components/pharmacy/UserMenu";
@@ -40,6 +40,13 @@ function AuthenticatedLayout() {
   const routerState = useRouterState();
   const pathname = routerState.location.pathname;
   const searchParams = routerState.location.search as Record<string, string>;
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTo(0, 0);
+    }
+  }, [pathname]);
 
   const [searchText, setSearchText] = useState(searchParams.q || "");
   const isMedicinesPage = pathname.startsWith("/dashboard/medicines");
@@ -50,7 +57,7 @@ function AuthenticatedLayout() {
 
   const handleSearchSubmit = (val: string) => {
     navigate({
-      to: "/dashboard/medicines/catalog",
+      to: "/dashboard/medicines",
       search: (prev: any) => ({
         ...prev,
         q: val || undefined,
@@ -115,10 +122,10 @@ function AuthenticatedLayout() {
 
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex h-screen w-full bg-background overflow-hidden">
         <AppSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-16 items-center gap-4 border-b border-border bg-background px-4 sm:px-6 shadow-sm">
+        <div ref={scrollRef} className="flex min-w-0 flex-1 flex-col h-screen overflow-y-auto">
+          <header className="sticky top-0 z-30 shrink-0 flex h-16 items-center gap-4 border-b border-border bg-background px-4 sm:px-6 shadow-sm">
             <SidebarTrigger />
             <BrandMark size="sm" showText={false} className="hidden sm:block" />
             <div className="sm:hidden">
@@ -129,7 +136,7 @@ function AuthenticatedLayout() {
               variant="ghost" 
               size="icon" 
               className="lg:hidden h-9 w-9 text-muted-foreground hover:bg-muted/50 rounded-full ml-1"
-              onClick={() => navigate({ to: "/dashboard/medicines/catalog", search: { focusSearch: "true" } })}
+              onClick={() => navigate({ to: "/dashboard/medicines", search: { focusSearch: "true" } })}
               title="Search Medicines"
             >
               <Search className="h-5 w-5" />
@@ -146,7 +153,7 @@ function AuthenticatedLayout() {
                   value={searchText}
                   onChange={(e) => {
                     setSearchText(e.target.value);
-                    if (isMedicinesPage && pathname === "/dashboard/medicines/catalog") {
+                    if (isMedicinesPage && pathname === "/dashboard/medicines") {
                       handleSearchSubmit(e.target.value);
                     }
                   }}

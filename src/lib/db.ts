@@ -6,13 +6,14 @@ import type {
   AuditTimelineEvent,
   Batch,
   DB,
+  Profile,
   StockAdjustment,
   VarianceItem,
   VarianceReason,
 } from "./types";
 import { DEFAULT_PERMISSIONS } from "./permissions";
 
-const STORAGE_KEY = "pharmacyos_db_v2";
+const STORAGE_KEY = "PharmaHub_db_v2";
 
 const uid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -31,16 +32,16 @@ function seed(): DB {
   const owner = {
     id: uid(),
     name: "Alex Morgan",
-    email: "owner@pharmacyos.demo",
+    email: "owner@PharmaHub.demo",
     role: "Owner" as const,
     active: true,
-    orgName: "PharmacyOS Demo",
+    orgName: "PharmaHub Demo",
     createdAt: now,
   };
   const pharm = {
     id: uid(),
     name: "Priya Shah",
-    email: "pharmacist@pharmacyos.demo",
+    email: "pharmacist@PharmaHub.demo",
     role: "Pharmacist" as const,
     active: true,
     createdAt: now,
@@ -48,7 +49,7 @@ function seed(): DB {
   const cashier = {
     id: uid(),
     name: "Sam Chen",
-    email: "cashier@pharmacyos.demo",
+    email: "cashier@PharmaHub.demo",
     role: "Cashier" as const,
     active: true,
     createdAt: now,
@@ -56,7 +57,7 @@ function seed(): DB {
   const inv = {
     id: uid(),
     name: "Diego Ruiz",
-    email: "inventory@pharmacyos.demo",
+    email: "inventory@PharmaHub.demo",
     role: "Inventory Manager" as const,
     active: true,
     createdAt: now,
@@ -276,63 +277,34 @@ function seed(): DB {
       ptr: 12.0,
       rack: "A-15",
     },
-    {
-      name: "Paracetamol 650mg",
-      generic: "Paracetamol",
-      brand: "Dolo 650",
-      prefix: "DL",
-      strength: "650mg",
-      dosage: "Tablet",
-      cat: catAnalg.id,
-      mfr: mfr5.id,
-      hsn: "3004",
-      gst: 12,
-      storage: "Store below 25°C",
-      reorder: 60,
-    },
-    {
-      name: "Amoxicillin + Clavulanate 625mg",
-      generic: "Amoxicillin + Clavulanic Acid",
-      brand: "Augmentin",
-      prefix: "AG",
-      strength: "625mg",
-      dosage: "Tablet",
-      cat: catAntib.id,
-      mfr: mfr3.id,
-      hsn: "3004",
-      gst: 12,
-      storage: "Store below 25°C",
-      reorder: 40,
-    },
-    {
-      name: "Metformin 1g SR",
-      generic: "Metformin",
-      brand: "Glycomet SR",
-      prefix: "GS",
-      strength: "1g",
-      dosage: "SR Tablet",
-      cat: catDiabetic.id,
-      mfr: mfr4.id,
+  ];
+
+  for (let i = 0; i < 43; i++) {
+    meds.push({
+      name: `Test Medicine ${i + 1} 500mg`,
+      generic: `Generic Alpha ${i + 1}`,
+      brand: `PharmaBrand ${i % 5}`,
+      cat: [catAnalg.id, catAntib.id, catCardio.id, catVit.id][i % 4],
+      mfr: [mfr1.id, mfr2.id, mfr3.id][i % 3],
       hsn: "3004",
       gst: 12,
       storage: "Store below 25°C",
       reorder: 50,
-    },
-    {
-      name: "Telmisartan 40mg",
-      generic: "Telmisartan",
-      brand: "Telma",
-      prefix: "TL",
-      strength: "40mg",
-      dosage: "Tablet",
-      cat: catCardio.id,
-      mfr: mfr6.id,
-      hsn: "3004",
-      gst: 12,
-      storage: "Store below 25°C",
-      reorder: 45,
-    },
-  ];
+      salt: `Active Ingredient ${i + 1}`,
+      strength: "500 mg",
+      dosageForm: i % 3 === 0 ? "Syrup" : "Tablet",
+      packSize: "10 units",
+      gtin: `08901234567${100 + i}`,
+      drugSchedule: "Schedule H",
+      dosageInfo: "Standard adult dosage",
+      usageInstructions: "Take with water after meals",
+      contraindications: "None reported",
+      sideEffects: "Mild nausea",
+      maxStock: 500,
+      ptr: 15.0 + (i % 30),
+      rack: `R-${i % 10}`,
+    });
+  }
 
   const medicines = meds.map((m) => ({
     id: uid(),
@@ -895,6 +867,53 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
+function mergeProfiles(
+  seeded: Profile[],
+  stored: Profile[] | undefined,
+): Profile[] {
+  if (!stored || stored.length === 0) return seeded;
+  const existing = new Set(stored.map((p) => p.email.toLowerCase()));
+  const missing = seeded.filter((p) => !existing.has(p.email.toLowerCase()));
+  return [...stored, ...missing];
+}
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
+const MOJIBAKE_FIXES: ReadonlyArray<[string, string]> = [
+  ["\u00E2\u20AC\u00A2", "\u2022"],
+  ["\u00E2\u2020\u0090", "\u2190"],
+  ["\u00E2\u0153\u201C", "\u2713"],
+  ["\u00E2\u20AC\u201D", "\u2014"],
+  ["\u00E2\u201A\u00B9", "\u20B9"],
+  ["\u00C2\u00B7", "\u00B7"],
+  ["\u00E2\u2020\u2019", "\u2192"],
+  ["\u00E2\u20AC\u00A6", "\u2026"],
+  ["\u00C2\u00B0", "\u00B0"],
+  ["\u00C3\u2014", "\u00D7"],
+  ["\u00C2\u00A9", "\u00A9"],
+];
+
+function fixMojibake(value: unknown): unknown {
+  if (typeof value === "string") {
+    let out = value;
+    for (const [from, to] of MOJIBAKE_FIXES) {
+      if (out.includes(from)) out = out.split(from).join(to);
+    }
+    return out;
+  }
+  if (Array.isArray(value)) return value.map(fixMojibake);
+  if (value !== null && typeof value === "object") {
+    const next: Record<string, unknown> = {};
+    for (const key of Object.keys(value)) {
+      next[key] = fixMojibake((value as Record<string, unknown>)[key]);
+    }
+    return next;
+  }
+  return value;
+}
+
 function load(): DB {
   if (cache) return cache;
   if (!isBrowser()) {
@@ -904,31 +923,42 @@ function load(): DB {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const loaded = JSON.parse(raw) as Partial<DB>;
+      const parsed = JSON.parse(raw) as Partial<DB>;
+      const hadMojibake =
+        JSON.stringify(parsed) !== JSON.stringify(fixMojibake(parsed));
+      const loaded = fixMojibake(parsed) as Partial<DB>;
       // Migrate missing fields from older versions
       cache = {
         ...seed(),
         ...loaded,
-        inventoryStock: loaded.inventoryStock ?? [],
-        inventoryLedger: loaded.inventoryLedger ?? [],
-        stockMovements: loaded.stockMovements ?? [],
-        sales: loaded.sales ?? [],
-        purchaseOrders: loaded.purchaseOrders ?? [],
-        grns: loaded.grns ?? [],
-        writeOffs: loaded.writeOffs ?? [],
-        creditNotes: loaded.creditNotes ?? [],
-        transfers: loaded.transfers ?? [],
-        reportSchedules: loaded.reportSchedules ?? [],
-        audits: loaded.audits ?? seed().audits,
-        auditCounts: loaded.auditCounts ?? seed().auditCounts,
-        variances: loaded.variances ?? seed().variances,
-        adjustments: loaded.adjustments ?? seed().adjustments,
-        notificationsRead: loaded.notificationsRead ?? [],
+        profiles: mergeProfiles(seed().profiles, loaded.profiles),
+        categories: asArray(loaded.categories),
+        manufacturers: asArray(loaded.manufacturers),
+        suppliers: asArray(loaded.suppliers),
+        medicines: asArray(loaded.medicines),
+        batches: asArray(loaded.batches),
+        activityLogs: asArray(loaded.activityLogs),
+        inventoryStock: asArray(loaded.inventoryStock),
+        inventoryLedger: asArray(loaded.inventoryLedger),
+        stockMovements: asArray(loaded.stockMovements),
+        sales: asArray(loaded.sales),
+        purchaseOrders: asArray(loaded.purchaseOrders),
+        grns: asArray(loaded.grns),
+        writeOffs: asArray(loaded.writeOffs),
+        creditNotes: asArray(loaded.creditNotes),
+        transfers: asArray(loaded.transfers),
+        reportSchedules: asArray(loaded.reportSchedules),
+        audits: asArray(loaded.audits),
+        auditCounts: asArray(loaded.auditCounts),
+        variances: asArray(loaded.variances),
+        adjustments: asArray(loaded.adjustments),
+        notificationsRead: asArray(loaded.notificationsRead),
         settings: {
           ...seed().settings,
           ...(loaded.settings ?? {}),
         },
       } as DB;
+      if (hadMojibake) save(cache);
       return cache;
     }
   } catch {

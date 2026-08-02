@@ -28,12 +28,12 @@ export function UserMenu() {
   const { user, signOut, switchRole } = useAuth();
   const navigate = useNavigate();
   const [activeBranch, setActiveBranch] = useState(() => {
-    return localStorage.getItem("pharmacyos_branch") || "main";
+    return localStorage.getItem("PharmaHub_branch") || "main";
   });
 
   const handleBranchChange = (branchId: string) => {
     setActiveBranch(branchId);
-    localStorage.setItem("pharmacyos_branch", branchId);
+    localStorage.setItem("PharmaHub_branch", branchId);
     const branchName = BRANCHES.find(b => b.id === branchId)?.name;
     toast.success(`Switched branch to ${branchName}`);
   };

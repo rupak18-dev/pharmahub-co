@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/dashboard/admin")({
-  head: () => ({ meta: [{ title: "System Admin · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "System Admin · PharmaHub" }] }),
   component: AdminPage,
 });
 
@@ -80,7 +80,7 @@ function AdminPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `pharmacyos-backup-${Date.now()}.json`;
+    a.download = `PharmaHub-backup-${Date.now()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -214,7 +214,7 @@ function AdminPage() {
 
         <TabsContent value="about" className="mt-4">
           <div className="max-w-lg space-y-2 rounded-lg border border-border bg-card p-6 text-sm">
-            <p><span className="text-muted-foreground">Product:</span> PharmacyOS</p>
+            <p><span className="text-muted-foreground">Product:</span> PharmaHub</p>
             <p><span className="text-muted-foreground">Version:</span> 1.0.0 (frontend preview)</p>
             <p><span className="text-muted-foreground">Data store:</span> local browser storage (MongoDB backend coming)</p>
             <p><span className="text-muted-foreground">Signed in as:</span> {user?.name} · {user?.role}</p>

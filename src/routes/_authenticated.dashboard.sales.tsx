@@ -32,7 +32,7 @@ import { format } from "date-fns";
 import type { Batch, Sale, SaleItem, PaymentMode } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/dashboard/sales")({
-  head: () => ({ meta: [{ title: "PharmacyOS · Sales & POS" }] }),
+  head: () => ({ meta: [{ title: "Sales & POS · PharmaHub" }] }),
   component: SalesPage,
 });
 
@@ -362,8 +362,8 @@ function SalesPage() {
                         className="group flex items-center justify-between gap-3 rounded-lg border border-transparent bg-muted/20 px-3.5 py-2.5 text-left transition-all duration-150 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 hover:border-emerald-500/50 hover:shadow-xs focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-bold text-foreground group-hover:text-emerald-950 dark:group-hover:text-emerald-200">{m.name}</p>
-                          <p className="truncate text-xs font-semibold text-muted-foreground group-hover:text-emerald-800 dark:group-hover:text-emerald-300">
+                          <p className="truncate text-sm font-medium">{m.name}</p>
+                          <p className="truncate text-xs text-muted-foreground">
                             {m.brandName ?? m.genericName ?? "—"} · Stock {stock}
                           </p>
                         </div>
@@ -657,9 +657,7 @@ function SalesPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {format(new Date(s.createdAt), "MMM d, HH:mm")}
-                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{format(new Date(s.createdAt), "MMM d, HH:mm")}</td>
                       <td className="px-4 py-3">{s.customerName ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{s.createdByName}</td>
                       <td className="px-4 py-3 capitalize">{s.paymentMode}</td>

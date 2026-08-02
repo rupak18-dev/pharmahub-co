@@ -12,7 +12,14 @@ import { useEffect } from "react";
 import { db } from "@/lib/db";
 
 export const Route = createFileRoute("/login")({
-  head: () => ({ meta: [{ title: "Sign in · PharmacyOS" }] }),
+  head: () => ({
+    meta: [
+      { title: "Sign in · PharmaHub" },
+      { name: "description", content: "Sign in to your PharmaHub dashboard to manage your pharmacy." },
+      { property: "og:title", content: "Sign in · PharmaHub" },
+      { property: "og:description", content: "Sign in to your PharmaHub dashboard to manage your pharmacy." },
+    ],
+  }),
   component: LoginPage,
 });
 
@@ -50,7 +57,7 @@ function LoginPage() {
       description="Welcome back. Enter your credentials to continue."
       footer={
         <span className="text-muted-foreground">
-          New to PharmacyOS?{" "}
+          New to PharmaHub?{" "}
           <Link to="/signup" className="font-medium text-primary hover:underline">
             Create an account
           </Link>
@@ -95,10 +102,10 @@ function LoginPage() {
         <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
           <div className="font-semibold text-foreground">Demo accounts</div>
           <div className="mt-1 space-y-0.5 font-mono">
-            <div>owner@pharmacyos.demo</div>
-            <div>pharmacist@pharmacyos.demo</div>
-            <div>cashier@pharmacyos.demo</div>
-            <div>inventory@pharmacyos.demo</div>
+            <div>owner@PharmaHub.demo</div>
+            <div>pharmacist@PharmaHub.demo</div>
+            <div>cashier@PharmaHub.demo</div>
+            <div>inventory@PharmaHub.demo</div>
           </div>
           <div className="mt-1">Any password works in demo mode.</div>
           <Button 
@@ -108,6 +115,11 @@ function LoginPage() {
             className="w-full mt-4 border-destructive/20 text-destructive hover:bg-destructive/10" 
             onClick={() => {
               db.reset();
+              try {
+                localStorage.removeItem("PharmaHub_session_v1");
+              } catch {
+                // ignore
+              }
               toast.success("Database reset to defaults. Please try logging in again.");
               setTimeout(() => window.location.reload(), 1000);
             }}

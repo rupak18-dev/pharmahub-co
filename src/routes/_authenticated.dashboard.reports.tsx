@@ -11,7 +11,7 @@ import { downloadCsv } from "@/lib/csv";
 import { subDays } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/reports")({
-  head: () => ({ meta: [{ title: "Reports · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Reports · PharmaHub" }] }),
   component: ReportsPage,
 });
 
@@ -116,13 +116,9 @@ function ReportsPage() {
     if (t > prev) lastOut.set(m.batchId, t);
   });
   const deadStock = data.batches
-    .map((b) => {
-      const stock = stockMap.get(b.id) ?? 0;
-      return { b, stock };
-    })
-    .filter(({ stock }) => stock > 0)
-    .filter(({ b }) => nowT - (lastOut.get(b.id) ?? new Date(b.createdAt).getTime()) > deadMs)
-    .map(({ b, stock }) => ({
+    .filter((b) => b.currentStock > 0 && b.status !== "disposed")
+    .filter((b) => nowT - (lastOut.get(b.id) ?? new Date(b.createdAt).getTime()) > deadMs)
+    .map((b) => ({
       medicine: medMap.get(b.medicineId) ?? "—",
       batch: b.batchNumber,
       stock,

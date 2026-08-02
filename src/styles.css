@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+﻿@import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
 
@@ -109,14 +109,13 @@
   --chart-4: oklch(0.75 0.15 75);
   --chart-5: oklch(0.58 0.22 25);
 
-  --sidebar: oklch(0.985 0.005 200);
+  --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.25 0.02 220);
-  --sidebar-primary: #007a5a;
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: #e6f4f1;
-  --sidebar-accent-foreground: #0b3d31;
-  --sidebar-border: oklch(0.92 0.008 220);
-  --sidebar-ring: #007a5a;
+  --sidebar-primary: oklch(0.48 0.08 180);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.96 0.01 200);
+  --sidebar-accent-foreground: oklch(0.25 0.03 220);
+  --sidebar-border: oklch(0.95 0.005 200);
 }
 
 .dark {

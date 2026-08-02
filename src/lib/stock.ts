@@ -154,10 +154,10 @@ export function applyStockMovement(input: ApplyMovement | ApplyMovementSimple) {
       id: db.uid(),
       userId: input.userId,
       userName: input.userName,
-      action: `Stock ${ledgerType} · ${Math.abs(signed)} units`,
-      entityType: "inventory_stock",
-      entityId: stock.id,
-      details: { location: stock.locationType, delta: signed },
+      action: `Stock ${input.movementType} · ${Math.abs(delta)} units`,
+      entityType: "batch",
+      entityId: input.batchId,
+      details: { reason: input.reason, delta },
       createdAt: now,
     });
   });

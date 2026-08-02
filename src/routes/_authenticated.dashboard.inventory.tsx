@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/dashboard/inventory")({
-  head: () => ({ meta: [{ title: "Inventory · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Inventory · PharmaHub" }] }),
   component: InventoryPage,
 });
 

@@ -15,7 +15,7 @@ const safeFormat = (dateStr: string | undefined | null, fmt: string) => {
 };
 
 export const Route = createFileRoute("/_authenticated/dashboard/batches/$batchId")({
-  head: () => ({ meta: [{ title: "Batch detail · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Batch detail · PharmaHub" }] }),
   component: BatchDetailPage,
 });
 
@@ -65,9 +65,9 @@ function BatchDetailPage() {
           value={`${totalStock}`}
         />
         <InfoTile label="Supplier" value={supplier?.name ?? "—"} />
-        <InfoTile label="MRP" value={`${settings.currency}${(batch.mrp || 0).toFixed(2)}`} />
-        <InfoTile label="Purchase price" value={`${settings.currency}${(batch.purchasePrice || 0).toFixed(2)}`} />
-        <InfoTile label="Selling price" value={`${settings.currency}${(batch.sellingPrice || 0).toFixed(2)}`} />
+        <InfoTile label="MRP" value={`${settings.currency}${batch.mrp.toFixed(2)}`} />
+        <InfoTile label="Purchase price" value={`${settings.currency}${batch.purchasePrice.toFixed(2)}`} />
+        <InfoTile label="Selling price" value={`${settings.currency}${batch.sellingPrice.toFixed(2)}`} />
         <InfoTile
           label="Total stock value"
           value={`${settings.currency}${(totalStock * (batch.purchasePrice || 0)).toFixed(2)}`}
@@ -99,8 +99,8 @@ function BatchDetailPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-sm font-medium capitalize">
-                      {m.movementType} · {m.quantityChange > 0 ? "+" : ""}
-                      {m.quantityChange}
+                      Stock {m.movementType} · {m.quantity > 0 ? "+" : ""}
+                      {m.quantity}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(m.timestamp), { addSuffix: true })}

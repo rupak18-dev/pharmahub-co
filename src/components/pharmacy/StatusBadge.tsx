@@ -1,4 +1,4 @@
-import { cn } from "@/lib/utils";
+﻿import { cn } from "@/lib/utils";
 import type { BatchStatus } from "@/lib/types";
 
 const map: Record<BatchStatus | "low" | "out" | "healthy", { label: string; cls: string }> = {

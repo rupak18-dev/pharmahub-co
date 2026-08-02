@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/pharmacy/EmptyState";
 import { differenceInDays, subDays } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/ai")({
-  head: () => ({ meta: [{ title: "AI Insights · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "AI Insights · PharmaHub" }] }),
   component: AiPage,
 });
 

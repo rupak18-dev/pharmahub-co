@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { differenceInDays } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/notifications")({
-  head: () => ({ meta: [{ title: "Notifications · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Notifications · PharmaHub" }] }),
   component: NotificationsPage,
 });
 
@@ -76,7 +76,7 @@ function NotificationsPage() {
           severity: "critical",
           icon: Skull,
           title: `${med?.name ?? "Batch"} · ${b.batchNumber} expired`,
-          detail: `${stock} units still in stock.`,
+          detail: `${b.currentStock} units still in stock.`,
           href: "/dashboard/expiry",
         });
       } else if (days <= data.settings.nearExpiryDays) {
@@ -85,7 +85,7 @@ function NotificationsPage() {
           severity: "warning",
           icon: CalendarClock,
           title: `${med?.name ?? "Batch"} · ${b.batchNumber} expiring in ${days}d`,
-          detail: `${stock} units.`,
+          detail: `${b.currentStock} units.`,
           href: "/dashboard/expiry",
         });
       }
