@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useRef } from "react";
 import {
   Plus,
   Trash2,
@@ -11,6 +11,16 @@ import {
   Lightbulb,
   Video,
   Info,
+  CreditCard,
+  CheckCircle2,
+  Printer,
+  Receipt,
+  ArrowRight,
+  DollarSign,
+  Wallet,
+  QrCode,
+  Building2,
+  Upload,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useDb } from "@/hooks/useDb";
@@ -35,6 +45,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/components/ui/popover";
 import { format, addDays } from "date-fns";
 import type { GRN, GRNItem, Batch, Medicine } from "@/lib/types";
 
@@ -42,6 +57,21 @@ export const Route = createFileRoute("/_authenticated/dashboard/purchases")({
   head: () => ({ meta: [{ title: "Purchases · eVitalRx Style · PharmacyOS" }] }),
   component: PurchasesPage,
 });
+/** Clickable info icon that shows a small popover with description text */
+function InfoTip({ text, size = "sm" }: { text: string; size?: "sm" | "xs" }) {
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button type="button" className="inline-flex cursor-pointer focus:outline-none">
+          <Info className={size === "xs" ? "h-2.5 w-2.5 text-muted-foreground/70" : "h-3 w-3 text-muted-foreground/70"} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent side="top" className="w-auto max-w-[220px] px-3 py-2 text-xs text-foreground leading-snug">
+        {text}
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 interface EVitalLineItem {
   id: string;
@@ -97,6 +127,34 @@ export function PurchasesPage() {
   const [poOpen, setPoOpen] = useState(false);
   const [poSupplier, setPoSupplier] = useState("");
   const [poDate, setPoDate] = useState("");
+
+  // Role state & Payment Access Control
+  const [activeRole, setActiveRole] = useState<string>("Admin");
+
+  // Payment Modal & Generated Bill Dialog State
+  const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"cash" | "upi" | "card" | "netbanking" | "credit">("cash");
+  const [amountPaid, setAmountPaid] = useState<number>(0);
+  const [paymentTxnRef, setPaymentTxnRef] = useState<string>("");
+
+  const [generatedBillModalOpen, setGeneratedBillModalOpen] = useState(false);
+  const [viewingGrn, setViewingGrn] = useState<GRN | null>(null);
+
+  // File Manager Upload Ref & Handler
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    toast.success(`Selected bill file: ${file.name}`);
+    const cleanFileName = file.name.replace(/\.[^/.]+$/, "").toUpperCase();
+    setBillNo(cleanFileName);
+
+    if (items.length === 0 && medicines.length > 0) {
+      addMedicineToGrid(medicines[0]);
+    }
+  };
 
   // Filter medicines by search query
   const filteredMedicines = useMemo(() => {
@@ -209,13 +267,15 @@ export function PurchasesPage() {
     };
   }, [items]);
 
-  // Submit Purchase Bill
-  const handleSavePurchase = () => {
+  // Direct Save Bill for Non-Admins (Owner / Manager)
+  const handleDirectSaveBill = () => {
     if (!user) return toast.error("User session not found");
-    if (!distributorId) return toast.error("Please select a Distributor");
-    if (!billNo.trim()) return toast.error("Please enter a Bill / Order No.");
+
+    const effectiveDistributorId = distributorId || (suppliers[0]?.id ?? "");
+    if (!effectiveDistributorId) return toast.error("Please select a Distributor");
     if (items.length === 0) return toast.error("Please add at least 1 item to the purchase bill");
 
+    const finalBillNo = billNo.trim() || `INV-${Math.floor(100000 + Math.random() * 900000)}`;
     const now = new Date().toISOString();
     const grnNumber = `GRN-${Date.now().toString().slice(-6)}`;
     const createdBatches: Batch[] = [];
@@ -223,11 +283,8 @@ export function PurchasesPage() {
 
     items.forEach((it) => {
       const batchId = db.uid();
-
       let expIso = it.expiryDate;
-      if (expIso.length === 7) {
-        expIso = `${expIso}-28`;
-      }
+      if (expIso.length === 7) expIso = `${expIso}-28`;
       try {
         expIso = new Date(expIso).toISOString();
       } catch {
@@ -243,7 +300,7 @@ export function PurchasesPage() {
         mrp: it.mrp,
         purchasePrice: it.ptr,
         sellingPrice: Math.round(it.mrp * 0.95),
-        supplierId: distributorId,
+        supplierId: effectiveDistributorId,
         quantityReceived: it.qty + it.freeQty,
         currentStock: 0,
         status: "active",
@@ -269,8 +326,8 @@ export function PurchasesPage() {
     const grn: GRN = {
       id: db.uid(),
       grnNumber,
-      supplierId: distributorId,
-      invoiceNumber: billNo,
+      supplierId: effectiveDistributorId,
+      invoiceNumber: finalBillNo,
       invoiceDate: billDate,
       poId: selectedPoId || undefined,
       items: grnItems,
@@ -291,7 +348,7 @@ export function PurchasesPage() {
         id: db.uid(),
         userId: user.id,
         userName: user.name,
-        action: `eVitalRx Purchase Bill #${billNo} recorded (${grnNumber})`,
+        action: `Purchase Bill #${finalBillNo} recorded by ${activeRole} (${grnNumber})`,
         entityType: "grn",
         entityId: grn.id,
         details: { totalValue: totals.grandTotal, itemsCount: items.length },
@@ -306,19 +363,227 @@ export function PurchasesPage() {
         batchId: it.batchId,
         movementType: "in",
         quantity: it.quantity,
-        reason: `Purchase Bill #${billNo} (${grnNumber})`,
+        reason: `Purchase Bill #${finalBillNo} (${grnNumber})`,
         referenceId: grn.id,
         userId: user.id,
         userName: user.name,
       });
     });
 
-    toast.success(`Purchase Bill #${billNo} saved! ${createdBatches.length} batches added to stock.`);
+    toast.success(`Purchase Bill #${finalBillNo} saved! ${createdBatches.length} batches added to inventory.`);
+
+    setViewingGrn(grn);
+    setGeneratedBillModalOpen(true);
 
     // Reset Form
     setBillNo("");
     setItems([]);
     setSelectedPoId("");
+  };
+
+  // 1. Proceed to Payment Step (Admin only)
+  const handleProceedToPayment = () => {
+    if (!user) return toast.error("User session not found");
+
+    if (activeRole !== "Admin") {
+      return handleDirectSaveBill();
+    }
+
+    const effectiveDistributorId = distributorId || (suppliers[0]?.id ?? "");
+    if (!effectiveDistributorId) return toast.error("Please select a Distributor");
+
+    if (items.length === 0) return toast.error("Please add at least 1 item to the purchase bill");
+
+    if (!billNo.trim()) {
+      setBillNo(`INV-${Math.floor(100000 + Math.random() * 900000)}`);
+    }
+
+    setAmountPaid(totals.grandTotal);
+    setPaymentModalOpen(true);
+  };
+
+  // 2. Fetch Existing Bill by Bill No. / Order No.
+  const handleFetchBill = (searchQueryStr?: string) => {
+    const query = (searchQueryStr ?? billNo).trim().toLowerCase();
+    if (!query) {
+      return toast.error("Please enter a Bill / Order No. to fetch details");
+    }
+
+    const foundGrn = grns.find(
+      (g) =>
+        g.invoiceNumber?.toLowerCase() === query ||
+        g.grnNumber.toLowerCase() === query ||
+        g.id.toLowerCase() === query
+    );
+
+    if (foundGrn) {
+      setDistributorId(foundGrn.supplierId);
+      setBillNo(foundGrn.invoiceNumber || foundGrn.grnNumber);
+      try {
+        setBillDate(format(new Date(foundGrn.createdAt), "yyyy-MM-dd"));
+      } catch {
+        setBillDate(todayStr);
+      }
+
+      // Populate line items grid from fetched GRN
+      const mappedItems: EVitalLineItem[] = foundGrn.items.map((gi) => {
+        const med = medicines.find((m) => m.id === gi.medicineId);
+        const ptr = gi.purchasePrice || 100;
+        const mrp = gi.mrp || Math.round(ptr * 1.25);
+        const gstRate = med?.gstRate || 12;
+        const baseAmt = ptr * gi.quantity;
+        const lineTotal = Math.round(baseAmt * (1 + gstRate / 100) * 100) / 100;
+
+        return {
+          id: db.uid(),
+          medicineId: gi.medicineId,
+          medicineName: gi.medicineName,
+          genericName: med?.genericName,
+          batchNumber: gi.batchNumber,
+          mfgDate: gi.mfgDate ? gi.mfgDate.slice(0, 10) : todayStr,
+          expiryDate: gi.expiryDate ? gi.expiryDate.slice(0, 7) : "2027-08",
+          mrp,
+          ptr,
+          qty: gi.quantity,
+          freeQty: 0,
+          schemeAmt: 0,
+          discPct: 0,
+          baseAmt,
+          gstRate,
+          lineTotal,
+        };
+      });
+
+      setItems(mappedItems);
+      setViewingGrn(foundGrn);
+      setGeneratedBillModalOpen(true);
+      toast.success(`Found Purchase Bill #${foundGrn.invoiceNumber ?? foundGrn.grnNumber}! Loaded details on screen.`);
+    } else {
+      toast.error(`No purchase bill found with number "${query.toUpperCase()}"`);
+    }
+  };
+
+  // 3. Finalize Payment & Generate Bill
+  const handleFinalizePaymentAndSave = () => {
+    if (!user) return toast.error("User session not found");
+
+    const effectiveDistributorId = distributorId || (suppliers[0]?.id ?? "");
+    if (!effectiveDistributorId) return toast.error("Please select a Distributor");
+    if (items.length === 0) return toast.error("Please add at least 1 item to the purchase bill");
+
+    const finalBillNo = billNo.trim() || `INV-${Math.floor(100000 + Math.random() * 900000)}`;
+    const now = new Date().toISOString();
+    const grnNumber = `GRN-${Date.now().toString().slice(-6)}`;
+    const createdBatches: Batch[] = [];
+    const grnItems: GRNItem[] = [];
+
+    items.forEach((it) => {
+      const batchId = db.uid();
+      let expIso = it.expiryDate;
+      if (expIso.length === 7) expIso = `${expIso}-28`;
+      try {
+        expIso = new Date(expIso).toISOString();
+      } catch {
+        expIso = new Date(addDays(new Date(), 365)).toISOString();
+      }
+
+      const batch: Batch = {
+        id: batchId,
+        medicineId: it.medicineId,
+        batchNumber: it.batchNumber,
+        mfgDate: it.mfgDate || todayStr,
+        expiryDate: expIso,
+        mrp: it.mrp,
+        purchasePrice: it.ptr,
+        sellingPrice: Math.round(it.mrp * 0.95),
+        supplierId: effectiveDistributorId,
+        quantityReceived: it.qty + it.freeQty,
+        currentStock: 0,
+        status: "active",
+        createdAt: now,
+      };
+
+      createdBatches.push(batch);
+
+      grnItems.push({
+        medicineId: it.medicineId,
+        batchId,
+        medicineName: it.medicineName,
+        batchNumber: it.batchNumber,
+        mfgDate: batch.mfgDate,
+        expiryDate: batch.expiryDate,
+        mrp: it.mrp,
+        purchasePrice: it.ptr,
+        sellingPrice: batch.sellingPrice,
+        quantity: it.qty + it.freeQty,
+      });
+    });
+
+    const grn: GRN = {
+      id: db.uid(),
+      grnNumber,
+      supplierId: effectiveDistributorId,
+      invoiceNumber: finalBillNo,
+      invoiceDate: billDate,
+      poId: selectedPoId || undefined,
+      items: grnItems,
+      totalValue: totals.grandTotal,
+      createdBy: user.id,
+      createdByName: user.name,
+      createdAt: now,
+    };
+
+    db.set((d) => {
+      d.batches.push(...createdBatches);
+      d.grns.unshift(grn);
+      if (selectedPoId) {
+        const po = d.purchaseOrders.find((p) => p.id === selectedPoId);
+        if (po) po.status = "received";
+      }
+      d.activityLogs.unshift({
+        id: db.uid(),
+        userId: user.id,
+        userName: user.name,
+        action: `eVitalRx Purchase Bill #${finalBillNo} paid via ${paymentMethod.toUpperCase()} (${grnNumber})`,
+        entityType: "grn",
+        entityId: grn.id,
+        details: {
+          totalValue: totals.grandTotal,
+          itemsCount: items.length,
+          paymentMethod,
+          amountPaid,
+          paymentTxnRef,
+        },
+        createdAt: now,
+      });
+    });
+
+    // Update stock levels
+    grnItems.forEach((it) => {
+      applyStockMovement({
+        medicineId: it.medicineId,
+        batchId: it.batchId,
+        movementType: "in",
+        quantity: it.quantity,
+        reason: `Purchase Bill #${finalBillNo} (${grnNumber})`,
+        referenceId: grn.id,
+        userId: user.id,
+        userName: user.name,
+      });
+    });
+
+    toast.success(`Payment complete! Purchase Bill #${finalBillNo} generated and stock updated.`);
+
+    // Close Payment Modal & Open Generated Bill Receipt Modal
+    setPaymentModalOpen(false);
+    setViewingGrn(grn);
+    setGeneratedBillModalOpen(true);
+
+    // Reset Form
+    setBillNo("");
+    setItems([]);
+    setSelectedPoId("");
+    setPaymentTxnRef("");
   };
 
   const supplierName = useMemo(() => {
@@ -328,18 +593,10 @@ export function PurchasesPage() {
 
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)] bg-background text-foreground">
-      {/* Top Bar / Header matching eVitalRx */}
-      <div className="border-b border-border bg-card px-4 py-2.5 flex flex-wrap items-center justify-between gap-3 shadow-sm">
-        {/* Left Breadcrumb */}
+      {/* Top Action Header (No outer container box or outline) */}
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-4 pt-2">
+        {/* Left: Tabs */}
         <div className="flex items-center gap-3">
-          <div className="flex items-center text-sm font-medium text-muted-foreground">
-            <span>Purchase</span>
-            <span className="mx-1">&gt;</span>
-            <span className="text-primary font-bold">New</span>
-            <Lightbulb className="ml-1.5 h-4 w-4 text-amber-500 fill-amber-400/20" />
-          </div>
-
-          <div className="h-4 w-px bg-border mx-1" />
 
           {/* Mode Tabs */}
           <div className="flex items-center rounded-lg bg-muted p-0.5 text-xs">
@@ -351,7 +608,7 @@ export function PurchasesPage() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              + eVitalRx Purchase Entry
+              Purchase Entry
             </button>
             <button
               onClick={() => setViewTab("history")}
@@ -361,7 +618,7 @@ export function PurchasesPage() {
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
-              Purchase History ({grns.length})
+              Purchase History
             </button>
           </div>
         </div>
@@ -385,64 +642,62 @@ export function PurchasesPage() {
             </SelectContent>
           </Select>
 
-          {/* Owner Role Badge */}
-          <Select defaultValue="Owner">
-            <SelectTrigger className="h-8 text-xs bg-background w-[100px] border-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="Owner">Owner</SelectItem>
-              <SelectItem value="Admin">Admin</SelectItem>
-              <SelectItem value="Manager">Manager</SelectItem>
-            </SelectContent>
-          </Select>
 
-          {/* Payment Type Badge */}
-          <button
-            onClick={() =>
-              setPaymentType((prev) => (prev === "credit" ? "cash" : prev === "cash" ? "upi" : "credit"))
-            }
-            className={`h-8 px-3 rounded-md text-xs font-semibold flex items-center gap-1 border transition-colors ${
-              paymentType === "credit"
-                ? "bg-destructive/10 text-destructive border-destructive/30"
-                : paymentType === "cash"
-                ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
-                : "bg-blue-500/10 text-blue-600 border-blue-500/30"
-            }`}
-          >
-            <span className="h-2 w-2 rounded-full bg-current" />
-            <span className="capitalize">{paymentType}</span>
-          </button>
 
-          {/* Primary Save Button */}
+
+
+          {/* Primary Action Button: Proceed to Pay for Admin, Save Bill for Owner/Manager */}
           {canCreate && (
             <Button
               size="sm"
-              onClick={handleSavePurchase}
-              className="h-8 px-4 text-xs bg-blue-600 hover:bg-blue-700 text-white font-medium flex items-center gap-1 shadow"
+              onClick={() => {
+                if (items.length === 0) {
+                  toast.warning("Please select items to proceed");
+                  return;
+                }
+                if (activeRole === "Admin") {
+                  handleProceedToPayment();
+                } else {
+                  handleDirectSaveBill();
+                }
+              }}
+              className={`h-8 px-4 text-xs font-semibold flex items-center gap-1.5 shadow ${
+                activeRole === "Admin"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
+              }`}
             >
-              <span>Save</span>
-              <ChevronDown className="h-3.5 w-3.5 opacity-80" />
+              {activeRole === "Admin" ? (
+                <>
+                  <CreditCard className="h-3.5 w-3.5" />
+                  <span>Proceed to Pay</span>
+                  <ArrowRight className="h-3.5 w-3.5 opacity-80" />
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  <span>Save Bill</span>
+                </>
+              )}
             </Button>
           )}
 
-          <Button variant="outline" size="icon" className="h-8 w-8 text-muted-foreground">
-            <Settings className="h-4 w-4" />
-          </Button>
+
         </div>
       </div>
 
       {viewTab === "entry" ? (
         <div className="flex-1 flex flex-col justify-between">
           {/* Main Form Body */}
-          <div className="p-4 space-y-4">
+          <div className="px-4 pb-0 space-y-0">
             {/* Row 1: Distributor, Bill No, Dates Header */}
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end bg-card p-3 rounded-lg border border-border/70 shadow-sm">
+            <div className="flex flex-wrap items-end gap-4 bg-card p-3 rounded-t-lg border border-border/60 border-b-0">
               {/* Distributor */}
-              <div className="md:col-span-4 space-y-1">
+              <div className="flex-1 min-w-[240px] space-y-1">
                 <div className="flex items-center justify-between text-xs font-medium text-muted-foreground">
                   <span className="flex items-center gap-1">
-                    Distributor <Info className="h-3 w-3 text-muted-foreground/70" />
+                    Distributor
+                    <InfoTip text="The medicine distributor or supplier you are purchasing from" />
                   </span>
                   <button
                     onClick={() => toast.info("No supplier emails linked yet")}
@@ -466,110 +721,116 @@ export function PurchasesPage() {
               </div>
 
               {/* Bill No. / Order No. */}
-              <div className="md:col-span-3 space-y-1">
+              <div className="w-full sm:w-[220px] space-y-1">
                 <Label className="text-xs font-medium text-muted-foreground">Bill No. / Order No.</Label>
                 <div className="flex items-center gap-1">
                   <Input
                     placeholder="Enter Invoice #"
                     value={billNo}
                     onChange={(e) => setBillNo(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleFetchBill();
+                      }
+                    }}
                     className="h-9 text-xs font-mono bg-background"
                   />
                   <Button
                     variant="secondary"
                     size="sm"
                     className="h-9 text-xs px-2.5 bg-muted text-muted-foreground hover:text-foreground shrink-0 font-medium"
-                    onClick={() => {
-                      if (!billNo) setBillNo(`INV-${Math.floor(100000 + Math.random() * 900000)}`);
-                      toast.success("Fetched bill reference");
-                    }}
+                    onClick={() => handleFetchBill()}
                   >
-                    Fetch
+                    Search
                   </Button>
                 </div>
               </div>
 
               {/* Bill Date */}
-              <div className="md:col-span-2.5 space-y-1">
+              <div className="w-full sm:w-[165px] space-y-1">
                 <Label className="text-xs font-medium text-muted-foreground">Bill Date</Label>
                 <Input
                   type="date"
                   value={billDate}
                   onChange={(e) => setBillDate(e.target.value)}
-                  className="h-9 text-xs bg-background"
+                  className="h-9 text-xs bg-background w-full px-3"
                 />
               </div>
 
               {/* Due Date */}
-              <div className="md:col-span-2.5 space-y-1">
+              <div className="w-full sm:w-[165px] space-y-1">
                 <Label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  Due Date <Info className="h-3 w-3 text-muted-foreground/70" />
+                  Due Date
+                  <InfoTip text="Last date by which payment must be made to the distributor" />
                 </Label>
                 <Input
                   type="date"
                   value={dueDate}
                   onChange={(e) => setDueDate(e.target.value)}
-                  className="h-9 text-xs bg-background"
+                  className="h-9 text-xs bg-background w-full px-3"
                 />
               </div>
             </div>
 
-            {/* eVitalRx Items Table Container */}
-            <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden flex flex-col">
+            {/* Items Table Container */}
+            <div className="bg-card rounded-b-lg border border-border/60 overflow-hidden flex flex-col">
               {/* Table Column Headers */}
               <div className="bg-muted/40 border-b border-border text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2 grid grid-cols-12 gap-1 items-center">
-                {/* Item Name + LIFA Toggle */}
+                {/* Item Name + Tax Mode Toggle */}
                 <div className="col-span-3 flex items-center justify-between pr-2">
                   <span className="text-foreground">Item Name</span>
-                  <div className="flex items-center gap-1 bg-background border border-border rounded px-1.5 py-0.5 text-[10px] lowercase">
+                  <div className="flex items-center gap-1 bg-background border border-border rounded px-1.5 py-0.5 text-[10px]">
                     <button
                       onClick={() => setLifaMode("LIFA")}
-                      className={`px-1 rounded font-bold ${
-                        lifaMode === "LIFA" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                      title="Incl. Tax: Prices include GST (tax is built into the price)"
+                      className={`px-1.5 py-0.5 rounded font-semibold ${
+                        lifaMode === "LIFA" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      LIFA
+                      Incl. Tax
                     </button>
                     <button
                       onClick={() => setLifaMode("LILA")}
-                      className={`px-1 rounded font-bold ${
-                        lifaMode === "LILA" ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+                      title="Excl. Tax: Prices do not include GST (tax is added separately)"
+                      className={`px-1.5 py-0.5 rounded font-semibold ${
+                        lifaMode === "LILA" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      LILA
+                      Excl. Tax
                     </button>
                   </div>
                 </div>
 
                 <div className="col-span-1 text-center flex items-center justify-center gap-0.5">
-                  Batch <Info className="h-2.5 w-2.5" />
+                  Batch <InfoTip text="Batch number printed on the medicine box — used for tracking and expiry" size="xs" />
                 </div>
                 <div className="col-span-1 text-center flex items-center justify-center gap-0.5">
-                  Expiry <Info className="h-2.5 w-2.5" />
+                  Expiry <InfoTip text="Month and year the medicine expires (format: YYYY-MM)" size="xs" />
                 </div>
                 <div className="col-span-1 text-right flex items-center justify-end gap-0.5 pr-1">
-                  MRP <Info className="h-2.5 w-2.5" />
+                  MRP <InfoTip text="Maximum Retail Price — the highest price at which this medicine can be sold" size="xs" />
                 </div>
                 <div className="col-span-1 text-right flex items-center justify-end gap-0.5 pr-1">
-                  PTR <Info className="h-2.5 w-2.5" />
+                  PTR <InfoTip text="Price to Retailer — the price the distributor is charging you" size="xs" />
                 </div>
                 <div className="col-span-1 text-center flex items-center justify-center gap-0.5">
-                  Qty <Info className="h-2.5 w-2.5" />
+                  Qty <InfoTip text="Number of units (strips, bottles, etc.) you are purchasing" size="xs" />
                 </div>
                 <div className="col-span-1 text-center flex items-center justify-center gap-0.5">
-                  Free <Info className="h-2.5 w-2.5" />
+                  Bonus <InfoTip text="Bonus units given by the distributor at no extra charge" size="xs" />
                 </div>
                 <div className="col-span-1 text-right flex items-center justify-end gap-0.5 pr-1">
-                  Disc% <Info className="h-2.5 w-2.5" />
+                  Disc% <InfoTip text="Discount percentage offered by the distributor on this item" size="xs" />
                 </div>
                 <div className="col-span-1 text-center flex items-center justify-center gap-0.5">
-                  GST% <Info className="h-2.5 w-2.5" />
+                  GST% <InfoTip text="GST tax rate applicable on this medicine (e.g. 5%, 12%, 18%)" size="xs" />
                 </div>
                 <div className="col-span-1 text-right font-bold text-foreground pr-2">Amount</div>
               </div>
 
               {/* Live Search Row Input */}
-              <div className="p-2 border-b border-border bg-blue-50/40 dark:bg-blue-950/20 relative">
+              <div className="px-3 py-2 border-b border-border/60 bg-background relative">
                 <div className="relative flex items-center">
                   <Search className="absolute left-3 h-4 w-4 text-blue-500" />
                   <Input
@@ -580,7 +841,7 @@ export function PurchasesPage() {
                       setShowSearchResults(true);
                     }}
                     onFocus={() => setShowSearchResults(true)}
-                    className="pl-9 h-9 text-xs bg-background border-blue-200 dark:border-blue-800 focus-visible:ring-blue-500 font-medium"
+                    className="pl-9 h-9 text-xs bg-transparent border-0 shadow-none focus-visible:ring-0 font-medium placeholder:text-muted-foreground/60"
                   />
                 </div>
 
@@ -611,29 +872,35 @@ export function PurchasesPage() {
                 )}
               </div>
 
-              {/* Items List or eVitalRx Empty Graphic */}
+              {/* Items List or Empty Graphic with File Upload */}
               {items.length === 0 ? (
                 <div className="py-12 px-4 flex flex-col items-center justify-center text-center bg-background/50">
-                  <div className="w-52 h-44 rounded-xl border border-dashed border-border bg-card p-4 flex flex-col items-center justify-center shadow-inner mb-3">
-                    <div className="w-16 h-24 border-2 border-primary/40 rounded-lg bg-primary/5 flex flex-col items-center justify-center p-2 mb-2 relative">
-                      <div className="w-10 h-1 bg-primary/40 rounded mb-1" />
-                      <div className="w-8 h-8 rounded border border-primary/30 flex items-center justify-center bg-background">
-                        <ShoppingCart className="h-4 w-4 text-primary" />
-                      </div>
-                      <span className="text-[8px] font-bold text-primary mt-1">Scan OTC</span>
-                    </div>
-                    <span className="text-xs font-semibold text-foreground">Sales / Purchase</span>
-                    <span className="text-[10px] text-muted-foreground">Fast Barcode & Item Bill</span>
-                  </div>
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    accept=".pdf,.jpg,.jpeg,.png,.csv,.xlsx,.xls"
+                    onChange={handleFileUpload}
+                    className="hidden"
+                  />
 
                   <button
-                    onClick={() => {
-                      if (medicines.length > 0) addMedicineToGrid(medicines[0]);
-                      else toast.info("No medicines available in database yet");
-                    }}
-                    className="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 font-semibold"
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="w-56 h-48 rounded-xl border-2 border-dashed border-primary/40 bg-card p-4 flex flex-col items-center justify-center shadow-sm hover:shadow-md hover:border-primary hover:bg-primary/5 transition-all cursor-pointer group focus:outline-none focus:ring-2 focus:ring-primary"
                   >
-                    <Video className="h-3.5 w-3.5" /> Video : Use Barcode & Make Purchase Bill ▶
+                    <div className="w-16 h-20 border-2 border-primary/40 rounded-lg bg-primary/5 flex flex-col items-center justify-center p-2 mb-2 relative group-hover:scale-105 transition-transform">
+                      <div className="w-10 h-1 bg-primary/40 rounded mb-1.5" />
+                      <div className="w-9 h-9 rounded border border-primary/30 flex items-center justify-center bg-background shadow-xs">
+                        <Upload className="h-4 w-4 text-primary" />
+                      </div>
+                      <span className="text-[8px] font-bold text-primary mt-1.5">Upload Bill</span>
+                    </div>
+                    <span className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                      Upload Purchase Bill File
+                    </span>
+                    <span className="text-[10px] text-muted-foreground mt-0.5">
+                      Click to choose PDF, Image, or Excel
+                    </span>
                   </button>
                 </div>
               ) : (
@@ -657,7 +924,7 @@ export function PurchasesPage() {
                           <Input
                             value={item.batchNumber}
                             onChange={(e) => updateLineItem(item.id, { batchNumber: e.target.value })}
-                            className="h-7 text-xs font-mono text-center px-1 bg-background"
+                            className="h-7 text-xs font-mono text-center px-1 border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -668,7 +935,7 @@ export function PurchasesPage() {
                             placeholder="YYYY-MM"
                             value={item.expiryDate}
                             onChange={(e) => updateLineItem(item.id, { expiryDate: e.target.value })}
-                            className="h-7 text-xs text-center px-1 bg-background"
+                            className="h-7 text-xs text-center px-1 border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -681,7 +948,7 @@ export function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { mrp: Number(e.target.value) || 0 })
                             }
-                            className="h-7 text-xs text-right px-1 font-mono bg-background"
+                            className="h-7 text-xs text-right px-1 font-mono border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -694,7 +961,7 @@ export function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { ptr: Number(e.target.value) || 0 })
                             }
-                            className="h-7 text-xs text-right px-1 font-mono bg-background"
+                            className="h-7 text-xs text-right px-1 font-mono border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -707,7 +974,7 @@ export function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { qty: Math.max(1, Number(e.target.value) || 1) })
                             }
-                            className="h-7 text-xs text-center px-1 font-mono bg-background font-bold"
+                            className="h-7 text-xs text-center px-1 font-mono font-bold border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -720,7 +987,7 @@ export function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { freeQty: Number(e.target.value) || 0 })
                             }
-                            className="h-7 text-xs text-center px-1 font-mono bg-background"
+                            className="h-7 text-xs text-center px-1 font-mono border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -735,7 +1002,7 @@ export function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { discPct: Number(e.target.value) || 0 })
                             }
-                            className="h-7 text-xs text-right px-1 font-mono bg-background"
+                            className="h-7 text-xs text-right px-1 font-mono border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -746,8 +1013,7 @@ export function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { gstRate: Number(e.target.value) || 0 })
                             }
-                            className="h-7 text-xs text-center w-full rounded border border-border bg-background"
-                          >
+                            className="h-7 text-xs text-center w-full rounded border-0 bg-transparent focus:outline-none focus:bg-muted/40">
                             <option value={0}>0%</option>
                             <option value={5}>5%</option>
                             <option value={12}>12%</option>
@@ -777,56 +1043,32 @@ export function PurchasesPage() {
             </div>
           </div>
 
-          {/* Sticky Bottom eVitalRx Red/Dark Summary Bar */}
-          <div className="bg-red-700 text-white px-4 py-2.5 flex flex-wrap items-center justify-between gap-4 shadow-lg text-xs">
-            {/* Left Credit Note indicator */}
-            <div className="flex items-center gap-2">
-              <span className="bg-white/10 px-3 py-1 rounded font-semibold tracking-wide">
-                No CN Adjusted
-              </span>
+          {/* Footer Action Bar — only visible when items are selected */}
+          {items.length > 0 && canCreate && (
+            <div className="border-t border-border bg-card px-4 py-3 flex items-center justify-end shadow-sm">
+              <Button
+                onClick={activeRole === "Admin" ? handleProceedToPayment : handleDirectSaveBill}
+                className={`h-9 px-6 text-sm font-semibold flex items-center gap-2 shadow-sm ${
+                  activeRole === "Admin"
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
+              >
+                {activeRole === "Admin" ? (
+                  <>
+                    <CreditCard className="h-4 w-4" />
+                    <span>Proceed to Payment</span>
+                    <ArrowRight className="h-4 w-4 opacity-80" />
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Save Bill</span>
+                  </>
+                )}
+              </Button>
             </div>
-
-            {/* Right Totals Breakdown */}
-            <div className="flex items-center gap-4 font-medium flex-wrap">
-              <span>
-                <strong>{totals.totalQty}</strong> Qty.
-              </span>
-              <span>•</span>
-              <span>
-                <strong>{totals.totalItems}</strong> Items
-              </span>
-              <span>•</span>
-              <span>
-                <strong>{totals.avgMarginPct}%</strong> Margin
-              </span>
-              <span>•</span>
-              <span>
-                <strong>
-                  {currency}
-                  {totals.totalGst.toFixed(2)}
-                </strong>{" "}
-                GST
-              </span>
-              <span>•</span>
-              <div className="flex items-center gap-2 bg-black/20 px-3 py-1 rounded border border-white/20">
-                <span className="text-white/80">Net</span>
-                <span className="text-sm font-extrabold font-mono text-white">
-                  {currency}
-                  {totals.grandTotal.toFixed(2)}
-                </span>
-                <ChevronDown className="h-4 w-4 text-white/70 cursor-pointer" />
-              </div>
-
-              {canCreate && (
-                <Button
-                  onClick={handleSavePurchase}
-                  className="bg-white text-red-700 hover:bg-white/90 font-bold text-xs h-8 px-4 shadow"
-                >
-                  Save Bill
-                </Button>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       ) : (
         /* History & GRN / PO View */
@@ -929,6 +1171,253 @@ export function PurchasesPage() {
               }}
             >
               Save PO
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Section / Modal */}
+      <Dialog open={paymentModalOpen} onOpenChange={setPaymentModalOpen}>
+        <DialogContent className="max-w-md p-0 overflow-hidden">
+          <DialogHeader className="p-4 bg-muted/40 border-b border-border">
+            <DialogTitle className="text-base font-bold flex items-center gap-2">
+              <CreditCard className="h-5 w-5 text-primary" />
+              Payment & Bill Confirmation
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="p-4 space-y-4 text-xs">
+            {/* Bill Summary Banner */}
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 flex justify-between items-center">
+              <div>
+                <div className="text-[11px] text-muted-foreground">
+                  Distributor: {supplierName(distributorId)}
+                </div>
+                <div className="font-mono font-bold text-sm text-foreground">
+                  Bill #: {billNo || "Auto-Generated"}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {totals.totalItems} Items ({totals.totalQty} Total Qty)
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[11px] font-semibold text-muted-foreground">Grand Total</div>
+                <div className="text-xl font-black font-mono text-primary">
+                  {currency}
+                  {totals.grandTotal.toFixed(2)}
+                </div>
+              </div>
+            </div>
+
+            {/* Select Payment Method */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-semibold">Select Payment Method</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: "cash", label: "Cash", icon: DollarSign },
+                  { id: "upi", label: "UPI / QR", icon: QrCode },
+                  { id: "card", label: "Card", icon: CreditCard },
+                  { id: "netbanking", label: "Net Banking", icon: Building2 },
+                  { id: "credit", label: "Credit (Pay Later)", icon: Wallet },
+                ].map((m) => {
+                  const Icon = m.icon;
+                  const isSel = paymentMethod === m.id;
+                  return (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => setPaymentMethod(m.id as any)}
+                      className={`p-2.5 rounded-lg border text-center flex flex-col items-center justify-center gap-1 transition-all ${
+                        isSel
+                          ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                          : "border-border hover:bg-muted text-muted-foreground"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      <span className="text-[11px]">{m.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Amount Paid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Amount Paid ({currency})</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={amountPaid}
+                  onChange={(e) => setAmountPaid(Number(e.target.value) || 0)}
+                  className="h-9 text-xs font-mono font-bold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs">Txn / Ref # (Optional)</Label>
+                <Input
+                  placeholder="e.g. UPI-987654"
+                  value={paymentTxnRef}
+                  onChange={(e) => setPaymentTxnRef(e.target.value)}
+                  className="h-9 text-xs font-mono"
+                />
+              </div>
+            </div>
+
+            {/* Balance Indicator */}
+            <div className="flex justify-between items-center bg-muted p-2 rounded-md font-mono text-[11px]">
+              <span>Balance Due:</span>
+              <span
+                className={
+                  totals.grandTotal - amountPaid > 0
+                    ? "text-destructive font-bold"
+                    : "text-emerald-600 font-bold"
+                }
+              >
+                {currency}
+                {Math.max(0, totals.grandTotal - amountPaid).toFixed(2)}
+              </span>
+            </div>
+          </div>
+
+          <DialogFooter className="p-3 bg-muted/30 border-t border-border flex justify-between gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPaymentModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleFinalizePaymentAndSave}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold gap-1.5 shadow"
+            >
+              <CheckCircle2 className="h-4 w-4" />
+              Confirm Payment & Generate Bill
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Generated Bill / Receipt Modal */}
+      <Dialog open={generatedBillModalOpen} onOpenChange={setGeneratedBillModalOpen}>
+        <DialogContent className="max-w-2xl p-0 overflow-hidden">
+          <DialogHeader className="p-4 bg-primary/10 border-b border-border flex flex-row items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Receipt className="h-5 w-5 text-primary" />
+              <DialogTitle className="text-base font-bold">Purchase Bill Receipt</DialogTitle>
+            </div>
+            <span className="text-xs bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 px-2.5 py-0.5 rounded-full font-bold uppercase tracking-wide">
+              Generated & Saved
+            </span>
+          </DialogHeader>
+
+          {viewingGrn && (
+            <div className="p-6 space-y-4 text-xs bg-background max-h-[75vh] overflow-y-auto print:p-0">
+              {/* Header Store & Invoice Details */}
+              <div className="flex justify-between items-start border-b border-border pb-4">
+                <div>
+                  <h2 className="text-lg font-black tracking-tight text-primary">PharmacyOS</h2>
+                  <p className="text-xs text-muted-foreground">Official Purchase Invoice Receipt</p>
+                </div>
+                <div className="text-right font-mono space-y-0.5">
+                  <div className="text-sm font-bold text-foreground">
+                    Invoice #{viewingGrn.invoiceNumber ?? viewingGrn.grnNumber}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground">GRN: {viewingGrn.grnNumber}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    Date: {format(new Date(viewingGrn.createdAt), "PPP")}
+                  </div>
+                </div>
+              </div>
+
+              {/* Distributor & Created By Info */}
+              <div className="grid grid-cols-2 gap-4 bg-muted/40 p-3 rounded-lg border border-border">
+                <div>
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase">
+                    Distributor / Supplier
+                  </span>
+                  <div className="font-bold text-sm text-foreground">
+                    {supplierName(viewingGrn.supplierId)}
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="text-[11px] font-semibold text-muted-foreground uppercase">
+                    Recorded By
+                  </span>
+                  <div className="font-semibold text-xs text-foreground">
+                    {viewingGrn.createdByName}
+                  </div>
+                </div>
+              </div>
+
+              {/* Items Table */}
+              <div className="border border-border rounded-lg overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted text-muted-foreground font-semibold border-b border-border uppercase text-[10px]">
+                    <tr>
+                      <th className="p-2 text-left">Item Name</th>
+                      <th className="p-2 text-center">Batch</th>
+                      <th className="p-2 text-center">Expiry</th>
+                      <th className="p-2 text-right">MRP</th>
+                      <th className="p-2 text-right">PTR</th>
+                      <th className="p-2 text-center">Qty</th>
+                      <th className="p-2 text-right">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border font-mono">
+                    {viewingGrn.items.map((item, idx) => (
+                      <tr key={idx} className="hover:bg-muted/20">
+                        <td className="p-2 text-left font-sans font-medium text-foreground">
+                          {item.medicineName}
+                        </td>
+                        <td className="p-2 text-center">{item.batchNumber}</td>
+                        <td className="p-2 text-center">
+                          {item.expiryDate ? item.expiryDate.slice(0, 7) : "—"}
+                        </td>
+                        <td className="p-2 text-right">
+                          {currency}
+                          {item.mrp.toFixed(2)}
+                        </td>
+                        <td className="p-2 text-right">
+                          {currency}
+                          {item.purchasePrice.toFixed(2)}
+                        </td>
+                        <td className="p-2 text-center font-bold">{item.quantity}</td>
+                        <td className="p-2 text-right font-bold text-foreground">
+                          {currency}
+                          {(item.purchasePrice * item.quantity).toFixed(2)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Grand Total */}
+              <div className="flex justify-end pt-2">
+                <div className="w-56 space-y-1 text-right font-mono">
+                  <div className="flex justify-between text-xs font-bold border-t border-border pt-2 text-base text-primary">
+                    <span>Grand Total:</span>
+                    <span>
+                      {currency}
+                      {viewingGrn.totalValue.toFixed(2)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="p-3 bg-muted/40 border-t border-border flex justify-between gap-2">
+            <Button variant="outline" size="sm" onClick={() => setGeneratedBillModalOpen(false)}>
+              Close
+            </Button>
+            <Button
+              size="sm"
+              onClick={() => window.print()}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-semibold gap-1.5"
+            >
+              <Printer className="h-4 w-4" />
+              Print Bill
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -1,10 +1,22 @@
-import { Outlet, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/pharmacy/AppSidebar";
 import { UserMenu } from "@/components/pharmacy/UserMenu";
 import { useAuth } from "@/lib/auth";
 import { BrandMark } from "@/components/pharmacy/BrandMark";
+import { ShoppingCart } from "lucide-react";
+
+/** Shows a ShoppingCart icon next to the sidebar toggle — only on the Purchases page */
+function PurchasePageIcon() {
+  const { location } = useRouterState();
+  if (!location.pathname.includes("/purchases")) return null;
+  return (
+    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
+      <ShoppingCart className="h-4 w-4" />
+    </div>
+  );
+}
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthenticatedLayout,
@@ -36,6 +48,7 @@ function AuthenticatedLayout() {
         <div className="flex min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 flex h-14 items-center gap-3 border-b border-border bg-background/80 px-3 backdrop-blur sm:px-4">
             <SidebarTrigger />
+            <PurchasePageIcon />
             <div className="sm:hidden">
               <BrandMark size="sm" showText={false} />
             </div>
