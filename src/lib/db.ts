@@ -12,7 +12,7 @@ import type {
 } from "./types";
 import { DEFAULT_PERMISSIONS } from "./permissions";
 
-const STORAGE_KEY = "pharmacyos_db_v3";
+const STORAGE_KEY = "pharmacyos_db_v2";
 
 const uid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -105,8 +105,7 @@ function seed(): DB {
       name: "Paracetamol 500mg",
       generic: "Paracetamol",
       brand: "Crocin",
-      strength: "500mg",
-      dosage: "Tablet",
+      prefix: "CR",
       cat: catAnalg.id,
       mfr: mfr1.id,
       hsn: "3004",
@@ -118,8 +117,7 @@ function seed(): DB {
       name: "Amoxicillin 250mg",
       generic: "Amoxicillin",
       brand: "Novamox",
-      strength: "250mg",
-      dosage: "Capsule",
+      prefix: "NV",
       cat: catAntib.id,
       mfr: mfr1.id,
       hsn: "3004",
@@ -131,8 +129,7 @@ function seed(): DB {
       name: "Azithromycin 500mg",
       generic: "Azithromycin",
       brand: "Azithral",
-      strength: "500mg",
-      dosage: "Tablet",
+      prefix: "AZ",
       cat: catAntib.id,
       mfr: mfr2.id,
       hsn: "3004",
@@ -144,8 +141,7 @@ function seed(): DB {
       name: "Atorvastatin 10mg",
       generic: "Atorvastatin",
       brand: "Atorlip",
-      strength: "10mg",
-      dosage: "Tablet",
+      prefix: "AT",
       cat: catCardio.id,
       mfr: mfr2.id,
       hsn: "3004",
@@ -157,10 +153,9 @@ function seed(): DB {
       name: "Metformin 500mg",
       generic: "Metformin",
       brand: "Glycomet",
-      strength: "500mg",
-      dosage: "Tablet",
-      cat: catDiabetic.id,
-      mfr: mfr4.id,
+      prefix: "GL",
+      cat: catCardio.id,
+      mfr: mfr1.id,
       hsn: "3004",
       gst: 12,
       storage: "Store below 25°C",
@@ -170,8 +165,7 @@ function seed(): DB {
       name: "Vitamin D3 60K IU",
       generic: "Cholecalciferol",
       brand: "Uprise-D3",
-      strength: "60K IU",
-      dosage: "Capsule",
+      prefix: "VD",
       cat: catVit.id,
       mfr: mfr3.id,
       hsn: "3004",
@@ -183,8 +177,7 @@ function seed(): DB {
       name: "Ibuprofen 400mg",
       generic: "Ibuprofen",
       brand: "Brufen",
-      strength: "400mg",
-      dosage: "Tablet",
+      prefix: "BR",
       cat: catAnalg.id,
       mfr: mfr3.id,
       hsn: "3004",
@@ -196,6 +189,7 @@ function seed(): DB {
       name: "Paracetamol 650mg",
       generic: "Paracetamol",
       brand: "Dolo 650",
+      prefix: "DL",
       strength: "650mg",
       dosage: "Tablet",
       cat: catAnalg.id,
@@ -209,6 +203,7 @@ function seed(): DB {
       name: "Amoxicillin + Clavulanate 625mg",
       generic: "Amoxicillin + Clavulanic Acid",
       brand: "Augmentin",
+      prefix: "AG",
       strength: "625mg",
       dosage: "Tablet",
       cat: catAntib.id,
@@ -222,6 +217,7 @@ function seed(): DB {
       name: "Metformin 1g SR",
       generic: "Metformin",
       brand: "Glycomet SR",
+      prefix: "GS",
       strength: "1g",
       dosage: "SR Tablet",
       cat: catDiabetic.id,
@@ -235,6 +231,7 @@ function seed(): DB {
       name: "Telmisartan 40mg",
       generic: "Telmisartan",
       brand: "Telma",
+      prefix: "TL",
       strength: "40mg",
       dosage: "Tablet",
       cat: catCardio.id,
@@ -261,94 +258,114 @@ function seed(): DB {
     barcode: `PH-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
     reorderThreshold: m.reorder,
     isActive: true,
+    prefix: m.prefix,
     createdAt: now,
   }));
 
-  const costs = [18, 22, 34, 20, 12, 28, 10, 20, 55, 18, 30];
-  const nearDays = [0, 2, 4, 7, 12, 20, 30, 5, 9, 16, 24];
-  const healthyDays = [90, 120, 150, 200, 260, 320, 365, 110, 170, 240, 300];
-  const expiredFor = [0, 3, 6, 9];
-  const pastDays = [3, 10, 25, 40];
-  const shelves = [
-    "R-01-A-01",
-    "R-01-A-05",
-    "R-02-B-03",
-    "R-03-C-07",
-    "R-04-C-12",
-    "R-05-A-02",
-    "R-06-B-11",
-    "R-07-B-04",
-    "R-01-A-08",
-    "R-02-C-01",
-    "R-03-A-02",
-    "R-04-C-14",
-  ];
-  const suppliers = [sup1.id, sup2.id, sup3.id];
-  const branchNames = ["HQ · Main Street", "Downtown Annex", "Sector 15 Branch"];
+  const batchCode = (prefix: string, year: number, month: number, seq: number) =>
+    `${prefix}-${String(year).slice(-2)}${String(month).padStart(2, "0")}-${String(seq).padStart(2, "0")}`;
+
+  const nearExpiryDays = 90;
 
   const batches = medicines.flatMap((m, i) => {
-    const cost = costs[i];
-    const mrp = Math.round(cost * 1.8);
-    const sell = Math.round(cost * 1.5);
+    const suppliers = [sup1.id, sup2.id];
+    const seq = i + 1;
     // Batch A - healthy
     const a = {
       id: uid(),
       medicineId: m.id,
-      batchNumber: `B${(1200 + i * 4).toString()}A`,
-      mfgDate: daysFromNow(-(healthyDays[i] + 180)),
-      expiryDate: daysFromNow(healthyDays[i]),
-      mrp,
-      purchasePrice: cost,
-      sellingPrice: sell,
-      supplierId: suppliers[i % 3],
-      shelfLocation: shelves[i % shelves.length],
-      branch: branchNames[i % branchNames.length],
-      quantityReceived: 200,
-      currentStock: 200 - ((i * 13) % 90),
-      status: "active" as const,
+      batchNumber: batchCode(m.prefix, 24, ((i * 2) % 12) + 1, seq),
+      mfgDate: daysFromNow(-180),
+      expiryDate: daysFromNow(365 + i * 20),
+      mrp: 40 + i * 15,
+      purchasePrice: 25 + i * 10,
+      sellingPrice: 38 + i * 14,
+      supplierId: suppliers[i % 2],
+      currentStock: 0,
       createdAt: now,
     };
     // Batch B - near expiry (spread across the warning windows)
     const b = {
       id: uid(),
       medicineId: m.id,
-      batchNumber: `B${(1200 + i * 4 + 1).toString()}B`,
+      batchNumber: batchCode(m.prefix, 24, ((i * 2 + 4) % 12) + 1, seq),
       mfgDate: daysFromNow(-300),
-      expiryDate: daysFromNow(nearDays[i]),
-      mrp,
-      purchasePrice: cost,
-      sellingPrice: sell,
-      supplierId: suppliers[(i + 1) % 3],
-      shelfLocation: shelves[(i + 3) % shelves.length],
-      branch: branchNames[(i + 1) % branchNames.length],
-      quantityReceived: 100,
-      currentStock: Math.max(4, 70 - ((i * 7) % 55)),
-      status: "near_expiry" as const,
+      expiryDate: daysFromNow(nearExpiryDays),
+      mrp: 40 + i * 15,
+      purchasePrice: 25 + i * 10,
+      sellingPrice: 38 + i * 14,
+      supplierId: suppliers[(i + 1) % 2],
+      currentStock: 0,
       createdAt: now,
     };
     // Batch C - expired (only some)
-    const eIdx = expiredFor.indexOf(i);
-    const c =
-      eIdx !== -1
-        ? {
-            id: uid(),
-            medicineId: m.id,
-            batchNumber: `B${(1200 + i * 4 + 2).toString()}C`,
-            mfgDate: daysFromNow(-500),
-            expiryDate: daysFromNow(-pastDays[eIdx]),
-            mrp,
-            purchasePrice: cost,
-            sellingPrice: sell,
-            supplierId: suppliers[(i + 2) % 3],
-            shelfLocation: shelves[(i + 6) % shelves.length],
-            branch: branchNames[(i + 2) % branchNames.length],
-            quantityReceived: 50,
-            currentStock: 5 + ((i * 3) % 10),
-            status: "expired" as const,
-            createdAt: now,
-          }
-        : null;
-    return c ? [a, b, c] : [a, b];
+    if (i % 3 === 0) {
+      const c = {
+        id: uid(),
+        medicineId: m.id,
+        batchNumber: batchCode(m.prefix, 23, ((i * 3 + 9) % 12) + 1, seq),
+        mfgDate: daysFromNow(-500),
+        expiryDate: daysFromNow(-10 - i),
+        mrp: 40 + i * 15,
+        purchasePrice: 25 + i * 10,
+        sellingPrice: 38 + i * 14,
+        supplierId: suppliers[i % 2],
+        currentStock: 0,
+        createdAt: now,
+      };
+      return [a, b, c];
+    }
+    return [a, b];
+  });
+
+  const stockQty = [180, 96, 42, 210, 75, 160, 110];
+  const locPool = [
+    "Front Shelf",
+    "Front Shelf",
+    "Backroom",
+    "Cold Storage",
+    "Front Shelf",
+    "Backroom",
+  ] as const;
+  const rackPool = [
+    "Aisle A, Shelf 1",
+    "Aisle A, Shelf 2",
+    "Backroom Rack 1",
+    "Cold Room 1",
+    "Aisle B, Shelf 1",
+    "Backroom Rack 2",
+  ];
+
+  const inventoryStock = batches.map((b, i) => {
+    let q = stockQty[i % stockQty.length];
+    if (b.batchNumber.endsWith("-02")) q = Math.max(0, Math.round(q / 3));
+    if (b.batchNumber.endsWith("-03")) q = 10;
+
+    return {
+      id: uid(),
+      batchId: b.id,
+      locationType: locPool[i % locPool.length],
+      rackCode: rackPool[i % rackPool.length],
+      quantityOnHand: q,
+      reservedQuantity: 0,
+      createdAt: now,
+    };
+  });
+
+  const inventoryLedger = inventoryStock.map((s) => ({
+    id: uid(),
+    batchId: s.batchId,
+    movementType: "Purchase Inward" as const,
+    quantityChange: s.quantityOnHand,
+    userId: owner.id,
+    timestamp: now,
+  }));
+
+  const branchNames = ["HQ · Main Street", "Downtown Annex", "Sector 15 Branch"];
+
+  inventoryStock.forEach((s) => {
+    const batch = batches.find((x) => x.id === s.batchId);
+    if (batch) batch.currentStock = s.quantityOnHand;
   });
 
   const stockMovements = batches.map((b) => ({
@@ -356,576 +373,182 @@ function seed(): DB {
     medicineId: b.medicineId,
     batchId: b.id,
     movementType: "in" as const,
-    quantity: b.quantityReceived,
-    reason: "Initial stock received",
+    quantity: b.currentStock,
+    reason: "Purchase Inward (seed)",
     createdBy: owner.id,
-    createdAt: now,
+    createdAt: b.createdAt,
   }));
 
-  const medById = new Map(medicines.map((m) => [m.id, m]));
-
-  const sev = (value: number): "low" | "medium" | "high" | "critical" => {
-    if (value >= 2000) return "critical";
-    if (value >= 500) return "high";
-    if (value >= 100) return "medium";
-    return "low";
-  };
-
-  const tl = (
-    action: AuditTimelineAction,
-    at: string,
-    user: { id: string; name: string },
-    note?: string,
-  ) => ({ id: uid(), action, at, byUserId: user.id, byName: user.name, ...(note ? { note } : {}) });
-
-  const scopeFor = (ids: string[]) =>
-    ids.map((id) => batches.find((b) => b.id === id) ?? null).filter(Boolean) as Batch[];
-
   const batchA = (i: number) => batches[i * 2];
-  const batchB = (i: number) => batches[i * 2 + 1];
 
-  // --- Stock audit seed data -----------------------------------------------
   const audits: Audit[] = [];
   const auditCounts: AuditCount[] = [];
   const variances: VarianceItem[] = [];
   const adjustments: StockAdjustment[] = [];
 
-  const mkCount = (
-    audit: Audit,
-    batch: Batch,
-    physical: number,
-    extra?: Partial<AuditCount>,
-  ): AuditCount => ({
-    id: uid(),
-    auditId: audit.id,
-    batchId: batch.id,
-    medicineId: batch.medicineId,
-    medicineName: medById.get(batch.medicineId)?.name ?? "—",
-    batchNumber: batch.batchNumber,
-    shelf: batch.shelfLocation ?? "—",
-    expectedQty: batch.currentStock,
-    physicalQty: physical,
-    countedBy: pharm.id,
-    countedByName: pharm.name,
-    countedAt: now,
-    device: "Scanner USB",
-    ...extra,
-  });
+  const medNameOf = (batchId: string) =>
+    medicines.find((m) => m.id === batches.find((x) => x.id === batchId)?.medicineId)?.name ?? "—";
 
-  const mkVariance = (
-    audit: Audit,
-    batch: Batch,
-    actual: number,
-    reason: VarianceReason,
-    extra?: Partial<VarianceItem>,
-  ): VarianceItem => {
-    const expected = batch.currentStock;
-    const diff = actual - expected;
-    const value = Math.abs(diff) * batch.purchasePrice;
-    return {
-      id: uid(),
-      auditId: audit.id,
-      batchId: batch.id,
-      medicineId: batch.medicineId,
-      medicineName: medById.get(batch.medicineId)?.name ?? "—",
-      batchNumber: batch.batchNumber,
-      expectedQty: expected,
-      actualQty: actual,
-      difference: diff,
-      unitCost: batch.purchasePrice,
-      varianceValue: value,
-      severity: sev(value),
-      reason,
-      verifiedBy: pharm.id,
-      verifiedByName: pharm.name,
-      status: "pending",
-      createdAt: now,
-      ...extra,
-    };
-  };
-
-  const mkAdjustment = (
-    audit: Audit,
-    batch: Batch,
-    variance: VarianceItem,
-    action: AdjustmentAction,
-    extra?: Partial<StockAdjustment>,
-  ): StockAdjustment => ({
-    id: uid(),
-    auditId: audit.id,
-    batchId: batch.id,
-    medicineId: batch.medicineId,
-    medicineName: medById.get(batch.medicineId)?.name ?? "—",
-    batchNumber: batch.batchNumber,
-    action,
-    quantity: action === "adjust" ? variance.difference : Math.abs(variance.difference),
-    unitCost: batch.purchasePrice,
-    varianceId: variance.id,
-    reason: variance.reason ?? "unknown",
-    severity: variance.severity,
-    targetBranch: action === "transfer" ? branchNames[1] : undefined,
-    submittedBy: pharm.id,
-    submittedByName: pharm.name,
-    createdAt: now,
-    status: "pending_supervisor",
-    history: [
-      { id: uid(), action: "Submitted by staff", userId: pharm.id, userName: pharm.name, at: now },
-    ],
-    ...extra,
-  });
-
-  // AUD-0001 · Completed Full Store Audit (HQ)
-  const a1 = {
+  const a1: Audit = {
     id: uid(),
     auditNumber: "AUD-0001",
-    type: "full" as const,
+    type: "full",
     title: "HQ · Full Store Audit",
     branch: branchNames[0],
-    batchIds: [] as string[],
+    batchIds: batches.slice(0, 10).map((x) => x.id),
     assignedUserIds: [pharm.id, inv.id],
     scheduledDate: daysFromNow(-6),
-    status: "completed" as const,
+    status: "completed",
     createdBy: owner.id,
     createdByName: owner.name,
     createdAt: daysFromNow(-7),
     startedAt: daysFromNow(-5),
     submittedAt: daysFromNow(-3),
     completedAt: daysFromNow(-3),
-    timeline: [] as AuditTimelineEvent[],
+    timeline: [
+      { id: uid(), action: "created", at: daysFromNow(-7), byUserId: owner.id, byName: owner.name },
+      { id: uid(), action: "started", at: daysFromNow(-5), byUserId: pharm.id, byName: pharm.name },
+      { id: uid(), action: "submitted", at: daysFromNow(-3), byUserId: pharm.id, byName: pharm.name },
+      { id: uid(), action: "approved", at: daysFromNow(-3), byUserId: inv.id, byName: inv.name },
+      { id: uid(), action: "completed", at: daysFromNow(-3), byUserId: owner.id, byName: owner.name },
+    ],
   };
-  a1.batchIds = Array.from({ length: 10 }, (_, i) => batchA(i).id);
-  a1.timeline = [
-    tl("created", daysFromNow(-7), owner),
-    tl("started", daysFromNow(-5), pharm),
-    tl("submitted", daysFromNow(-3), pharm),
-    tl("approved", daysFromNow(-3), inv),
-    tl("completed", daysFromNow(-3), owner),
-  ];
   audits.push(a1);
 
   a1.batchIds.forEach((bid, i) => {
-    const b = batches.find((x) => x.id === bid)!;
+    const b = batches.find((x) => x.id === bid);
+    if (!b) return;
     const delta = i === 2 ? -12 : i === 5 ? 9 : i === 8 ? -5 : 0;
-    auditCounts.push(mkCount(a1, b, b.currentStock + delta));
+    auditCounts.push({
+      id: uid(),
+      auditId: a1.id,
+      batchId: b.id,
+      medicineId: b.medicineId,
+      medicineName: medNameOf(b.id),
+      batchNumber: b.batchNumber,
+      shelf: "—",
+      expectedQty: b.currentStock,
+      physicalQty: b.currentStock + delta,
+      countedBy: pharm.id,
+      countedByName: pharm.name,
+      countedAt: daysFromNow(-4),
+      device: "Scanner USB",
+    });
   });
 
-  const v1 = mkVariance(
-    a1,
-    batches.find((x) => x.id === a1.batchIds[2])!,
-    batches.find((x) => x.id === a1.batchIds[2])!.currentStock - 12,
-    "theft",
-    {
-      status: "approved",
-      recommendedAction: "approve",
-      managerComment: "Reconciled against CCTV — confirmed missing.",
-    },
-  );
-  const v2 = mkVariance(
-    a1,
-    batches.find((x) => x.id === a1.batchIds[5])!,
-    batches.find((x) => x.id === a1.batchIds[5])!.currentStock + 9,
-    "damaged",
-    {
-      status: "approved",
-      recommendedAction: "write_off",
-      managerComment: "Bottles cracked in transit.",
-    },
-  );
-  const v3 = mkVariance(
-    a1,
-    batches.find((x) => x.id === a1.batchIds[8])!,
-    batches.find((x) => x.id === a1.batchIds[8])!.currentStock - 5,
-    "billing_error",
-    {
-      status: "rejected",
-      recommendedAction: "reject",
-      managerComment: "Counter check showed no error — book stock unchanged.",
-    },
-  );
+  const varianceOf = (
+    batch: Batch,
+    audit: Audit,
+    delta: number,
+    reason: VarianceReason,
+    extra?: Partial<VarianceItem>,
+  ): VarianceItem => ({
+    id: uid(),
+    auditId: audit.id,
+    batchId: batch.id,
+    medicineId: batch.medicineId,
+    medicineName: medNameOf(batch.id),
+    batchNumber: batch.batchNumber,
+    expectedQty: batch.currentStock,
+    actualQty: batch.currentStock + delta,
+    difference: delta,
+    unitCost: batch.purchasePrice,
+    varianceValue: Math.abs(delta) * batch.purchasePrice,
+    severity: Math.abs(delta) >= 10 ? "high" : "medium",
+    reason,
+    recommendedAction: reason === "theft" ? "approve" : reason === "billing_error" ? "reject" : "write_off",
+    managerComment:
+      reason === "theft"
+        ? "Reconciled against CCTV — confirmed missing."
+        : reason === "billing_error"
+          ? "Counter check showed no error — book stock unchanged."
+          : "Bottles cracked in transit.",
+    verifiedBy: pharm.id,
+    verifiedByName: pharm.name,
+    status: "approved",
+    createdAt: daysFromNow(-4),
+    ...extra,
+  });
+
+  const v1 = varianceOf(batches[2], a1, -12, "theft");
+  const v2 = varianceOf(batches[5], a1, 9, "damaged");
+  const v3 = varianceOf(batches[8], a1, -5, "billing_error", { status: "rejected" });
   variances.push(v1, v2, v3);
 
-  adjustments.push(
-    mkAdjustment(
-      a1,
-      batches.find((x) => x.id === a1.batchIds[2])!,
-      v1,
-      "adjust",
-      {
-        status: "applied",
-        approverName: owner.name,
-        approvedAt: daysFromNow(-3),
-        appliedAt: daysFromNow(-3),
-        appliedBy: owner.id,
-        appliedByName: owner.name,
-        history: [
-          {
-            id: uid(),
-            action: "Submitted by staff",
-            userId: pharm.id,
-            userName: pharm.name,
-            at: daysFromNow(-4),
-          },
-          {
-            id: uid(),
-            action: "Approved (Supervisor)",
-            userId: inv.id,
-            userName: inv.name,
-            at: daysFromNow(-3),
-          },
-          {
-            id: uid(),
-            action: "Approved (Manager)",
-            userId: owner.id,
-            userName: owner.name,
-            at: daysFromNow(-3),
-          },
-          {
-            id: uid(),
-            action: "Inventory updated",
-            userId: owner.id,
-            userName: owner.name,
-            at: daysFromNow(-3),
-          },
-        ],
-      },
-    ),
-    mkAdjustment(
-      a1,
-      batches.find((x) => x.id === a1.batchIds[5])!,
-      v2,
-      "write_off",
-      {
-        status: "applied",
-        approverName: owner.name,
-        approvedAt: daysFromNow(-3),
-        appliedAt: daysFromNow(-3),
-        appliedBy: owner.id,
-        appliedByName: owner.name,
-        history: [
-          {
-            id: uid(),
-            action: "Submitted by staff",
-            userId: pharm.id,
-            userName: pharm.name,
-            at: daysFromNow(-4),
-          },
-          {
-            id: uid(),
-            action: "Approved (Supervisor)",
-            userId: inv.id,
-            userName: inv.name,
-            at: daysFromNow(-3),
-          },
-          {
-            id: uid(),
-            action: "Approved (Manager)",
-            userId: owner.id,
-            userName: owner.name,
-            at: daysFromNow(-3),
-          },
-          {
-            id: uid(),
-            action: "Inventory updated",
-            userId: owner.id,
-            userName: owner.name,
-            at: daysFromNow(-3),
-          },
-        ],
-      },
-    ),
-  );
+  adjustments.push({
+    id: uid(),
+    auditId: a1.id,
+    batchId: batches[2].id,
+    medicineId: batches[2].medicineId,
+    medicineName: medNameOf(batches[2].id),
+    batchNumber: batches[2].batchNumber,
+    action: "adjust",
+    quantity: 12,
+    unitCost: batches[2].purchasePrice,
+    varianceId: v1.id,
+    reason: "theft",
+    severity: "high",
+    submittedBy: pharm.id,
+    submittedByName: pharm.name,
+    createdAt: daysFromNow(-4),
+    status: "applied",
+    approverName: owner.name,
+    approvedAt: daysFromNow(-3),
+    appliedAt: daysFromNow(-3),
+    appliedBy: owner.id,
+    appliedByName: owner.name,
+    history: [
+      { id: uid(), action: "Submitted by staff", userId: pharm.id, userName: pharm.name, at: daysFromNow(-4) },
+      { id: uid(), action: "Approved (Manager)", userId: owner.id, userName: owner.name, at: daysFromNow(-3) },
+    ],
+  });
 
-  // AUD-0002 · Cycle Count — Paused at 68%
-  const a2 = {
+  const a2: Audit = {
     id: uid(),
     auditNumber: "AUD-0002",
-    type: "cycle" as const,
-    title: "HQ · Cycle Count (A)",
+    type: "category",
+    title: "HQ · Antibiotics Category Audit",
     branch: branchNames[0],
-    batchIds: Array.from({ length: 13 }, (_, i) => batchB(i).id),
+    categoryId: catAntib.id,
+    batchIds: batches.slice(1, 7).map((x) => x.id),
     assignedUserIds: [pharm.id],
-    scheduledDate: daysFromNow(-3),
-    status: "paused" as const,
-    createdBy: inv.id,
-    createdByName: inv.name,
-    createdAt: daysFromNow(-4),
-    startedAt: daysFromNow(-1),
+    scheduledDate: daysFromNow(-1),
+    status: "paused",
+    createdBy: owner.id,
+    createdByName: owner.name,
+    createdAt: daysFromNow(-3),
+    startedAt: daysFromNow(-2),
     pausedAt: now,
     timeline: [
-      tl("created", daysFromNow(-4), inv),
-      tl("started", daysFromNow(-1), pharm),
-      tl("paused", now, pharm, "Shift ended — resuming tomorrow"),
-    ] as AuditTimelineEvent[],
+      { id: uid(), action: "created", at: daysFromNow(-3), byUserId: owner.id, byName: owner.name },
+      { id: uid(), action: "started", at: daysFromNow(-2), byUserId: pharm.id, byName: pharm.name },
+      { id: uid(), action: "paused", at: now, byUserId: pharm.id, byName: pharm.name, note: "Shift ended — resuming tomorrow" },
+    ],
   };
   audits.push(a2);
 
-  a2.batchIds.slice(0, 9).forEach((bid, i) => {
-    const b = batches.find((x) => x.id === bid)!;
-    const delta = i === 4 ? -3 : 0;
-    auditCounts.push(
-      mkCount(a2, b, b.currentStock + delta, {
-        device: i % 2 ? "Android · Web" : "iPhone · Camera",
-      }),
-    );
-  });
-  const v4 = mkVariance(
-    a2,
-    batches.find((x) => x.id === a2.batchIds[4])!,
-    batches.find((x) => x.id === a2.batchIds[4])!.currentStock - 3,
-    "unknown",
-    {
-      status: "pending",
-    },
-  );
-  variances.push(v4);
-
-  // AUD-0003 · Shelf Audit — Pending Review (variance + approval demo)
-  const a3 = {
+  const a3: Audit = {
     id: uid(),
     auditNumber: "AUD-0003",
-    type: "shelf" as const,
-    title: "HQ · R-01-A-01 Shelf Audit",
-    branch: branchNames[0],
-    shelf: "R-01-A-01",
-    batchIds: [batchA(0), batchA(1), batchA(2), batchA(3), batchA(4), batchA(5)].map((b) => b.id),
-    assignedUserIds: [pharm.id, inv.id],
-    scheduledDate: daysFromNow(-2),
-    status: "pending_review" as const,
-    createdBy: inv.id,
-    createdByName: inv.name,
-    createdAt: daysFromNow(-3),
-    startedAt: daysFromNow(-2),
-    submittedAt: daysFromNow(-1),
-    timeline: [
-      tl("created", daysFromNow(-3), inv),
-      tl("started", daysFromNow(-2), pharm),
-      tl("submitted", daysFromNow(-1), pharm),
-    ] as AuditTimelineEvent[],
-  };
-  audits.push(a3);
-
-  a3.batchIds.forEach((bid, i) => {
-    const b = batches.find((x) => x.id === bid)!;
-    const delta = i === 1 ? -16 : i === 3 ? 7 : i === 4 ? -2 : 0;
-    auditCounts.push(mkCount(a3, b, b.currentStock + delta));
-  });
-
-  const v5 = mkVariance(
-    a3,
-    batches.find((x) => x.id === a3.batchIds[1])!,
-    batches.find((x) => x.id === a3.batchIds[1])!.currentStock - 16,
-    "supplier_short_supply",
-    {
-      status: "pending",
-      recommendedAction: "approve",
-    },
-  );
-  const v6 = mkVariance(
-    a3,
-    batches.find((x) => x.id === a3.batchIds[3])!,
-    batches.find((x) => x.id === a3.batchIds[3])!.currentStock + 7,
-    "wrong_shelf",
-    {
-      status: "pending",
-      recommendedAction: "transfer",
-      managerComment: "Likely counted from neighbouring shelf.",
-    },
-  );
-  const v7 = mkVariance(
-    a3,
-    batches.find((x) => x.id === a3.batchIds[4])!,
-    batches.find((x) => x.id === a3.batchIds[4])!.currentStock - 2,
-    "damaged",
-    {
-      status: "recount_requested",
-      recommendedAction: "recount",
-    },
-  );
-  variances.push(v5, v6, v7);
-
-  adjustments.push(
-    mkAdjustment(
-      a3,
-      batches.find((x) => x.id === a3.batchIds[1])!,
-      v5,
-      "adjust",
-    ),
-    mkAdjustment(
-      a3,
-      batches.find((x) => x.id === a3.batchIds[3])!,
-      v6,
-      "transfer",
-      {
-        status: "pending_manager",
-        approverName: inv.name,
-        approvedAt: now,
-        history: [
-          {
-            id: uid(),
-            action: "Submitted by staff",
-            userId: pharm.id,
-            userName: pharm.name,
-            at: now,
-          },
-          {
-            id: uid(),
-            action: "Approved (Supervisor)",
-            userId: inv.id,
-            userName: inv.name,
-            at: now,
-          },
-        ],
-      },
-    ),
-  );
-
-  // AUD-0004 · Scheduled today (Full, Annex)
-  const a4 = {
-    id: uid(),
-    auditNumber: "AUD-0004",
-    type: "full" as const,
-    title: "Annex · Full Store Audit",
+    type: "batch",
+    title: "Downtown Annex · Batch Audit",
     branch: branchNames[1],
-    batchIds: [] as string[],
+    batchIds: batches.slice(2, 8).map((x) => x.id),
     assignedUserIds: [pharm.id],
-    scheduledDate: daysFromNow(0),
-    status: "scheduled" as const,
-    createdBy: inv.id,
-    createdByName: inv.name,
-    createdAt: daysFromNow(-1),
-    timeline: [tl("created", daysFromNow(-1), inv)] as AuditTimelineEvent[],
-  };
-  a4.batchIds = Array.from(
-    { length: 12 },
-    (_, i) => (i % 3 === 0 ? batchB(i) : batchA(i)).id,
-  ).slice(0, 12);
-  audits.push(a4);
-
-  // AUD-0005 · Overdue (Category, Antibiotics)
-  const a5 = {
-    id: uid(),
-    auditNumber: "AUD-0005",
-    type: "category" as const,
-    title: "Antibiotics Category Audit",
-    branch: branchNames[0],
-    categoryId: catAntib.id,
-    batchIds: [batchA(1), batchA(2), batchA(8)].map((b) => b.id),
-    assignedUserIds: [pharm.id],
-    scheduledDate: daysFromNow(-2),
-    status: "scheduled" as const,
-    createdBy: inv.id,
-    createdByName: inv.name,
-    createdAt: daysFromNow(-5),
-    timeline: [tl("created", daysFromNow(-5), inv)] as AuditTimelineEvent[],
-  };
-  audits.push(a5);
-
-  // AUD-0006 · Upcoming Shelf Audit
-  audits.push({
-    id: uid(),
-    auditNumber: "AUD-0006",
-    type: "shelf" as const,
-    title: "Sector 15 · R-02-B-03",
-    branch: branchNames[2],
-    shelf: "R-02-B-03",
-    batchIds: [batchB(0), batchB(1), batchB(2)].map((b) => b.id),
-    assignedUserIds: [pharm.id],
-    scheduledDate: daysFromNow(3),
-    status: "scheduled" as const,
-    createdBy: inv.id,
-    createdByName: inv.name,
-    createdAt: daysFromNow(0),
-    timeline: [tl("created", daysFromNow(0), inv)] as AuditTimelineEvent[],
-  });
-
-  // AUD-0007 · Upcoming Cycle Count
-  audits.push({
-    id: uid(),
-    auditNumber: "AUD-0007",
-    type: "cycle" as const,
-    title: "Annex · Cycle Count (B)",
-    branch: branchNames[1],
-    batchIds: Array.from({ length: 10 }, (_, i) => batchB(i).id),
-    assignedUserIds: [pharm.id, inv.id],
-    scheduledDate: daysFromNow(7),
-    status: "scheduled" as const,
-    createdBy: inv.id,
-    createdByName: inv.name,
-    createdAt: daysFromNow(0),
-    timeline: [tl("created", daysFromNow(0), inv)] as AuditTimelineEvent[],
-  });
-
-  // AUD-0008 · Upcoming Batch Audit
-  audits.push({
-    id: uid(),
-    auditNumber: "AUD-0008",
-    type: "batch" as const,
-    title: "Batch audit · Novamox / Augmentin",
-    branch: branchNames[2],
-    batchIds: [batchA(1).id, batchA(8).id],
-    assignedUserIds: [pharm.id],
-    scheduledDate: daysFromNow(10),
-    status: "scheduled" as const,
-    createdBy: inv.id,
-    createdByName: inv.name,
-    createdAt: daysFromNow(0),
-    timeline: [tl("created", daysFromNow(0), inv)] as AuditTimelineEvent[],
-  });
-
-  // AUD-0009 · Upcoming Random Audit
-  audits.push({
-    id: uid(),
-    auditNumber: "AUD-0009",
-    type: "random" as const,
-    title: "Random spot-check",
-    branch: branchNames[0],
-    batchIds: [batchA(2).id, batchA(6).id, batchA(9).id],
-    assignedUserIds: [pharm.id],
-    scheduledDate: daysFromNow(14),
-    status: "scheduled" as const,
-    createdBy: inv.id,
-    createdByName: inv.name,
-    createdAt: daysFromNow(0),
-    timeline: [tl("created", daysFromNow(0), inv)] as AuditTimelineEvent[],
-  });
-
-  // AUD-0010 · Upcoming (next cycle)
-  audits.push({
-    id: uid(),
-    auditNumber: "AUD-0010",
-    type: "full" as const,
-    title: "HQ · Month-end Full Store Audit",
-    branch: branchNames[0],
-    batchIds: Array.from({ length: 12 }, (_, i) => batchA(i).id),
-    assignedUserIds: [pharm.id, inv.id],
-    scheduledDate: daysFromNow(21),
-    status: "scheduled" as const,
+    scheduledDate: daysFromNow(-1),
+    status: "pending_review",
     createdBy: owner.id,
     createdByName: owner.name,
-    createdAt: daysFromNow(0),
-    timeline: [tl("created", daysFromNow(0), owner)] as AuditTimelineEvent[],
-  });
-
-  // AUD-0011 · Cancelled
-  audits.push({
-    id: uid(),
-    auditNumber: "AUD-0011",
-    type: "shelf" as const,
-    title: "HQ · R-05-A-02 (cancelled)",
-    branch: branchNames[0],
-    shelf: "R-05-A-02",
-    batchIds: [batchA(5).id, batchA(6).id],
-    assignedUserIds: [pharm.id],
-    scheduledDate: daysFromNow(-5),
-    status: "cancelled" as const,
-    createdBy: inv.id,
-    createdByName: inv.name,
-    createdAt: daysFromNow(-6),
+    createdAt: daysFromNow(-2),
+    startedAt: daysFromNow(-1),
+    submittedAt: now,
     timeline: [
-      tl("created", daysFromNow(-6), inv),
-      tl("cancelled", daysFromNow(-4), owner, "Deferred — shelf merged into full audit"),
-    ] as AuditTimelineEvent[],
-  });
+      { id: uid(), action: "created", at: daysFromNow(-2), byUserId: owner.id, byName: owner.name },
+      { id: uid(), action: "started", at: daysFromNow(-1), byUserId: pharm.id, byName: pharm.name },
+      { id: uid(), action: "submitted", at: now, byUserId: pharm.id, byName: pharm.name },
+    ],
+  };
+  audits.push(a3);
 
   const activityLogs = [
     {
@@ -1056,6 +679,8 @@ function seed(): DB {
     suppliers: [sup1, sup2, sup3],
     medicines,
     batches,
+    inventoryStock,
+    inventoryLedger,
     stockMovements,
     activityLogs,
     sales: [],
@@ -1105,6 +730,9 @@ function load(): DB {
       cache = {
         ...seed(),
         ...loaded,
+        inventoryStock: loaded.inventoryStock ?? [],
+        inventoryLedger: loaded.inventoryLedger ?? [],
+        stockMovements: loaded.stockMovements ?? [],
         sales: loaded.sales ?? [],
         purchaseOrders: loaded.purchaseOrders ?? [],
         grns: loaded.grns ?? [],

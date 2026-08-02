@@ -205,9 +205,7 @@ function PurchasesPage() {
         purchasePrice: l.purchasePrice,
         sellingPrice: l.sellingPrice,
         supplierId: grnSupplier,
-        quantityReceived: l.quantity,
-        currentStock: 0, // applyStockMovement will add
-        status: "active",
+        currentStock: l.quantity,
         createdAt: now,
       };
       createdBatches.push(batch);
@@ -261,12 +259,12 @@ function PurchasesPage() {
 
     items.forEach((it) => {
       applyStockMovement({
-        medicineId: it.medicineId,
         batchId: it.batchId,
-        movementType: "in",
-        quantity: it.quantity,
-        reason: `GRN ${grnNumber}`,
-        referenceId: grn.id,
+        locationType: "Front Shelf",
+        rackCode: "GRN",
+        movementType: "Purchase Inward",
+        quantityChange: it.quantity,
+        referenceDocId: grn.id,
         userId: user.id,
         userName: user.name,
       });
