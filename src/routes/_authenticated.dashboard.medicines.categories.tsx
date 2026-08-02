@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/dashboard/medicines/categories")({
-  head: () => ({ meta: [{ title: "Categories Â· PharmaHub" }] }),
+  head: () => ({ meta: [{ title: "Categories · PharmaHub" }] }),
   component: CategoriesPage,
 });
 

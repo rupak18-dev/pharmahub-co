@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo } from "react";
 import { Sparkles, TrendingUp, TrendingDown, AlertTriangle, CalendarClock, Zap } from "lucide-react";
 import { useDb } from "@/hooks/useDb";
@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/pharmacy/EmptyState";
 import { differenceInDays, subDays } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/ai")({
-  head: () => ({ meta: [{ title: "AI Insights Â· PharmaHub" }] }),
+  head: () => ({ meta: [{ title: "AI Insights · PharmaHub" }] }),
   component: AiPage,
 });
 
@@ -16,7 +16,7 @@ function AiPage() {
   const currency = data.settings.currency;
   const medName = useMemo(() => {
     const m = new Map(data.medicines.map((x) => [x.id, x.name]));
-    return (id: string) => m.get(id) ?? "â€”";
+    return (id: string) => m.get(id) ?? "—";
   }, [data.medicines]);
 
   const insights = useMemo(() => {
@@ -82,7 +82,7 @@ function AiPage() {
       .sort((a, b) => a.daysLeft - a.daysToSell - (b.daysLeft - b.daysToSell))
       .slice(0, 6);
 
-    // Anomalies: today's sales > 3Ã— rolling 14-day daily average
+    // Anomalies: today's sales > 3× rolling 14-day daily average
     const salesByDay = new Map<string, number>();
     data.sales.forEach((s) => {
       if (s.status === "voided") return;
@@ -111,7 +111,7 @@ function AiPage() {
         <span className="inline-flex items-center gap-1 font-medium text-primary">
           <Sparkles className="h-3.5 w-3.5" /> Heuristic preview
         </span>
-        {" "}â€” these signals are computed from stock movements and won't replace an ML model.
+        {" "}— these signals are computed from stock movements and won't replace an ML model.
       </div>
 
       {empty ? (
@@ -160,7 +160,7 @@ function AiPage() {
                   <li key={r.m.id} className="flex items-center justify-between">
                     <span>{r.m.name}</span>
                     <span className="font-mono text-warning-foreground">
-                      ~{Math.round(r.daysToZero)}d left Â· {r.stock} u
+                      ~{Math.round(r.daysToZero)}d left · {r.stock} u
                     </span>
                   </li>
                 ))}
@@ -173,7 +173,7 @@ function AiPage() {
               <ul className="space-y-1.5 text-sm">
                 {insights.risk.map((r) => (
                   <li key={r.b.id} className="flex items-center justify-between">
-                    <span>{medName(r.b.medicineId)} Â· <span className="font-mono text-xs">{r.b.batchNumber}</span></span>
+                    <span>{medName(r.b.medicineId)} · <span className="font-mono text-xs">{r.b.batchNumber}</span></span>
                     <span className="font-mono text-destructive">{r.daysLeft}d vs ~{Math.round(r.daysToSell)}d</span>
                   </li>
                 ))}

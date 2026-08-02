@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { ArrowDownToLine, ArrowUpFromLine, SlidersHorizontal, AlertTriangle } from "lucide-react";
 import { useForm } from "react-hook-form";
@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/dashboard/inventory")({
-  head: () => ({ meta: [{ title: "Inventory Â· PharmaHub" }] }),
+  head: () => ({ meta: [{ title: "Inventory · PharmaHub" }] }),
   component: InventoryPage,
 });
 
@@ -319,9 +319,9 @@ function InventoryPage() {
                     return (
                       <tr key={mv.id} className="hover:bg-muted/30">
                         <td className="px-4 py-3 text-xs text-muted-foreground">
-                          {format(new Date(mv.createdAt), "dd MMM Â· HH:mm")}
+                          {format(new Date(mv.createdAt), "dd MMM · HH:mm")}
                         </td>
-                        <td className="px-4 py-3">{med?.name ?? "â€”"}</td>
+                        <td className="px-4 py-3">{med?.name ?? "—"}</td>
                         <td className="px-4 py-3 capitalize text-muted-foreground">
                           {mv.movementType}
                         </td>
@@ -430,7 +430,7 @@ function MovementSheet({
                   const med = meds.find((m) => m.id === b.medicineId);
                   return (
                     <SelectItem key={b.id} value={b.id}>
-                      {med?.name} Â· {b.batchNumber} Â· {b.currentStock} in stock
+                      {med?.name} · {b.batchNumber} · {b.currentStock} in stock
                     </SelectItem>
                   );
                 })}

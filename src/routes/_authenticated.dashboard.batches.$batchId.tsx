@@ -15,7 +15,7 @@ const safeFormat = (dateStr: string | undefined | null, fmt: string) => {
 };
 
 export const Route = createFileRoute("/_authenticated/dashboard/batches/$batchId")({
-  head: () => ({ meta: [{ title: "Batch detail Â· PharmaHub" }] }),
+  head: () => ({ meta: [{ title: "Batch detail · PharmaHub" }] }),
   component: BatchDetailPage,
 });
 
@@ -64,7 +64,7 @@ function BatchDetailPage() {
           label="Current stock"
           value={`${totalStock}`}
         />
-        <InfoTile label="Supplier" value={supplier?.name ?? "â€”"} />
+        <InfoTile label="Supplier" value={supplier?.name ?? "—"} />
         <InfoTile label="MRP" value={`${settings.currency}${batch.mrp.toFixed(2)}`} />
         <InfoTile label="Purchase price" value={`${settings.currency}${batch.purchasePrice.toFixed(2)}`} />
         <InfoTile label="Selling price" value={`${settings.currency}${batch.sellingPrice.toFixed(2)}`} />
@@ -99,7 +99,7 @@ function BatchDetailPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-sm font-medium capitalize">
-                      Stock {m.movementType} Â· {m.quantity > 0 ? "+" : ""}
+                      Stock {m.movementType} · {m.quantity > 0 ? "+" : ""}
                       {m.quantity}
                     </div>
                     <div className="text-xs text-muted-foreground">

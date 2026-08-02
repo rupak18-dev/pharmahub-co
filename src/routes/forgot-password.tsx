@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,9 +13,9 @@ import { CheckCircle2 } from "lucide-react";
 export const Route = createFileRoute("/forgot-password")({
   head: () => ({
     meta: [
-      { title: "Reset password Â· PharmaHub" },
+      { title: "Reset password · PharmaHub" },
       { name: "description", content: "Reset your PharmaHub account password." },
-      { property: "og:title", content: "Reset password Â· PharmaHub" },
+      { property: "og:title", content: "Reset password · PharmaHub" },
       { property: "og:description", content: "Reset your PharmaHub account password." },
     ],
   }),
@@ -48,7 +48,7 @@ function ForgotPage() {
       footer={
         <span className="text-muted-foreground">
           <Link to="/login" className="font-medium text-primary hover:underline">
-            â† Back to sign in
+            ← Back to sign in
           </Link>
         </span>
       }
@@ -77,7 +77,7 @@ function ForgotPage() {
             )}
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
-            {isSubmitting ? "Sendingâ€¦" : "Send reset link"}
+            {isSubmitting ? "Sending…" : "Send reset link"}
           </Button>
         </form>
       )}

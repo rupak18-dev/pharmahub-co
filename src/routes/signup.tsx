@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -12,9 +12,9 @@ import { useAuth } from "@/lib/auth";
 export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
-      { title: "Create account Â· PharmaHub" },
+      { title: "Create account · PharmaHub" },
       { name: "description", content: "Create a new PharmaHub account to start managing your pharmacy." },
-      { property: "og:title", content: "Create account Â· PharmaHub" },
+      { property: "og:title", content: "Create account · PharmaHub" },
       { property: "og:description", content: "Create a new PharmaHub account to start managing your pharmacy." },
     ],
   }),
@@ -114,7 +114,7 @@ function SignupPage() {
           </div>
         </div>
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Creating accountâ€¦" : "Create account"}
+          {isSubmitting ? "Creating account…" : "Create account"}
         </Button>
       </form>
     </AuthShell>

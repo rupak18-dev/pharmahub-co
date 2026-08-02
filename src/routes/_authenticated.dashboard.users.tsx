@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Check, X, ShieldCheck, UserPlus } from "lucide-react";
 import { toast } from "sonner";
@@ -32,7 +32,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/dashboard/users")({
-  head: () => ({ meta: [{ title: "Users & Roles Â· PharmaHub" }] }),
+  head: () => ({ meta: [{ title: "Users & Roles · PharmaHub" }] }),
   component: UsersPage,
 });
 

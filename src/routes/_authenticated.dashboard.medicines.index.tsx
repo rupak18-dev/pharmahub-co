@@ -115,7 +115,7 @@ export const Route = createFileRoute("/_authenticated/dashboard/medicines/")({
       searchType: search.searchType as string | undefined,
     };
   },
-  head: () => ({ meta: [{ title: "Master Catalog Â· PharmaHub" }] }),
+  head: () => ({ meta: [{ title: "Master Catalog · PharmaHub" }] }),
   component: MedicinesCatalogPage,
 });
 
@@ -305,9 +305,9 @@ function MedicinesCatalogPage() {
         ptr: med.ptr || 0,
         pur: 0,
         sell: 0,
-        batchNo: "â€”",
-        expiry: "â€”",
-        supplier: "â€”"
+        batchNo: "—",
+        expiry: "—",
+        supplier: "—"
       });
     });
 
@@ -319,7 +319,7 @@ function MedicinesCatalogPage() {
         const nearMs = 90 * 24 * 60 * 60 * 1000;
         const isExpired = expTime < Date.now();
         const isNear = !isExpired && (expTime - Date.now() <= nearMs);
-        const supplierName = suppliers.find(s => s.id === b.supplierId)?.name || "â€”";
+        const supplierName = suppliers.find(s => s.id === b.supplierId)?.name || "—";
 
         m.set(b.medicineId, {
           current: prev.current + b.currentStock,
@@ -438,28 +438,28 @@ function MedicinesCatalogPage() {
         switch (col.id) {
           case "id": return m.id;
           case "name": return m.name;
-          case "brand": return m.brandName || "â€”";
-          case "generic": return m.genericName || "â€”";
-          case "category": return categories.find(c => c.id === m.categoryId)?.name || "â€”";
+          case "brand": return m.brandName || "—";
+          case "generic": return m.genericName || "—";
+          case "category": return categories.find(c => c.id === m.categoryId)?.name || "—";
           case "type": return m.type;
           case "status": return m.isActive ? "Active" : "Inactive";
-          case "dosage": return m.dosageForm || "â€”";
-          case "strength": return m.strength || "â€”";
-          case "manufacturer": return manufacturers.find(man => man.id === m.manufacturerId)?.name || "â€”";
-          case "packSize": return m.packSize || "â€”";
-          case "barcode": return m.barcode || "â€”";
-          case "batch": return meta?.batchNo || "â€”";
+          case "dosage": return m.dosageForm || "—";
+          case "strength": return m.strength || "—";
+          case "manufacturer": return manufacturers.find(man => man.id === m.manufacturerId)?.name || "—";
+          case "packSize": return m.packSize || "—";
+          case "barcode": return m.barcode || "—";
+          case "batch": return meta?.batchNo || "—";
           case "mrp": return `${currency}${meta?.mrp || 0}`;
           case "ptr": return `${currency}${meta?.ptr || 0}`;
           case "purchasePrice": return `${currency}${meta?.pur || 0}`;
           case "sellingPrice": return `${currency}${meta?.sell || 0}`;
           case "currentStock": return (meta?.current || 0).toString();
           case "minStock": return (meta?.min || 0).toString();
-          case "expiryDate": return meta?.expiry || "â€”";
-          case "rack": return m.rackLocation || "â€”";
-          case "supplier": return meta?.supplier || "â€”";
+          case "expiryDate": return meta?.expiry || "—";
+          case "rack": return m.rackLocation || "—";
+          case "supplier": return meta?.supplier || "—";
           case "availability": return (meta?.current || 0) > 0 ? "In Stock" : "Out of Stock";
-          default: return "â€”";
+          default: return "—";
         }
       });
     });
@@ -937,36 +937,36 @@ function MedicinesCatalogPage() {
                           </td>
 
                           {/* Brand */}
-                          {isFieldVisible("brand") && <td className="px-4 py-3 text-muted-foreground">{m.brandName || "â€”"}</td>}
+                          {isFieldVisible("brand") && <td className="px-4 py-3 text-muted-foreground">{m.brandName || "—"}</td>}
 
                           {/* Generic */}
-                          {isFieldVisible("genericName") && <td className="px-4 py-3 text-muted-foreground">{m.genericName || "â€”"}</td>}
+                          {isFieldVisible("genericName") && <td className="px-4 py-3 text-muted-foreground">{m.genericName || "—"}</td>}
 
                           {/* Salt */}
-                          {isFieldVisible("saltComposition") && <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate" title={m.saltComposition}>{m.saltComposition || "â€”"}</td>}
+                          {isFieldVisible("saltComposition") && <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate" title={m.saltComposition}>{m.saltComposition || "—"}</td>}
 
                           {/* Category */}
                           {isFieldVisible("category") && <td className="px-4 py-3 text-muted-foreground">
-                            {categories.find((c) => c.id === m.categoryId)?.name ?? "â€”"}
+                            {categories.find((c) => c.id === m.categoryId)?.name ?? "—"}
                           </td>}
 
                           {/* Strength */}
-                          {isFieldVisible("strength") && <td className="px-4 py-3 text-muted-foreground">{m.strength || "â€”"}</td>}
+                          {isFieldVisible("strength") && <td className="px-4 py-3 text-muted-foreground">{m.strength || "—"}</td>}
 
                           {/* Form */}
-                          {isFieldVisible("form") && <td className="px-4 py-3 text-muted-foreground">{m.dosageForm || "â€”"}</td>}
+                          {isFieldVisible("form") && <td className="px-4 py-3 text-muted-foreground">{m.dosageForm || "—"}</td>}
 
                           {/* Pack */}
-                          {isFieldVisible("packSize") && <td className="px-4 py-3 text-muted-foreground">{m.packSize || "â€”"}</td>}
+                          {isFieldVisible("packSize") && <td className="px-4 py-3 text-muted-foreground">{m.packSize || "—"}</td>}
 
                           {/* GTIN / Barcode */}
                           {isFieldVisible("barcode") && <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
-                            <div>G: {m.gtin || "â€”"}</div>
-                            <div>B: {m.barcode || "â€”"}</div>
+                            <div>G: {m.gtin || "—"}</div>
+                            <div>B: {m.barcode || "—"}</div>
                           </td>}
 
                           {/* Active Batch */}
-                          {isFieldVisible("batch") && <td className="px-4 py-3 font-mono text-xs">{meta?.batchNo || "â€”"}</td>}
+                          {isFieldVisible("batch") && <td className="px-4 py-3 font-mono text-xs">{meta?.batchNo || "—"}</td>}
 
                           {/* MRP */}
                           {isFieldVisible("mrp") && <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
@@ -1001,15 +1001,15 @@ function MedicinesCatalogPage() {
                           {/* Expiry */}
                           {isFieldVisible("expiryDate") && <td className="px-4 py-3">
                             <span className={meta?.expired ? "text-destructive font-bold" : meta?.nearExp ? "text-amber-500 font-semibold" : "text-muted-foreground"}>
-                              {meta?.expiry !== "â€”" ? new Date(meta?.expiry || "").toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "â€”"}
+                              {meta?.expiry !== "—" ? new Date(meta?.expiry || "").toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "—"}
                             </span>
                           </td>}
 
                           {/* Rack */}
-                          {isFieldVisible("rack") && <td className="px-4 py-3 text-muted-foreground font-mono">{m.rackLocation || "â€”"}</td>}
+                          {isFieldVisible("rack") && <td className="px-4 py-3 text-muted-foreground font-mono">{m.rackLocation || "—"}</td>}
 
                           {/* Supplier */}
-                          {isFieldVisible("supplier") && <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px]">{meta?.supplier || "â€”"}</td>}
+                          {isFieldVisible("supplier") && <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px]">{meta?.supplier || "—"}</td>}
 
                           {/* Availability */}
                           {isFieldVisible("availability") && <td className="px-4 py-3">
@@ -1101,7 +1101,7 @@ function MedicinesCatalogPage() {
                         </div>
                         <div>
                           <span className="text-muted-foreground block text-[10px]">Rack Location</span>
-                          <span className="font-semibold text-foreground font-mono">{m.rackLocation || "â€”"}</span>
+                          <span className="font-semibold text-foreground font-mono">{m.rackLocation || "—"}</span>
                         </div>
                         <div>
                           <span className="text-muted-foreground block text-[10px]">Selling Price</span>
@@ -1110,7 +1110,7 @@ function MedicinesCatalogPage() {
                         <div>
                           <span className="text-muted-foreground block text-[10px]">Expiry</span>
                           <span className={`font-semibold font-mono ${meta?.expired ? 'text-destructive' : meta?.nearExp ? 'text-amber-500' : 'text-muted-foreground'}`}>
-                            {meta?.expiry !== "â€”" ? new Date(meta?.expiry || "").toLocaleDateString(undefined, { month: "short", year: "2-digit" }) : "â€”"}
+                            {meta?.expiry !== "—" ? new Date(meta?.expiry || "").toLocaleDateString(undefined, { month: "short", year: "2-digit" }) : "—"}
                           </span>
                         </div>
                       </div>
@@ -1191,7 +1191,7 @@ function MedicinesCatalogPage() {
                           </span>
                         </div>
 
-                        <p className="text-xs text-muted-foreground pt-1.5 font-medium">{m.strength || "â€”"} | {m.packSize || "â€”"}</p>
+                        <p className="text-xs text-muted-foreground pt-1.5 font-medium">{m.strength || "—"} | {m.packSize || "—"}</p>
                       </div>
                     </div>
 
@@ -1580,7 +1580,7 @@ function MedicineFormSheet({
             
             <div className="space-y-2">
               <Label htmlFor="storageRequirements">Storage requirements</Label>
-              <Textarea id="storageRequirements" rows={2} placeholder="e.g. Store below 25Â°C, protect from direct sunlight" {...register("storageRequirements")} />
+              <Textarea id="storageRequirements" rows={2} placeholder="e.g. Store below 25°C, protect from direct sunlight" {...register("storageRequirements")} />
             </div>
           </div>
 

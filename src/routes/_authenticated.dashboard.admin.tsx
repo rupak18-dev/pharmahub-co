@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { Download, Upload, RefreshCw, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/dashboard/admin")({
-  head: () => ({ meta: [{ title: "System Admin Â· PharmaHub" }] }),
+  head: () => ({ meta: [{ title: "System Admin · PharmaHub" }] }),
   component: AdminPage,
 });
 
@@ -217,7 +217,7 @@ function AdminPage() {
             <p><span className="text-muted-foreground">Product:</span> PharmaHub</p>
             <p><span className="text-muted-foreground">Version:</span> 1.0.0 (frontend preview)</p>
             <p><span className="text-muted-foreground">Data store:</span> local browser storage (MongoDB backend coming)</p>
-            <p><span className="text-muted-foreground">Signed in as:</span> {user?.name} Â· {user?.role}</p>
+            <p><span className="text-muted-foreground">Signed in as:</span> {user?.name} · {user?.role}</p>
           </div>
         </TabsContent>
       </Tabs>

@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { db } from "./db";
 import type { Profile, RoleName } from "./types";
 
@@ -108,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const requestPasswordReset = async () => {
-    // Mock â€” always succeed
+    // Mock — always succeed
     await new Promise((r) => setTimeout(r, 400));
   };
 

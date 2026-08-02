@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -14,9 +14,9 @@ import { db } from "@/lib/db";
 export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
-      { title: "Sign in Â· PharmaHub" },
+      { title: "Sign in · PharmaHub" },
       { name: "description", content: "Sign in to your PharmaHub dashboard to manage your pharmacy." },
-      { property: "og:title", content: "Sign in Â· PharmaHub" },
+      { property: "og:title", content: "Sign in · PharmaHub" },
       { property: "og:description", content: "Sign in to your PharmaHub dashboard to manage your pharmacy." },
     ],
   }),
@@ -97,7 +97,7 @@ function LoginPage() {
           )}
         </div>
         <Button type="submit" className="w-full" disabled={isSubmitting}>
-          {isSubmitting ? "Signing inâ€¦" : "Sign in"}
+          {isSubmitting ? "Signing in…" : "Sign in"}
         </Button>
         <div className="rounded-md border border-dashed border-border bg-muted/40 p-3 text-xs text-muted-foreground">
           <div className="font-semibold text-foreground">Demo accounts</div>

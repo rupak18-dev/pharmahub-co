@@ -154,7 +154,7 @@ export function applyStockMovement(input: ApplyMovement | ApplyMovementSimple) {
       id: db.uid(),
       userId: input.userId,
       userName: input.userName,
-      action: `Stock ${input.movementType} Â· ${Math.abs(delta)} units`,
+      action: `Stock ${input.movementType} · ${Math.abs(delta)} units`,
       entityType: "batch",
       entityId: input.batchId,
       details: { reason: input.reason, delta },

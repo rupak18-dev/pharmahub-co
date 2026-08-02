@@ -1,11 +1,11 @@
-﻿import { createFileRoute, Link, notFound } from "@tanstack/react-router";
+import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowLeft, Printer } from "lucide-react";
 import { useDb } from "@/hooks/useDb";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/sales/$saleId")({
-  head: () => ({ meta: [{ title: "Invoice Â· PharmaHub" }] }),
+  head: () => ({ meta: [{ title: "Invoice · PharmaHub" }] }),
   component: ReceiptPage,
   notFoundComponent: () => (
     <div className="p-8 text-center text-sm text-muted-foreground">Sale not found.</div>

@@ -1,4 +1,4 @@
-﻿import { useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "@tanstack/react-router";
 import { LogOut, User as UserIcon, Repeat, Store } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -76,7 +76,7 @@ export function UserMenu() {
             {ALL_ROLES.map((r) => (
               <DropdownMenuItem key={r} onClick={() => switchRole(r)}>
                 <UserIcon className="mr-2 h-4 w-4" /> {r}
-                {r === user.role && <span className="ml-auto text-xs">âœ“</span>}
+                {r === user.role && <span className="ml-auto text-xs">✓</span>}
               </DropdownMenuItem>
             ))}
           </DropdownMenuSubContent>
@@ -89,7 +89,7 @@ export function UserMenu() {
             {BRANCHES.map((b) => (
               <DropdownMenuItem key={b.id} onClick={() => handleBranchChange(b.id)}>
                 <Store className="mr-2 h-4 w-4" /> {b.name}
-                {b.id === activeBranch && <span className="ml-auto text-xs">âœ“</span>}
+                {b.id === activeBranch && <span className="ml-auto text-xs">✓</span>}
               </DropdownMenuItem>
             ))}
           </DropdownMenuSubContent>

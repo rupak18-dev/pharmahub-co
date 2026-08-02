@@ -1,4 +1,4 @@
-﻿import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useDb } from "@/hooks/useDb";
 import { useWishlist } from "@/hooks/useWishlist";
 import { useMemo, useState } from "react";
@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { getImageForMedicine } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/dashboard/medicines/$medicineId")({
-  head: ({ params }) => ({ meta: [{ title: `Details - ${params.medicineId} Â· PharmaHub` }] }),
+  head: ({ params }) => ({ meta: [{ title: `Details - ${params.medicineId} · PharmaHub` }] }),
   component: MedicineDetailsPage,
 });
 

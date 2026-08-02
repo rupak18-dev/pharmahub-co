@@ -111,7 +111,7 @@ function seed(): DB {
       mfr: mfr1.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25Â°C",
+      storage: "Store below 25°C",
       reorder: 100,
       salt: "Paracetamol IP 500mg",
       strength: "500 mg",
@@ -136,7 +136,7 @@ function seed(): DB {
       mfr: mfr1.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25Â°C",
+      storage: "Store below 25°C",
       reorder: 80,
       salt: "Amoxicillin Trihydrate IP 250mg",
       strength: "250 mg",
@@ -161,7 +161,7 @@ function seed(): DB {
       mfr: mfr2.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25Â°C",
+      storage: "Store below 25°C",
       reorder: 50,
       salt: "Azithromycin Dihydrate IP 500mg",
       strength: "500 mg",
@@ -186,7 +186,7 @@ function seed(): DB {
       mfr: mfr2.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25Â°C",
+      storage: "Store below 25°C",
       reorder: 60,
       salt: "Atorvastatin Calcium IP 10mg",
       strength: "10 mg",
@@ -211,7 +211,7 @@ function seed(): DB {
       mfr: mfr1.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25Â°C",
+      storage: "Store below 25°C",
       reorder: 90,
       salt: "Metformin Hydrochloride IP 500mg",
       strength: "500 mg",
@@ -261,7 +261,7 @@ function seed(): DB {
       mfr: mfr3.id,
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25Â°C",
+      storage: "Store below 25°C",
       reorder: 75,
       salt: "Ibuprofen IP 400mg",
       strength: "400 mg",
@@ -288,7 +288,7 @@ function seed(): DB {
       mfr: [mfr1.id, mfr2.id, mfr3.id][i % 3],
       hsn: "3004",
       gst: 12,
-      storage: "Store below 25Â°C",
+      storage: "Store below 25°C",
       reorder: 50,
       salt: `Active Ingredient ${i + 1}`,
       strength: "500 mg",
@@ -847,7 +847,7 @@ function seed(): DB {
     adjustments,
     notificationsRead: [],
     settings: {
-      currency: "â‚¹",
+      currency: "₹",
       gstDefault: 12,
       nearExpiryDays: 90,
       deadStockDays: 90,
@@ -881,6 +881,39 @@ function asArray<T>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
 
+const MOJIBAKE_FIXES: ReadonlyArray<[string, string]> = [
+  ["\u00E2\u20AC\u00A2", "\u2022"],
+  ["\u00E2\u2020\u0090", "\u2190"],
+  ["\u00E2\u0153\u201C", "\u2713"],
+  ["\u00E2\u20AC\u201D", "\u2014"],
+  ["\u00E2\u201A\u00B9", "\u20B9"],
+  ["\u00C2\u00B7", "\u00B7"],
+  ["\u00E2\u2020\u2019", "\u2192"],
+  ["\u00E2\u20AC\u00A6", "\u2026"],
+  ["\u00C2\u00B0", "\u00B0"],
+  ["\u00C3\u2014", "\u00D7"],
+  ["\u00C2\u00A9", "\u00A9"],
+];
+
+function fixMojibake(value: unknown): unknown {
+  if (typeof value === "string") {
+    let out = value;
+    for (const [from, to] of MOJIBAKE_FIXES) {
+      if (out.includes(from)) out = out.split(from).join(to);
+    }
+    return out;
+  }
+  if (Array.isArray(value)) return value.map(fixMojibake);
+  if (value !== null && typeof value === "object") {
+    const next: Record<string, unknown> = {};
+    for (const key of Object.keys(value)) {
+      next[key] = fixMojibake((value as Record<string, unknown>)[key]);
+    }
+    return next;
+  }
+  return value;
+}
+
 function load(): DB {
   if (cache) return cache;
   if (!isBrowser()) {
@@ -890,7 +923,10 @@ function load(): DB {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const loaded = JSON.parse(raw) as Partial<DB>;
+      const parsed = JSON.parse(raw) as Partial<DB>;
+      const hadMojibake =
+        JSON.stringify(parsed) !== JSON.stringify(fixMojibake(parsed));
+      const loaded = fixMojibake(parsed) as Partial<DB>;
       // Migrate missing fields from older versions
       cache = {
         ...seed(),
@@ -922,6 +958,7 @@ function load(): DB {
           ...(loaded.settings ?? {}),
         },
       } as DB;
+      if (hadMojibake) save(cache);
       return cache;
     }
   } catch {

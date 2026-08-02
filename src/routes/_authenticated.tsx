@@ -1,4 +1,4 @@
-﻿import { Outlet, createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, useMemo, useRef } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/pharmacy/AppSidebar";
@@ -233,7 +233,7 @@ function AuthenticatedLayout() {
                               <span className="font-semibold text-foreground block truncate">{s.invoiceNo}</span>
                               <span className="text-[10px] text-muted-foreground truncate block">{s.customerName || "Walk-in"}</span>
                             </div>
-                            <span className="text-[10px] font-semibold text-emerald-600 font-mono">â‚¹{s.grandTotal.toFixed(2)}</span>
+                            <span className="text-[10px] font-semibold text-emerald-600 font-mono">₹{s.grandTotal.toFixed(2)}</span>
                           </div>
                         ))}
                       </div>
