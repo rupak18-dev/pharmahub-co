@@ -32,7 +32,7 @@ export function KpiCard({
       onClick={onClick}
       disabled={!onClick}
       className={cn(
-        "flex w-full flex-col rounded-lg border border-border bg-card p-4 text-left shadow-sm transition-colors",
+        "flex w-full flex-col rounded-lg border border-border bg-card p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md",
         onClick && "hover:border-primary/40 hover:bg-accent/40 cursor-pointer",
       )}
     >
