@@ -69,6 +69,7 @@ function MedicinesPage() {
   const categories = useDb((d) => d.categories);
   const manufacturers = useDb((d) => d.manufacturers);
   const batches = useDb((d) => d.batches);
+  const inventoryStock = useDb((d) => d.inventoryStock);
   const has = usePermission();
   const { user } = useAuth();
 
@@ -82,11 +83,12 @@ function MedicinesPage() {
 
   const stockByMed = useMemo(() => {
     const m = new Map<string, number>();
-    batches.forEach((b) =>
-      m.set(b.medicineId, (m.get(b.medicineId) ?? 0) + b.currentStock),
-    );
+    inventoryStock.forEach((s) => {
+      const b = batches.find((b) => b.id === s.batchId);
+      if (b) m.set(b.medicineId, (m.get(b.medicineId) ?? 0) + s.quantityOnHand);
+    });
     return m;
-  }, [batches]);
+  }, [batches, inventoryStock]);
 
   const filtered = useMemo(() => {
     const s = q.trim().toLowerCase();

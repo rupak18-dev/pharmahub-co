@@ -76,32 +76,39 @@ export type BatchStatus = "active" | "near_expiry" | "expired" | "disposed" | "s
 
 export interface Batch {
   id: string;
-  medicineId: string;
+  medicineId: string; // Acts as product_id
+  supplierId?: string;
   batchNumber: string;
   mfgDate: string;
   expiryDate: string;
   mrp: number;
   purchasePrice: number;
   sellingPrice: number;
-  supplierId?: string;
-  quantityReceived: number;
-  currentStock: number;
-  status: BatchStatus;
   createdAt: string;
 }
 
-export type MovementType = "in" | "out" | "adjustment";
+export type LocationType = "Front Shelf" | "Backroom" | "Cold Storage" | "Quarantine";
 
-export interface StockMovement {
+export interface InventoryStock {
   id: string;
-  medicineId: string;
   batchId: string;
-  movementType: MovementType;
-  quantity: number; // signed: positive for in, negative for out
-  reason: string;
-  referenceId?: string;
-  createdBy: string;
+  locationType: LocationType;
+  rackCode: string;
+  quantityOnHand: number;
+  reservedQuantity: number;
   createdAt: string;
+}
+
+export type InventoryLedgerMovementType = "Purchase Inward" | "Sales Outward" | "Customer Return" | "Vendor Return" | "Damaged/Broken" | "Adjustment";
+
+export interface InventoryLedger {
+  id: string;
+  batchId: string;
+  movementType: InventoryLedgerMovementType;
+  quantityChange: number;
+  referenceDocId?: string;
+  userId: string;
+  timestamp: string;
 }
 
 export interface ActivityLog {
@@ -217,7 +224,8 @@ export interface DB {
   suppliers: Supplier[];
   medicines: Medicine[];
   batches: Batch[];
-  stockMovements: StockMovement[];
+  inventoryStock: InventoryStock[];
+  inventoryLedger: InventoryLedger[];
   activityLogs: ActivityLog[];
   sales: Sale[];
   purchaseOrders: PurchaseOrder[];

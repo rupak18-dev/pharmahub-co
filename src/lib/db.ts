@@ -1,7 +1,7 @@
 import type { DB } from "./types";
 import { DEFAULT_PERMISSIONS } from "./permissions";
 
-const STORAGE_KEY = "pharmacyos_db_v1";
+const STORAGE_KEY = "pharmacyos_db_v2";
 
 const uid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -80,6 +80,7 @@ function seed(): DB {
       name: "Paracetamol 500mg",
       generic: "Paracetamol",
       brand: "Crocin",
+      prefix: "CR",
       cat: catAnalg.id,
       mfr: mfr1.id,
       hsn: "3004",
@@ -91,6 +92,7 @@ function seed(): DB {
       name: "Amoxicillin 250mg",
       generic: "Amoxicillin",
       brand: "Novamox",
+      prefix: "NV",
       cat: catAntib.id,
       mfr: mfr1.id,
       hsn: "3004",
@@ -102,6 +104,7 @@ function seed(): DB {
       name: "Azithromycin 500mg",
       generic: "Azithromycin",
       brand: "Azithral",
+      prefix: "AZ",
       cat: catAntib.id,
       mfr: mfr2.id,
       hsn: "3004",
@@ -113,6 +116,7 @@ function seed(): DB {
       name: "Atorvastatin 10mg",
       generic: "Atorvastatin",
       brand: "Atorlip",
+      prefix: "AT",
       cat: catCardio.id,
       mfr: mfr2.id,
       hsn: "3004",
@@ -124,6 +128,7 @@ function seed(): DB {
       name: "Metformin 500mg",
       generic: "Metformin",
       brand: "Glycomet",
+      prefix: "GL",
       cat: catCardio.id,
       mfr: mfr1.id,
       hsn: "3004",
@@ -135,6 +140,7 @@ function seed(): DB {
       name: "Vitamin D3 60K IU",
       generic: "Cholecalciferol",
       brand: "Uprise-D3",
+      prefix: "VD",
       cat: catVit.id,
       mfr: mfr3.id,
       hsn: "3004",
@@ -146,6 +152,7 @@ function seed(): DB {
       name: "Ibuprofen 400mg",
       generic: "Ibuprofen",
       brand: "Brufen",
+      prefix: "BR",
       cat: catAnalg.id,
       mfr: mfr3.id,
       hsn: "3004",
@@ -168,25 +175,27 @@ function seed(): DB {
     barcode: `PH-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
     reorderThreshold: m.reorder,
     isActive: true,
+    prefix: m.prefix,
     createdAt: now,
   }));
 
+  const batchCode = (prefix: string, year: number, month: number, seq: number) =>
+    `${prefix}-${String(year).slice(-2)}${String(month).padStart(2, "0")}-${String(seq).padStart(2, "0")}`;
+
   const batches = medicines.flatMap((m, i) => {
     const suppliers = [sup1.id, sup2.id];
+    const seq = i + 1;
     // Batch A - healthy
     const a = {
       id: uid(),
       medicineId: m.id,
-      batchNumber: `B${(1000 + i * 3).toString()}A`,
+      batchNumber: batchCode(m.prefix, 24, ((i * 2) % 12) + 1, seq),
       mfgDate: daysFromNow(-180),
       expiryDate: daysFromNow(365 + i * 20),
       mrp: 40 + i * 15,
       purchasePrice: 25 + i * 10,
       sellingPrice: 38 + i * 14,
       supplierId: suppliers[i % 2],
-      quantityReceived: 200,
-      currentStock: 200 - i * 15,
-      status: "active" as const,
       createdAt: now,
     };
     // Batch B - near expiry
@@ -194,16 +203,13 @@ function seed(): DB {
     const b = {
       id: uid(),
       medicineId: m.id,
-      batchNumber: `B${(1000 + i * 3 + 1).toString()}B`,
+      batchNumber: batchCode(m.prefix, 24, ((i * 2 + 4) % 12) + 1, seq),
       mfgDate: daysFromNow(-300),
       expiryDate: daysFromNow(nearExpiryDays),
       mrp: 40 + i * 15,
       purchasePrice: 25 + i * 10,
       sellingPrice: 38 + i * 14,
       supplierId: suppliers[(i + 1) % 2],
-      quantityReceived: 100,
-      currentStock: Math.max(0, 60 - i * 4),
-      status: "near_expiry" as const,
       createdAt: now,
     };
     // Batch C - expired (only some)
@@ -211,16 +217,13 @@ function seed(): DB {
       const c = {
         id: uid(),
         medicineId: m.id,
-        batchNumber: `B${(1000 + i * 3 + 2).toString()}C`,
+        batchNumber: batchCode(m.prefix, 23, ((i * 3 + 9) % 12) + 1, seq),
         mfgDate: daysFromNow(-500),
         expiryDate: daysFromNow(-10 - i),
         mrp: 40 + i * 15,
         purchasePrice: 25 + i * 10,
         sellingPrice: 38 + i * 14,
         supplierId: suppliers[i % 2],
-        quantityReceived: 50,
-        currentStock: 10,
-        status: "expired" as const,
         createdAt: now,
       };
       return [a, b, c];
@@ -228,15 +231,47 @@ function seed(): DB {
     return [a, b];
   });
 
-  const stockMovements = batches.map((b) => ({
+  const stockQty = [180, 96, 42, 210, 75, 160, 110];
+  const locPool = [
+    "Front Shelf",
+    "Front Shelf",
+    "Backroom",
+    "Cold Storage",
+    "Front Shelf",
+    "Backroom",
+  ] as const;
+  const rackPool = [
+    "Aisle A, Shelf 1",
+    "Aisle A, Shelf 2",
+    "Backroom Rack 1",
+    "Cold Room 1",
+    "Aisle B, Shelf 1",
+    "Backroom Rack 2",
+  ];
+
+  const inventoryStock = batches.map((b, i) => {
+    let q = stockQty[i % stockQty.length];
+    if (b.batchNumber.endsWith("-02")) q = Math.max(0, Math.round(q / 3));
+    if (b.batchNumber.endsWith("-03")) q = 10;
+
+    return {
+      id: uid(),
+      batchId: b.id,
+      locationType: locPool[i % locPool.length],
+      rackCode: rackPool[i % rackPool.length],
+      quantityOnHand: q,
+      reservedQuantity: 0,
+      createdAt: now,
+    };
+  });
+
+  const inventoryLedger = inventoryStock.map((s) => ({
     id: uid(),
-    medicineId: b.medicineId,
-    batchId: b.id,
-    movementType: "in" as const,
-    quantity: b.quantityReceived,
-    reason: "Initial stock received",
-    createdBy: owner.id,
-    createdAt: now,
+    batchId: s.batchId,
+    movementType: "Purchase Inward" as const,
+    quantityChange: s.quantityOnHand,
+    userId: owner.id,
+    timestamp: now,
   }));
 
   const activityLogs = [
@@ -258,7 +293,8 @@ function seed(): DB {
     suppliers: [sup1, sup2],
     medicines,
     batches,
-    stockMovements,
+    inventoryStock,
+    inventoryLedger,
     activityLogs,
     sales: [],
     purchaseOrders: [],
@@ -298,6 +334,8 @@ function load(): DB {
       cache = {
         ...seed(),
         ...loaded,
+        inventoryStock: loaded.inventoryStock ?? [],
+        inventoryLedger: loaded.inventoryLedger ?? [],
         sales: loaded.sales ?? [],
         purchaseOrders: loaded.purchaseOrders ?? [],
         grns: loaded.grns ?? [],
