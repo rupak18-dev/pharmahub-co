@@ -92,7 +92,7 @@ interface EVitalLineItem {
   lineTotal: number;
 }
 
-export function PurchasesPage() {
+function PurchasesPage() {
   const { user } = useAuth();
   const has = usePermission();
   const suppliers = useDb((d) => d.suppliers);
