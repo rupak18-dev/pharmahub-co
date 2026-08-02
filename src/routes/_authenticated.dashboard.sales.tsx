@@ -47,6 +47,7 @@ function SalesPage() {
   const has = usePermission();
   const medicines = useDb((d) => d.medicines);
   const batches = useDb((d) => d.batches);
+  const inventoryStock = useDb((d) => d.inventoryStock);
   const sales = useDb((d) => d.sales);
   const currency = useDb((d) => d.settings.currency);
   const nearExpiryDays = useDb((d) => d.settings.nearExpiryDays);
@@ -66,13 +67,13 @@ function SalesPage() {
   const stockByMed = useMemo(() => {
     const map = new Map<string, number>();
     const now = Date.now();
-    batches.forEach((b) => {
-      if (b.status === "disposed") return;
-      if (new Date(b.expiryDate).getTime() <= now) return;
-      map.set(b.medicineId, (map.get(b.medicineId) ?? 0) + b.currentStock);
+    inventoryStock.forEach((s) => {
+      const b = batches.find((b) => b.id === s.batchId);
+      if (!b || new Date(b.expiryDate).getTime() <= now) return;
+      map.set(b.medicineId, (map.get(b.medicineId) ?? 0) + s.quantityOnHand);
     });
     return map;
-  }, [batches]);
+  }, [batches, inventoryStock]);
 
   const results = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -91,7 +92,7 @@ function SalesPage() {
   }, [medicines, query]);
 
   const priceFor = (medicineId: string): number => {
-    const picks = pickBatchesFEFO(batches, medicineId, 1);
+    const picks = pickBatchesFEFO(batches, inventoryStock, medicineId, 1);
     if (!picks.length) return 0;
     const b = batches.find((x) => x.id === picks[0].batchId);
     return b?.sellingPrice ?? 0;
@@ -156,7 +157,7 @@ function SalesPage() {
     const rounded = Math.round(grossTotal);
     const roundOff = rounded - grossTotal;
     return { subtotal, discountTotal, gstTotal, grandTotal: rounded, roundOff, details };
-  }, [cart, medicines, batches]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [cart, medicines, batches, inventoryStock]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const clearCart = () => {
     setCart([]);
@@ -180,11 +181,12 @@ function SalesPage() {
     // Build sale items with FEFO batch splits (one SaleItem per batch used)
     const currentBatches = db.get().batches;
     const items: SaleItem[] = [];
+    const stockPicks: ReturnType<typeof pickBatchesFEFO> = [];
     let ok = true;
     cart.forEach((line) => {
       const med = medicines.find((m) => m.id === line.medicineId);
       if (!med) return;
-      const picks = pickBatchesFEFO(currentBatches, line.medicineId, line.quantity);
+      const picks = pickBatchesFEFO(currentBatches, db.get().inventoryStock, line.medicineId, line.quantity);
       const picked = picks.reduce((s, p) => s + p.quantity, 0);
       if (picked < line.quantity) {
         toast.error(`Insufficient stock for ${med.name}`);
@@ -192,6 +194,7 @@ function SalesPage() {
         return;
       }
       picks.forEach((p) => {
+        stockPicks.push(p);
         const b = currentBatches.find((x) => x.id === p.batchId);
         if (!b) return;
         const unit = b.sellingPrice;
@@ -250,14 +253,14 @@ function SalesPage() {
         createdAt: new Date().toISOString(),
       });
     });
-    items.forEach((it) => {
+    stockPicks.forEach((p) => {
       applyStockMovement({
-        medicineId: it.medicineId,
-        batchId: it.batchId,
-        movementType: "out",
-        quantity: it.quantity,
-        reason: `Sale ${invoiceNo}`,
-        referenceId: sale.id,
+        batchId: p.batchId,
+        locationType: p.locationType,
+        rackCode: p.rackCode,
+        movementType: "Sales Outward",
+        quantityChange: -Math.abs(p.quantity),
+        referenceDocId: sale.id,
         userId: user.id,
         userName: user.name,
       });
@@ -276,12 +279,12 @@ function SalesPage() {
     // Restore stock for each item
     sale.items.forEach((it) => {
       applyStockMovement({
-        medicineId: it.medicineId,
         batchId: it.batchId,
-        movementType: "in",
-        quantity: it.quantity,
-        reason: `Void ${sale.invoiceNo}`,
-        referenceId: sale.id,
+        locationType: "Front Shelf",
+        rackCode: "Returns",
+        movementType: "Customer Return",
+        quantityChange: Math.abs(it.quantity),
+        referenceDocId: sale.id,
         userId: user.id,
         userName: user.name,
       });

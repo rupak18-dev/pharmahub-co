@@ -561,7 +561,6 @@ export function PurchasesPage() {
     // Update stock levels
     grnItems.forEach((it) => {
       applyStockMovement({
-        medicineId: it.medicineId,
         batchId: it.batchId,
         movementType: "in",
         quantity: it.quantity,
@@ -603,8 +602,8 @@ export function PurchasesPage() {
             <button
               onClick={() => setViewTab("entry")}
               className={`px-3 py-1 font-semibold rounded-md transition-all ${viewTab === "entry"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               Purchase Entry
@@ -612,8 +611,8 @@ export function PurchasesPage() {
             <button
               onClick={() => setViewTab("history")}
               className={`px-3 py-1 font-semibold rounded-md transition-all ${viewTab === "history"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground"
                 }`}
             >
               Purchase History
@@ -1011,8 +1010,8 @@ export function PurchasesPage() {
               <Button
                 onClick={activeRole === "Admin" ? handleProceedToPayment : handleDirectSaveBill}
                 className={`h-9 px-6 text-sm font-semibold flex items-center gap-2 shadow-sm ${activeRole === "Admin"
-                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                  : "bg-blue-600 hover:bg-blue-700 text-white"
                   }`}
               >
                 {activeRole === "Admin" ? (
@@ -1189,8 +1188,8 @@ export function PurchasesPage() {
                       type="button"
                       onClick={() => setPaymentMethod(m.id as any)}
                       className={`p-2.5 rounded-lg border text-center flex flex-col items-center justify-center gap-1 transition-all ${isSel
-                          ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
-                          : "border-border hover:bg-muted text-muted-foreground"
+                        ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                        : "border-border hover:bg-muted text-muted-foreground"
                         }`}
                     >
                       <Icon className="h-4 w-4" />
