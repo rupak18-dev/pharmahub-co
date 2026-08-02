@@ -68,9 +68,27 @@ export interface Medicine {
   barcode?: string;
   imageUrl?: string;
   reorderThreshold: number;
+  unitLabel?: string;
   isActive: boolean;
   createdAt: string;
 }
+
+export const STOCK_TYPES = [
+  "tablets",
+  "strips",
+  "capsules",
+  "syrups",
+  "injections",
+  "vials",
+  "drops",
+  "inhalers",
+  "sachets",
+  "ointments",
+  "bottles",
+  "boxes",
+] as const;
+
+export type StockType = (typeof STOCK_TYPES)[number];
 
 export type BatchStatus = "active" | "near_expiry" | "expired" | "disposed" | "sold_out";
 
@@ -84,6 +102,8 @@ export interface Batch {
   purchasePrice: number;
   sellingPrice: number;
   supplierId?: string;
+  storageLocation?: string;
+  invoiceNumber?: string;
   quantityReceived: number;
   currentStock: number;
   status: BatchStatus;
