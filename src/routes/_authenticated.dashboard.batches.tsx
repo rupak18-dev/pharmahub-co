@@ -51,7 +51,7 @@ import {
 } from "@/components/ui/select";
 
 export const Route = createFileRoute("/_authenticated/dashboard/batches")({
-  head: () => ({ meta: [{ title: "Batches Â· PharmaHub" }] }),
+  head: () => ({ meta: [{ title: "Batches · PharmacyOS" }] }),
   component: BatchesPage,
 });
 
@@ -372,7 +372,7 @@ function BatchesPage() {
     <div className="space-y-6">
       <PageHeader
         title="Batches"
-        description="Every unit is tracked by batch â€” including MRP, cost, expiry and supplier."
+        description="Real-time lot tracking, visual shelf-life countdowns, and automated expiration risk management."
         actions={
           has("batches", "create") && (
             <Button
@@ -435,7 +435,7 @@ function BatchesPage() {
           />
           <Input
             className="pl-9"
-            placeholder="Search by batch number or medicineâ€¦"
+            placeholder="Search by batch code, medicine name, or manufacturer…"
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
@@ -590,9 +590,8 @@ function BatchesPage() {
                     <td className="whitespace-nowrap px-3 py-2.5 text-center align-middle">
                       <StockLevel stock={row.totalStock} />
                     </td>
-                    <td className="px-4 py-3">{med?.name ?? "â€”"}</td>
-                    <td className="px-4 py-3 font-mono text-muted-foreground">
-                      {format(new Date(batch.expiryDate), "dd MMM yyyy")}
+                    <td className="hidden md:table-cell whitespace-nowrap px-3 py-2.5 text-center align-middle">
+                      <MfgCell mfgDate={row.batch.mfgDate} />
                     </td>
                     <td className="whitespace-nowrap px-3 py-2.5 text-center align-middle">
                       <ExpiryCell expiryDate={row.batch.expiryDate} />

@@ -6,6 +6,7 @@ import type {
   AuditTimelineEvent,
   Batch,
   DB,
+  Profile,
   StockAdjustment,
   VarianceItem,
   VarianceReason,
@@ -866,6 +867,20 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
+function mergeProfiles(
+  seeded: Profile[],
+  stored: Profile[] | undefined,
+): Profile[] {
+  if (!stored || stored.length === 0) return seeded;
+  const existing = new Set(stored.map((p) => p.email.toLowerCase()));
+  const missing = seeded.filter((p) => !existing.has(p.email.toLowerCase()));
+  return [...stored, ...missing];
+}
+
+function asArray<T>(value: unknown): T[] {
+  return Array.isArray(value) ? (value as T[]) : [];
+}
+
 function load(): DB {
   if (cache) return cache;
   if (!isBrowser()) {
@@ -880,21 +895,28 @@ function load(): DB {
       cache = {
         ...seed(),
         ...loaded,
-        inventoryStock: loaded.inventoryStock ?? [],
-        inventoryLedger: loaded.inventoryLedger ?? [],
-        stockMovements: loaded.stockMovements ?? [],
-        sales: loaded.sales ?? [],
-        purchaseOrders: loaded.purchaseOrders ?? [],
-        grns: loaded.grns ?? [],
-        writeOffs: loaded.writeOffs ?? [],
-        creditNotes: loaded.creditNotes ?? [],
-        transfers: loaded.transfers ?? [],
-        reportSchedules: loaded.reportSchedules ?? [],
-        audits: loaded.audits ?? seed().audits,
-        auditCounts: loaded.auditCounts ?? seed().auditCounts,
-        variances: loaded.variances ?? seed().variances,
-        adjustments: loaded.adjustments ?? seed().adjustments,
-        notificationsRead: loaded.notificationsRead ?? [],
+        profiles: mergeProfiles(seed().profiles, loaded.profiles),
+        categories: asArray(loaded.categories),
+        manufacturers: asArray(loaded.manufacturers),
+        suppliers: asArray(loaded.suppliers),
+        medicines: asArray(loaded.medicines),
+        batches: asArray(loaded.batches),
+        activityLogs: asArray(loaded.activityLogs),
+        inventoryStock: asArray(loaded.inventoryStock),
+        inventoryLedger: asArray(loaded.inventoryLedger),
+        stockMovements: asArray(loaded.stockMovements),
+        sales: asArray(loaded.sales),
+        purchaseOrders: asArray(loaded.purchaseOrders),
+        grns: asArray(loaded.grns),
+        writeOffs: asArray(loaded.writeOffs),
+        creditNotes: asArray(loaded.creditNotes),
+        transfers: asArray(loaded.transfers),
+        reportSchedules: asArray(loaded.reportSchedules),
+        audits: asArray(loaded.audits),
+        auditCounts: asArray(loaded.auditCounts),
+        variances: asArray(loaded.variances),
+        adjustments: asArray(loaded.adjustments),
+        notificationsRead: asArray(loaded.notificationsRead),
         settings: {
           ...seed().settings,
           ...(loaded.settings ?? {}),

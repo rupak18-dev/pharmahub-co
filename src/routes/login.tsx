@@ -115,6 +115,11 @@ function LoginPage() {
             className="w-full mt-4 border-destructive/20 text-destructive hover:bg-destructive/10" 
             onClick={() => {
               db.reset();
+              try {
+                localStorage.removeItem("PharmaHub_session_v1");
+              } catch {
+                // ignore
+              }
               toast.success("Database reset to defaults. Please try logging in again.");
               setTimeout(() => window.location.reload(), 1000);
             }}

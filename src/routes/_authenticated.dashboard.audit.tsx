@@ -1,4 +1,4 @@
-﻿import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import { CalendarDays, Check, ChevronsUpDown } from "lucide-react";
@@ -51,7 +51,7 @@ import type {
 } from "@/lib/types";
 
 export const Route = createFileRoute("/_authenticated/dashboard/audit")({
-  head: () => ({ meta: [{ title: "Audit log Â· PharmaHub" }] }),
+  head: () => ({ meta: [{ title: "Stock Audit · PharmacyOS" }] }),
   component: AuditPage,
 });
 
@@ -814,90 +814,259 @@ function AuditPage() {
         title="Stock Audit"
         description="Plan, execute, and reconcile physical stock against the book — end to end."
         actions={
-          <Button variant="outline" size="sm" onClick={exportCsv} disabled={!filtered.length}>
-            <Download className="mr-1 h-4 w-4" /> Export CSV
-          </Button>
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+            <Button
+              size="sm"
+              variant="outline"
+              className="flex-1 sm:flex-none min-h-[44px] sm:min-h-[36px]"
+              onClick={() => {
+                setView("calendar");
+              }}
+            >
+              Audit Calendar
+            </Button>
+            {has("audit", "create") && (
+              <Button
+                size="sm"
+                className="flex-1 sm:flex-none min-h-[44px] sm:min-h-[36px]"
+                onClick={() => setCreateOpen(true)}
+              >
+                New Audit
+              </Button>
+            )}
+          </div>
         }
       />
 
-      <div className="grid gap-3 sm:grid-cols-[1fr_200px_200px]">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input placeholder="Search action, user, detailsâ€¦" value={q} onChange={(e) => setQ(e.target.value)} className="pl-9" />
-        </div>
-        <Select value={entity} onValueChange={setEntity}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All entities</SelectItem>
-            {entityTypes.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={userId} onValueChange={setUserId}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All users</SelectItem>
-            {users.map((u) => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
-          </SelectContent>
-        </Select>
+      {/* Mobile section selector */}
+      <div className="md:hidden">
+        <button
+          type="button"
+          onClick={() => setSectionOpen(true)}
+          className="flex w-full min-h-[44px] items-center justify-between gap-2 rounded-lg border border-border/60 bg-card px-4 text-sm font-medium text-foreground"
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <CalendarDays className="h-4 w-4 shrink-0 text-primary" />
+            <span className="truncate">{VIEW_LABELS[view]}</span>
+          </span>
+          <ChevronsUpDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+        </button>
       </div>
 
-      {filtered.length === 0 ? (
-        <EmptyState title="No log entries" description="Adjust filters or record some activity first." />
-      ) : (
-        <div className="max-h-[70vh] overflow-auto rounded-lg border border-border bg-card">
-          <table className="w-full text-sm">
-            <thead className="sticky top-0 z-10 border-b border-border bg-muted text-left text-xs uppercase tracking-wide text-muted-foreground">
-              <tr>
-                <th className="px-4 py-2.5 font-medium">When</th>
-                <th className="px-4 py-2.5 font-medium">User</th>
-                <th className="px-4 py-2.5 font-medium">Action</th>
-                <th className="px-4 py-2.5 font-medium">Entity</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.map((l) => (
-                <tr key={l.id} className="cursor-pointer hover:bg-muted/30" onClick={() => setSelected(l)}>
-                  <td className="px-4 py-2.5 whitespace-nowrap text-muted-foreground">{format(new Date(l.createdAt), "MMM d, HH:mm:ss")}</td>
-                  <td className="px-4 py-2.5">{l.userName}</td>
-                  <td className="px-4 py-2.5 font-medium">{l.action}</td>
-                  <td className="px-4 py-2.5 text-muted-foreground">{l.entityType}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+      {/* Desktop & tablet tabs */}
+      <div className="hidden md:block w-full max-w-full overflow-x-auto no-scrollbar scroll-smooth pb-1 sm:mx-0 sm:px-0">
+        <Tabs value={view} onValueChange={(v) => setView(v as View)}>
+          <TabsList className="w-max justify-start flex-nowrap shrink-0">
+            <TabsTrigger
+              value="overview"
+              className="min-h-[40px] sm:min-h-[36px] px-3 sm:px-4 text-xs sm:text-sm"
+            >
+              Overview
+            </TabsTrigger>
+            <TabsTrigger
+              value="calendar"
+              className="min-h-[40px] sm:min-h-[36px] px-3 sm:px-4 text-xs sm:text-sm"
+            >
+              Calendar
+            </TabsTrigger>
+            <TabsTrigger
+              value="audits"
+              className="min-h-[40px] sm:min-h-[36px] px-3 sm:px-4 text-xs sm:text-sm"
+            >
+              Audits
+            </TabsTrigger>
+            <TabsTrigger
+              value="live"
+              className="min-h-[40px] sm:min-h-[36px] px-3 sm:px-4 text-xs sm:text-sm"
+            >
+              Live Audit
+            </TabsTrigger>
+            <TabsTrigger
+              value="variance"
+              className="min-h-[40px] sm:min-h-[36px] px-3 sm:px-4 text-xs sm:text-sm"
+            >
+              Variance Review
+            </TabsTrigger>
+            <TabsTrigger
+              value="approvals"
+              className="min-h-[40px] sm:min-h-[36px] px-3 sm:px-4 text-xs sm:text-sm"
+            >
+              Approvals
+            </TabsTrigger>
+            <TabsTrigger
+              value="activity"
+              className="min-h-[40px] sm:min-h-[36px] px-3 sm:px-4 text-xs sm:text-sm"
+            >
+              Activity Log
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Mobile section picker bottom sheet */}
+      <Drawer open={sectionOpen} onOpenChange={setSectionOpen} shouldScaleBackground={false}>
+        <DrawerContent className="max-h-[72vh]">
+          <DrawerHeader className="text-left">
+            <DrawerTitle>Go to</DrawerTitle>
+            <DrawerDescription>Choose a Stock Audit section</DrawerDescription>
+          </DrawerHeader>
+          <div className="space-y-1 px-4 pb-6">
+            {VIEW_ORDER.map((v) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => {
+                  setView(v);
+                  setSectionOpen(false);
+                }}
+                className={cn(
+                  "flex w-full min-h-[44px] items-center justify-between gap-2 rounded-lg px-4 text-sm transition-colors",
+                  view === v
+                    ? "bg-primary/10 font-semibold text-primary"
+                    : "text-foreground hover:bg-accent",
+                )}
+              >
+                <span className="truncate">{VIEW_LABELS[v]}</span>
+                {view === v && <Check className="h-4 w-4 shrink-0" />}
+              </button>
+            ))}
+          </div>
+        </DrawerContent>
+      </Drawer>
+
+      {view === "overview" && (
+        <AuditOverview
+          audits={audits}
+          counts={counts}
+          variances={variances}
+          currency={currency}
+          onNewAudit={() => setCreateOpen(true)}
+          onOpenCalendar={() => setView("calendar")}
+          onOpenApprovals={() => setView("approvals")}
+        />
       )}
 
-      <Sheet open={!!selected} onOpenChange={(o) => !o && setSelected(null)}>
-        <SheetContent>
-          <SheetHeader><SheetTitle>Activity detail</SheetTitle></SheetHeader>
-          {selected && (
-            <div className="mt-4 space-y-3 text-sm">
-              <Field label="Action" value={selected.action} />
-              <Field label="User" value={selected.userName} />
-              <Field label="Entity" value={`${selected.entityType}${selected.entityId ? ` Â· ${selected.entityId}` : ""}`} />
-              <Field label="When" value={format(new Date(selected.createdAt), "PPpp")} />
-              {selected.details && (
-                <div>
-                  <p className="text-xs text-muted-foreground">Details</p>
-                  <pre className="mt-1 max-h-64 overflow-auto rounded-md bg-muted p-3 text-xs">
-                    {JSON.stringify(selected.details, null, 2)}
-                  </pre>
-                </div>
-              )}
-            </div>
-          )}
-        </SheetContent>
-      </Sheet>
-    </div>
-  );
-}
+      {view === "calendar" && (
+        <AuditCalendar
+          audits={audits}
+          onSelect={setSelectedAuditId}
+          onStart={startAudit}
+          onView={openLive}
+          onNewAudit={() => setCreateOpen(true)}
+        />
+      )}
 
-function Field({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="font-medium">{value}</p>
+      {view === "audits" && (
+        <AuditManagement
+          audits={audits}
+          counts={counts}
+          profiles={profiles}
+          has={has}
+          onOpenCreate={() => setCreateOpen(true)}
+          onSelect={setSelectedAuditId}
+          onStart={startAudit}
+          onPause={pauseAudit}
+          onResume={resumeAudit}
+          onCancel={cancelAudit}
+          onSubmit={submitAudit}
+          onLive={openLive}
+        />
+      )}
+
+      {view === "live" && liveAudit && (
+        <LiveAudit
+          audit={liveAudit}
+          allAudits={audits}
+          items={liveItems}
+          counts={countsForAudit(liveAudit.id, counts)}
+          has={has}
+          onCount={(batchId, qty, extra) => submitCount(liveAudit.id, batchId, qty, extra)}
+          onSkip={(batchId) => skipBatch(liveAudit.id, batchId)}
+          onFlag={(batchId, extra) => flagBatch(liveAudit.id, batchId, extra)}
+          onPause={() => pauseAudit(liveAudit.id)}
+          onResume={() => resumeAudit(liveAudit.id)}
+          onSubmit={() => submitAudit(liveAudit.id)}
+          onSwitchAudit={setLiveAuditId}
+        />
+      )}
+
+      {view === "live" && !liveAudit && (
+        <LiveAuditHome
+          audits={audits}
+          counts={counts}
+          profiles={profiles}
+          onStart={startAudit}
+          onResume={resumeAudit}
+          onLive={openLive}
+          onNewAudit={() => setCreateOpen(true)}
+          onOpenAudits={() => setView("audits")}
+        />
+      )}
+
+      {view === "variance" && (
+        <VarianceReview
+          variances={variances}
+          audits={audits}
+          currency={currency}
+          has={has}
+          onReason={setVarianceReason}
+          onManagerComment={setManagerComment}
+          onAction={applyVarianceAction}
+          onRecount={requestRecount}
+          onConfirmRecount={confirmRecount}
+        />
+      )}
+
+      {view === "approvals" && (
+        <Approvals
+          adjustments={adjustments}
+          audits={audits}
+          variances={variances}
+          currency={currency}
+          has={has}
+          onApprove={approveAdjustment}
+          onReject={rejectAdjustment}
+        />
+      )}
+
+      {view === "activity" && (
+        <ActivityLogView
+          logs={activityLogs}
+          audits={audits}
+          profiles={profiles}
+          onExportAudit={() => {
+            toast.success("Activity log exported successfully");
+          }}
+        />
+      )}
+
+      <CreateAuditSheet
+        open={createOpen}
+        onOpenChange={setCreateOpen}
+        batches={batches}
+        medicines={medicines}
+        categories={categories}
+        profiles={profiles}
+        branches={BRANCHES}
+        onSubmit={createAudit}
+      />
+
+      <AuditDrawer
+        audit={selectedAudit}
+        counts={selectedCounts}
+        variances={variances}
+        adjustments={adjustments}
+        profiles={profiles}
+        currency={currency}
+        open={!!selectedAudit}
+        onOpenChange={(o) => !o && setSelectedAuditId(null)}
+        onStart={startAudit}
+        onPause={pauseAudit}
+        onResume={resumeAudit}
+        onSubmit={submitAudit}
+        onCancel={cancelAudit}
+        onLive={(id) => openLive(id)}
+      />
     </div>
   );
 }
