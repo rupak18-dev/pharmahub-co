@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 import { useEffect } from "react";
+import { db } from "@/lib/db";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -107,6 +108,19 @@ function LoginPage() {
             <div>inventory@PharmaHub.demo</div>
           </div>
           <div className="mt-1">Any password works in demo mode.</div>
+          <Button 
+            type="button" 
+            variant="outline" 
+            size="sm" 
+            className="w-full mt-4 border-destructive/20 text-destructive hover:bg-destructive/10" 
+            onClick={() => {
+              db.reset();
+              toast.success("Database reset to defaults. Please try logging in again.");
+              setTimeout(() => window.location.reload(), 1000);
+            }}
+          >
+            Reset Database
+          </Button>
         </div>
       </form>
     </AuthShell>

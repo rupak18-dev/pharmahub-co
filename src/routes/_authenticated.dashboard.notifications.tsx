@@ -31,11 +31,15 @@ function NotificationsPage() {
     const list: Alert[] = [];
     const now = Date.now();
 
+    const stockMap = new Map<string, number>();
+    data.inventoryStock.forEach((s) => {
+      stockMap.set(s.batchId, (stockMap.get(s.batchId) ?? 0) + s.quantityOnHand);
+    });
+
     // Aggregate stock per medicine
     const perMed = new Map<string, number>();
     data.batches.forEach((b) => {
-      if (b.status === "disposed") return;
-      perMed.set(b.medicineId, (perMed.get(b.medicineId) ?? 0) + b.currentStock);
+      perMed.set(b.medicineId, (perMed.get(b.medicineId) ?? 0) + (stockMap.get(b.id) ?? 0));
     });
 
     data.medicines.filter((m) => m.isActive).forEach((m) => {
@@ -62,7 +66,8 @@ function NotificationsPage() {
     });
 
     data.batches.forEach((b) => {
-      if (b.status === "disposed" || b.currentStock <= 0) return;
+      const stock = stockMap.get(b.id) ?? 0;
+      if (stock <= 0) return;
       const days = differenceInDays(new Date(b.expiryDate), new Date());
       const med = data.medicines.find((m) => m.id === b.medicineId);
       if (days < 0) {

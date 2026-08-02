@@ -2,12 +2,13 @@
 import { useState } from "react";
 import {
   LayoutDashboard,
+  LayoutGrid,
   Pill,
-  Layers,
   Boxes,
-  ShoppingCart,
+  Warehouse,
+  ShoppingBag,
   Receipt,
-  CalendarClock,
+  AlertTriangle,
   ClipboardCheck,
   Users,
   BarChart3,
@@ -22,10 +23,12 @@ import {
   FileText,
   Image as ImageIcon,
   Globe,
+  Layers,
 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
+  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
@@ -35,8 +38,10 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { BrandMark } from "./BrandMark";
 import { usePermission } from "@/hooks/usePermission";
+import { useAuth } from "@/lib/auth";
 import type { ModuleKey } from "@/lib/types";
 import type { LucideIcon } from "lucide-react";
 
@@ -61,14 +66,19 @@ const groups: { label: string; items: NavItem[] }[] = [
   {
     label: "Commerce",
     items: [
-      { key: "purchases", title: "Purchases", url: "/dashboard/purchases", icon: ShoppingCart },
+      { key: "purchases", title: "Purchases", url: "/dashboard/purchases", icon: ShoppingBag },
       { key: "sales", title: "Sales & POS", url: "/dashboard/sales", icon: Receipt },
     ],
   },
   {
     label: "Compliance",
     items: [
-      { key: "expiry", title: "Expiry", url: "/dashboard/expiry", icon: CalendarClock },
+      {
+        key: "expiry",
+        title: "Expiry Alert Center",
+        url: "/dashboard/expiry",
+        icon: AlertTriangle,
+      },
       { key: "audit", title: "Stock Audit", url: "/dashboard/audit", icon: ClipboardCheck },
       { key: "reports", title: "Reports", url: "/dashboard/reports", icon: BarChart3 },
     ],

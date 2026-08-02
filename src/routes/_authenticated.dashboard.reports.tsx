@@ -58,13 +58,17 @@ function ReportsPage() {
   const top10Units = [...top10Revenue].sort((a, b) => b.units - a.units).slice(0, 10);
 
   // Stock valuation by category
+  const stockMap = new Map<string, number>();
+  data.inventoryStock.forEach((s) => stockMap.set(s.batchId, (stockMap.get(s.batchId) ?? 0) + s.quantityOnHand));
+
   const catMap = new Map(data.categories.map((c) => [c.id, c.name]));
   const catVal = new Map<string, number>();
   data.batches.forEach((b) => {
     const med = data.medicines.find((m) => m.id === b.medicineId);
     if (!med) return;
     const key = med.categoryId ?? "uncat";
-    catVal.set(key, (catVal.get(key) ?? 0) + b.currentStock * b.purchasePrice);
+    const stock = stockMap.get(b.id) ?? 0;
+    catVal.set(key, (catVal.get(key) ?? 0) + stock * b.purchasePrice);
   });
   const catRows = Array.from(catVal, ([id, v]) => ({
     category: catMap.get(id) ?? "Uncategorized",
@@ -105,9 +109,9 @@ function ReportsPage() {
   const deadMs = data.settings.deadStockDays * 24 * 60 * 60 * 1000;
   const nowT = Date.now();
   const lastOut = new Map<string, number>();
-  data.stockMovements.forEach((m) => {
-    if (m.movementType !== "out") return;
-    const t = new Date(m.createdAt).getTime();
+  data.inventoryLedger.forEach((m) => {
+    if (m.movementType === "Purchase Inward" || m.movementType === "Customer Return" || (m.movementType === "Adjustment" && m.quantityChange >= 0)) return;
+    const t = new Date(m.timestamp).getTime();
     const prev = lastOut.get(m.batchId) ?? 0;
     if (t > prev) lastOut.set(m.batchId, t);
   });
@@ -117,8 +121,8 @@ function ReportsPage() {
     .map((b) => ({
       medicine: medMap.get(b.medicineId) ?? "â€”",
       batch: b.batchNumber,
-      stock: b.currentStock,
-      valueAtCost: Math.round(b.currentStock * b.purchasePrice),
+      stock,
+      valueAtCost: Math.round(stock * b.purchasePrice),
     }))
     .sort((a, b) => b.valueAtCost - a.valueAtCost)
     .slice(0, 50);

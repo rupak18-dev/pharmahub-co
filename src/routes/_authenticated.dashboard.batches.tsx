@@ -1,30 +1,47 @@
-﻿import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
-import { Plus, Search } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useMemo, useState } from "react";
+import {
+  Boxes,
+  Check,
+  Copy,
+  LayoutGrid,
+  LayoutList,
+  MoreHorizontal,
+  Move,
+  PackageOpen,
+  Pencil,
+  Plus,
+  QrCode,
+  Search,
+  ShieldAlert,
+  Snowflake,
+  Tag,
+  Timer,
+  TrendingUp,
+} from "lucide-react";
+import { format, isValid } from "date-fns";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { useDb } from "@/hooks/useDb";
 import { db } from "@/lib/db";
 import { usePermission } from "@/hooks/usePermission";
 import { useAuth } from "@/lib/auth";
 import { applyStockMovement, computeBatchStatus, logActivity } from "@/lib/stock";
+import { cn } from "@/lib/utils";
+import type { Batch, BatchStatus, LocationType, Medicine } from "@/lib/types";
 import { PageHeader } from "@/components/pharmacy/PageHeader";
 import { EmptyState } from "@/components/pharmacy/EmptyState";
 import { StatusBadge } from "@/components/pharmacy/StatusBadge";
+import { KpiCard } from "@/components/pharmacy/KpiCard";
+import { AddBatchSheet } from "@/components/pharmacy/AddBatchSheet";
+import type { BatchFormValues } from "@/lib/batch-schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -38,58 +55,280 @@ export const Route = createFileRoute("/_authenticated/dashboard/batches")({
   component: BatchesPage,
 });
 
-const schema = z
-  .object({
-    medicineId: z.string().min(1, "Select a medicine"),
-    batchNumber: z.string().trim().min(1, "Batch number required").max(40),
-    mfgDate: z.string().min(1, "Required"),
-    expiryDate: z.string().min(1, "Required"),
-    mrp: z.coerce.number().min(0),
-    purchasePrice: z.coerce.number().min(0),
-    sellingPrice: z.coerce.number().min(0),
-    supplierId: z.string().optional().or(z.literal("")),
-    quantityReceived: z.coerce.number().int().min(1, "At least 1"),
-  })
-  .refine((v) => new Date(v.expiryDate) > new Date(v.mfgDate), {
-    message: "Expiry must be after manufacture date",
-    path: ["expiryDate"],
-  });
+const safeFormat = (dateStr: string | undefined | null, fmt: string) => {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (!isValid(d)) return "—";
+  return format(d, fmt);
+};
 
-type FormValues = z.infer<typeof schema>;
+const chipCls =
+  "inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 font-mono text-xs font-semibold text-primary ring-1 ring-inset ring-primary/15";
+
+const ACTIVE_REF_DAYS = 90;
+
+type Row = {
+  batch: Batch;
+  med?: Medicine;
+  status: BatchStatus;
+  totalStock: number;
+  locations: { locationType: LocationType; rackCode: string }[];
+};
+
+function BatchChip({ batchId, batchNumber }: { batchId: string; batchNumber: string }) {
+  return (
+    <span className={cn(chipCls, "group/chip transition-colors hover:bg-primary/15")}>
+      <Link to="/dashboard/batches/$batchId" params={{ batchId }} className="hover:underline">
+        {batchNumber}
+      </Link>
+      <button
+        type="button"
+        title="Copy batch code"
+        onClick={() => {
+          void navigator.clipboard?.writeText(batchNumber);
+          toast(`Batch code ${batchNumber} copied`);
+        }}
+        className="rounded-sm text-primary/50 transition-colors hover:text-primary"
+      >
+        <Copy className="h-3 w-3" strokeWidth={1.5} />
+      </button>
+    </span>
+  );
+}
+
+function MfgCell({ mfgDate }: { mfgDate: string }) {
+  return (
+    <span className="font-mono text-xs font-medium text-foreground">
+      {safeFormat(mfgDate, "MM/yyyy")}
+    </span>
+  );
+}
+
+function ExpiryCell({ expiryDate }: { expiryDate: string }) {
+  return (
+    <span className="font-mono text-xs font-medium text-foreground">
+      {safeFormat(expiryDate, "MM/yyyy")}
+    </span>
+  );
+}
+
+function LocationPill({
+  locations,
+}: {
+  locations: { locationType: LocationType; rackCode: string }[];
+}) {
+  if (!locations.length) return <span className="text-xs text-muted-foreground">—</span>;
+  const first = locations[0];
+  const extra = locations.length - 1;
+  const isCold = first.locationType === "Cold Storage";
+  const Icon = isCold ? Snowflake : Tag;
+  return (
+    <div className="flex items-center gap-1">
+      <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+        <Icon className="h-3 w-3 text-muted-foreground" strokeWidth={1.5} />
+        {first.rackCode || first.locationType}
+      </span>
+      {extra > 0 && <span className="text-[10px] text-muted-foreground">+{extra}</span>}
+    </div>
+  );
+}
+
+function StockLevel({ stock }: { stock: number }) {
+  return (
+    <span className="block text-center font-mono text-sm font-semibold tabular-nums">
+      {stock}
+    </span>
+  );
+}
+
+function BatchActions({ batchId, batchNumber }: { batchId: string; batchNumber: string }) {
+  const navigate = useNavigate();
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          title="Batch actions"
+          className="grid h-6 w-6 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={() => navigate({ to: "/dashboard/batches/$batchId", params: { batchId } })}
+        >
+          <Pencil className="mr-2 h-4 w-4" /> View details
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => toast("Edit coming soon")}>
+          <Pencil className="mr-2 h-4 w-4" /> Edit batch
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => toast(`QR label for ${batchNumber} queued`)}>
+          <QrCode className="mr-2 h-4 w-4" /> Print QR label
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => toast("Move stock coming soon")}>
+          <Move className="mr-2 h-4 w-4" /> Move stock
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => toast("Quarantine coming soon")}>
+          <ShieldAlert className="mr-2 h-4 w-4" /> Quarantine batch
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+function BatchCard({ row }: { row: Row }) {
+  const { batch, med, status, totalStock, locations } = row;
+  return (
+    <div className="rounded-lg border border-border bg-card p-3 shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0">
+          <BatchChip batchId={batch.id} batchNumber={batch.batchNumber} />
+          <div className="mt-1.5 truncate text-sm font-medium text-foreground">
+            {med?.name ?? "—"}
+          </div>
+          {med?.genericName && (
+            <div className="truncate text-xs text-muted-foreground">{med.genericName}</div>
+          )}
+        </div>
+        <StatusBadge status={status} />
+      </div>
+      <div className="mt-3">
+        <ExpiryCell expiryDate={batch.expiryDate} />
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-2">
+        <LocationPill locations={locations} />
+        <div className="text-xs text-muted-foreground">Available: {totalStock}</div>
+      </div>
+    </div>
+  );
+}
 
 function BatchesPage() {
   const batches = useDb((d) => d.batches);
   const meds = useDb((d) => d.medicines);
+  const manufacturers = useDb((d) => d.manufacturers);
+  const inventoryStock = useDb((d) => d.inventoryStock);
   const settings = useDb((d) => d.settings);
-  const suppliers = useDb((d) => d.suppliers);
   const has = usePermission();
   const { user } = useAuth();
   const [q, setQ] = useState("");
   const [medFilter, setMedFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "near_expiry" | "expired" | "sold_out">("all");
+  const [locFilter, setLocFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState<
+    "all" | "active" | "near_expiry" | "expired" | "sold_out"
+  >("all");
+  const [view, setView] = useState<"table" | "grid">(() =>
+    typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
+      ? "grid"
+      : "table",
+  );
   const [sheetOpen, setSheetOpen] = useState(false);
+
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 767px)");
+    const onChange = (e: MediaQueryListEvent) => setView(e.matches ? "grid" : "table");
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
+  const locationOptions = useMemo(() => {
+    const set = new Set<string>();
+    inventoryStock.forEach((s) => set.add(s.locationType));
+    return Array.from(set).sort();
+  }, [inventoryStock]);
+
+  const manName = useMemo(() => new Map(manufacturers.map((m) => [m.id, m.name])), [manufacturers]);
 
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase();
+
+    const stockByBatch = new Map<string, number>();
+    const locByBatch = new Map<string, { locationType: LocationType; rackCode: string }[]>();
+    inventoryStock.forEach((stock) => {
+      stockByBatch.set(
+        stock.batchId,
+        (stockByBatch.get(stock.batchId) || 0) + stock.quantityOnHand,
+      );
+      const arr = locByBatch.get(stock.batchId) || [];
+      arr.push({ locationType: stock.locationType, rackCode: stock.rackCode });
+      locByBatch.set(stock.batchId, arr);
+    });
+
     return batches
       .map((b) => {
         const med = meds.find((m) => m.id === b.medicineId);
-        const status = computeBatchStatus(b, settings.nearExpiryDays);
-        return { batch: b, med, status };
+        const totalStock = stockByBatch.get(b.id) || 0;
+        const status = computeBatchStatus(b, totalStock, settings.nearExpiryDays);
+        const locations = locByBatch.get(b.id) || [];
+        return { batch: b, med, status, totalStock, locations };
       })
-      .filter(({ batch, med, status }) => {
+      .filter(({ batch, med, status, totalStock, locations }) => {
         if (medFilter !== "all" && batch.medicineId !== medFilter) return false;
-        if (statusFilter !== "all" && status !== statusFilter) return false;
+        if (locFilter !== "all" && !locations.some((l) => l.locationType === locFilter))
+          return false;
+        if (statusFilter !== "all") {
+          const matches =
+            statusFilter === "active"
+              ? computeBatchStatus(batch, totalStock, ACTIVE_REF_DAYS) === "active"
+              : status === statusFilter;
+          if (!matches) return false;
+        }
         if (!s) return true;
-        return (
-          batch.batchNumber.toLowerCase().includes(s) ||
-          (med?.name ?? "").toLowerCase().includes(s)
-        );
+        const hay = `${batch.batchNumber} ${med?.name ?? ""} ${med?.genericName ?? ""} ${
+          manName.get(med?.manufacturerId ?? "") ?? ""
+        }`.toLowerCase();
+        return hay.includes(s);
       })
-      .sort((a, b) => a.batch.expiryDate.localeCompare(b.batch.expiryDate));
-  }, [batches, meds, settings.nearExpiryDays, q, medFilter, statusFilter]);
+      .sort((a, b) => (a.batch.expiryDate || "").localeCompare(b.batch.expiryDate || ""));
+  }, [
+    batches,
+    meds,
+    manName,
+    inventoryStock,
+    settings.nearExpiryDays,
+    q,
+    medFilter,
+    locFilter,
+    statusFilter,
+  ]);
 
-  const submit = (v: FormValues) => {
+  const kpis = useMemo(() => {
+    const stockMap = new Map<string, number>();
+    inventoryStock.forEach((s) =>
+      stockMap.set(s.batchId, (stockMap.get(s.batchId) ?? 0) + s.quantityOnHand),
+    );
+    let active = 0;
+    let near = 0;
+    let value = 0;
+    const activeRefDays = 90;
+    const activeMeds = new Set<string>();
+    batches.forEach((b) => {
+      const total = stockMap.get(b.id) ?? 0;
+      if (computeBatchStatus(b, total, ACTIVE_REF_DAYS) === "active") {
+        active++;
+        activeMeds.add(b.medicineId);
+      }
+      if (computeBatchStatus(b, total, settings.nearExpiryDays) === "near_expiry") near++;
+      value += total * (b.purchasePrice || 0);
+    });
+    return { active, near, value, medicineCount: activeMeds.size };
+  }, [batches, inventoryStock, settings.nearExpiryDays]);
+
+  const toggleStatus = (s: "active" | "near_expiry") =>
+    setStatusFilter((cur) => (cur === s ? "all" : s));
+
+  const setNearExpiryWindow = (days: number) => {
+    db.set((d) => {
+      d.settings.nearExpiryDays = days;
+    });
+    setQ("");
+    setMedFilter("all");
+    setLocFilter("all");
+    setStatusFilter("near_expiry");
+  };
+
+  const submit = (v: BatchFormValues) => {
     const id = db.uid();
     const now = new Date().toISOString();
     db.set((d) => {
@@ -99,23 +338,21 @@ function BatchesPage() {
         batchNumber: v.batchNumber,
         mfgDate: new Date(v.mfgDate).toISOString(),
         expiryDate: new Date(v.expiryDate).toISOString(),
-        mrp: v.mrp,
-        purchasePrice: v.purchasePrice,
-        sellingPrice: v.sellingPrice,
+        mrp: 0,
+        purchasePrice: 0,
+        sellingPrice: 0,
         supplierId: v.supplierId || undefined,
-        quantityReceived: v.quantityReceived,
         currentStock: v.quantityReceived,
-        status: "active",
         createdAt: now,
       });
     });
     if (user) {
       applyStockMovement({
-        medicineId: v.medicineId,
         batchId: id,
-        movementType: "in",
-        quantity: v.quantityReceived,
-        reason: "New batch received",
+        locationType: v.locationType,
+        rackCode: v.rackCode,
+        movementType: "Purchase Inward",
+        quantityChange: v.quantityReceived,
         userId: user.id,
         userName: user.name,
       });
@@ -138,16 +375,64 @@ function BatchesPage() {
         description="Every unit is tracked by batch â€” including MRP, cost, expiry and supplier."
         actions={
           has("batches", "create") && (
-            <Button size="sm" onClick={() => setSheetOpen(true)}>
-              <Plus className="mr-1 h-4 w-4" /> Add batch
+            <Button
+              size="sm"
+              onClick={() => setSheetOpen(true)}
+              className="shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30"
+            >
+              <Plus className="mr-1 h-4 w-4" strokeWidth={1.5} /> Add batch
             </Button>
           )
         }
       />
 
+      <div className="grid gap-4 sm:grid-cols-3">
+        <KpiCard
+          label="Active Batches"
+          value={kpis.active}
+          hint={`Across ${kpis.medicineCount} medicines`}
+          icon={Boxes}
+          tone="default"
+          onClick={() => toggleStatus("active")}
+          selected={statusFilter === "active"}
+        />
+        <KpiCard
+          label={`Expiring within ${settings.nearExpiryDays} days`}
+          value={kpis.near}
+          badge={`${kpis.near} Batches`}
+          hint="Flagged for priority action"
+          icon={Timer}
+          tone="warning"
+          onClick={() => toggleStatus("near_expiry")}
+          selected={statusFilter === "near_expiry"}
+          iconMenu={
+            <>
+              {[7, 30, 90].map((d) => (
+                <DropdownMenuItem key={d} onSelect={() => setNearExpiryWindow(d)}>
+                  <span className="flex w-4 shrink-0 justify-center">
+                    {settings.nearExpiryDays === d && <Check className="h-4 w-4" />}
+                  </span>
+                  Expiring in {d} days
+                </DropdownMenuItem>
+              ))}
+            </>
+          }
+        />
+        <KpiCard
+          label="Total Inventory Value"
+          value={`${settings.currency}${Math.round(kpis.value).toLocaleString("en-IN")}`}
+          hint="Purchase cost basis"
+          icon={TrendingUp}
+          tone="default"
+        />
+      </div>
+
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative flex-1">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search
+            className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            strokeWidth={1.5}
+          />
           <Input
             className="pl-9"
             placeholder="Search by batch number or medicineâ€¦"
@@ -158,7 +443,7 @@ function BatchesPage() {
         <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-none">
           <Select value={medFilter} onValueChange={setMedFilter}>
             <SelectTrigger className="sm:w-52">
-              <SelectValue placeholder="Medicine" />
+              <SelectValue placeholder="Medicine Filter" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All medicines</SelectItem>
@@ -169,12 +454,25 @@ function BatchesPage() {
               ))}
             </SelectContent>
           </Select>
+          <Select value={locFilter} onValueChange={setLocFilter}>
+            <SelectTrigger className="sm:w-40">
+              <SelectValue placeholder="Rack / Zone" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All racks</SelectItem>
+              {locationOptions.map((loc) => (
+                <SelectItem key={loc} value={loc}>
+                  {loc}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Select
             value={statusFilter}
             onValueChange={(v) => setStatusFilter(v as typeof statusFilter)}
           >
             <SelectTrigger className="sm:w-40">
-              <SelectValue />
+              <SelectValue placeholder="Status Filter" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All statuses</SelectItem>
@@ -184,243 +482,136 @@ function BatchesPage() {
               <SelectItem value="sold_out">Sold out</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-0.5 rounded-md border border-border bg-card p-0.5">
+            <button
+              type="button"
+              title="Table view"
+              onClick={() => setView("table")}
+              className={cn(
+                "grid h-7 w-7 place-items-center rounded",
+                view === "table"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <LayoutList className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </button>
+            <button
+              type="button"
+              title="Grid view"
+              onClick={() => setView("grid")}
+              className={cn(
+                "grid h-7 w-7 place-items-center rounded",
+                view === "grid"
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" strokeWidth={1.5} />
+            </button>
+          </div>
         </div>
       </div>
 
       {rows.length === 0 ? (
-        <EmptyState title="No batches match" description="Adjust your filters or add a batch." />
+        statusFilter === "near_expiry" ? (
+          <EmptyState
+            icon={Timer}
+            title={`No batches expiring within ${settings.nearExpiryDays} days`}
+            description={`No in-stock batches expire in the next ${settings.nearExpiryDays} days. Try a wider window.`}
+          />
+        ) : (
+          <EmptyState title="No batches match" description="Adjust your filters or add a batch." />
+        )
+      ) : view === "grid" ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+          {rows.map((row) => (
+            <BatchCard key={row.batch.id} row={row} />
+          ))}
+        </div>
       ) : (
         <>
-          <div className="hidden overflow-hidden rounded-lg border border-border bg-card md:block">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.05)]">
+            <table className="w-full table-fixed text-sm [&_th]:border-r [&_th:last-child]:border-r-0 [&_td]:border-r [&_td:last-child]:border-r-0">
               <thead className="border-b border-border bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
-                  <th className="px-4 py-2.5 font-medium">Batch</th>
-                  <th className="px-4 py-2.5 font-medium">Medicine</th>
-                  <th className="px-4 py-2.5 font-medium">Expiry</th>
-                  <th className="px-4 py-2.5 font-medium text-right">MRP</th>
-                  <th className="px-4 py-2.5 font-medium text-right">Stock</th>
-                  <th className="px-4 py-2.5 font-medium">Status</th>
+                  <th className="md:w-[160px] md:whitespace-nowrap px-3 py-2.5 text-left align-middle font-medium">
+                    Batch Number
+                  </th>
+                  <th className="md:w-[240px] px-3 py-2.5 text-left align-middle font-medium">
+                    Medicine
+                  </th>
+                  <th className="hidden md:table-cell md:w-[140px] md:whitespace-nowrap px-3 py-2.5 text-left align-middle font-medium">
+                    Rack / Zone
+                  </th>
+                  <th className="md:w-[110px] md:whitespace-nowrap px-3 py-2.5 text-center align-middle font-medium">
+                    Available Qty
+                  </th>
+                  <th className="hidden md:table-cell md:w-[110px] md:whitespace-nowrap px-3 py-2.5 text-center align-middle font-medium">
+                    Mfg Date
+                  </th>
+                  <th className="md:w-[110px] md:whitespace-nowrap px-3 py-2.5 text-center align-middle font-medium">
+                    Expiry Date
+                  </th>
+                  <th className="hidden md:table-cell md:w-[120px] md:whitespace-nowrap px-3 py-2.5 text-left align-middle font-medium">
+                    Status
+                  </th>
+                  <th className="md:w-[64px] md:whitespace-nowrap px-3 py-2.5 text-right align-middle font-medium">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {rows.map(({ batch, med, status }) => (
-                  <tr key={batch.id} className="hover:bg-muted/30">
-                    <td className="px-4 py-3">
-                      <Link
-                        to="/dashboard/batches/$batchId"
-                        params={{ batchId: batch.id }}
-                        className="font-mono font-medium text-primary hover:underline"
-                      >
-                        {batch.batchNumber}
-                      </Link>
+                {rows.map((row) => (
+                  <tr key={row.batch.id} className="group hover:bg-accent/40">
+                    <td className="md:whitespace-nowrap px-3 py-2.5 align-middle">
+                      <BatchChip batchId={row.batch.id} batchNumber={row.batch.batchNumber} />
+                    </td>
+                    <td className="px-3 py-2.5 align-middle">
+                      <div className="flex items-center gap-2">
+                        <span className="grid h-6 w-6 shrink-0 place-items-center rounded-md bg-[#E6F4F1] text-[#007A5A]">
+                          <PackageOpen className="h-3.5 w-3.5" strokeWidth={1.5} />
+                        </span>
+                        <div className="min-w-0">
+                          <div className="truncate font-medium text-foreground">
+                            {row.med?.name ?? "—"}
+                          </div>
+                          {row.med?.genericName && (
+                            <div className="truncate text-xs text-muted-foreground">
+                              {row.med.genericName}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </td>
+                    <td className="hidden md:table-cell whitespace-nowrap px-3 py-2.5 align-middle">
+                      <LocationPill locations={row.locations} />
+                    </td>
+                    <td className="whitespace-nowrap px-3 py-2.5 text-center align-middle">
+                      <StockLevel stock={row.totalStock} />
                     </td>
                     <td className="px-4 py-3">{med?.name ?? "â€”"}</td>
                     <td className="px-4 py-3 font-mono text-muted-foreground">
                       {format(new Date(batch.expiryDate), "dd MMM yyyy")}
                     </td>
-                    <td className="px-4 py-3 text-right font-mono">
-                      {settings.currency}
-                      {batch.mrp.toFixed(2)}
+                    <td className="whitespace-nowrap px-3 py-2.5 text-center align-middle">
+                      <ExpiryCell expiryDate={row.batch.expiryDate} />
                     </td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums">
-                      {batch.currentStock}
+                    <td className="hidden md:table-cell whitespace-nowrap px-3 py-2.5 align-middle">
+                      <StatusBadge status={row.status} />
                     </td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={status} />
+                    <td className="whitespace-nowrap px-3 py-2.5 text-right align-middle">
+                      <BatchActions batchId={row.batch.id} batchNumber={row.batch.batchNumber} />
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
-          <div className="space-y-2 md:hidden">
-            {rows.map(({ batch, med, status }) => (
-              <Link
-                key={batch.id}
-                to="/dashboard/batches/$batchId"
-                params={{ batchId: batch.id }}
-                className="block rounded-lg border border-border bg-card p-3"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="font-mono text-sm font-semibold text-primary">
-                      {batch.batchNumber}
-                    </div>
-                    <div className="mt-0.5 truncate text-xs text-muted-foreground">
-                      {med?.name}
-                    </div>
-                  </div>
-                  <StatusBadge status={status} />
-                </div>
-                <div className="mt-2 grid grid-cols-3 gap-2 text-xs">
-                  <div>
-                    <div className="text-muted-foreground">Expiry</div>
-                    <div className="font-mono">{format(new Date(batch.expiryDate), "dd MMM yy")}</div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">MRP</div>
-                    <div className="font-mono">
-                      {settings.currency}
-                      {batch.mrp.toFixed(2)}
-                    </div>
-                  </div>
-                  <div>
-                    <div className="text-muted-foreground">Stock</div>
-                    <div className="font-mono">{batch.currentStock}</div>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
         </>
       )}
 
       <AddBatchSheet open={sheetOpen} onOpenChange={setSheetOpen} onSubmit={submit} />
     </div>
-  );
-}
-
-function AddBatchSheet({
-  open,
-  onOpenChange,
-  onSubmit,
-}: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
-  onSubmit: (v: FormValues) => void;
-}) {
-  const meds = useDb((d) => d.medicines);
-  const suppliers = useDb((d) => d.suppliers);
-  const {
-    register,
-    handleSubmit,
-    reset,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm<FormValues>({ resolver: zodResolver(schema) });
-
-  return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-lg flex flex-col">
-        <SheetHeader>
-          <SheetTitle>Add batch</SheetTitle>
-          <SheetDescription>
-            Create a new batch for an existing medicine and log the incoming stock.
-          </SheetDescription>
-        </SheetHeader>
-        <form
-          onSubmit={handleSubmit((v) => {
-            onSubmit(v);
-            reset();
-          })}
-          className="flex-1 overflow-y-auto space-y-4 py-4 px-4"
-        >
-          <div className="space-y-2">
-            <Label>Medicine *</Label>
-            <Select
-              value={watch("medicineId") || ""}
-              onValueChange={(v) => setValue("medicineId", v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select medicine" />
-              </SelectTrigger>
-              <SelectContent>
-                {meds
-                  .filter((m) => m.isActive)
-                  .map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            {errors.medicineId && (
-              <p className="text-xs text-destructive">{errors.medicineId.message}</p>
-            )}
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="batchNumber">Batch number *</Label>
-              <Input id="batchNumber" {...register("batchNumber")} />
-              {errors.batchNumber && (
-                <p className="text-xs text-destructive">{errors.batchNumber.message}</p>
-              )}
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="quantityReceived">Quantity received *</Label>
-              <Input
-                id="quantityReceived"
-                type="number"
-                min={1}
-                {...register("quantityReceived")}
-              />
-              {errors.quantityReceived && (
-                <p className="text-xs text-destructive">{errors.quantityReceived.message}</p>
-              )}
-            </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="mfgDate">Manufacture date *</Label>
-              <Input id="mfgDate" type="date" {...register("mfgDate")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="expiryDate">Expiry date *</Label>
-              <Input id="expiryDate" type="date" {...register("expiryDate")} />
-              {errors.expiryDate && (
-                <p className="text-xs text-destructive">{errors.expiryDate.message}</p>
-              )}
-            </div>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="space-y-2">
-              <Label htmlFor="mrp">MRP *</Label>
-              <Input id="mrp" type="number" step="0.01" {...register("mrp")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="purchasePrice">Cost *</Label>
-              <Input id="purchasePrice" type="number" step="0.01" {...register("purchasePrice")} />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="sellingPrice">Selling *</Label>
-              <Input id="sellingPrice" type="number" step="0.01" {...register("sellingPrice")} />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label>Supplier</Label>
-            <Select
-              value={watch("supplierId") || ""}
-              onValueChange={(v) => setValue("supplierId", v)}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select supplier" />
-              </SelectTrigger>
-              <SelectContent>
-                {suppliers.map((s) => (
-                  <SelectItem key={s.id} value={s.id}>
-                    {s.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <SheetFooter className="mt-2 flex-row gap-2 sm:flex-row">
-            <Button
-              type="button"
-              variant="outline"
-              className="flex-1"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" className="flex-1">
-              Add batch
-            </Button>
-          </SheetFooter>
-        </form>
-      </SheetContent>
-    </Sheet>
   );
 }
