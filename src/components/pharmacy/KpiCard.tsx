@@ -50,7 +50,7 @@ export function KpiCard({
       )}
     >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        <span className="truncate text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {label}
         </span>
         {Icon &&

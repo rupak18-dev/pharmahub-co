@@ -342,6 +342,7 @@ function BatchesPage() {
         purchasePrice: 0,
         sellingPrice: 0,
         supplierId: v.supplierId || undefined,
+        currentStock: v.quantityReceived,
         createdAt: now,
       });
     });
