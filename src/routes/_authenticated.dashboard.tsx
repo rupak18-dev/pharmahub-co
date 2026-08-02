@@ -74,7 +74,7 @@ function DashboardPage() {
           if (batch) {
              costOfGoodsSold += (batch.purchasePrice * item.quantity);
           } else {
-             costOfGoodsSold += (item.lineTotal * 0.7); // Fallback
+             costOfGoodsSold += ((item.lineTotal || 0) * 0.7); // Fallback
           }
         });
       }

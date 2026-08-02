@@ -35,7 +35,7 @@ export function QuickActions() {
       title: "Add Customer",
       description: "New CRM entry",
       icon: UserPlus,
-      href: "/dashboard",
+      href: "/dashboard/sales",
       iconColor: "text-rose-500 bg-rose-50",
     },
     {
