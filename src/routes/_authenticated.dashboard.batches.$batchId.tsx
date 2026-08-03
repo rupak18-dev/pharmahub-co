@@ -23,8 +23,12 @@ function BatchDetailPage() {
   const { batchId } = useParams({ from: "/_authenticated/dashboard/batches/$batchId" });
   const batch = useDb((d) => d.batches.find((b) => b.id === batchId));
   const settings = useDb((d) => d.settings);
-  const med = useDb((d) => (batch ? d.medicines.find((m) => m.id === batch.medicineId) : undefined));
-  const supplier = useDb((d) => (batch?.supplierId ? d.suppliers.find((s) => s.id === batch.supplierId) : undefined));
+  const med = useDb((d) =>
+    batch ? d.medicines.find((m) => m.id === batch.medicineId) : undefined,
+  );
+  const supplier = useDb((d) =>
+    batch?.supplierId ? d.suppliers.find((s) => s.id === batch.supplierId) : undefined,
+  );
   const ledger = useDb((d) => d.inventoryLedger.filter((m) => m.batchId === batchId));
   const stock = useDb((d) => d.inventoryStock.filter((s) => s.batchId === batchId));
 
@@ -32,9 +36,15 @@ function BatchDetailPage() {
     return (
       <div className="space-y-6">
         <PageHeader title="Batch not found" />
-        <EmptyState title="This batch doesn't exist" description="It may have been deleted." action={
-          <Button asChild><Link to="/dashboard/batches">Back to batches</Link></Button>
-        } />
+        <EmptyState
+          title="This batch doesn't exist"
+          description="It may have been deleted."
+          action={
+            <Button asChild>
+              <Link to="/dashboard/batches">Back to batches</Link>
+            </Button>
+          }
+        />
       </div>
     );
   }
@@ -60,14 +70,17 @@ function BatchDetailPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <InfoTile label="Manufacture" value={safeFormat(batch.mfgDate, "dd MMM yyyy")} />
         <InfoTile label="Expiry" value={safeFormat(batch.expiryDate, "dd MMM yyyy")} />
-        <InfoTile
-          label="Current stock"
-          value={`${totalStock}`}
-        />
+        <InfoTile label="Current stock" value={`${totalStock}`} />
         <InfoTile label="Supplier" value={supplier?.name ?? "—"} />
         <InfoTile label="MRP" value={`${settings.currency}${batch.mrp.toFixed(2)}`} />
-        <InfoTile label="Purchase price" value={`${settings.currency}${batch.purchasePrice.toFixed(2)}`} />
-        <InfoTile label="Selling price" value={`${settings.currency}${batch.sellingPrice.toFixed(2)}`} />
+        <InfoTile
+          label="Purchase price"
+          value={`${settings.currency}${batch.purchasePrice.toFixed(2)}`}
+        />
+        <InfoTile
+          label="Selling price"
+          value={`${settings.currency}${batch.sellingPrice.toFixed(2)}`}
+        />
         <InfoTile
           label="Total stock value"
           value={`${settings.currency}${(totalStock * (batch.purchasePrice || 0)).toFixed(2)}`}
@@ -77,7 +90,9 @@ function BatchDetailPage() {
       <div className="rounded-xl border border-border bg-card">
         <div className="border-b border-border px-4 py-3">
           <h3 className="text-sm font-semibold">Lifecycle</h3>
-          <p className="text-xs text-muted-foreground">Every stock movement recorded for this batch.</p>
+          <p className="text-xs text-muted-foreground">
+            Every stock movement recorded for this batch.
+          </p>
         </div>
         {ledger.length === 0 ? (
           <div className="p-6">
@@ -99,8 +114,8 @@ function BatchDetailPage() {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
                     <div className="text-sm font-medium capitalize">
-                      Stock {m.movementType} · {m.quantity > 0 ? "+" : ""}
-                      {m.quantity}
+                      Stock {m.movementType} · {m.quantityChange > 0 ? "+" : ""}
+                      {m.quantityChange}
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {formatDistanceToNow(new Date(m.timestamp), { addSuffix: true })}

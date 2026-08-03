@@ -54,7 +54,7 @@ function DashboardPage() {
     // Sales data
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    
+
     let todaysSales = 0;
     let monthlyRevenue = 0;
     let costOfGoodsSold = 0; // For gross profit
@@ -64,17 +64,20 @@ function DashboardPage() {
       if (saleDate.getTime() >= today.getTime()) {
         todaysSales += 1;
       }
-      
+
       // If sale is in the current month
-      if (saleDate.getMonth() === today.getMonth() && saleDate.getFullYear() === today.getFullYear()) {
+      if (
+        saleDate.getMonth() === today.getMonth() &&
+        saleDate.getFullYear() === today.getFullYear()
+      ) {
         monthlyRevenue += s.grandTotal;
         // Approximate COGS by finding the batch cost (if available, else approximate 70% margin)
-        s.items.forEach(item => {
-          const batch = data.batches.find(b => b.id === item.batchId);
+        s.items.forEach((item) => {
+          const batch = data.batches.find((b) => b.id === item.batchId);
           if (batch) {
-             costOfGoodsSold += (batch.purchasePrice * item.quantity);
+            costOfGoodsSold += batch.purchasePrice * item.quantity;
           } else {
-             costOfGoodsSold += (item.lineTotal * 0.7); // Fallback
+            costOfGoodsSold += item.lineTotal * 0.7; // Fallback
           }
         });
       }
@@ -82,9 +85,13 @@ function DashboardPage() {
 
     const grossProfit = monthlyRevenue - costOfGoodsSold;
 
-    const pendingOrders = data.purchaseOrders.filter(po => po.status === "placed" || po.status === "draft").length;
-    
-    const uniqueCustomers = new Set(data.sales.filter(s => s.customerName).map(s => s.customerName)).size;
+    const pendingOrders = data.purchaseOrders.filter(
+      (po) => po.status === "placed" || po.status === "draft",
+    ).length;
+
+    const uniqueCustomers = new Set(
+      data.sales.filter((s) => s.customerName).map((s) => s.customerName),
+    ).size;
 
     return {
       totalStock,
@@ -106,9 +113,9 @@ function DashboardPage() {
         title="Dashboard"
         description="Comprehensive overview of your pharmacy operations and business performance."
         actions={
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowCharts(!showCharts)}
             className="rounded-lg text-[#2563EB] hover:text-[#2563EB]/80 border-[#2563EB]/30 hover:bg-[#2563EB]/5"
           >
@@ -179,9 +186,11 @@ function DashboardPage() {
       </div>
 
       {showCharts && <DashboardCharts db={data} />}
-      
+
       <div className="border-t border-border/40 pt-4">
-        <h3 className="text-sm font-bold text-muted-foreground tracking-wider mb-4">Operations widgets</h3>
+        <h3 className="text-sm font-bold text-muted-foreground tracking-wider mb-4">
+          Operations widgets
+        </h3>
         <DashboardWidgets db={data} />
       </div>
     </div>

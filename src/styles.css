@@ -166,7 +166,11 @@
     font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
-  .font-mono, code, kbd, pre, samp {
+  .font-mono,
+  code,
+  kbd,
+  pre,
+  samp {
     font-family: var(--font-mono);
   }
   .tabular-nums {
@@ -180,4 +184,3 @@
     display: none;
   }
 }
-

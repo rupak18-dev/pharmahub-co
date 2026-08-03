@@ -44,7 +44,7 @@ export function DashboardCharts({ db }: DashboardChartsProps) {
       const m = months.find(
         (month) =>
           month.date.getMonth() === saleDate.getMonth() &&
-          month.date.getFullYear() === saleDate.getFullYear()
+          month.date.getFullYear() === saleDate.getFullYear(),
       );
       if (m) {
         m.salesAmt += s.items.length;
@@ -58,7 +58,7 @@ export function DashboardCharts({ db }: DashboardChartsProps) {
         const m = months.find(
           (month) =>
             month.date.getMonth() === poDate.getMonth() &&
-            month.date.getFullYear() === poDate.getFullYear()
+            month.date.getFullYear() === poDate.getFullYear(),
         );
         if (m) {
           const total = po.items.reduce((acc, item) => acc + item.quantity * item.expectedPrice, 0);
@@ -108,9 +108,7 @@ export function DashboardCharts({ db }: DashboardChartsProps) {
     <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
       {/* Monthly Revenue - Area Chart */}
       <div className="rounded-2xl border border-border bg-card p-4 shadow-sm xl:col-span-2">
-        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
-          Revenue by Month
-        </h3>
+        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">Revenue by Month</h3>
         <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
@@ -121,18 +119,37 @@ export function DashboardCharts({ db }: DashboardChartsProps) {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
                 tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                tickFormatter={(value) => `${currency}${value >= 1000 ? (value/1000).toFixed(1) + 'k' : value}`}
+                dy={10}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tickFormatter={(value) =>
+                  `${currency}${value >= 1000 ? (value / 1000).toFixed(1) + "k" : value}`
+                }
               />
               <Tooltip
-                contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", backgroundColor: "hsl(var(--background))" }}
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "hsl(var(--background))",
+                }}
                 formatter={(value: number) => [`${currency}${value.toFixed(2)}`, "Revenue"]}
               />
-              <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
+              <Area
+                type="monotone"
+                dataKey="revenue"
+                stroke="#3b82f6"
+                strokeWidth={3}
+                fillOpacity={1}
+                fill="url(#colorRevenue)"
+              />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -143,13 +160,33 @@ export function DashboardCharts({ db }: DashboardChartsProps) {
         <h3 className="text-sm font-semibold mb-4">Top Selling Medicines</h3>
         <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={topMedicines} layout="vertical" margin={{ top: 0, right: 10, left: 0, bottom: 0 }}>
+            <BarChart
+              data={topMedicines}
+              layout="vertical"
+              margin={{ top: 0, right: 10, left: 0, bottom: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
-              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-              <YAxis dataKey="name" type="category" width={100} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }} />
-              <Tooltip 
+              <XAxis
+                type="number"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              />
+              <YAxis
+                dataKey="name"
+                type="category"
+                width={100}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+              />
+              <Tooltip
                 cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
-                contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", backgroundColor: "hsl(var(--background))" }}
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "hsl(var(--background))",
+                }}
               />
               <Bar dataKey="quantity" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} />
             </BarChart>
@@ -164,20 +201,44 @@ export function DashboardCharts({ db }: DashboardChartsProps) {
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-              <YAxis 
-                axisLine={false} 
-                tickLine={false} 
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
                 tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                tickFormatter={(value) => `${currency}${value >= 1000 ? (value/1000).toFixed(0) + 'k' : value}`}
+                dy={10}
               />
-              <Tooltip 
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tickFormatter={(value) =>
+                  `${currency}${value >= 1000 ? (value / 1000).toFixed(0) + "k" : value}`
+                }
+              />
+              <Tooltip
                 cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
-                contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", backgroundColor: "hsl(var(--background))" }}
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "hsl(var(--background))",
+                }}
               />
               <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} iconType="circle" />
-              <Bar dataKey="revenue" name="Sales" fill="#3b82f6" radius={[4, 4, 0, 0]} maxBarSize={40} />
-              <Bar dataKey="purchasesAmt" name="Purchases" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={40} />
+              <Bar
+                dataKey="revenue"
+                name="Sales"
+                fill="#3b82f6"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={40}
+              />
+              <Bar
+                dataKey="purchasesAmt"
+                name="Purchases"
+                fill="#f59e0b"
+                radius={[4, 4, 0, 0]}
+                maxBarSize={40}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -190,12 +251,34 @@ export function DashboardCharts({ db }: DashboardChartsProps) {
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} dy={10} />
-              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }} />
-              <Tooltip
-                contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", backgroundColor: "hsl(var(--background))" }}
+              <XAxis
+                dataKey="name"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                dy={10}
               />
-              <Line type="monotone" dataKey="salesAmt" name="Invoices" stroke="#8b5cf6" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+              />
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "hsl(var(--background))",
+                }}
+              />
+              <Line
+                type="monotone"
+                dataKey="salesAmt"
+                name="Invoices"
+                stroke="#8b5cf6"
+                strokeWidth={3}
+                dot={{ r: 4, strokeWidth: 2 }}
+                activeDot={{ r: 6 }}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -220,15 +303,24 @@ export function DashboardCharts({ db }: DashboardChartsProps) {
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip 
-                contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", backgroundColor: "hsl(var(--background))" }}
+              <Tooltip
+                contentStyle={{
+                  borderRadius: "8px",
+                  border: "1px solid hsl(var(--border))",
+                  backgroundColor: "hsl(var(--background))",
+                }}
               />
-              <Legend layout="vertical" verticalAlign="middle" align="right" wrapperStyle={{ fontSize: "12px" }} iconType="circle" />
+              <Legend
+                layout="vertical"
+                verticalAlign="middle"
+                align="right"
+                wrapperStyle={{ fontSize: "12px" }}
+                iconType="circle"
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>
       </div>
-
     </div>
   );
 }

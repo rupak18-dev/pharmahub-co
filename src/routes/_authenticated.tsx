@@ -6,17 +6,17 @@ import { UserMenu } from "@/components/pharmacy/UserMenu";
 import { useAuth } from "@/lib/auth";
 import { useDb } from "@/hooks/useDb";
 import { BrandMark } from "@/components/pharmacy/BrandMark";
-import { 
-  Bell, 
-  Mail, 
-  Search, 
-  Store, 
-  Mic, 
-  QrCode, 
-  Plus, 
-  Upload, 
+import {
+  Bell,
+  Mail,
+  Search,
+  Store,
+  Mic,
+  QrCode,
+  Plus,
+  Upload,
   Download,
-  Barcode
+  Barcode,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -58,10 +58,10 @@ function AuthenticatedLayout() {
   const handleSearchSubmit = (val: string) => {
     navigate({
       to: "/dashboard/medicines",
-      search: (prev: any) => ({
+      search: (prev) => ({
         ...prev,
         q: val || undefined,
-      })
+      }),
     });
   };
 
@@ -72,22 +72,29 @@ function AuthenticatedLayout() {
     if (searchText.trim().length < 2) return null;
     const query = searchText.toLowerCase().trim();
 
-    const matchedMeds = data.medicines.filter((m) =>
-      m.name.toLowerCase().includes(query) ||
-      (m.genericName ?? "").toLowerCase().includes(query) ||
-      (m.brandName ?? "").toLowerCase().includes(query)
-    ).slice(0, 3);
+    const matchedMeds = data.medicines
+      .filter(
+        (m) =>
+          m.name.toLowerCase().includes(query) ||
+          (m.genericName ?? "").toLowerCase().includes(query) ||
+          (m.brandName ?? "").toLowerCase().includes(query),
+      )
+      .slice(0, 3);
 
-    const matchedBatches = data.batches.filter((b) =>
-      b.batchNumber.toLowerCase().includes(query)
-    ).slice(0, 3);
+    const matchedBatches = data.batches
+      .filter((b) => b.batchNumber.toLowerCase().includes(query))
+      .slice(0, 3);
 
-    const matchedSales = data.sales.filter((s) =>
-      s.invoiceNo.toLowerCase().includes(query) ||
-      (s.customerName ?? "").toLowerCase().includes(query)
-    ).slice(0, 3);
+    const matchedSales = data.sales
+      .filter(
+        (s) =>
+          s.invoiceNo.toLowerCase().includes(query) ||
+          (s.customerName ?? "").toLowerCase().includes(query),
+      )
+      .slice(0, 3);
 
-    const hasResults = matchedMeds.length > 0 || matchedBatches.length > 0 || matchedSales.length > 0;
+    const hasResults =
+      matchedMeds.length > 0 || matchedBatches.length > 0 || matchedSales.length > 0;
 
     return hasResults ? { meds: matchedMeds, batches: matchedBatches, sales: matchedSales } : null;
   }, [searchText, data]);
@@ -132,23 +139,29 @@ function AuthenticatedLayout() {
               <BrandMark size="sm" showText={false} />
             </div>
 
-            <Button 
-              variant="ghost" 
-              size="icon" 
+            <Button
+              variant="ghost"
+              size="icon"
               className="lg:hidden h-9 w-9 text-muted-foreground hover:bg-muted/50 rounded-full ml-1"
-              onClick={() => navigate({ to: "/dashboard/medicines", search: { focusSearch: "true" } })}
+              onClick={() =>
+                navigate({ to: "/dashboard/medicines", search: { focusSearch: "true" } })
+              }
               title="Search Medicines"
             >
               <Search className="h-5 w-5" />
             </Button>
-            
+
             {/* Advanced Global Medicine Search */}
             <div className="hidden lg:flex flex-1 items-center max-w-xl gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder={isMedicinesPage ? "Search medicines..." : "Search medicines, batches, customers..."}
+                  placeholder={
+                    isMedicinesPage
+                      ? "Search medicines..."
+                      : "Search medicines, batches, customers..."
+                  }
                   className="w-full bg-muted/50 pl-9 pr-24 border-none focus-visible:ring-1 focus-visible:bg-background transition-colors h-9"
                   value={searchText}
                   onChange={(e) => {
@@ -167,13 +180,31 @@ function AuthenticatedLayout() {
                 />
                 {isMedicinesPage && (
                   <div className="absolute right-1 top-1 flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={handleVoiceSearch} title="Voice Search">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      onClick={handleVoiceSearch}
+                      title="Voice Search"
+                    >
                       <Mic className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={handleBarcodeScan} title="Scan Barcode">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      onClick={handleBarcodeScan}
+                      title="Scan Barcode"
+                    >
                       <Barcode className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-foreground" onClick={handleQRScan} title="Scan QR Code">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                      onClick={handleQRScan}
+                      title="Scan QR Code"
+                    >
                       <QrCode className="h-4 w-4" />
                     </Button>
                   </div>
@@ -183,7 +214,9 @@ function AuthenticatedLayout() {
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-border shadow-xl rounded-xl p-4 z-50 max-h-[350px] overflow-y-auto space-y-4 min-w-[320px]">
                     {searchResults.meds.length > 0 && (
                       <div className="space-y-1.5">
-                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Medicines</h4>
+                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          Medicines
+                        </h4>
                         {searchResults.meds.map((m) => (
                           <div
                             key={m.id}
@@ -194,14 +227,18 @@ function AuthenticatedLayout() {
                             }}
                           >
                             <span className="font-semibold text-foreground">{m.name}</span>
-                            <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">{m.dosageForm || "Tab"}</span>
+                            <span className="text-[10px] text-muted-foreground font-mono bg-muted px-1.5 py-0.5 rounded">
+                              {m.dosageForm || "Tab"}
+                            </span>
                           </div>
                         ))}
                       </div>
                     )}
                     {searchResults.batches.length > 0 && (
                       <div className="space-y-1.5">
-                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Batches</h4>
+                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          Batches
+                        </h4>
                         {searchResults.batches.map((b) => (
                           <div
                             key={b.id}
@@ -211,15 +248,21 @@ function AuthenticatedLayout() {
                               navigate({ to: "/dashboard/batches" });
                             }}
                           >
-                            <span className="font-semibold text-foreground">Batch {b.batchNumber}</span>
-                            <span className="text-[10px] text-muted-foreground font-mono">Stock: {b.currentStock}</span>
+                            <span className="font-semibold text-foreground">
+                              Batch {b.batchNumber}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground font-mono">
+                              Stock: {b.currentStock}
+                            </span>
                           </div>
                         ))}
                       </div>
                     )}
                     {searchResults.sales.length > 0 && (
                       <div className="space-y-1.5">
-                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Invoices & Customers</h4>
+                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                          Invoices & Customers
+                        </h4>
                         {searchResults.sales.map((s) => (
                           <div
                             key={s.id}
@@ -230,10 +273,16 @@ function AuthenticatedLayout() {
                             }}
                           >
                             <div className="min-w-0">
-                              <span className="font-semibold text-foreground block truncate">{s.invoiceNo}</span>
-                              <span className="text-[10px] text-muted-foreground truncate block">{s.customerName || "Walk-in"}</span>
+                              <span className="font-semibold text-foreground block truncate">
+                                {s.invoiceNo}
+                              </span>
+                              <span className="text-[10px] text-muted-foreground truncate block">
+                                {s.customerName || "Walk-in"}
+                              </span>
                             </div>
-                            <span className="text-[10px] font-semibold text-emerald-600 font-mono">₹{s.grandTotal.toFixed(2)}</span>
+                            <span className="text-[10px] font-semibold text-emerald-600 font-mono">
+                              ₹{s.grandTotal.toFixed(2)}
+                            </span>
                           </div>
                         ))}
                       </div>
@@ -244,13 +293,11 @@ function AuthenticatedLayout() {
             </div>
 
             <div className="ml-auto flex items-center gap-2">
-
-
-
-
-
-              
-              <Button variant="ghost" size="icon" className="relative hover:bg-muted/50 rounded-full mr-1 h-9 w-9">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="relative hover:bg-muted/50 rounded-full mr-1 h-9 w-9"
+              >
                 <Bell className="h-5 w-5 text-muted-foreground" />
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-[10px] bg-red-500 hover:bg-red-600 border-2 border-background">
                   3

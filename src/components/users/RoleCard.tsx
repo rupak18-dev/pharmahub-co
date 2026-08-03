@@ -146,9 +146,7 @@ export function RoleCard({ roleName, onConfigure, onClone }: RoleCardProps) {
           </Button>
         </div>
 
-        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">
-          {description}
-        </p>
+        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{description}</p>
       </div>
 
       {/* Dynamic Factual Metrics */}

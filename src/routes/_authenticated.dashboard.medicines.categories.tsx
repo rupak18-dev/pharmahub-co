@@ -72,7 +72,13 @@ function CategoriesPage() {
           has("medicines", "create") && (
             <Dialog open={open} onOpenChange={setOpen}>
               <DialogTrigger asChild>
-                <Button size="sm" onClick={() => { setName(""); setEditingId(null); }}>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setName("");
+                    setEditingId(null);
+                  }}
+                >
                   <Plus className="mr-1 h-4 w-4" /> New category
                 </Button>
               </DialogTrigger>
@@ -103,7 +109,10 @@ function CategoriesPage() {
       />
 
       {cats.length === 0 ? (
-        <EmptyState title="No categories yet" description="Add your first category to organize the catalog." />
+        <EmptyState
+          title="No categories yet"
+          description="Add your first category to organize the catalog."
+        />
       ) : (
         <div className="overflow-hidden rounded-lg border border-border bg-card">
           <table className="w-full text-sm">

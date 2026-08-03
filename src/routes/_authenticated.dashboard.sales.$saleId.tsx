@@ -24,7 +24,9 @@ function ReceiptPage() {
     <div className="mx-auto max-w-2xl space-y-4">
       <div className="flex items-center justify-between print:hidden">
         <Button variant="ghost" size="sm" asChild>
-          <Link to="/dashboard/sales"><ArrowLeft className="mr-1 h-4 w-4" /> Back to sales</Link>
+          <Link to="/dashboard/sales">
+            <ArrowLeft className="mr-1 h-4 w-4" /> Back to sales
+          </Link>
         </Button>
         <Button size="sm" onClick={() => window.print()}>
           <Printer className="mr-1 h-4 w-4" /> Print
@@ -39,9 +41,13 @@ function ReceiptPage() {
           </div>
           <div className="text-right">
             <p className="font-mono text-sm font-semibold">{sale.invoiceNo}</p>
-            <p className="text-xs text-muted-foreground">{format(new Date(sale.createdAt), "PPp")}</p>
+            <p className="text-xs text-muted-foreground">
+              {format(new Date(sale.createdAt), "PPp")}
+            </p>
             {sale.status === "voided" && (
-              <p className="mt-1 rounded bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">VOIDED</p>
+              <p className="mt-1 rounded bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
+                VOIDED
+              </p>
             )}
           </div>
         </div>
@@ -50,7 +56,9 @@ function ReceiptPage() {
           <div>
             <p className="text-xs text-muted-foreground">Customer</p>
             <p>{sale.customerName ?? "Walk-in"}</p>
-            {sale.customerPhone && <p className="text-xs text-muted-foreground">{sale.customerPhone}</p>}
+            {sale.customerPhone && (
+              <p className="text-xs text-muted-foreground">{sale.customerPhone}</p>
+            )}
           </div>
           <div className="text-right">
             <p className="text-xs text-muted-foreground">Cashier</p>
@@ -76,22 +84,70 @@ function ReceiptPage() {
                 <td className="py-2">{it.medicineName}</td>
                 <td className="py-2 font-mono text-xs text-muted-foreground">{it.batchNumber}</td>
                 <td className="py-2 text-right font-mono">{it.quantity}</td>
-                <td className="py-2 text-right font-mono">{currency}{it.unitPrice.toFixed(2)}</td>
+                <td className="py-2 text-right font-mono">
+                  {currency}
+                  {it.unitPrice.toFixed(2)}
+                </td>
                 <td className="py-2 text-right font-mono">{it.gstRate}%</td>
-                <td className="py-2 text-right font-mono font-semibold">{currency}{it.lineTotal.toFixed(2)}</td>
+                <td className="py-2 text-right font-mono font-semibold">
+                  {currency}
+                  {it.lineTotal.toFixed(2)}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
 
         <dl className="mt-4 space-y-1 text-sm">
-          <div className="flex justify-between"><dt className="text-muted-foreground">Subtotal</dt><dd className="font-mono">{currency}{sale.subtotal.toFixed(2)}</dd></div>
-          <div className="flex justify-between"><dt className="text-muted-foreground">Discount</dt><dd className="font-mono">-{currency}{sale.discountTotal.toFixed(2)}</dd></div>
-          <div className="flex justify-between"><dt className="text-muted-foreground">GST</dt><dd className="font-mono">{currency}{sale.gstTotal.toFixed(2)}</dd></div>
-          <div className="flex justify-between text-xs"><dt className="text-muted-foreground">Round off</dt><dd className="font-mono">{currency}{sale.roundOff.toFixed(2)}</dd></div>
-          <div className="mt-2 flex justify-between border-t border-border pt-2 text-base font-semibold"><dt>Grand total</dt><dd className="font-mono">{currency}{sale.grandTotal.toFixed(2)}</dd></div>
-          <div className="flex justify-between text-xs text-muted-foreground"><dt>Tendered</dt><dd className="font-mono">{currency}{sale.tender.toFixed(2)}</dd></div>
-          <div className="flex justify-between text-xs text-muted-foreground"><dt>Change</dt><dd className="font-mono">{currency}{sale.change.toFixed(2)}</dd></div>
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Subtotal</dt>
+            <dd className="font-mono">
+              {currency}
+              {sale.subtotal.toFixed(2)}
+            </dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">Discount</dt>
+            <dd className="font-mono">
+              -{currency}
+              {sale.discountTotal.toFixed(2)}
+            </dd>
+          </div>
+          <div className="flex justify-between">
+            <dt className="text-muted-foreground">GST</dt>
+            <dd className="font-mono">
+              {currency}
+              {sale.gstTotal.toFixed(2)}
+            </dd>
+          </div>
+          <div className="flex justify-between text-xs">
+            <dt className="text-muted-foreground">Round off</dt>
+            <dd className="font-mono">
+              {currency}
+              {sale.roundOff.toFixed(2)}
+            </dd>
+          </div>
+          <div className="mt-2 flex justify-between border-t border-border pt-2 text-base font-semibold">
+            <dt>Grand total</dt>
+            <dd className="font-mono">
+              {currency}
+              {sale.grandTotal.toFixed(2)}
+            </dd>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <dt>Tendered</dt>
+            <dd className="font-mono">
+              {currency}
+              {sale.tender.toFixed(2)}
+            </dd>
+          </div>
+          <div className="flex justify-between text-xs text-muted-foreground">
+            <dt>Change</dt>
+            <dd className="font-mono">
+              {currency}
+              {sale.change.toFixed(2)}
+            </dd>
+          </div>
         </dl>
 
         <p className="mt-6 border-t border-border pt-4 text-center text-xs text-muted-foreground">

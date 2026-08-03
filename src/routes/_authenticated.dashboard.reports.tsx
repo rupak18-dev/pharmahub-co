@@ -152,7 +152,8 @@ const INITIAL_REPORTS: ReportDefinition[] = [
     id: "purchase-register",
     title: "Purchase Register & GRN Audit",
     category: "Purchases",
-    description: "Detailed procurement audit tracking Goods Received Notes (GRNs) and supplier invoices.",
+    description:
+      "Detailed procurement audit tracking Goods Received Notes (GRNs) and supplier invoices.",
     owner: "Procurement Lead",
     lastGenerated: "Yesterday, 04:20 PM",
     lastModified: "Yesterday, 04:20 PM",
@@ -166,7 +167,8 @@ const INITIAL_REPORTS: ReportDefinition[] = [
     id: "stock-valuation",
     title: "Stock Valuation by Category",
     category: "Inventory",
-    description: "Complete asset valuation of active medicine inventory evaluated at cost and retail value.",
+    description:
+      "Complete asset valuation of active medicine inventory evaluated at cost and retail value.",
     owner: "Inventory Manager",
     lastGenerated: "Today, 08:30 AM",
     lastModified: "Today, 08:30 AM",
@@ -180,7 +182,8 @@ const INITIAL_REPORTS: ReportDefinition[] = [
     id: "gst-summary",
     title: "GST Tax Filing Summary",
     category: "GST",
-    description: "Tax liability summary grouped by GST slabs (5%, 12%, 18%) for monthly tax returns.",
+    description:
+      "Tax liability summary grouped by GST slabs (5%, 12%, 18%) for monthly tax returns.",
     owner: "Chief Accountant",
     lastGenerated: "Today, 07:00 AM",
     lastModified: "Today, 07:00 AM",
@@ -208,7 +211,8 @@ const INITIAL_REPORTS: ReportDefinition[] = [
     id: "expiry-audit",
     title: "Expiry & Near-Expiry Audit",
     category: "Expiry",
-    description: "Critical risk analysis of expired and near-expiry medicine batches to prevent loss.",
+    description:
+      "Critical risk analysis of expired and near-expiry medicine batches to prevent loss.",
     owner: "Quality Assurance",
     lastGenerated: "Today, 09:15 AM",
     lastModified: "Today, 09:15 AM",
@@ -222,7 +226,8 @@ const INITIAL_REPORTS: ReportDefinition[] = [
     id: "compliance-narcotics",
     title: "Schedule H & H1 Drug Audit",
     category: "Compliance",
-    description: "Mandatory regulatory register for controlled drugs, prescriber details, and verification.",
+    description:
+      "Mandatory regulatory register for controlled drugs, prescriber details, and verification.",
     owner: "Compliance Officer",
     lastGenerated: "3 days ago",
     lastModified: "3 days ago",
@@ -236,7 +241,8 @@ const INITIAL_REPORTS: ReportDefinition[] = [
     id: "finance-operating",
     title: "Financial Operating Statement",
     category: "Finance",
-    description: "High-level operational summary comparing gross revenue against procurement intake.",
+    description:
+      "High-level operational summary comparing gross revenue against procurement intake.",
     owner: "Chief Accountant",
     lastGenerated: "Today, 06:30 AM",
     lastModified: "Today, 06:30 AM",
@@ -723,7 +729,7 @@ function ReportsPage() {
             ? `Expired (${Math.abs(r.daysRemaining)}d ago)`
             : `${r.daysRemaining} days`,
           r.stock,
-          r.status.replace("_", " ").toUpperCase(),
+          r.status?.replace("_", " ").toUpperCase() ?? "—",
         ]);
         return {
           title: "Expiry & Near-Expiry Audit",
@@ -938,15 +944,11 @@ function ReportsPage() {
   const handleArchiveReport = (report: ReportDefinition) => {
     setReports((prev) =>
       prev.map((r) =>
-        r.id === report.id
-          ? { ...r, status: r.status === "Archived" ? "Ready" : "Archived" }
-          : r,
+        r.id === report.id ? { ...r, status: r.status === "Archived" ? "Ready" : "Archived" } : r,
       ),
     );
     toast.success(
-      report.status === "Archived"
-        ? `Restored "${report.title}"`
-        : `Archived "${report.title}"`,
+      report.status === "Archived" ? `Restored "${report.title}"` : `Archived "${report.title}"`,
     );
   };
 
@@ -1037,7 +1039,9 @@ function ReportsPage() {
                 <SelectValue placeholder="All Owners" />
               </SelectTrigger>
               <SelectContent align="end" className="text-xs">
-                <SelectItem value="all" className="text-xs">All Owners</SelectItem>
+                <SelectItem value="all" className="text-xs">
+                  All Owners
+                </SelectItem>
                 {uniqueOwners.map((owner) => (
                   <SelectItem key={owner} value={owner} className="text-xs">
                     {owner}
@@ -1052,11 +1056,21 @@ function ReportsPage() {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent align="end" className="text-xs">
-                <SelectItem value="all" className="text-xs">All Status</SelectItem>
-                <SelectItem value="Ready" className="text-xs">Ready</SelectItem>
-                <SelectItem value="Scheduled" className="text-xs">Scheduled</SelectItem>
-                <SelectItem value="Uploaded" className="text-xs">Uploaded</SelectItem>
-                <SelectItem value="Archived" className="text-xs">Archived</SelectItem>
+                <SelectItem value="all" className="text-xs">
+                  All Status
+                </SelectItem>
+                <SelectItem value="Ready" className="text-xs">
+                  Ready
+                </SelectItem>
+                <SelectItem value="Scheduled" className="text-xs">
+                  Scheduled
+                </SelectItem>
+                <SelectItem value="Uploaded" className="text-xs">
+                  Uploaded
+                </SelectItem>
+                <SelectItem value="Archived" className="text-xs">
+                  Archived
+                </SelectItem>
               </SelectContent>
             </Select>
 
@@ -1066,14 +1080,30 @@ function ReportsPage() {
                 <SelectValue placeholder="Select Period" />
               </SelectTrigger>
               <SelectContent align="end" className="text-xs">
-                <SelectItem value="today" className="text-xs">Today</SelectItem>
-                <SelectItem value="yesterday" className="text-xs">Yesterday</SelectItem>
-                <SelectItem value="7days" className="text-xs">Last 7 Days</SelectItem>
-                <SelectItem value="30days" className="text-xs">Last 30 Days</SelectItem>
-                <SelectItem value="thisMonth" className="text-xs">This Month</SelectItem>
-                <SelectItem value="lastMonth" className="text-xs">Last Month</SelectItem>
-                <SelectItem value="financialYear" className="text-xs">Financial Year</SelectItem>
-                <SelectItem value="custom" className="text-xs font-semibold text-primary">Custom Range...</SelectItem>
+                <SelectItem value="today" className="text-xs">
+                  Today
+                </SelectItem>
+                <SelectItem value="yesterday" className="text-xs">
+                  Yesterday
+                </SelectItem>
+                <SelectItem value="7days" className="text-xs">
+                  Last 7 Days
+                </SelectItem>
+                <SelectItem value="30days" className="text-xs">
+                  Last 30 Days
+                </SelectItem>
+                <SelectItem value="thisMonth" className="text-xs">
+                  This Month
+                </SelectItem>
+                <SelectItem value="lastMonth" className="text-xs">
+                  Last Month
+                </SelectItem>
+                <SelectItem value="financialYear" className="text-xs">
+                  Financial Year
+                </SelectItem>
+                <SelectItem value="custom" className="text-xs font-semibold text-primary">
+                  Custom Range...
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -1150,7 +1180,9 @@ function ReportsPage() {
                   }`}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <Icon className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary-foreground" : "text-muted-foreground"}`} />
+                    <Icon
+                      className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary-foreground" : "text-muted-foreground"}`}
+                    />
                     <span className="truncate">{cat.label}</span>
                   </div>
                   <span
@@ -1382,10 +1414,7 @@ function ReportsPage() {
                       {explorerReports.map((report) => {
                         const Icon = report.icon;
                         return (
-                          <tr
-                            key={report.id}
-                            className="hover:bg-muted/40 transition-colors group"
-                          >
+                          <tr key={report.id} className="hover:bg-muted/40 transition-colors group">
                             {/* Favorite / Pin Check */}
                             <td className="py-2.5 px-3 text-center">
                               <button
@@ -1439,11 +1468,7 @@ function ReportsPage() {
                             {/* Status Badge */}
                             <td className="py-2.5 px-3">
                               <Badge
-                                variant={
-                                  report.status === "Ready"
-                                    ? "secondary"
-                                    : "outline"
-                                }
+                                variant={report.status === "Ready" ? "secondary" : "outline"}
                                 className={`text-[10px] font-medium ${
                                   report.status === "Ready"
                                     ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
@@ -1503,9 +1528,7 @@ function ReportsPage() {
                                     </button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="w-44 text-xs">
-                                    <DropdownMenuItem
-                                      onClick={() => handleDuplicateReport(report)}
-                                    >
+                                    <DropdownMenuItem onClick={() => handleDuplicateReport(report)}>
                                       <Copy className="mr-2 h-3.5 w-3.5" /> Duplicate
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
@@ -1515,9 +1538,7 @@ function ReportsPage() {
                                     >
                                       <Calendar className="mr-2 h-3.5 w-3.5" /> Schedule...
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => handleArchiveReport(report)}
-                                    >
+                                    <DropdownMenuItem onClick={() => handleArchiveReport(report)}>
                                       <FileText className="mr-2 h-3.5 w-3.5" />
                                       {report.status === "Archived" ? "Unarchive" : "Archive"}
                                     </DropdownMenuItem>
@@ -1602,10 +1623,7 @@ function ReportsPage() {
                 <Label htmlFor="template-type" className="text-xs font-medium">
                   Template Type
                 </Label>
-                <Select
-                  value={newReportTemplateType}
-                  onValueChange={setNewReportTemplateType}
-                >
+                <Select value={newReportTemplateType} onValueChange={setNewReportTemplateType}>
                   <SelectTrigger id="template-type" className="h-9 text-xs">
                     <SelectValue />
                   </SelectTrigger>
@@ -1621,10 +1639,7 @@ function ReportsPage() {
                 <Label htmlFor="permissions" className="text-xs font-medium">
                   Permissions
                 </Label>
-                <Select
-                  value={newReportPermissions}
-                  onValueChange={setNewReportPermissions}
-                >
+                <Select value={newReportPermissions} onValueChange={setNewReportPermissions}>
                   <SelectTrigger id="permissions" className="h-9 text-xs">
                     <SelectValue />
                   </SelectTrigger>
@@ -1660,7 +1675,11 @@ function ReportsPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="h-9 text-xs bg-primary text-primary-foreground font-semibold">
+              <Button
+                type="submit"
+                size="sm"
+                className="h-9 text-xs bg-primary text-primary-foreground font-semibold"
+              >
                 Create Template
               </Button>
             </DialogFooter>
@@ -1814,7 +1833,11 @@ function ReportsPage() {
               >
                 Cancel
               </Button>
-              <Button type="submit" size="sm" className="h-9 text-xs bg-primary text-primary-foreground font-semibold">
+              <Button
+                type="submit"
+                size="sm"
+                className="h-9 text-xs bg-primary text-primary-foreground font-semibold"
+              >
                 Upload & Attach
               </Button>
             </DialogFooter>
@@ -1844,7 +1867,9 @@ function ReportsPage() {
               {/* Applied Filters & Info Toolbar */}
               <div className="flex flex-wrap items-center justify-between border-b border-border bg-card px-4 py-2.5 gap-2 text-xs">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-medium text-muted-foreground text-[11px]">Applied Range:</span>
+                  <span className="font-medium text-muted-foreground text-[11px]">
+                    Applied Range:
+                  </span>
                   <Badge variant="secondary" className="font-mono text-[11px]">
                     {fromDate} to {toDate}
                   </Badge>
@@ -1882,7 +1907,8 @@ function ReportsPage() {
                             No records found for period
                           </h4>
                           <p className="text-xs text-muted-foreground max-w-sm mx-auto">
-                            No database entries found for {previewReport.title} between {fromDate} and {toDate}.
+                            No database entries found for {previewReport.title} between {fromDate}{" "}
+                            and {toDate}.
                           </p>
                         </div>
                       );
@@ -2005,7 +2031,9 @@ function ReportsPage() {
 
           <div className="space-y-2 max-h-[60vh] overflow-y-auto py-2">
             {recentActivity.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-6">No recent activity logged.</p>
+              <p className="text-xs text-muted-foreground text-center py-6">
+                No recent activity logged.
+              </p>
             ) : (
               <div className="divide-y divide-border rounded-lg border border-border bg-card">
                 {recentActivity.map((act) => (
@@ -2013,7 +2041,8 @@ function ReportsPage() {
                     <div>
                       <p className="font-semibold text-foreground">{act.reportTitle}</p>
                       <p className="text-[11px] text-muted-foreground mt-0.5">
-                        Action: <span className="font-medium text-foreground">{act.action}</span> by {act.user}
+                        Action: <span className="font-medium text-foreground">{act.action}</span> by{" "}
+                        {act.user}
                       </p>
                     </div>
                     <div className="text-right">

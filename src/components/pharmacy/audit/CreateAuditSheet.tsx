@@ -157,7 +157,9 @@ export function CreateAuditSheet({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="audit-title" className="text-xs font-semibold">Title</Label>
+            <Label htmlFor="audit-title" className="text-xs font-semibold">
+              Title
+            </Label>
             <Input
               id="audit-title"
               value={title}
@@ -311,7 +313,11 @@ export function CreateAuditSheet({
           >
             Cancel
           </Button>
-          <Button type="button" className="flex-1 min-h-[48px] sm:min-h-[36px] font-bold" onClick={submit}>
+          <Button
+            type="button"
+            className="flex-1 min-h-[48px] sm:min-h-[36px] font-bold"
+            onClick={submit}
+          >
             Schedule Audit
           </Button>
         </SheetFooter>

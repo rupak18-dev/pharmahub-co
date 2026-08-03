@@ -34,7 +34,7 @@ export function UserMenu() {
   const handleBranchChange = (branchId: string) => {
     setActiveBranch(branchId);
     localStorage.setItem("PharmaHub_branch", branchId);
-    const branchName = BRANCHES.find(b => b.id === branchId)?.name;
+    const branchName = BRANCHES.find((b) => b.id === branchId)?.name;
     toast.success(`Switched branch to ${branchName}`);
   };
 

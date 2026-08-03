@@ -38,27 +38,28 @@ interface InviteUserWizardProps {
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 
-const ACTION_GROUPS: { groupName: string; actions: { key: PermissionAction; label: string }[] }[] = [
-  {
-    groupName: "General Access",
-    actions: [{ key: "view", label: "View Data" }],
-  },
-  {
-    groupName: "Management",
-    actions: [
-      { key: "create", label: "Create Records" },
-      { key: "update", label: "Edit / Update" },
-    ],
-  },
-  {
-    groupName: "Advanced Operations",
-    actions: [
-      { key: "approve", label: "Approve Workflow" },
-      { key: "export", label: "Export Data" },
-      { key: "delete", label: "Delete Records" },
-    ],
-  },
-];
+const ACTION_GROUPS: { groupName: string; actions: { key: PermissionAction; label: string }[] }[] =
+  [
+    {
+      groupName: "General Access",
+      actions: [{ key: "view", label: "View Data" }],
+    },
+    {
+      groupName: "Management",
+      actions: [
+        { key: "create", label: "Create Records" },
+        { key: "update", label: "Edit / Update" },
+      ],
+    },
+    {
+      groupName: "Advanced Operations",
+      actions: [
+        { key: "approve", label: "Approve Workflow" },
+        { key: "export", label: "Export Data" },
+        { key: "delete", label: "Delete Records" },
+      ],
+    },
+  ];
 
 export function InviteUserWizard({ isOpen, onClose }: InviteUserWizardProps) {
   const profiles = useDb((d) => d.profiles);
@@ -136,9 +137,7 @@ export function InviteUserWizard({ isOpen, onClose }: InviteUserWizardProps) {
         toast.error("Full name and valid email are required.");
         return;
       }
-      const existing = profiles.find(
-        (p) => p.email.toLowerCase() === email.trim().toLowerCase()
-      );
+      const existing = profiles.find((p) => p.email.toLowerCase() === email.trim().toLowerCase());
       if (existing) {
         toast.error("A user profile with this email address already exists.");
         return;
@@ -234,8 +233,8 @@ export function InviteUserWizard({ isOpen, onClose }: InviteUserWizardProps) {
                     isCurrent
                       ? "border-primary text-primary"
                       : isDone
-                      ? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
-                      : "border-border text-muted-foreground/60"
+                        ? "border-emerald-500 text-emerald-600 dark:text-emerald-400"
+                        : "border-border text-muted-foreground/60"
                   }`}
                 >
                   <span className="truncate">{label}</span>
@@ -359,7 +358,9 @@ export function InviteUserWizard({ isOpen, onClose }: InviteUserWizardProps) {
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <RoleIcon className={`h-4 w-4 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                        <RoleIcon
+                          className={`h-4 w-4 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                        />
                         <h4 className="font-semibold text-xs text-foreground">{role}</h4>
                       </div>
                       {isSelected && (
@@ -440,9 +441,14 @@ export function InviteUserWizard({ isOpen, onClose }: InviteUserWizardProps) {
             ) : (
               <div className="space-y-4 max-h-[380px] overflow-y-auto pr-1">
                 {selectedModules.map((mod) => (
-                  <div key={mod.key} className="rounded-xl border border-border bg-card p-3.5 space-y-3">
+                  <div
+                    key={mod.key}
+                    className="rounded-xl border border-border bg-card p-3.5 space-y-3"
+                  >
                     <div className="flex items-center justify-between border-b border-border pb-2">
-                      <h4 className="font-semibold text-xs text-foreground">{mod.label} Permissions</h4>
+                      <h4 className="font-semibold text-xs text-foreground">
+                        {mod.label} Permissions
+                      </h4>
                       <span className="text-[11px] font-mono text-muted-foreground">
                         Module Key: {mod.key}
                       </span>
@@ -533,9 +539,7 @@ export function InviteUserWizard({ isOpen, onClose }: InviteUserWizardProps) {
             {/* Custom Permissions Summary */}
             <div className="rounded-xl border border-border bg-card p-4 space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
-                <h4 className="font-semibold text-sm text-foreground">
-                  Configured Access Scope
-                </h4>
+                <h4 className="font-semibold text-sm text-foreground">Configured Access Scope</h4>
                 <span className="font-mono text-xs text-muted-foreground">
                   {selectedModules.length} Active Modules
                 </span>
@@ -569,12 +573,7 @@ export function InviteUserWizard({ isOpen, onClose }: InviteUserWizardProps) {
           </Button>
 
           {step < 5 ? (
-            <Button
-              size="sm"
-              disabled={!canGoNext()}
-              onClick={handleNext}
-              className="gap-1"
-            >
+            <Button size="sm" disabled={!canGoNext()} onClick={handleNext} className="gap-1">
               Continue <ChevronRight className="h-4 w-4" />
             </Button>
           ) : (

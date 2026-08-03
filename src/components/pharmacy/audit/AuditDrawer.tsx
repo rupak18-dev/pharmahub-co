@@ -92,31 +92,63 @@ export function AuditDrawer({
   const actions: ReactNode[] = [];
   if (audit.status === "scheduled") {
     actions.push(
-      <Button key="start" className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px] font-bold" onClick={() => onStart(audit.id)}>
+      <Button
+        key="start"
+        className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px] font-bold"
+        onClick={() => onStart(audit.id)}
+      >
         <Play className="mr-1.5 h-4 w-4" /> Start audit
       </Button>,
-      <Button key="cancel" variant="outline" className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px]" onClick={() => onCancel(audit.id)}>
+      <Button
+        key="cancel"
+        variant="outline"
+        className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px]"
+        onClick={() => onCancel(audit.id)}
+      >
         Cancel
       </Button>,
     );
   } else if (audit.status === "in_progress") {
     actions.push(
-      <Button key="live" className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px] font-bold" onClick={() => onLive(audit.id)}>
+      <Button
+        key="live"
+        className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px] font-bold"
+        onClick={() => onLive(audit.id)}
+      >
         <ClipboardCheck className="mr-1.5 h-4 w-4" /> Continue count
       </Button>,
-      <Button key="pause" variant="outline" className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px]" onClick={() => onPause(audit.id)}>
+      <Button
+        key="pause"
+        variant="outline"
+        className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px]"
+        onClick={() => onPause(audit.id)}
+      >
         Pause
       </Button>,
-      <Button key="submit" variant="outline" className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px]" onClick={() => onSubmit(audit.id)}>
+      <Button
+        key="submit"
+        variant="outline"
+        className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px]"
+        onClick={() => onSubmit(audit.id)}
+      >
         Submit review
       </Button>,
     );
   } else if (audit.status === "paused") {
     actions.push(
-      <Button key="resume" className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px] font-bold" onClick={() => onResume(audit.id)}>
+      <Button
+        key="resume"
+        className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px] font-bold"
+        onClick={() => onResume(audit.id)}
+      >
         <Play className="mr-1.5 h-4 w-4" /> Resume audit
       </Button>,
-      <Button key="submit" variant="outline" className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px]" onClick={() => onSubmit(audit.id)}>
+      <Button
+        key="submit"
+        variant="outline"
+        className="w-full sm:w-auto min-h-[48px] sm:min-h-[36px]"
+        onClick={() => onSubmit(audit.id)}
+      >
         Submit review
       </Button>,
     );

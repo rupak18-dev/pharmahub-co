@@ -111,7 +111,8 @@ function seed(): DB {
       gtin: "08901234567891",
       drugSchedule: "Schedule H1",
       dosageInfo: "1 capsule three times daily for 5-7 days.",
-      usageInstructions: "Complete full course of antibiotic as prescribed. Can be taken with or without food.",
+      usageInstructions:
+        "Complete full course of antibiotic as prescribed. Can be taken with or without food.",
       contraindications: "Hypersensitivity to penicillin class.",
       sideEffects: "Diarrhea, rash, oral thrush (long-term use).",
       maxStock: 500,
@@ -137,7 +138,8 @@ function seed(): DB {
       drugSchedule: "Schedule H1",
       dosageInfo: "1 tablet once daily for 3-5 days.",
       usageInstructions: "Take 1 hour before or 2 hours after meals.",
-      contraindications: "History of cholestatic jaundice/hepatic dysfunction associated with prior azithromycin use.",
+      contraindications:
+        "History of cholestatic jaundice/hepatic dysfunction associated with prior azithromycin use.",
       sideEffects: "Abdominal pain, loose stools, temporary hearing loss (very rare).",
       maxStock: 300,
       ptr: 82.0,
@@ -512,10 +514,7 @@ function isBrowser() {
   return typeof window !== "undefined";
 }
 
-function mergeProfiles(
-  seeded: Profile[],
-  stored: Profile[] | undefined,
-): Profile[] {
+function mergeProfiles(seeded: Profile[], stored: Profile[] | undefined): Profile[] {
   if (!stored || stored.length === 0) return seeded;
   const existing = new Set(stored.map((p) => p.email.toLowerCase()));
   const missing = seeded.filter((p) => !existing.has(p.email.toLowerCase()));

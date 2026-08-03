@@ -42,28 +42,30 @@ function NotificationsPage() {
       perMed.set(b.medicineId, (perMed.get(b.medicineId) ?? 0) + (stockMap.get(b.id) ?? 0));
     });
 
-    data.medicines.filter((m) => m.isActive).forEach((m) => {
-      const stock = perMed.get(m.id) ?? 0;
-      if (stock <= 0) {
-        list.push({
-          id: `out-${m.id}`,
-          severity: "critical",
-          icon: PackageX,
-          title: `${m.name} is out of stock`,
-          detail: "Reorder immediately to avoid lost sales.",
-          href: "/dashboard/inventory",
-        });
-      } else if (stock <= m.reorderThreshold) {
-        list.push({
-          id: `low-${m.id}`,
-          severity: "warning",
-          icon: AlertTriangle,
-          title: `${m.name} is low`,
-          detail: `${stock} units left (reorder at ${m.reorderThreshold}).`,
-          href: "/dashboard/inventory",
-        });
-      }
-    });
+    data.medicines
+      .filter((m) => m.isActive)
+      .forEach((m) => {
+        const stock = perMed.get(m.id) ?? 0;
+        if (stock <= 0) {
+          list.push({
+            id: `out-${m.id}`,
+            severity: "critical",
+            icon: PackageX,
+            title: `${m.name} is out of stock`,
+            detail: "Reorder immediately to avoid lost sales.",
+            href: "/dashboard/inventory",
+          });
+        } else if (stock <= m.reorderThreshold) {
+          list.push({
+            id: `low-${m.id}`,
+            severity: "warning",
+            icon: AlertTriangle,
+            title: `${m.name} is low`,
+            detail: `${stock} units left (reorder at ${m.reorderThreshold}).`,
+            href: "/dashboard/inventory",
+          });
+        }
+      });
 
     data.batches.forEach((b) => {
       const stock = stockMap.get(b.id) ?? 0;
@@ -144,7 +146,9 @@ function NotificationsPage() {
             if (!list.length) return null;
             return (
               <section key={sev}>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{sev}</h3>
+                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {sev}
+                </h3>
                 <ul className="space-y-2">
                   {list.map((a) => {
                     const Icon = a.icon;
@@ -170,7 +174,9 @@ function NotificationsPage() {
                             <Link to={a.href}>Open</Link>
                           </Button>
                           {!isRead && (
-                            <Button variant="ghost" size="sm" onClick={() => markOne(a.id)}>Mark read</Button>
+                            <Button variant="ghost" size="sm" onClick={() => markOne(a.id)}>
+                              Mark read
+                            </Button>
                           )}
                         </div>
                       </li>

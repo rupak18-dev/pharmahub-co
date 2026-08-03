@@ -75,9 +75,15 @@ function Landing() {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <BrandMark />
           <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-            <a href="#features" className="hover:text-foreground">Features</a>
-            <a href="#workflow" className="hover:text-foreground">Workflow</a>
-            <a href="#pricing" className="hover:text-foreground">Pricing</a>
+            <a href="#features" className="hover:text-foreground">
+              Features
+            </a>
+            <a href="#workflow" className="hover:text-foreground">
+              Workflow
+            </a>
+            <a href="#pricing" className="hover:text-foreground">
+              Pricing
+            </a>
           </nav>
           <div className="flex items-center gap-2">
             <Button asChild variant="ghost" size="sm">
@@ -97,7 +103,8 @@ function Landing() {
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs font-medium text-muted-foreground">
-              <span className="h-1.5 w-1.5 rounded-full bg-success" /> Built for daily pharmacy operations
+              <span className="h-1.5 w-1.5 rounded-full bg-success" /> Built for daily pharmacy
+              operations
             </span>
             <h1 className="mt-6 text-4xl font-semibold tracking-tight sm:text-6xl">
               The operating system for <span className="text-primary">modern pharmacies</span>.
@@ -141,9 +148,7 @@ function Landing() {
                   <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                     {k.l}
                   </div>
-                  <div className={`mt-1 text-xl font-semibold tabular-nums ${k.tone}`}>
-                    {k.v}
-                  </div>
+                  <div className={`mt-1 text-xl font-semibold tabular-nums ${k.tone}`}>{k.v}</div>
                 </div>
               ))}
             </div>
@@ -257,9 +262,15 @@ function Landing() {
             © {new Date().getFullYear()} PharmaHub. All rights reserved.
           </p>
           <div className="flex gap-4 text-xs text-muted-foreground">
-            <a href="#" className="hover:text-foreground">Privacy</a>
-            <a href="#" className="hover:text-foreground">Terms</a>
-            <a href="#" className="hover:text-foreground">Contact</a>
+            <a href="#" className="hover:text-foreground">
+              Privacy
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Terms
+            </a>
+            <a href="#" className="hover:text-foreground">
+              Contact
+            </a>
           </div>
         </div>
       </footer>

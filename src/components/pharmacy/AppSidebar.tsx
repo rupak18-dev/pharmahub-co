@@ -154,7 +154,13 @@ export function AppSidebar() {
       {/* Decorative foliage outline illustration at the bottom-left corner */}
       {!collapsed && (
         <div className="absolute bottom-0 left-0 w-full h-32 overflow-hidden pointer-events-none opacity-25 z-0 select-none">
-          <svg className="absolute bottom-0 left-0 w-36 h-36 text-emerald-600/30" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1">
+          <svg
+            className="absolute bottom-0 left-0 w-36 h-36 text-emerald-600/30"
+            viewBox="0 0 100 100"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1"
+          >
             <path d="M-10,110 C20,90 30,50 40,20" />
             <path d="M40,20 C42,18 45,15 48,15 C45,22 41,25 40,20" fill="currentColor" />
             <path d="M10,80 C15,70 25,72 20,83 C15,83 12,82 10,80" fill="currentColor" />

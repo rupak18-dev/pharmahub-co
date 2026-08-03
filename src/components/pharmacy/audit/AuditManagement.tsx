@@ -274,12 +274,21 @@ export function AuditManagement({
 
           {/* Reset Filters */}
           {isFiltered && (
-            <Button size="sm" variant="ghost" className="h-9 px-2 text-xs min-h-[44px] sm:min-h-[36px]" onClick={resetFilters}>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-9 px-2 text-xs min-h-[44px] sm:min-h-[36px]"
+              onClick={resetFilters}
+            >
               <RotateCcw className="mr-1 h-3.5 w-3.5" /> Clear Filters
             </Button>
           )}
 
-          <Button size="sm" className="w-full sm:w-auto sm:ml-auto font-medium min-h-[44px] sm:min-h-[36px]" onClick={onOpenCreate}>
+          <Button
+            size="sm"
+            className="w-full sm:w-auto sm:ml-auto font-medium min-h-[44px] sm:min-h-[36px]"
+            onClick={onOpenCreate}
+          >
             <Plus className="mr-1.5 h-4 w-4" /> New Audit
           </Button>
         </div>
@@ -436,10 +445,17 @@ export function AuditManagement({
                       <Badge
                         className={cn(
                           "border inline-flex items-center gap-1.5 px-2.5 py-0.5 text-xs rounded-md shadow-2xs font-medium",
-                          isOverdue ? "bg-destructive/10 text-destructive border-destructive/30" : meta.chip,
+                          isOverdue
+                            ? "bg-destructive/10 text-destructive border-destructive/30"
+                            : meta.chip,
                         )}
                       >
-                        <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", isOverdue ? "bg-destructive" : meta.dot)} />
+                        <span
+                          className={cn(
+                            "h-1.5 w-1.5 rounded-full shrink-0",
+                            isOverdue ? "bg-destructive" : meta.dot,
+                          )}
+                        />
                         {isOverdue ? "Overdue" : meta.label}
                       </Badge>
                     </TableCell>
@@ -583,7 +599,11 @@ export function AuditManagement({
         {filtered.length > 0 && (
           <div className="flex items-center justify-between border-t border-border px-4 py-3 bg-card text-xs text-muted-foreground">
             <div>
-              Showing <span className="font-semibold text-foreground">{(currentPage - 1) * pageSize + 1}</span> to{" "}
+              Showing{" "}
+              <span className="font-semibold text-foreground">
+                {(currentPage - 1) * pageSize + 1}
+              </span>{" "}
+              to{" "}
               <span className="font-semibold text-foreground">
                 {Math.min(currentPage * pageSize, filtered.length)}
               </span>{" "}
@@ -642,14 +662,14 @@ export function AuditManagement({
                     <span className="font-semibold text-sm text-foreground tracking-tight block">
                       {a.auditNumber}
                     </span>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {getScopeDescription(a)}
-                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{getScopeDescription(a)}</p>
                   </div>
                   <Badge
                     className={cn(
                       "border shrink-0 px-2.5 py-1 text-xs font-medium",
-                      isOverdue ? "bg-destructive/10 text-destructive border-destructive/30" : meta.chip,
+                      isOverdue
+                        ? "bg-destructive/10 text-destructive border-destructive/30"
+                        : meta.chip,
                     )}
                   >
                     {isOverdue ? "Overdue" : meta.label}
@@ -668,15 +688,22 @@ export function AuditManagement({
                     Branch: <strong className="text-foreground font-medium">{a.branch}</strong>
                   </div>
                   <div>
-                    Date: <strong className="text-foreground font-medium">{format(schedDate, "MMM d, yyyy")}</strong>
+                    Date:{" "}
+                    <strong className="text-foreground font-medium">
+                      {format(schedDate, "MMM d, yyyy")}
+                    </strong>
                   </div>
                 </div>
 
                 {/* Progress */}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-foreground tabular-nums">{p.pct}% complete</span>
-                    <span className="text-muted-foreground text-[11px] tabular-nums">{p.verified}/{p.total} batches</span>
+                    <span className="font-semibold text-foreground tabular-nums">
+                      {p.pct}% complete
+                    </span>
+                    <span className="text-muted-foreground text-[11px] tabular-nums">
+                      {p.verified}/{p.total} batches
+                    </span>
                   </div>
                   <Progress value={p.pct} className="h-2" />
                 </div>
@@ -698,8 +725,15 @@ export function AuditManagement({
                       <Play className="mr-2 h-4 w-4" /> Resume Audit
                     </Button>
                   )}
-                  {(a.status === "pending_review" || a.status === "approved" || a.status === "completed" || a.status === "cancelled") && (
-                    <Button variant="outline" className="w-full min-h-[44px]" onClick={() => onSelect(a.id)}>
+                  {(a.status === "pending_review" ||
+                    a.status === "approved" ||
+                    a.status === "completed" ||
+                    a.status === "cancelled") && (
+                    <Button
+                      variant="outline"
+                      className="w-full min-h-[44px]"
+                      onClick={() => onSelect(a.id)}
+                    >
                       <Eye className="mr-2 h-4 w-4" /> View Details
                     </Button>
                   )}
@@ -712,7 +746,9 @@ export function AuditManagement({
         {/* Mobile Pagination */}
         {filtered.length > 0 && (
           <div className="flex items-center justify-between border-t border-border px-3 py-2.5 text-xs text-muted-foreground pt-3">
-            <span>Page {currentPage} of {totalPages} ({filtered.length} total)</span>
+            <span>
+              Page {currentPage} of {totalPages} ({filtered.length} total)
+            </span>
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"

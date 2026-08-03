@@ -91,10 +91,7 @@ export function RoleDetailModal({ roleName, isOpen, onClose }: RoleDetailModalPr
 
           {/* TAB 1: Policy Builder */}
           <TabsContent value="editor" className="space-y-4 pt-1">
-            <AccessPolicyBuilder
-              initialRole={roleName}
-              hideRoleSelector={true}
-            />
+            <AccessPolicyBuilder initialRole={roleName} hideRoleSelector={true} />
           </TabsContent>
 
           {/* TAB 2: Live Access Preview */}
@@ -106,9 +103,7 @@ export function RoleDetailModal({ roleName, isOpen, onClose }: RoleDetailModalPr
           <TabsContent value="users" className="space-y-3 pt-1">
             <div className="rounded-xl border border-border bg-card p-4 shadow-sm space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2.5 text-xs">
-                <h4 className="font-semibold text-foreground">
-                  Team Members with {roleName} Role
-                </h4>
+                <h4 className="font-semibold text-foreground">Team Members with {roleName} Role</h4>
                 <span className="text-muted-foreground font-mono">
                   Total: {assignedUsers.length}
                 </span>

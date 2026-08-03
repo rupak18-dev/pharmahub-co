@@ -114,7 +114,11 @@ function InventoryPage() {
         const last = lastMove.get(m.id);
         return !last || last < cutoff;
       })
-      .map((m) => ({ medicine: m, stock: stockByMed.get(m.id) ?? 0, last: lastMove.get(m.id) ?? null }));
+      .map((m) => ({
+        medicine: m,
+        stock: stockByMed.get(m.id) ?? 0,
+        last: lastMove.get(m.id) ?? null,
+      }));
   }, [meds, movements, stockByMed, settings.deadStockDays]);
 
   const totalValue = valuation.reduce((s, v) => s + v.value, 0);
@@ -164,20 +168,26 @@ function InventoryPage() {
 
       <div className="grid gap-4 sm:grid-cols-3">
         <div className="rounded-lg border border-border bg-card p-4">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Total stock value</div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            Total stock value
+          </div>
           <div className="mt-1 text-2xl font-semibold tabular-nums text-primary">
             {settings.currency}
             {Math.round(totalValue).toLocaleString()}
           </div>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Reorder alerts</div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            Reorder alerts
+          </div>
           <div className="mt-1 text-2xl font-semibold tabular-nums text-warning-foreground">
             {reorderList.length}
           </div>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
-          <div className="text-xs uppercase tracking-wide text-muted-foreground">Dead stock items</div>
+          <div className="text-xs uppercase tracking-wide text-muted-foreground">
+            Dead stock items
+          </div>
           <div className="mt-1 text-2xl font-semibold tabular-nums text-destructive">
             {deadStock.length}
           </div>
@@ -207,10 +217,7 @@ function InventoryPage() {
                 {valuation.map(({ medicine, stock, value }) => (
                   <tr key={medicine.id} className="hover:bg-muted/30">
                     <td className="px-4 py-3">
-                      <Link
-                        to="/dashboard/medicines"
-                        className="font-medium hover:text-primary"
-                      >
+                      <Link to="/dashboard/medicines" className="font-medium hover:text-primary">
                         {medicine.name}
                       </Link>
                       <div className="text-xs text-muted-foreground">{medicine.genericName}</div>
@@ -229,7 +236,10 @@ function InventoryPage() {
 
         <TabsContent value="reorder" className="mt-4">
           {reorderList.length === 0 ? (
-            <EmptyState title="Stock is healthy" description="No medicines are below their reorder threshold." />
+            <EmptyState
+              title="Stock is healthy"
+              description="No medicines are below their reorder threshold."
+            />
           ) : (
             <div className="overflow-hidden rounded-lg border border-border bg-card">
               <table className="w-full text-sm">
@@ -265,13 +275,19 @@ function InventoryPage() {
         <TabsContent value="movement" className="mt-4">
           <div className="grid gap-4 md:grid-cols-2">
             <RankPanel title="Fast movers (30d)" items={movementRanking.slice(0, 10)} />
-            <RankPanel title="Slow movers (30d)" items={[...movementRanking].reverse().slice(0, 10)} />
+            <RankPanel
+              title="Slow movers (30d)"
+              items={[...movementRanking].reverse().slice(0, 10)}
+            />
           </div>
         </TabsContent>
 
         <TabsContent value="dead" className="mt-4">
           {deadStock.length === 0 ? (
-            <EmptyState title="No dead stock" description={`All active stock has moved within ${settings.deadStockDays} days.`} />
+            <EmptyState
+              title="No dead stock"
+              description={`All active stock has moved within ${settings.deadStockDays} days.`}
+            />
           ) : (
             <div className="overflow-hidden rounded-lg border border-border bg-card">
               <table className="w-full text-sm">
@@ -327,7 +343,11 @@ function InventoryPage() {
                         </td>
                         <td
                           className={`px-4 py-3 text-right font-mono tabular-nums ${
-                            mv.quantity > 0 ? "text-success" : mv.quantity < 0 ? "text-destructive" : ""
+                            mv.quantity > 0
+                              ? "text-success"
+                              : mv.quantity < 0
+                                ? "text-destructive"
+                                : ""
                           }`}
                         >
                           {mv.quantity > 0 ? "+" : ""}
@@ -396,8 +416,7 @@ function MovementSheet({
     formState: { errors },
   } = useForm<FormValues>({ resolver: zodResolver(schema) });
 
-  const title =
-    kind === "in" ? "Stock in" : kind === "out" ? "Stock out" : "Stock adjustment";
+  const title = kind === "in" ? "Stock in" : kind === "out" ? "Stock out" : "Stock adjustment";
   const description =
     kind === "in"
       ? "Add stock to an existing batch (manual receipt)."
@@ -439,9 +458,7 @@ function MovementSheet({
             {errors.batchId && <p className="text-xs text-destructive">{errors.batchId.message}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="quantity">
-              Quantity {kind === "adjust" ? "(signed: +/-)" : ""}*
-            </Label>
+            <Label htmlFor="quantity">Quantity {kind === "adjust" ? "(signed: +/-)" : ""}*</Label>
             <Input
               id="quantity"
               type="number"

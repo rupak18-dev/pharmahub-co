@@ -135,9 +135,7 @@ function LocationPill({
 
 function StockLevel({ stock }: { stock: number }) {
   return (
-    <span className="block text-center font-mono text-sm font-semibold tabular-nums">
-      {stock}
-    </span>
+    <span className="block text-center font-mono text-sm font-semibold tabular-nums">{stock}</span>
   );
 }
 

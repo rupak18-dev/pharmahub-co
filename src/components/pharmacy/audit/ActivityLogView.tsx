@@ -68,19 +68,34 @@ const ENTITY_META: Record<
 function getActionIcon(action: string, entityType: string) {
   const lower = action.toLowerCase();
   if (lower.includes("approved"))
-    return { Icon: CheckCircle2, tone: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30" };
+    return {
+      Icon: CheckCircle2,
+      tone: "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border-emerald-500/30",
+    };
   if (lower.includes("rejected"))
     return { Icon: XCircle, tone: "text-destructive bg-destructive/10 border-destructive/30" };
   if (lower.includes("started") || lower.includes("resumed"))
-    return { Icon: Play, tone: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/30" };
+    return {
+      Icon: Play,
+      tone: "text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/30",
+    };
   if (lower.includes("paused"))
-    return { Icon: Pause, tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/30" };
+    return {
+      Icon: Pause,
+      tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/30",
+    };
   if (lower.includes("recount"))
-    return { Icon: RotateCcw, tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/30" };
+    return {
+      Icon: RotateCcw,
+      tone: "text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/30",
+    };
   if (lower.includes("cancelled"))
     return { Icon: XCircle, tone: "text-zinc-500 bg-zinc-500/10 border-zinc-500/30" };
   if (lower.includes("updated") || lower.includes("applied"))
-    return { Icon: PackageCheck, tone: "text-teal-600 dark:text-teal-400 bg-teal-500/10 border-teal-500/30" };
+    return {
+      Icon: PackageCheck,
+      tone: "text-teal-600 dark:text-teal-400 bg-teal-500/10 border-teal-500/30",
+    };
 
   const meta = ENTITY_META[entityType];
   return {
@@ -282,7 +297,10 @@ export function ActivityLogView({
 
       {/* Mobile Bottom Sheet Filters (<640px) */}
       <Sheet open={filterSheetOpen} onOpenChange={setFilterSheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4">
+        <SheetContent
+          side="bottom"
+          className="rounded-t-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6 space-y-4"
+        >
           <SheetHeader className="pb-2 border-b border-border">
             <SheetTitle className="text-left text-base font-bold">Filter Activity Logs</SheetTitle>
           </SheetHeader>
@@ -400,7 +418,9 @@ export function ActivityLogView({
         {shown.length === 0 ? (
           <div className="grid h-44 place-items-center text-center text-sm text-muted-foreground p-6">
             <div>
-              <p className="font-semibold text-foreground">No activity log events match your filters</p>
+              <p className="font-semibold text-foreground">
+                No activity log events match your filters
+              </p>
               <p className="text-xs text-muted-foreground mt-1">
                 Try clearing your search query or date range filters.
               </p>
@@ -457,7 +477,14 @@ export function ActivityLogView({
                                 </h4>
                               ) : null}
                               {/* Activity Title */}
-                              <p className={cn("text-xs", subject ? "text-muted-foreground font-medium" : "text-sm font-semibold text-foreground")}>
+                              <p
+                                className={cn(
+                                  "text-xs",
+                                  subject
+                                    ? "text-muted-foreground font-medium"
+                                    : "text-sm font-semibold text-foreground",
+                                )}
+                              >
                                 {l.action}
                               </p>
                             </div>
@@ -474,7 +501,9 @@ export function ActivityLogView({
                           {/* Friendly Status Transition (Objective 3) */}
                           {(l.oldValue !== undefined || l.newValue !== undefined) && (
                             <div className="rounded-lg bg-muted/30 px-2.5 py-1 border border-border/40 text-xs inline-flex items-center gap-1.5 font-medium text-foreground">
-                              <span className="text-muted-foreground text-[11px]">Status Changed:</span>
+                              <span className="text-muted-foreground text-[11px]">
+                                Status Changed:
+                              </span>
                               {l.oldValue !== undefined && (
                                 <span className="text-muted-foreground line-through">
                                   {formatStatusValue(l.oldValue)}

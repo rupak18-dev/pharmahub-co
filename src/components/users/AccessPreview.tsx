@@ -134,8 +134,12 @@ export function AccessPreview({ roleName, permissions }: AccessPreviewProps) {
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate">
-                        <Icon className={`h-3.5 w-3.5 ${canView ? "text-primary" : "text-muted-foreground/40"}`} />
-                        <span className={`truncate text-xs ${canView ? "font-medium" : "line-through"}`}>
+                        <Icon
+                          className={`h-3.5 w-3.5 ${canView ? "text-primary" : "text-muted-foreground/40"}`}
+                        />
+                        <span
+                          className={`truncate text-xs ${canView ? "font-medium" : "line-through"}`}
+                        >
                           {item.title}
                         </span>
                       </div>

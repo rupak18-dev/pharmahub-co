@@ -76,8 +76,7 @@ export const DEFAULT_PERMISSIONS: PermissionMatrix = {
     return none();
   }),
   "Store Keeper": role((m) => {
-    if (["inventory", "batches"].includes(m))
-      return { ...view(), create: true, update: true };
+    if (["inventory", "batches"].includes(m)) return { ...view(), create: true, update: true };
     if (["dashboard", "medicines", "expiry", "audit", "notifications"].includes(m)) return view();
     return none();
   }),

@@ -106,13 +106,18 @@ function AdminPage() {
 
   const clearLogs = () => {
     if (!confirm("Clear all activity logs?")) return;
-    db.set((d) => { d.activityLogs = []; });
+    db.set((d) => {
+      d.activityLogs = [];
+    });
     toast.success("Activity logs cleared");
   };
 
   return (
     <div className="space-y-6">
-      <PageHeader title="System Admin" description="Organization settings, thresholds, roles, and data management." />
+      <PageHeader
+        title="System Admin"
+        description="Organization settings, thresholds, roles, and data management."
+      />
 
       <Tabs defaultValue="org">
         <TabsList>
@@ -132,11 +137,19 @@ function AdminPage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Currency symbol</Label>
-                <Input value={currency} onChange={(e) => setCurrency(e.target.value)} maxLength={4} />
+                <Input
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value)}
+                  maxLength={4}
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>Default GST %</Label>
-                <Input type="number" value={gstDefault} onChange={(e) => setGstDefault(Number(e.target.value) || 0)} />
+                <Input
+                  type="number"
+                  value={gstDefault}
+                  onChange={(e) => setGstDefault(Number(e.target.value) || 0)}
+                />
               </div>
             </div>
             <Button onClick={saveOrg}>Save organization</Button>
@@ -147,15 +160,27 @@ function AdminPage() {
           <div className="max-w-lg space-y-4 rounded-lg border border-border bg-card p-6">
             <div className="space-y-1.5">
               <Label>Near expiry window (days)</Label>
-              <Input type="number" value={nearExpiry} onChange={(e) => setNearExpiry(Number(e.target.value) || 0)} />
+              <Input
+                type="number"
+                value={nearExpiry}
+                onChange={(e) => setNearExpiry(Number(e.target.value) || 0)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Dead stock window (days)</Label>
-              <Input type="number" value={deadStock} onChange={(e) => setDeadStock(Number(e.target.value) || 0)} />
+              <Input
+                type="number"
+                value={deadStock}
+                onChange={(e) => setDeadStock(Number(e.target.value) || 0)}
+              />
             </div>
             <div className="space-y-1.5">
               <Label>Default low-stock threshold</Label>
-              <Input type="number" value={lowStock} onChange={(e) => setLowStock(Number(e.target.value) || 0)} />
+              <Input
+                type="number"
+                value={lowStock}
+                onChange={(e) => setLowStock(Number(e.target.value) || 0)}
+              />
             </div>
             <Button onClick={saveThresholds}>Save thresholds</Button>
           </div>
@@ -167,7 +192,9 @@ function AdminPage() {
               Manage staff, roles, and the permission matrix on the Users & Roles page.
             </p>
             <Button variant="outline" className="mt-3" asChild>
-              <Link to="/dashboard/users"><Users className="mr-1 h-4 w-4" /> Open Users & Roles</Link>
+              <Link to="/dashboard/users">
+                <Users className="mr-1 h-4 w-4" /> Open Users & Roles
+              </Link>
             </Button>
           </div>
         </TabsContent>
@@ -193,7 +220,9 @@ function AdminPage() {
                     className="hidden"
                     onChange={(e) => e.target.files?.[0] && importJson(e.target.files[0])}
                   />
-                  <Button variant="outline" onClick={() => fileInput.current?.click()}>Choose file</Button>
+                  <Button variant="outline" onClick={() => fileInput.current?.click()}>
+                    Choose file
+                  </Button>
                 </>
               }
             />
@@ -201,23 +230,41 @@ function AdminPage() {
               icon={RefreshCw}
               title="Reset demo data"
               description="Wipe current state and re-seed the demo dataset."
-              action={<Button variant="outline" onClick={resetDemo}>Reset</Button>}
+              action={
+                <Button variant="outline" onClick={resetDemo}>
+                  Reset
+                </Button>
+              }
             />
             <ActionCard
               icon={Trash2}
               title="Clear activity logs"
               description="Remove every entry from the audit log."
-              action={<Button variant="destructive" onClick={clearLogs}>Clear logs</Button>}
+              action={
+                <Button variant="destructive" onClick={clearLogs}>
+                  Clear logs
+                </Button>
+              }
             />
           </div>
         </TabsContent>
 
         <TabsContent value="about" className="mt-4">
           <div className="max-w-lg space-y-2 rounded-lg border border-border bg-card p-6 text-sm">
-            <p><span className="text-muted-foreground">Product:</span> PharmaHub</p>
-            <p><span className="text-muted-foreground">Version:</span> 1.0.0 (frontend preview)</p>
-            <p><span className="text-muted-foreground">Data store:</span> local browser storage (MongoDB backend coming)</p>
-            <p><span className="text-muted-foreground">Signed in as:</span> {user?.name} · {user?.role}</p>
+            <p>
+              <span className="text-muted-foreground">Product:</span> PharmaHub
+            </p>
+            <p>
+              <span className="text-muted-foreground">Version:</span> 1.0.0 (frontend preview)
+            </p>
+            <p>
+              <span className="text-muted-foreground">Data store:</span> local browser storage
+              (MongoDB backend coming)
+            </p>
+            <p>
+              <span className="text-muted-foreground">Signed in as:</span> {user?.name} ·{" "}
+              {user?.role}
+            </p>
           </div>
         </TabsContent>
       </Tabs>
@@ -226,7 +273,10 @@ function AdminPage() {
 }
 
 function ActionCard({
-  icon: Icon, title, description, action,
+  icon: Icon,
+  title,
+  description,
+  action,
 }: {
   icon: typeof Download;
   title: string;

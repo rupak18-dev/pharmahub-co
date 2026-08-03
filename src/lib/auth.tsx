@@ -54,9 +54,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn: AuthContextValue["signIn"] = async (email) => {
-    const found = db.get().profiles.find(
-      (p) => p.email.toLowerCase() === email.trim().toLowerCase() && p.active,
-    );
+    const found = db
+      .get()
+      .profiles.find((p) => p.email.toLowerCase() === email.trim().toLowerCase() && p.active);
     if (!found) throw new Error("No account found for that email");
     writeSession(found.id);
     setUser(found);
@@ -64,9 +64,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp: AuthContextValue["signUp"] = async ({ name, email, orgName }) => {
-    const existing = db.get().profiles.find(
-      (p) => p.email.toLowerCase() === email.trim().toLowerCase(),
-    );
+    const existing = db
+      .get()
+      .profiles.find((p) => p.email.toLowerCase() === email.trim().toLowerCase());
     if (existing) throw new Error("An account already exists with that email");
     const profile: Profile = {
       id: db.uid(),

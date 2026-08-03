@@ -27,7 +27,13 @@ import { ALL_MODULES, ALL_ROLES } from "@/lib/permissions";
 import type { ModuleKey, PermissionAction, RoleName } from "@/lib/types";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 
 interface AccessPolicyBuilderProps {
@@ -63,24 +69,48 @@ const ACTION_GROUPS: { groupName: string; description: string; actions: GroupedA
     groupName: "General Access",
     description: "Read & visibility permissions for this module",
     actions: [
-      { key: "view", label: "View Data", description: "Allows accessing module screens and reading records" },
+      {
+        key: "view",
+        label: "View Data",
+        description: "Allows accessing module screens and reading records",
+      },
     ],
   },
   {
     groupName: "Management & Authoring",
     description: "Create new records and modify existing data",
     actions: [
-      { key: "create", label: "Create Records", description: "Permission to add new items, bills, or entries" },
-      { key: "update", label: "Edit / Update", description: "Permission to modify existing record fields" },
+      {
+        key: "create",
+        label: "Create Records",
+        description: "Permission to add new items, bills, or entries",
+      },
+      {
+        key: "update",
+        label: "Edit / Update",
+        description: "Permission to modify existing record fields",
+      },
     ],
   },
   {
     groupName: "Advanced & Operations",
     description: "Critical actions, data export, and elevated approvals",
     actions: [
-      { key: "approve", label: "Approve Workflow", description: "Authorize purchase orders, stock GRNs, or voids" },
-      { key: "export", label: "Export Data", description: "Download CSV, Excel, or PDF data extracts" },
-      { key: "delete", label: "Delete Records", description: "Permanent removal or archiving of records" },
+      {
+        key: "approve",
+        label: "Approve Workflow",
+        description: "Authorize purchase orders, stock GRNs, or voids",
+      },
+      {
+        key: "export",
+        label: "Export Data",
+        description: "Download CSV, Excel, or PDF data extracts",
+      },
+      {
+        key: "delete",
+        label: "Delete Records",
+        description: "Permanent removal or archiving of records",
+      },
     ],
   },
 ];
@@ -107,7 +137,7 @@ export function AccessPolicyBuilder({
     const q = moduleSearch.trim().toLowerCase();
     if (!q) return ALL_MODULES;
     return ALL_MODULES.filter(
-      (m) => m.label.toLowerCase().includes(q) || m.key.toLowerCase().includes(q)
+      (m) => m.label.toLowerCase().includes(q) || m.key.toLowerCase().includes(q),
     );
   }, [moduleSearch]);
 
@@ -182,7 +212,9 @@ export function AccessPolicyBuilder({
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">Editing Role:</span>
+            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
+              Editing Role:
+            </span>
             <Select value={activeRole} onValueChange={(v) => handleRoleSelect(v as RoleName)}>
               <SelectTrigger className="h-9 w-[180px] text-xs font-medium bg-background">
                 <SelectValue />
@@ -203,7 +235,8 @@ export function AccessPolicyBuilder({
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
           <Lock className="h-4 w-4 shrink-0" />
           <span>
-            The <strong>Owner</strong> role has system-level unrestricted privileges. Permissions are permanently enabled and cannot be revoked.
+            The <strong>Owner</strong> role has system-level unrestricted privileges. Permissions
+            are permanently enabled and cannot be revoked.
           </span>
         </div>
       )}
@@ -248,7 +281,9 @@ export function AccessPolicyBuilder({
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <Icon className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary-foreground" : "text-primary"}`} />
+                      <Icon
+                        className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary-foreground" : "text-primary"}`}
+                      />
                       <span className="truncate">{mod.label}</span>
                     </div>
 
@@ -266,7 +301,9 @@ export function AccessPolicyBuilder({
                       ) : (
                         <span
                           className={`rounded-full px-1.5 py-0.5 text-[10px] font-mono ${
-                            isSelected ? "bg-primary-foreground/10 text-primary-foreground/70" : "bg-muted text-muted-foreground"
+                            isSelected
+                              ? "bg-primary-foreground/10 text-primary-foreground/70"
+                              : "bg-muted text-muted-foreground"
                           }`}
                         >
                           Off

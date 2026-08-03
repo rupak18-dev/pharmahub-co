@@ -50,7 +50,8 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong. If your saved data is from an older version, use "Reset app data" below.
+          Something went wrong. If your saved data is from an older version, use "Reset app data"
+          below.
         </p>
         {error.message ? (
           <pre className="mt-4 max-h-40 overflow-auto rounded-md border border-border bg-muted p-3 text-left font-mono text-xs text-destructive">

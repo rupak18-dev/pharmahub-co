@@ -13,9 +13,15 @@ export const Route = createFileRoute("/signup")({
   head: () => ({
     meta: [
       { title: "Create account · PharmaHub" },
-      { name: "description", content: "Create a new PharmaHub account to start managing your pharmacy." },
+      {
+        name: "description",
+        content: "Create a new PharmaHub account to start managing your pharmacy.",
+      },
       { property: "og:title", content: "Create account · PharmaHub" },
-      { property: "og:description", content: "Create a new PharmaHub account to start managing your pharmacy." },
+      {
+        property: "og:description",
+        content: "Create a new PharmaHub account to start managing your pharmacy.",
+      },
     ],
   }),
   component: SignupPage,
@@ -108,9 +114,7 @@ function SignupPage() {
               autoComplete="new-password"
               {...register("confirm")}
             />
-            {errors.confirm && (
-              <p className="text-xs text-destructive">{errors.confirm.message}</p>
-            )}
+            {errors.confirm && <p className="text-xs text-destructive">{errors.confirm.message}</p>}
           </div>
         </div>
         <Button type="submit" className="w-full" disabled={isSubmitting}>

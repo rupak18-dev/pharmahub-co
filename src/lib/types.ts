@@ -72,11 +72,9 @@ export interface Medicine {
   reorderThreshold: number;
   isActive: boolean;
   createdAt: string;
-  
+
   // Enterprise fields
   saltComposition?: string;
-  strength?: string;
-  dosageForm?: string;
   packSize?: string;
   gtin?: string;
   drugSchedule?: string;
@@ -146,7 +144,13 @@ export interface InventoryStock {
   createdAt: string;
 }
 
-export type InventoryLedgerMovementType = "Purchase Inward" | "Sales Outward" | "Customer Return" | "Vendor Return" | "Damaged/Broken" | "Adjustment";
+export type InventoryLedgerMovementType =
+  | "Purchase Inward"
+  | "Sales Outward"
+  | "Customer Return"
+  | "Vendor Return"
+  | "Damaged/Broken"
+  | "Adjustment";
 
 export interface InventoryLedger {
   id: string;

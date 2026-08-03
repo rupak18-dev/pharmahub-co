@@ -6,11 +6,11 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const getImageForMedicine = (id: string, form: string | undefined) => {
-  const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+  const hash = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
   if (form?.toLowerCase().includes("syrup") || form?.toLowerCase().includes("suspension")) {
     const syrupImages = [
       "https://images.unsplash.com/photo-1626806819282-2c1dc01a5e0c?auto=format&fit=crop&w=400&q=80",
-      "https://images.unsplash.com/photo-1512069772995-36be0b57e0e7?auto=format&fit=crop&w=400&q=80"
+      "https://images.unsplash.com/photo-1512069772995-36be0b57e0e7?auto=format&fit=crop&w=400&q=80",
     ];
     return syrupImages[hash % syrupImages.length];
   }

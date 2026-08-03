@@ -10,7 +10,11 @@
   return [keys.join(","), ...rows.map((r) => keys.map((k) => esc(r[k])).join(","))].join("\n");
 }
 
-export function downloadCsv(filename: string, rows: Array<Record<string, unknown>>, headers?: string[]) {
+export function downloadCsv(
+  filename: string,
+  rows: Array<Record<string, unknown>>,
+  headers?: string[],
+) {
   const csv = toCsv(rows, headers);
   const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);

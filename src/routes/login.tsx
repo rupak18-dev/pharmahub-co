@@ -15,9 +15,15 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Sign in · PharmaHub" },
-      { name: "description", content: "Sign in to your PharmaHub dashboard to manage your pharmacy." },
+      {
+        name: "description",
+        content: "Sign in to your PharmaHub dashboard to manage your pharmacy.",
+      },
       { property: "og:title", content: "Sign in · PharmaHub" },
-      { property: "og:description", content: "Sign in to your PharmaHub dashboard to manage your pharmacy." },
+      {
+        property: "og:description",
+        content: "Sign in to your PharmaHub dashboard to manage your pharmacy.",
+      },
     ],
   }),
   component: LoginPage,
@@ -79,10 +85,7 @@ function LoginPage() {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link
-              to="/forgot-password"
-              className="text-xs text-primary hover:underline"
-            >
+            <Link to="/forgot-password" className="text-xs text-primary hover:underline">
               Forgot password?
             </Link>
           </div>
@@ -92,9 +95,7 @@ function LoginPage() {
             autoComplete="current-password"
             {...register("password")}
           />
-          {errors.password && (
-            <p className="text-xs text-destructive">{errors.password.message}</p>
-          )}
+          {errors.password && <p className="text-xs text-destructive">{errors.password.message}</p>}
         </div>
         <Button type="submit" className="w-full" disabled={isSubmitting}>
           {isSubmitting ? "Signing in…" : "Sign in"}
@@ -108,11 +109,11 @@ function LoginPage() {
             <div>inventory@PharmaHub.demo</div>
           </div>
           <div className="mt-1">Any password works in demo mode.</div>
-          <Button 
-            type="button" 
-            variant="outline" 
-            size="sm" 
-            className="w-full mt-4 border-destructive/20 text-destructive hover:bg-destructive/10" 
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-full mt-4 border-destructive/20 text-destructive hover:bg-destructive/10"
             onClick={() => {
               db.reset();
               try {

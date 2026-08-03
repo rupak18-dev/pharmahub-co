@@ -57,11 +57,17 @@ export function QuickActions() {
             to={action.href}
             className="flex flex-col items-center justify-center p-4 rounded-2xl border border-border bg-white hover:-translate-y-1 hover:shadow-lg transition-all duration-300 group"
           >
-            <div className={`p-3 rounded-xl shadow-sm border border-border/40 group-hover:scale-110 transition-transform duration-300 mb-3 ${action.iconColor}`}>
+            <div
+              className={`p-3 rounded-xl shadow-sm border border-border/40 group-hover:scale-110 transition-transform duration-300 mb-3 ${action.iconColor}`}
+            >
               <Icon className="w-5 h-5" />
             </div>
-            <h4 className="text-sm font-semibold text-foreground text-center mb-1">{action.title}</h4>
-            <p className="text-[10px] text-muted-foreground text-center font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">{action.description}</p>
+            <h4 className="text-sm font-semibold text-foreground text-center mb-1">
+              {action.title}
+            </h4>
+            <p className="text-[10px] text-muted-foreground text-center font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              {action.description}
+            </p>
           </Link>
         );
       })}

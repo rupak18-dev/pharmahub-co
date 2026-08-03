@@ -594,7 +594,9 @@ export function VarianceReview({
                   <p
                     className={cn(
                       "font-mono text-sm font-extrabold",
-                      selected.difference < 0 ? "text-destructive" : "text-emerald-600 dark:text-emerald-400",
+                      selected.difference < 0
+                        ? "text-destructive"
+                        : "text-emerald-600 dark:text-emerald-400",
                     )}
                   >
                     {formatDifferenceText(selected.difference)}

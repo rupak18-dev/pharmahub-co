@@ -12,8 +12,7 @@ export function BrandMark({
   size?: "sm" | "md" | "lg";
 }) {
   const sz = size === "sm" ? "h-7 w-7" : size === "lg" ? "h-10 w-10" : "h-8 w-8";
-  const text =
-    size === "sm" ? "text-base" : size === "lg" ? "text-2xl" : "text-lg";
+  const text = size === "sm" ? "text-base" : size === "lg" ? "text-2xl" : "text-lg";
   return (
     <Link to="/" className={cn("flex items-center gap-2 font-semibold tracking-tight", className)}>
       <span

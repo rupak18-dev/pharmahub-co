@@ -16,8 +16,8 @@ export function useWishlist() {
       const stored = localStorage.getItem("medicine_wishlist_v2");
       const current: string[] = stored ? JSON.parse(stored) : [];
       const isWishlisted = current.includes(id);
-      const next = isWishlisted ? current.filter(x => x !== id) : [...current, id];
-      
+      const next = isWishlisted ? current.filter((x) => x !== id) : [...current, id];
+
       localStorage.setItem("medicine_wishlist_v2", JSON.stringify(next));
       window.dispatchEvent(new Event("wishlist_updated"));
     } catch (e) {
@@ -30,7 +30,9 @@ export function useWishlist() {
       try {
         const stored = localStorage.getItem("medicine_wishlist_v2");
         if (stored) setWishlist(JSON.parse(stored));
-      } catch {}
+      } catch {
+        return;
+      }
     };
     window.addEventListener("wishlist_updated", handleStorage);
     window.addEventListener("storage", handleStorage);

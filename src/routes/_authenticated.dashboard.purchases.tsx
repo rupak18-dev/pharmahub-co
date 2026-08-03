@@ -45,11 +45,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
 import { format, addDays } from "date-fns";
 import type { GRN, GRNItem, Batch, Medicine } from "@/lib/types";
 
@@ -63,10 +59,19 @@ function InfoTip({ text, size = "sm" }: { text: string; size?: "sm" | "xs" }) {
     <Popover>
       <PopoverTrigger asChild>
         <button type="button" className="inline-flex cursor-pointer focus:outline-none">
-          <Info className={size === "xs" ? "h-2.5 w-2.5 text-muted-foreground/70" : "h-3 w-3 text-muted-foreground/70"} />
+          <Info
+            className={
+              size === "xs"
+                ? "h-2.5 w-2.5 text-muted-foreground/70"
+                : "h-3 w-3 text-muted-foreground/70"
+            }
+          />
         </button>
       </PopoverTrigger>
-      <PopoverContent side="top" className="w-auto max-w-[220px] px-3 py-2 text-xs text-foreground leading-snug">
+      <PopoverContent
+        side="top"
+        className="w-auto max-w-[220px] px-3 py-2 text-xs text-foreground leading-snug"
+      >
         {text}
       </PopoverContent>
     </Popover>
@@ -133,7 +138,9 @@ function PurchasesPage() {
 
   // Payment Modal & Generated Bill Dialog State
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<"cash" | "upi" | "card" | "netbanking" | "credit">("cash");
+  const [paymentMethod, setPaymentMethod] = useState<
+    "cash" | "upi" | "card" | "netbanking" | "credit"
+  >("cash");
   const [amountPaid, setAmountPaid] = useState<number>(0);
   const [paymentTxnRef, setPaymentTxnRef] = useState<string>("");
 
@@ -166,7 +173,7 @@ function PurchasesPage() {
           m.isActive &&
           (m.name.toLowerCase().includes(q) ||
             m.genericName?.toLowerCase().includes(q) ||
-            m.barcode?.includes(q))
+            m.barcode?.includes(q)),
       )
       .slice(0, 8);
   }, [searchQuery, medicines]);
@@ -223,7 +230,7 @@ function PurchasesPage() {
           baseAmt,
           lineTotal,
         };
-      })
+      }),
     );
   };
 
@@ -370,7 +377,9 @@ function PurchasesPage() {
       });
     });
 
-    toast.success(`Purchase Bill #${finalBillNo} saved! ${createdBatches.length} batches added to inventory.`);
+    toast.success(
+      `Purchase Bill #${finalBillNo} saved! ${createdBatches.length} batches added to inventory.`,
+    );
 
     setViewingGrn(grn);
     setGeneratedBillModalOpen(true);
@@ -413,7 +422,7 @@ function PurchasesPage() {
       (g) =>
         g.invoiceNumber?.toLowerCase() === query ||
         g.grnNumber.toLowerCase() === query ||
-        g.id.toLowerCase() === query
+        g.id.toLowerCase() === query,
     );
 
     if (foundGrn) {
@@ -457,7 +466,9 @@ function PurchasesPage() {
       setItems(mappedItems);
       setViewingGrn(foundGrn);
       setGeneratedBillModalOpen(true);
-      toast.success(`Found Purchase Bill #${foundGrn.invoiceNumber ?? foundGrn.grnNumber}! Loaded details on screen.`);
+      toast.success(
+        `Found Purchase Bill #${foundGrn.invoiceNumber ?? foundGrn.grnNumber}! Loaded details on screen.`,
+      );
     } else {
       toast.error(`No purchase bill found with number "${query.toUpperCase()}"`);
     }
@@ -562,6 +573,7 @@ function PurchasesPage() {
     grnItems.forEach((it) => {
       applyStockMovement({
         batchId: it.batchId,
+        medicineId: it.medicineId,
         movementType: "in",
         quantity: it.quantity,
         reason: `Purchase Bill #${finalBillNo} (${grnNumber})`,
@@ -596,24 +608,25 @@ function PurchasesPage() {
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-4 pt-2">
         {/* Left: Tabs */}
         <div className="flex items-center gap-3">
-
           {/* Mode Tabs */}
           <div className="flex items-center rounded-lg bg-muted p-0.5 text-xs">
             <button
               onClick={() => setViewTab("entry")}
-              className={`px-3 py-1 font-semibold rounded-md transition-all ${viewTab === "entry"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
+              className={`px-3 py-1 font-semibold rounded-md transition-all ${
+                viewTab === "entry"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
               Purchase Entry
             </button>
             <button
               onClick={() => setViewTab("history")}
-              className={`px-3 py-1 font-semibold rounded-md transition-all ${viewTab === "history"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground hover:text-foreground"
-                }`}
+              className={`px-3 py-1 font-semibold rounded-md transition-all ${
+                viewTab === "history"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
             >
               Purchase History
             </button>
@@ -638,14 +651,6 @@ function PurchasesPage() {
                 ))}
             </SelectContent>
           </Select>
-
-
-
-
-
-
-
-
         </div>
       </div>
 
@@ -685,7 +690,9 @@ function PurchasesPage() {
 
               {/* Bill No. / Order No. */}
               <div className="w-full sm:w-[220px] space-y-1">
-                <Label className="text-xs font-medium text-muted-foreground">Bill No. / Order No.</Label>
+                <Label className="text-xs font-medium text-muted-foreground">
+                  Bill No. / Order No.
+                </Label>
                 <div className="flex items-center gap-1">
                   <Input
                     placeholder="Enter Invoice #"
@@ -747,16 +754,22 @@ function PurchasesPage() {
                     <button
                       onClick={() => setLifaMode("LIFA")}
                       title="Incl. Tax: Prices include GST (tax is built into the price)"
-                      className={`px-1.5 py-0.5 rounded font-semibold ${lifaMode === "LIFA" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                        }`}
+                      className={`px-1.5 py-0.5 rounded font-semibold ${
+                        lifaMode === "LIFA"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
                     >
                       Incl. Tax
                     </button>
                     <button
                       onClick={() => setLifaMode("LILA")}
                       title="Excl. Tax: Prices do not include GST (tax is added separately)"
-                      className={`px-1.5 py-0.5 rounded font-semibold ${lifaMode === "LILA" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-                        }`}
+                      className={`px-1.5 py-0.5 rounded font-semibold ${
+                        lifaMode === "LILA"
+                          ? "bg-primary text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
                     >
                       Excl. Tax
                     </button>
@@ -764,28 +777,57 @@ function PurchasesPage() {
                 </div>
 
                 <div className="col-span-1 text-center flex items-center justify-center gap-0.5">
-                  Batch <InfoTip text="Batch number printed on the medicine box — used for tracking and expiry" size="xs" />
+                  Batch{" "}
+                  <InfoTip
+                    text="Batch number printed on the medicine box — used for tracking and expiry"
+                    size="xs"
+                  />
                 </div>
                 <div className="col-span-1 text-center flex items-center justify-center gap-0.5">
-                  Expiry <InfoTip text="Month and year the medicine expires (format: YYYY-MM)" size="xs" />
+                  Expiry{" "}
+                  <InfoTip text="Month and year the medicine expires (format: YYYY-MM)" size="xs" />
                 </div>
                 <div className="col-span-1 text-right flex items-center justify-end gap-0.5 pr-1">
-                  MRP <InfoTip text="Maximum Retail Price — the highest price at which this medicine can be sold" size="xs" />
+                  MRP{" "}
+                  <InfoTip
+                    text="Maximum Retail Price — the highest price at which this medicine can be sold"
+                    size="xs"
+                  />
                 </div>
                 <div className="col-span-1 text-right flex items-center justify-end gap-0.5 pr-1">
-                  PTR <InfoTip text="Price to Retailer — the price the distributor is charging you" size="xs" />
+                  PTR{" "}
+                  <InfoTip
+                    text="Price to Retailer — the price the distributor is charging you"
+                    size="xs"
+                  />
                 </div>
                 <div className="col-span-1 text-center flex items-center justify-center gap-0.5">
-                  Qty <InfoTip text="Number of units (strips, bottles, etc.) you are purchasing" size="xs" />
+                  Qty{" "}
+                  <InfoTip
+                    text="Number of units (strips, bottles, etc.) you are purchasing"
+                    size="xs"
+                  />
                 </div>
                 <div className="col-span-1 text-center flex items-center justify-center gap-0.5">
-                  Bonus <InfoTip text="Bonus units given by the distributor at no extra charge" size="xs" />
+                  Bonus{" "}
+                  <InfoTip
+                    text="Bonus units given by the distributor at no extra charge"
+                    size="xs"
+                  />
                 </div>
                 <div className="col-span-1 text-right flex items-center justify-end gap-0.5 pr-1">
-                  Disc% <InfoTip text="Discount percentage offered by the distributor on this item" size="xs" />
+                  Disc%{" "}
+                  <InfoTip
+                    text="Discount percentage offered by the distributor on this item"
+                    size="xs"
+                  />
                 </div>
                 <div className="col-span-1 text-center flex items-center justify-center gap-0.5">
-                  GST% <InfoTip text="GST tax rate applicable on this medicine (e.g. 5%, 12%, 18%)" size="xs" />
+                  GST%{" "}
+                  <InfoTip
+                    text="GST tax rate applicable on this medicine (e.g. 5%, 12%, 18%)"
+                    size="xs"
+                  />
                 </div>
                 <div className="col-span-1 text-right font-bold text-foreground pr-2">Amount</div>
               </div>
@@ -818,7 +860,9 @@ function PurchasesPage() {
                         <div>
                           <div className="font-semibold text-foreground">{med.name}</div>
                           {med.genericName && (
-                            <div className="text-[11px] text-muted-foreground">{med.genericName}</div>
+                            <div className="text-[11px] text-muted-foreground">
+                              {med.genericName}
+                            </div>
                           )}
                         </div>
                         <div className="text-right">
@@ -874,9 +918,13 @@ function PurchasesPage() {
                       >
                         {/* Medicine Name */}
                         <div className="col-span-3 pr-2">
-                          <div className="font-semibold text-foreground truncate">{item.medicineName}</div>
+                          <div className="font-semibold text-foreground truncate">
+                            {item.medicineName}
+                          </div>
                           {item.genericName && (
-                            <div className="text-[10px] text-muted-foreground truncate">{item.genericName}</div>
+                            <div className="text-[10px] text-muted-foreground truncate">
+                              {item.genericName}
+                            </div>
                           )}
                         </div>
 
@@ -884,7 +932,9 @@ function PurchasesPage() {
                         <div className="col-span-1">
                           <Input
                             value={item.batchNumber}
-                            onChange={(e) => updateLineItem(item.id, { batchNumber: e.target.value })}
+                            onChange={(e) =>
+                              updateLineItem(item.id, { batchNumber: e.target.value })
+                            }
                             className="h-7 text-xs font-mono text-center px-1 border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
@@ -895,7 +945,9 @@ function PurchasesPage() {
                             type="text"
                             placeholder="YYYY-MM"
                             value={item.expiryDate}
-                            onChange={(e) => updateLineItem(item.id, { expiryDate: e.target.value })}
+                            onChange={(e) =>
+                              updateLineItem(item.id, { expiryDate: e.target.value })
+                            }
                             className="h-7 text-xs text-center px-1 border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
@@ -933,7 +985,9 @@ function PurchasesPage() {
                             min="1"
                             value={item.qty}
                             onChange={(e) =>
-                              updateLineItem(item.id, { qty: Math.max(1, Number(e.target.value) || 1) })
+                              updateLineItem(item.id, {
+                                qty: Math.max(1, Number(e.target.value) || 1),
+                              })
                             }
                             className="h-7 text-xs text-center px-1 font-mono font-bold border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
@@ -974,7 +1028,8 @@ function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { gstRate: Number(e.target.value) || 0 })
                             }
-                            className="h-7 text-xs text-center w-full rounded border-0 bg-transparent focus:outline-none focus:bg-muted/40">
+                            className="h-7 text-xs text-center w-full rounded border-0 bg-transparent focus:outline-none focus:bg-muted/40"
+                          >
                             <option value={0}>0%</option>
                             <option value={5}>5%</option>
                             <option value={12}>12%</option>
@@ -1009,10 +1064,11 @@ function PurchasesPage() {
             <div className="border-t border-border bg-card px-4 py-3 flex items-center justify-end shadow-sm">
               <Button
                 onClick={activeRole === "Admin" ? handleProceedToPayment : handleDirectSaveBill}
-                className={`h-9 px-6 text-sm font-semibold flex items-center gap-2 shadow-sm ${activeRole === "Admin"
-                  ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                  : "bg-blue-600 hover:bg-blue-700 text-white"
-                  }`}
+                className={`h-9 px-6 text-sm font-semibold flex items-center gap-2 shadow-sm ${
+                  activeRole === "Admin"
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "bg-blue-600 hover:bg-blue-700 text-white"
+                }`}
               >
                 {activeRole === "Admin" ? (
                   <>
@@ -1059,14 +1115,17 @@ function PurchasesPage() {
                 {grns.length === 0 ? (
                   <tr>
                     <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                      No purchase bills recorded yet. Use the <strong>eVitalRx Purchase Entry</strong> tab
-                      above to create your first purchase!
+                      No purchase bills recorded yet. Use the{" "}
+                      <strong>eVitalRx Purchase Entry</strong> tab above to create your first
+                      purchase!
                     </td>
                   </tr>
                 ) : (
                   grns.map((g) => (
                     <tr key={g.id} className="hover:bg-muted/30">
-                      <td className="px-4 py-3 font-mono font-semibold text-primary">{g.grnNumber}</td>
+                      <td className="px-4 py-3 font-mono font-semibold text-primary">
+                        {g.grnNumber}
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {format(new Date(g.createdAt), "PP")}
                       </td>
@@ -1186,11 +1245,12 @@ function PurchasesPage() {
                     <button
                       key={m.id}
                       type="button"
-                      onClick={() => setPaymentMethod(m.id as any)}
-                      className={`p-2.5 rounded-lg border text-center flex flex-col items-center justify-center gap-1 transition-all ${isSel
-                        ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
-                        : "border-border hover:bg-muted text-muted-foreground"
-                        }`}
+                      onClick={() => setPaymentMethod(m.id as typeof paymentMethod)}
+                      className={`p-2.5 rounded-lg border text-center flex flex-col items-center justify-center gap-1 transition-all ${
+                        isSel
+                          ? "border-primary bg-primary/10 text-primary font-bold shadow-sm"
+                          : "border-border hover:bg-muted text-muted-foreground"
+                      }`}
                     >
                       <Icon className="h-4 w-4" />
                       <span className="text-[11px]">{m.label}</span>
@@ -1281,7 +1341,9 @@ function PurchasesPage() {
                   <div className="text-sm font-bold text-foreground">
                     Invoice #{viewingGrn.invoiceNumber ?? viewingGrn.grnNumber}
                   </div>
-                  <div className="text-[11px] text-muted-foreground">GRN: {viewingGrn.grnNumber}</div>
+                  <div className="text-[11px] text-muted-foreground">
+                    GRN: {viewingGrn.grnNumber}
+                  </div>
                   <div className="text-[11px] text-muted-foreground">
                     Date: {format(new Date(viewingGrn.createdAt), "PPP")}
                   </div>

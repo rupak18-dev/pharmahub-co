@@ -103,7 +103,6 @@ function SalesPage() {
     return picks.length ? batches.find((b) => b.id === picks[0].batchId) : undefined;
   };
 
-
   const addToCart = (medicineId: string) => {
     const flagged = fefoBatchOf(medicineId)?.discountPct ?? 0;
     setCart((prev) => {
@@ -186,7 +185,12 @@ function SalesPage() {
     cart.forEach((line) => {
       const med = medicines.find((m) => m.id === line.medicineId);
       if (!med) return;
-      const picks = pickBatchesFEFO(currentBatches, db.get().inventoryStock, line.medicineId, line.quantity);
+      const picks = pickBatchesFEFO(
+        currentBatches,
+        db.get().inventoryStock,
+        line.medicineId,
+        line.quantity,
+      );
       const picked = picks.reduce((s, p) => s + p.quantity, 0);
       if (picked < line.quantity) {
         toast.error(`Insufficient stock for ${med.name}`);
@@ -358,8 +362,8 @@ function SalesPage() {
                       <div
                         key={m.id}
                         onClick={() => addToCart(m.id)}
-                        disabled={stock <= 0}
-                        className="group flex items-center justify-between gap-3 rounded-lg border border-transparent bg-muted/20 px-3.5 py-2.5 text-left transition-all duration-150 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 hover:border-emerald-500/50 hover:shadow-xs focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+                        aria-disabled={stock <= 0}
+                        className="group flex items-center justify-between gap-3 rounded-lg border border-transparent bg-muted/20 px-3.5 py-2.5 text-left transition-all duration-150 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 hover:border-emerald-500/50 hover:shadow-xs focus:outline-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
                       >
                         <div className="min-w-0">
                           <p className="truncate text-sm font-medium">{m.name}</p>
@@ -368,10 +372,15 @@ function SalesPage() {
                           </p>
                         </div>
                         <div className="text-right">
-                          <p className="font-mono text-sm font-extrabold text-foreground group-hover:text-emerald-950 dark:group-hover:text-emerald-200">{currency}{price.toFixed(2)}</p>
-                          <p className="text-[10px] font-bold text-muted-foreground group-hover:text-emerald-800 dark:group-hover:text-emerald-300">GST {m.gstRate}%</p>
+                          <p className="font-mono text-sm font-extrabold text-foreground group-hover:text-emerald-950 dark:group-hover:text-emerald-200">
+                            {currency}
+                            {price.toFixed(2)}
+                          </p>
+                          <p className="text-[10px] font-bold text-muted-foreground group-hover:text-emerald-800 dark:group-hover:text-emerald-300">
+                            GST {m.gstRate}%
+                          </p>
                         </div>
-                        </div>
+                      </div>
                     );
                   })}
                   {!results.length && (
@@ -482,12 +491,12 @@ function SalesPage() {
                                     prev.map((l) =>
                                       l.medicineId === line.medicineId
                                         ? {
-                                          ...l,
-                                          discountPct: Math.min(
-                                            100,
-                                            Math.max(0, Number(e.target.value) || 0),
-                                          ),
-                                        }
+                                            ...l,
+                                            discountPct: Math.min(
+                                              100,
+                                              Math.max(0, Number(e.target.value) || 0),
+                                            ),
+                                          }
                                         : l,
                                     ),
                                   )
@@ -538,35 +547,50 @@ function SalesPage() {
                     <span className="w-2 h-2 rounded-full bg-amber-500" />
                     <span>Subtotal</span>
                   </dt>
-                  <dd className="font-mono">{currency}{totals.subtotal.toFixed(2)}</dd>
+                  <dd className="font-mono">
+                    {currency}
+                    {totals.subtotal.toFixed(2)}
+                  </dd>
                 </div>
                 <div className="flex justify-between items-center">
                   <dt className="text-muted-foreground flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-rose-500" />
                     <span>Discount</span>
                   </dt>
-                  <dd className="font-mono text-destructive">-{currency}{totals.discountTotal.toFixed(2)}</dd>
+                  <dd className="font-mono text-destructive">
+                    -{currency}
+                    {totals.discountTotal.toFixed(2)}
+                  </dd>
                 </div>
                 <div className="flex justify-between items-center">
                   <dt className="text-muted-foreground flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-indigo-500" />
                     <span>GST</span>
                   </dt>
-                  <dd className="font-mono">{currency}{totals.gstTotal.toFixed(2)}</dd>
+                  <dd className="font-mono">
+                    {currency}
+                    {totals.gstTotal.toFixed(2)}
+                  </dd>
                 </div>
                 <div className="flex justify-between items-center text-xs">
                   <dt className="text-muted-foreground flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-slate-400" />
                     <span>Round off</span>
                   </dt>
-                  <dd className="font-mono">{currency}{totals.roundOff.toFixed(2)}</dd>
+                  <dd className="font-mono">
+                    {currency}
+                    {totals.roundOff.toFixed(2)}
+                  </dd>
                 </div>
                 <div className="mt-2 flex justify-between items-center border-t border-border pt-2 text-base font-semibold">
                   <dt className="flex items-center gap-1.5">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
                     <span>Grand total</span>
                   </dt>
-                  <dd className="font-mono">{currency}{totals.grandTotal.toFixed(2)}</dd>
+                  <dd className="font-mono">
+                    {currency}
+                    {totals.grandTotal.toFixed(2)}
+                  </dd>
                 </div>
               </dl>
               <Button
@@ -606,7 +630,9 @@ function SalesPage() {
                 <span className="w-2.5 h-2.5 rounded-full bg-blue-500 shadow-xs" />
                 <span>Today's invoices</span>
               </p>
-              <p className="mt-1 font-mono text-xl font-bold text-foreground">{todaysSales.length}</p>
+              <p className="mt-1 font-mono text-xl font-bold text-foreground">
+                {todaysSales.length}
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-card p-3 shadow-xs">
               <p className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5">
@@ -657,7 +683,9 @@ function SalesPage() {
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{format(new Date(s.createdAt), "MMM d, HH:mm")}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        {format(new Date(s.createdAt), "MMM d, HH:mm")}
+                      </td>
                       <td className="px-4 py-3">{s.customerName ?? "—"}</td>
                       <td className="px-4 py-3 text-muted-foreground">{s.createdByName}</td>
                       <td className="px-4 py-3 capitalize">{s.paymentMode}</td>
@@ -756,15 +784,21 @@ function SalesPage() {
               <div className="flex justify-between items-center text-base">
                 <span className="font-bold text-foreground">Total Bill Amount:</span>
                 <span className="font-mono text-xl sm:text-2xl font-extrabold text-emerald-700 dark:text-emerald-300">
-                  {currency}{totals.grandTotal.toFixed(2)}
+                  {currency}
+                  {totals.grandTotal.toFixed(2)}
                 </span>
               </div>
 
               {payment === "cash" && (
                 <div className="flex justify-between items-center text-sm border-t border-emerald-500/20 pt-2.5">
-                  <span className="text-muted-foreground font-semibold">Return Change to Customer:</span>
+                  <span className="text-muted-foreground font-semibold">
+                    Return Change to Customer:
+                  </span>
                   <span className="font-mono font-bold text-base sm:text-lg text-foreground">
-                    {currency}{Math.max(0, Number(tender || totals.grandTotal) - totals.grandTotal).toFixed(2)}
+                    {currency}
+                    {Math.max(0, Number(tender || totals.grandTotal) - totals.grandTotal).toFixed(
+                      2,
+                    )}
                   </span>
                 </div>
               )}
@@ -772,7 +806,11 @@ function SalesPage() {
           </div>
 
           <DialogFooter className="gap-3 pt-2">
-            <Button variant="outline" className="h-10 text-sm font-medium" onClick={() => setCheckoutOpen(false)}>
+            <Button
+              variant="outline"
+              className="h-10 text-sm font-medium"
+              onClick={() => setCheckoutOpen(false)}
+            >
               Cancel
             </Button>
             <Button
@@ -806,8 +844,9 @@ function CartBatchInfo({
   const near = days >= 0 && days <= 60;
   return (
     <p
-      className={`mt-0.5 flex items-center gap-1 text-[10px] ${near ? "text-warning-foreground" : "text-muted-foreground"
-        }`}
+      className={`mt-0.5 flex items-center gap-1 text-[10px] ${
+        near ? "text-warning-foreground" : "text-muted-foreground"
+      }`}
     >
       Billing batch <span className="font-mono">{b.batchNumber}</span> · expires{" "}
       {days <= 0 ? "today" : `in ${days}d`}

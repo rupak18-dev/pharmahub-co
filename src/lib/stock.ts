@@ -9,7 +9,11 @@ import type {
   StockMovement,
 } from "./types";
 
-export function computeBatchStatus(batch: Batch, totalStock: number, nearExpiryDays: number): BatchStatus {
+export function computeBatchStatus(
+  batch: Batch,
+  totalStock: number,
+  nearExpiryDays: number,
+): BatchStatus {
   const now = Date.now();
   const exp = new Date(batch.expiryDate).getTime();
   if (totalStock <= 0 && exp >= now) return "sold_out";
@@ -79,10 +83,11 @@ export function applyStockMovement(input: ApplyMovement | ApplyMovementSimple) {
         : -Math.abs(input.quantity)
       : input.quantityChange;
     const locationType = isSimple
-      ? d.inventoryStock.find((s) => s.batchId === input.batchId)?.locationType ?? DEFAULT_LOCATION
+      ? (d.inventoryStock.find((s) => s.batchId === input.batchId)?.locationType ??
+        DEFAULT_LOCATION)
       : input.locationType;
     const rackCode = isSimple
-      ? d.inventoryStock.find((s) => s.batchId === input.batchId)?.rackCode ?? DEFAULT_RACK
+      ? (d.inventoryStock.find((s) => s.batchId === input.batchId)?.rackCode ?? DEFAULT_RACK)
       : input.rackCode;
 
     let stock = d.inventoryStock.find(
@@ -154,10 +159,10 @@ export function applyStockMovement(input: ApplyMovement | ApplyMovementSimple) {
       id: db.uid(),
       userId: input.userId,
       userName: input.userName,
-      action: `Stock ${input.movementType} · ${Math.abs(delta)} units`,
+      action: `Stock ${input.movementType} · ${Math.abs(signed)} units`,
       entityType: "batch",
       entityId: input.batchId,
-      details: { reason: input.reason, delta },
+      details: { reason: isSimple ? input.reason : `Stock ${ledgerType}`, delta: signed },
       createdAt: now,
     });
   });
@@ -205,9 +210,7 @@ export function pickBatchesFEFO(
   qty?: number,
 ): FeFoPick[] {
   const hasInventory = Array.isArray(inventoryOrMedicineId);
-  const medicineId = hasInventory
-    ? (medicineIdOrQty as string)
-    : (inventoryOrMedicineId as string);
+  const medicineId = hasInventory ? (medicineIdOrQty as string) : (inventoryOrMedicineId as string);
   const wanted = hasInventory ? (qty as number) : (medicineIdOrQty as number);
   const inventory = hasInventory
     ? (inventoryOrMedicineId as InventoryStock[])
@@ -226,11 +229,7 @@ export function pickBatchesFEFO(
   const now = Date.now();
 
   const candidates = batches
-    .filter(
-      (b) =>
-        b.medicineId === medicineId &&
-        new Date(b.expiryDate).getTime() > now,
-    )
+    .filter((b) => b.medicineId === medicineId && new Date(b.expiryDate).getTime() > now)
     .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
 
   const picks: FeFoPick[] = [];

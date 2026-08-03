@@ -1,18 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useState, useMemo, useEffect } from "react";
-import { 
-  Plus, 
-  Search, 
-  Pencil, 
-  Power, 
-  PowerOff, 
-  Barcode, 
-  Eye, 
-  Filter, 
+import {
+  Plus,
+  Search,
+  Pencil,
+  Power,
+  PowerOff,
+  Barcode,
+  Eye,
+  Filter,
   ChevronsUpDown,
   FileSpreadsheet,
   Download,
-  Trash2
+  Trash2,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -93,7 +93,7 @@ const schema = z.object({
   storageRequirements: z.string().trim().max(200).optional().or(z.literal("")),
   barcode: z.string().trim().max(64).optional().or(z.literal("")),
   reorderThreshold: z.coerce.number().min(0).max(100000),
-  
+
   // New enterprise inputs
   saltComposition: z.string().trim().max(200).optional().or(z.literal("")),
   strength: z.string().trim().max(50).optional().or(z.literal("")),
@@ -132,7 +132,10 @@ function MedicinesCatalogPage() {
 
   const handleSearchChange = (val: string) => {
     setQ(val);
-    navigate({ search: (prev) => ({ ...prev, q: val || undefined }) });
+    navigate({
+      to: "/dashboard/medicines/catalog",
+      search: { ...searchParams, q: val || undefined },
+    });
   };
 
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -204,10 +207,25 @@ function MedicinesCatalogPage() {
 
   // Map inventory details
   const stockByMed = useMemo(() => {
-    const m = new Map<string, { current: number; min: number; expired: boolean; nearExp: boolean; mrp: number; ptr: number; pur: number; sell: number; batchNo: string; expiry: string; supplier: string }>();
-    
+    const m = new Map<
+      string,
+      {
+        current: number;
+        min: number;
+        expired: boolean;
+        nearExp: boolean;
+        mrp: number;
+        ptr: number;
+        pur: number;
+        sell: number;
+        batchNo: string;
+        expiry: string;
+        supplier: string;
+      }
+    >();
+
     // Seed default based on medicines
-    medicines.forEach(med => {
+    medicines.forEach((med) => {
       m.set(med.id, {
         current: 0,
         min: med.reorderThreshold,
@@ -219,7 +237,7 @@ function MedicinesCatalogPage() {
         sell: 0,
         batchNo: "—",
         expiry: "—",
-        supplier: "—"
+        supplier: "—",
       });
     });
 
@@ -230,8 +248,8 @@ function MedicinesCatalogPage() {
         const expTime = new Date(b.expiryDate).getTime();
         const nearMs = 90 * 24 * 60 * 60 * 1000;
         const isExpired = expTime < Date.now();
-        const isNear = !isExpired && (expTime - Date.now() <= nearMs);
-        const supplierName = suppliers.find(s => s.id === b.supplierId)?.name || "—";
+        const isNear = !isExpired && expTime - Date.now() <= nearMs;
+        const supplierName = suppliers.find((s) => s.id === b.supplierId)?.name || "—";
 
         m.set(b.medicineId, {
           current: prev.current + b.currentStock,
@@ -244,7 +262,7 @@ function MedicinesCatalogPage() {
           sell: b.sellingPrice,
           batchNo: b.batchNumber,
           expiry: b.expiryDate,
-          supplier: supplierName
+          supplier: supplierName,
         });
       }
     });
@@ -261,7 +279,7 @@ function MedicinesCatalogPage() {
       // Dropdown filters
       if (catFilter !== "all") {
         if (catFilter === "vitamins") {
-          const vitCat = categories.find(c => c.name.toLowerCase().includes("vitamin"));
+          const vitCat = categories.find((c) => c.name.toLowerCase().includes("vitamin"));
           if (m.categoryId !== vitCat?.id) return false;
         } else if (m.categoryId !== catFilter) {
           return false;
@@ -284,8 +302,13 @@ function MedicinesCatalogPage() {
       // Stock status filter
       if (stockStatusFilter !== "all") {
         if (stockStatusFilter === "out" && (meta?.current || 0) > 0) return false;
-        if (stockStatusFilter === "low" && ((meta?.current || 0) > (meta?.min || 0) || (meta?.current || 0) === 0)) return false;
-        if (stockStatusFilter === "over" && (meta?.current || 0) <= (m.maxStockLevel || 1000)) return false;
+        if (
+          stockStatusFilter === "low" &&
+          ((meta?.current || 0) > (meta?.min || 0) || (meta?.current || 0) === 0)
+        )
+          return false;
+        if (stockStatusFilter === "over" && (meta?.current || 0) <= (m.maxStockLevel || 1000))
+          return false;
       }
 
       // Expiry status filter
@@ -305,7 +328,19 @@ function MedicinesCatalogPage() {
         (m.gtin ?? "").toLowerCase().includes(s)
       );
     });
-  }, [medicines, q, catFilter, brandFilter, genericFilter, rackFilter, supplierFilter, stockStatusFilter, expiryStatusFilter, activeFilter, stockByMed]);
+  }, [
+    medicines,
+    q,
+    catFilter,
+    brandFilter,
+    genericFilter,
+    rackFilter,
+    supplierFilter,
+    stockStatusFilter,
+    expiryStatusFilter,
+    activeFilter,
+    stockByMed,
+  ]);
 
   const openCreate = () => {
     setEditing(null);
@@ -423,11 +458,20 @@ function MedicinesCatalogPage() {
         />
         <div className="flex items-center gap-2">
           {has("medicines", "create") && (
-            <Button size="sm" onClick={openCreate} className="bg-[#2563EB] hover:bg-blue-700 text-white rounded-lg gap-1">
+            <Button
+              size="sm"
+              onClick={openCreate}
+              className="bg-[#2563EB] hover:bg-blue-700 text-white rounded-lg gap-1"
+            >
               <Plus className="h-4 w-4" /> Add medicine
             </Button>
           )}
-          <Button variant="outline" size="sm" className="rounded-lg gap-1" onClick={() => toast.info("Exporting Excel report...")}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="rounded-lg gap-1"
+            onClick={() => toast.info("Exporting Excel report...")}
+          >
             <FileSpreadsheet className="h-4 w-4 text-emerald-600" /> Export Sheet
           </Button>
         </div>
@@ -440,17 +484,23 @@ function MedicinesCatalogPage() {
             <Filter className="w-3.5 h-3.5" /> Workspace Filters
           </div>
           <div className="flex items-center gap-3">
-            <button 
-              onClick={() => setShowMobileFilters(!showMobileFilters)} 
+            <button
+              onClick={() => setShowMobileFilters(!showMobileFilters)}
               className="md:hidden text-xs font-semibold text-[#2563EB]"
             >
               {showMobileFilters ? "Hide Filters" : "Show Filters"}
             </button>
-            <button 
+            <button
               onClick={() => {
-                setCatFilter("all"); setBrandFilter("all"); setGenericFilter("all");
-                setSupplierFilter("all"); setRackFilter("all"); setStockStatusFilter("all");
-                setExpiryStatusFilter("all"); setActiveFilter("all"); setQ("");
+                setCatFilter("all");
+                setBrandFilter("all");
+                setGenericFilter("all");
+                setSupplierFilter("all");
+                setRackFilter("all");
+                setStockStatusFilter("all");
+                setExpiryStatusFilter("all");
+                setActiveFilter("all");
+                setQ("");
               }}
               className="text-xs text-[#2563EB] hover:underline"
             >
@@ -472,8 +522,9 @@ function MedicinesCatalogPage() {
         </div>
 
         {/* Dropdown Filters (collapsible on mobile) */}
-        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 ${showMobileFilters ? 'block' : 'hidden md:grid'}`}>
-
+        <div
+          className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 ${showMobileFilters ? "block" : "hidden md:grid"}`}
+        >
           <Select value={catFilter} onValueChange={setCatFilter}>
             <SelectTrigger className="bg-white">
               <SelectValue placeholder="Category" />
@@ -481,7 +532,9 @@ function MedicinesCatalogPage() {
             <SelectContent>
               <SelectItem value="all">All Categories</SelectItem>
               {categories.map((c) => (
-                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                <SelectItem key={c.id} value={c.id}>
+                  {c.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -494,7 +547,9 @@ function MedicinesCatalogPage() {
               <SelectItem value="all">All Brands</SelectItem>
               <SelectItem value="only">Only Branded</SelectItem>
               {uniqueBrands.map((b, idx) => (
-                <SelectItem key={idx} value={b}>{b}</SelectItem>
+                <SelectItem key={idx} value={b}>
+                  {b}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -507,7 +562,9 @@ function MedicinesCatalogPage() {
               <SelectItem value="all">All Generics</SelectItem>
               <SelectItem value="only">Only Generic</SelectItem>
               {uniqueGenerics.map((g, idx) => (
-                <SelectItem key={idx} value={g}>{g}</SelectItem>
+                <SelectItem key={idx} value={g}>
+                  {g}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -519,7 +576,9 @@ function MedicinesCatalogPage() {
             <SelectContent>
               <SelectItem value="all">All Suppliers</SelectItem>
               {suppliers.map((s) => (
-                <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                <SelectItem key={s.id} value={s.name}>
+                  {s.name}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -531,7 +590,9 @@ function MedicinesCatalogPage() {
             <SelectContent>
               <SelectItem value="all">All Racks</SelectItem>
               {uniqueRacks.map((r, idx) => (
-                <SelectItem key={idx} value={r}>{r}</SelectItem>
+                <SelectItem key={idx} value={r}>
+                  {r}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -559,7 +620,10 @@ function MedicinesCatalogPage() {
             </SelectContent>
           </Select>
 
-          <Select value={activeFilter} onValueChange={(v) => setActiveFilter(v as typeof activeFilter)}>
+          <Select
+            value={activeFilter}
+            onValueChange={(v) => setActiveFilter(v as typeof activeFilter)}
+          >
             <SelectTrigger className="bg-white">
               <SelectValue placeholder="Catalog Status" />
             </SelectTrigger>
@@ -611,7 +675,9 @@ function MedicinesCatalogPage() {
                   <th className="px-4 py-3">Rack</th>
                   <th className="px-4 py-3">Supplier</th>
                   <th className="px-4 py-3">Availability</th>
-                  <th className="px-4 py-3 text-center sticky right-0 bg-white shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.05)] border-l border-border/80">Actions</th>
+                  <th className="px-4 py-3 text-center sticky right-0 bg-white shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.05)] border-l border-border/80">
+                    Actions
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border/80">
@@ -633,8 +699,16 @@ function MedicinesCatalogPage() {
                             {m.dosageForm?.charAt(0) || "💊"}
                           </div>
                           <div className="min-w-0">
-                            <Link to={`/dashboard/medicines/${m.id}`} className="hover:underline hover:text-[#2563EB] truncate block">{m.name}</Link>
-                            <span className="text-[10px] font-mono text-muted-foreground block">{m.id.slice(0, 8).toUpperCase()}</span>
+                            <Link
+                              to="/dashboard/medicines/$medicineId"
+                              params={{ medicineId: m.id }}
+                              className="hover:underline hover:text-[#2563EB] truncate block"
+                            >
+                              {m.name}
+                            </Link>
+                            <span className="text-[10px] font-mono text-muted-foreground block">
+                              {m.id.slice(0, 8).toUpperCase()}
+                            </span>
                           </div>
                         </div>
                       </td>
@@ -646,7 +720,12 @@ function MedicinesCatalogPage() {
                       <td className="px-4 py-3 text-muted-foreground">{m.genericName || "—"}</td>
 
                       {/* Salt */}
-                      <td className="px-4 py-3 text-muted-foreground max-w-[200px] truncate" title={m.saltComposition}>{m.saltComposition || "—"}</td>
+                      <td
+                        className="px-4 py-3 text-muted-foreground max-w-[200px] truncate"
+                        title={m.saltComposition}
+                      >
+                        {m.saltComposition || "—"}
+                      </td>
 
                       {/* Category */}
                       <td className="px-4 py-3 text-muted-foreground">
@@ -673,22 +752,26 @@ function MedicinesCatalogPage() {
 
                       {/* MRP */}
                       <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
-                        {currency}{meta?.mrp?.toFixed(2) || "0.00"}
+                        {currency}
+                        {meta?.mrp?.toFixed(2) || "0.00"}
                       </td>
 
                       {/* PTR */}
                       <td className="px-4 py-3 text-right font-mono text-muted-foreground">
-                        {currency}{m.ptr?.toFixed(2) || "0.00"}
+                        {currency}
+                        {m.ptr?.toFixed(2) || "0.00"}
                       </td>
 
                       {/* Purchase */}
                       <td className="px-4 py-3 text-right font-mono text-muted-foreground">
-                        {currency}{meta?.pur?.toFixed(2) || "0.00"}
+                        {currency}
+                        {meta?.pur?.toFixed(2) || "0.00"}
                       </td>
 
                       {/* Selling */}
                       <td className="px-4 py-3 text-right font-mono font-semibold text-emerald-600">
-                        {currency}{meta?.sell?.toFixed(2) || "0.00"}
+                        {currency}
+                        {meta?.sell?.toFixed(2) || "0.00"}
                       </td>
 
                       {/* Stock */}
@@ -703,16 +786,33 @@ function MedicinesCatalogPage() {
 
                       {/* Expiry */}
                       <td className="px-4 py-3">
-                        <span className={meta?.expired ? "text-destructive font-bold" : meta?.nearExp ? "text-amber-500 font-semibold" : "text-muted-foreground"}>
-                          {meta?.expiry !== "—" ? new Date(meta?.expiry || "").toLocaleDateString(undefined, { month: "short", year: "numeric" }) : "—"}
+                        <span
+                          className={
+                            meta?.expired
+                              ? "text-destructive font-bold"
+                              : meta?.nearExp
+                                ? "text-amber-500 font-semibold"
+                                : "text-muted-foreground"
+                          }
+                        >
+                          {meta?.expiry !== "—"
+                            ? new Date(meta?.expiry || "").toLocaleDateString(undefined, {
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : "—"}
                         </span>
                       </td>
 
                       {/* Rack */}
-                      <td className="px-4 py-3 text-muted-foreground font-mono">{m.rackLocation || "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground font-mono">
+                        {m.rackLocation || "—"}
+                      </td>
 
                       {/* Supplier */}
-                      <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px]">{meta?.supplier || "—"}</td>
+                      <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px]">
+                        {meta?.supplier || "—"}
+                      </td>
 
                       {/* Availability */}
                       <td className="px-4 py-3">
@@ -728,18 +828,39 @@ function MedicinesCatalogPage() {
                       {/* Actions */}
                       <td className="px-4 py-3 text-center sticky right-0 bg-white shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.05)] border-l border-border/80">
                         <div className="flex items-center justify-center gap-1">
-                          <Button asChild variant="ghost" size="icon" className="h-8 w-8 text-[#2563EB]" title="View details">
-                            <Link to={`/dashboard/medicines/${m.id}`}>
+                          <Button
+                            asChild
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-[#2563EB]"
+                            title="View details"
+                          >
+                            <Link
+                              to="/dashboard/medicines/$medicineId"
+                              params={{ medicineId: m.id }}
+                            >
                               <Eye className="h-4 w-4" />
                             </Link>
                           </Button>
                           {has("medicines", "update") && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:text-[#2563EB]" onClick={() => openEdit(m)} title="Edit Configuration">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:text-[#2563EB]"
+                              onClick={() => openEdit(m)}
+                              title="Edit Configuration"
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
                           )}
                           {has("medicines", "delete") && (
-                            <Button variant="ghost" size="icon" className="h-8 w-8 hover:bg-destructive/10" onClick={() => setConfirmDeactivate(m)} title={m.isActive ? "Deactivate" : "Activate"}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-destructive/10"
+                              onClick={() => setConfirmDeactivate(m)}
+                              title={m.isActive ? "Deactivate" : "Activate"}
+                            >
                               {m.isActive ? (
                                 <PowerOff className="h-4 w-4 text-destructive" />
                               ) : (
@@ -768,15 +889,26 @@ function MedicinesCatalogPage() {
                     : "healthy";
 
               return (
-                <div key={m.id} className="bg-white border border-border/80 rounded-2xl p-4 shadow-sm space-y-3">
+                <div
+                  key={m.id}
+                  className="bg-white border border-border/80 rounded-2xl p-4 shadow-sm space-y-3"
+                >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
                       <div className="w-9 h-9 rounded bg-muted/60 flex items-center justify-center text-sm border shrink-0">
                         {m.dosageForm?.charAt(0) || "💊"}
                       </div>
                       <div className="min-w-0">
-                        <Link to={`/dashboard/medicines/${m.id}`} className="font-bold text-foreground hover:underline text-sm truncate block">{m.name}</Link>
-                        <span className="text-[10px] text-muted-foreground font-mono">{m.genericName || "Generic"}</span>
+                        <Link
+                          to="/dashboard/medicines/$medicineId"
+                          params={{ medicineId: m.id }}
+                          className="font-bold text-foreground hover:underline text-sm truncate block"
+                        >
+                          {m.name}
+                        </Link>
+                        <span className="text-[10px] text-muted-foreground font-mono">
+                          {m.genericName || "Generic"}
+                        </span>
                       </div>
                     </div>
                     {m.isActive ? (
@@ -791,38 +923,71 @@ function MedicinesCatalogPage() {
                   <div className="grid grid-cols-2 gap-2 text-xs border-t border-b py-2 my-2">
                     <div>
                       <span className="text-muted-foreground block text-[10px]">Stock Level</span>
-                      <span className="font-semibold text-foreground font-mono">{meta?.current} units</span>
+                      <span className="font-semibold text-foreground font-mono">
+                        {meta?.current} units
+                      </span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block text-[10px]">Rack Location</span>
-                      <span className="font-semibold text-foreground font-mono">{m.rackLocation || "—"}</span>
+                      <span className="font-semibold text-foreground font-mono">
+                        {m.rackLocation || "—"}
+                      </span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block text-[10px]">Selling Price</span>
-                      <span className="font-semibold text-emerald-600 font-mono">{currency}{meta?.sell?.toFixed(2)}</span>
+                      <span className="font-semibold text-emerald-600 font-mono">
+                        {currency}
+                        {meta?.sell?.toFixed(2)}
+                      </span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block text-[10px]">Expiry</span>
-                      <span className={`font-semibold font-mono ${meta?.expired ? 'text-destructive' : meta?.nearExp ? 'text-amber-500' : 'text-muted-foreground'}`}>
-                        {meta?.expiry !== "—" ? new Date(meta?.expiry || "").toLocaleDateString(undefined, { month: "short", year: "2-digit" }) : "—"}
+                      <span
+                        className={`font-semibold font-mono ${meta?.expired ? "text-destructive" : meta?.nearExp ? "text-amber-500" : "text-muted-foreground"}`}
+                      >
+                        {meta?.expiry !== "—"
+                          ? new Date(meta?.expiry || "").toLocaleDateString(undefined, {
+                              month: "short",
+                              year: "2-digit",
+                            })
+                          : "—"}
                       </span>
                     </div>
                   </div>
 
                   <div className="flex gap-2">
-                    <Button asChild size="sm" variant="outline" className="flex-1 text-xs gap-1 rounded-lg h-9">
-                      <Link to={`/dashboard/medicines/${m.id}`}>
+                    <Button
+                      asChild
+                      size="sm"
+                      variant="outline"
+                      className="flex-1 text-xs gap-1 rounded-lg h-9"
+                    >
+                      <Link to="/dashboard/medicines/$medicineId" params={{ medicineId: m.id }}>
                         <Eye className="h-3.5 w-3.5" /> View Specs
                       </Link>
                     </Button>
                     {has("medicines", "update") && (
-                      <Button size="sm" variant="outline" className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground" onClick={() => openEdit(m)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"
+                        onClick={() => openEdit(m)}
+                      >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
                     )}
                     {has("medicines", "delete") && (
-                      <Button size="sm" variant="outline" className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10" onClick={() => setConfirmDeactivate(m)}>
-                        {m.isActive ? <PowerOff className="h-3.5 w-3.5" /> : <Power className="h-3.5 w-3.5 text-emerald-600" />}
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10"
+                        onClick={() => setConfirmDeactivate(m)}
+                      >
+                        {m.isActive ? (
+                          <PowerOff className="h-3.5 w-3.5" />
+                        ) : (
+                          <Power className="h-3.5 w-3.5 text-emerald-600" />
+                        )}
                       </Button>
                     )}
                   </div>
@@ -842,10 +1007,15 @@ function MedicinesCatalogPage() {
       />
 
       {/* CONFIRMATION POPUP */}
-      <AlertDialog open={!!confirmDeactivate} onOpenChange={(o) => !o && setConfirmDeactivate(null)}>
+      <AlertDialog
+        open={!!confirmDeactivate}
+        onOpenChange={(o) => !o && setConfirmDeactivate(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{confirmDeactivate?.isActive ? "Deactivate" : "Activate"} master config?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {confirmDeactivate?.isActive ? "Deactivate" : "Activate"} master config?
+            </AlertDialogTitle>
             <AlertDialogDescription>
               {confirmDeactivate?.isActive
                 ? "This medicine will be hidden from sales forms and stock reports. Active batches will remain registered but unavailable."
@@ -854,7 +1024,10 @@ function MedicinesCatalogPage() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction className="bg-[#2563EB] hover:bg-blue-700" onClick={() => confirmDeactivate && toggleActive(confirmDeactivate)}>
+            <AlertDialogAction
+              className="bg-[#2563EB] hover:bg-blue-700"
+              onClick={() => confirmDeactivate && toggleActive(confirmDeactivate)}
+            >
               Confirm
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -901,7 +1074,7 @@ function MedicineFormSheet({
           storageRequirements: editing.storageRequirements ?? "",
           barcode: editing.barcode ?? "",
           reorderThreshold: editing.reorderThreshold,
-          
+
           saltComposition: editing.saltComposition ?? "",
           strength: editing.strength ?? "",
           dosageForm: editing.dosageForm ?? "",
@@ -927,7 +1100,7 @@ function MedicineFormSheet({
           storageRequirements: "",
           barcode: "",
           reorderThreshold: settings.lowStockDefault,
-          
+
           saltComposition: "",
           strength: "",
           dosageForm: "",
@@ -964,7 +1137,9 @@ function MedicineFormSheet({
         >
           {/* GENERAL INFO */}
           <div className="space-y-3">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">General Details</h4>
+            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">
+              General Details
+            </h4>
             <div className="space-y-2">
               <Label htmlFor="name">Medicine Trade Name *</Label>
               <Input id="name" {...register("name")} placeholder="e.g. Crocin 500mg" />
@@ -977,18 +1152,28 @@ function MedicineFormSheet({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="genericName">Generic / Salt Name</Label>
-                <Input id="genericName" {...register("genericName")} placeholder="e.g. Paracetamol" />
+                <Input
+                  id="genericName"
+                  {...register("genericName")}
+                  placeholder="e.g. Paracetamol"
+                />
               </div>
             </div>
             <div className="space-y-2">
               <Label htmlFor="saltComposition">Full Salt Composition Details</Label>
-              <Input id="saltComposition" {...register("saltComposition")} placeholder="e.g. Paracetamol IP 500mg + Caffeine 30mg" />
+              <Input
+                id="saltComposition"
+                {...register("saltComposition")}
+                placeholder="e.g. Paracetamol IP 500mg + Caffeine 30mg"
+              />
             </div>
           </div>
 
           {/* CLINICAL DATA */}
           <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">Clinical Settings</h4>
+            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">
+              Clinical Settings
+            </h4>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="strength">Strength</Label>
@@ -996,7 +1181,11 @@ function MedicineFormSheet({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="dosageForm">Dosage Form</Label>
-                <Input id="dosageForm" {...register("dosageForm")} placeholder="e.g. Tablet, Syrup" />
+                <Input
+                  id="dosageForm"
+                  {...register("dosageForm")}
+                  placeholder="e.g. Tablet, Syrup"
+                />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="packSize">Pack Size</Label>
@@ -1006,20 +1195,28 @@ function MedicineFormSheet({
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Category</Label>
-                <Select value={watch("categoryId") || ""} onValueChange={(v) => setValue("categoryId", v)}>
+                <Select
+                  value={watch("categoryId") || ""}
+                  onValueChange={(v) => setValue("categoryId", v)}
+                >
                   <SelectTrigger className="bg-white">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-2">
                 <Label>Drug Schedule</Label>
-                <Select value={watch("drugSchedule") || ""} onValueChange={(v) => setValue("drugSchedule", v)}>
+                <Select
+                  value={watch("drugSchedule") || ""}
+                  onValueChange={(v) => setValue("drugSchedule", v)}
+                >
                   <SelectTrigger className="bg-white">
                     <SelectValue placeholder="Select Schedule" />
                   </SelectTrigger>
@@ -1037,17 +1234,24 @@ function MedicineFormSheet({
 
           {/* INVENTORY & WAREHOUSE */}
           <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">Stock Rules & Storage</h4>
+            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">
+              Stock Rules & Storage
+            </h4>
             <div className="grid gap-4 sm:grid-cols-4">
               <div className="space-y-2 col-span-2">
                 <Label>Manufacturer</Label>
-                <Select value={watch("manufacturerId") || ""} onValueChange={(v) => setValue("manufacturerId", v)}>
+                <Select
+                  value={watch("manufacturerId") || ""}
+                  onValueChange={(v) => setValue("manufacturerId", v)}
+                >
                   <SelectTrigger className="bg-white">
                     <SelectValue placeholder="Select manufacturer" />
                   </SelectTrigger>
                   <SelectContent>
                     {manufacturers.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name}
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
@@ -1088,42 +1292,81 @@ function MedicineFormSheet({
               </div>
               <div className="space-y-2">
                 <Label htmlFor="barcode">Barcode / SKU</Label>
-                <Input id="barcode" placeholder="Leave empty for auto-generate" {...register("barcode")} />
+                <Input
+                  id="barcode"
+                  placeholder="Leave empty for auto-generate"
+                  {...register("barcode")}
+                />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="storageRequirements">Storage requirements</Label>
-              <Textarea id="storageRequirements" rows={2} placeholder="e.g. Store below 25°C, protect from direct sunlight" {...register("storageRequirements")} />
+              <Textarea
+                id="storageRequirements"
+                rows={2}
+                placeholder="e.g. Store below 25°C, protect from direct sunlight"
+                {...register("storageRequirements")}
+              />
             </div>
           </div>
 
           {/* PATIENT MONOGRAPHS */}
           <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">Safety & Drug Monographs</h4>
+            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">
+              Safety & Drug Monographs
+            </h4>
             <div className="space-y-2">
               <Label htmlFor="dosageInfo">Standard Dosage Information</Label>
-              <Textarea id="dosageInfo" rows={2} placeholder="Standard adult and pediatric dosages..." {...register("dosageInfo")} />
+              <Textarea
+                id="dosageInfo"
+                rows={2}
+                placeholder="Standard adult and pediatric dosages..."
+                {...register("dosageInfo")}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="usageInstructions">Usage Instructions</Label>
-              <Textarea id="usageInstructions" rows={2} placeholder="Directions for taking the drug safely..." {...register("usageInstructions")} />
+              <Textarea
+                id="usageInstructions"
+                rows={2}
+                placeholder="Directions for taking the drug safely..."
+                {...register("usageInstructions")}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="contraindications">Contraindications</Label>
-              <Textarea id="contraindications" rows={2} placeholder="When NOT to take this medicine..." {...register("contraindications")} />
+              <Textarea
+                id="contraindications"
+                rows={2}
+                placeholder="When NOT to take this medicine..."
+                {...register("contraindications")}
+              />
             </div>
             <div className="space-y-2">
               <Label htmlFor="sideEffects">Side Effects</Label>
-              <Textarea id="sideEffects" rows={2} placeholder="Common or severe reactions..." {...register("sideEffects")} />
+              <Textarea
+                id="sideEffects"
+                rows={2}
+                placeholder="Common or severe reactions..."
+                {...register("sideEffects")}
+              />
             </div>
           </div>
 
           <SheetFooter className="mt-4 border-t border-border/60 pt-4 flex-row gap-3">
-            <Button type="button" variant="outline" className="flex-1 rounded-lg" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="flex-1 rounded-lg"
+              onClick={() => onOpenChange(false)}
+            >
               Cancel
             </Button>
-            <Button type="submit" className="flex-1 bg-[#2563EB] hover:bg-blue-700 text-white rounded-lg">
+            <Button
+              type="submit"
+              className="flex-1 bg-[#2563EB] hover:bg-blue-700 text-white rounded-lg"
+            >
               {editing ? "Save Changes" : "Register Medicine"}
             </Button>
           </SheetFooter>

@@ -55,12 +55,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -366,11 +361,7 @@ function UsersTab() {
           </Select>
         </div>
         {has("users", "create") && (
-          <Button
-            size="sm"
-            className="h-9 gap-2 shrink-0"
-            onClick={() => setInviteOpen(true)}
-          >
+          <Button size="sm" className="h-9 gap-2 shrink-0" onClick={() => setInviteOpen(true)}>
             <UserPlus className="h-4 w-4" />
             Invite User
           </Button>
@@ -405,19 +396,13 @@ function UsersTab() {
           <tbody className="divide-y divide-border">
             {filtered.length === 0 ? (
               <tr>
-                <td
-                  colSpan={6}
-                  className="px-4 py-12 text-center text-sm text-muted-foreground"
-                >
+                <td colSpan={6} className="px-4 py-12 text-center text-sm text-muted-foreground">
                   No users match your filters.
                 </td>
               </tr>
             ) : (
               filtered.map((p) => (
-                <tr
-                  key={p.id}
-                  className="group hover:bg-muted/20 transition-colors"
-                >
+                <tr key={p.id} className="group hover:bg-muted/20 transition-colors">
                   {/* Avatar + Name */}
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
@@ -776,7 +761,9 @@ function InviteWizard({ open, onClose }: { open: boolean; onClose: () => void })
                           : "border-border bg-white hover:bg-muted/30"
                       }`}
                     >
-                      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${meta.bg}`}>
+                      <div
+                        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${meta.bg}`}
+                      >
                         <Icon className={`h-4 w-4 ${meta.color}`} />
                       </div>
                       <div className="flex-1">
@@ -837,7 +824,8 @@ function InviteWizard({ open, onClose }: { open: boolean; onClose: () => void })
                 ))}
               </div>
               <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                An invitation email will be sent to <strong>{email}</strong> with setup instructions.
+                An invitation email will be sent to <strong>{email}</strong> with setup
+                instructions.
               </div>
             </div>
           )}
@@ -856,9 +844,13 @@ function InviteWizard({ open, onClose }: { open: boolean; onClose: () => void })
             )}
             <Button size="sm" onClick={handleContinue} className="gap-1.5">
               {step < WIZARD_STEPS.length - 1 ? (
-                <>Continue <ChevronRight className="h-4 w-4" /></>
+                <>
+                  Continue <ChevronRight className="h-4 w-4" />
+                </>
               ) : (
-                <>Send Invitation <Check className="h-4 w-4" /></>
+                <>
+                  Send Invitation <Check className="h-4 w-4" />
+                </>
               )}
             </Button>
           </div>
@@ -915,7 +907,9 @@ function RolesTab() {
             >
               {/* Card header */}
               <div className="flex items-start justify-between">
-                <div className={`flex h-11 w-11 items-center justify-center rounded-xl border ${meta.bg} transition-transform group-hover:scale-105`}>
+                <div
+                  className={`flex h-11 w-11 items-center justify-center rounded-xl border ${meta.bg} transition-transform group-hover:scale-105`}
+                >
                   <Icon className={`h-5 w-5 ${meta.color}`} />
                 </div>
                 <span className="rounded-full border border-border bg-muted/40 px-2.5 py-0.5 text-[11px] font-semibold text-muted-foreground">
@@ -1051,9 +1045,7 @@ function PolicyModal({
   };
 
   const filteredModules = moduleSearch
-    ? ALL_MODULES.filter((m) =>
-        m.label.toLowerCase().includes(moduleSearch.toLowerCase()),
-      )
+    ? ALL_MODULES.filter((m) => m.label.toLowerCase().includes(moduleSearch.toLowerCase()))
     : ALL_MODULES;
 
   const currentPerms = perms[role][selectedModule];
@@ -1090,7 +1082,9 @@ function PolicyModal({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-4">
           <div className="flex items-center gap-3">
-            <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${meta.bg}`}>
+            <div
+              className={`flex h-10 w-10 items-center justify-center rounded-xl border ${meta.bg}`}
+            >
               <Icon className={`h-5 w-5 ${meta.color}`} />
             </div>
             <div>
@@ -1249,10 +1243,14 @@ function PolicyModal({
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className={`text-sm font-semibold ${enabled ? "text-foreground" : "text-muted-foreground"}`}>
+                              <p
+                                className={`text-sm font-semibold ${enabled ? "text-foreground" : "text-muted-foreground"}`}
+                              >
                                 {pMeta.label}
                               </p>
-                              <p className="text-[11px] text-muted-foreground truncate">{pMeta.desc}</p>
+                              <p className="text-[11px] text-muted-foreground truncate">
+                                {pMeta.desc}
+                              </p>
                             </div>
                             <div
                               className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-colors ${
@@ -1391,7 +1389,8 @@ function PolicyBuilderTab() {
     if (!canEdit || selectedRole === "Owner") return;
     const pa = action as import("@/lib/types").PermissionAction;
     db.set((d) => {
-      d.permissions[selectedRole][selectedModule][pa] = !d.permissions[selectedRole][selectedModule][pa];
+      d.permissions[selectedRole][selectedModule][pa] =
+        !d.permissions[selectedRole][selectedModule][pa];
     });
   };
 
@@ -1416,9 +1415,7 @@ function PolicyBuilderTab() {
   };
 
   const filteredModules = moduleSearch
-    ? ALL_MODULES.filter((m) =>
-        m.label.toLowerCase().includes(moduleSearch.toLowerCase()),
-      )
+    ? ALL_MODULES.filter((m) => m.label.toLowerCase().includes(moduleSearch.toLowerCase()))
     : ALL_MODULES;
 
   const currentPerms = perms[selectedRole][selectedModule];
@@ -1451,10 +1448,7 @@ function PolicyBuilderTab() {
         {/* Role selector */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-muted-foreground">Editing Role:</span>
-          <Select
-            value={selectedRole}
-            onValueChange={(v) => setSelectedRole(v as RoleName)}
-          >
+          <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as RoleName)}>
             <SelectTrigger className="h-9 w-48 bg-white">
               <div className="flex items-center gap-2">
                 <RoleIcon className={`h-3.5 w-3.5 ${rolesMeta.color}`} />
@@ -1561,7 +1555,11 @@ function PolicyBuilderTab() {
                         : "border-border bg-muted/40 text-muted-foreground"
                   }`}
                 >
-                  {isFullAccess ? "Full Access" : isNoAccess ? "No Access" : `${activePerms}/${totalPerms}`}
+                  {isFullAccess
+                    ? "Full Access"
+                    : isNoAccess
+                      ? "No Access"
+                      : `${activePerms}/${totalPerms}`}
                 </span>
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -1615,12 +1613,16 @@ function PolicyBuilderTab() {
                 >
                   <div
                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-colors ${
-                      enabled ? "border-primary bg-primary" : "border-muted-foreground/30 bg-transparent"
+                      enabled
+                        ? "border-primary bg-primary"
+                        : "border-muted-foreground/30 bg-transparent"
                     }`}
                   >
                     {enabled && <Check className="h-3 w-3 text-white" />}
                   </div>
-                  <span className={`text-sm font-semibold ${enabled ? "text-foreground" : "text-muted-foreground"}`}>
+                  <span
+                    className={`text-sm font-semibold ${enabled ? "text-foreground" : "text-muted-foreground"}`}
+                  >
                     {label}
                   </span>
                 </button>
@@ -1637,9 +1639,14 @@ function PolicyBuilderTab() {
               <table className="w-full text-xs">
                 <thead>
                   <tr>
-                    <th className="pb-2 pr-3 text-left font-semibold text-muted-foreground">Module</th>
+                    <th className="pb-2 pr-3 text-left font-semibold text-muted-foreground">
+                      Module
+                    </th>
                     {ALL_ACTIONS.map((a) => (
-                      <th key={a} className="pb-2 px-2 text-center capitalize font-semibold text-muted-foreground">
+                      <th
+                        key={a}
+                        className="pb-2 px-2 text-center capitalize font-semibold text-muted-foreground"
+                      >
                         {a}
                       </th>
                     ))}

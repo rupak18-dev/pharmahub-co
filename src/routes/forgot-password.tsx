@@ -60,9 +60,8 @@ function ForgotPage() {
             <div>
               <div className="font-medium text-foreground">Check your inbox</div>
               <p className="mt-1 text-muted-foreground">
-                If an account exists for{" "}
-                <span className="font-mono">{getValues("email")}</span>, we've sent a reset
-                link.
+                If an account exists for <span className="font-mono">{getValues("email")}</span>,
+                we've sent a reset link.
               </p>
             </div>
           </div>
@@ -72,9 +71,7 @@ function ForgotPage() {
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" autoComplete="email" {...register("email")} />
-            {errors.email && (
-              <p className="text-xs text-destructive">{errors.email.message}</p>
-            )}
+            {errors.email && <p className="text-xs text-destructive">{errors.email.message}</p>}
           </div>
           <Button type="submit" className="w-full" disabled={isSubmitting}>
             {isSubmitting ? "Sending…" : "Send reset link"}

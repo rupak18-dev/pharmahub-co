@@ -40,6 +40,7 @@ New types: `PurchaseOrder`, `POItem`, `GRN`, `GRNItem`.
 ## 5. Reports — `/dashboard/reports`
 
 Card grid of on-demand reports rendered inline (recharts already in the stack via shadcn charts, otherwise plain tables):
+
 - Sales summary (day/week/month) – revenue, invoices, avg basket.
 - Top 10 medicines by revenue and by units.
 - Stock valuation by category / manufacturer.
@@ -69,6 +70,7 @@ Adds one field to `DB` + `settings`-adjacent state.
 ## 8. Admin / Settings — `/dashboard/admin`
 
 Tabbed settings page (Owner/Admin only):
+
 - **Organization**: org name, currency, timezone, GST default, address (edits `db.settings` + owner profile).
 - **Thresholds**: nearExpiryDays, deadStockDays, lowStockDefault.
 - **Roles & permissions**: link to existing users matrix.

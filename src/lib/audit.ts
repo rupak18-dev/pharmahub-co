@@ -120,9 +120,15 @@ export function severityForValue(value: number): Severity {
 
 export const SEVERITY_META: Record<Severity, { label: string; chip: string }> = {
   low: { label: "Low Impact", chip: "bg-muted text-muted-foreground border-border" },
-  medium: { label: "Medium Impact", chip: "bg-warning/20 text-warning-foreground border-warning/40" },
+  medium: {
+    label: "Medium Impact",
+    chip: "bg-warning/20 text-warning-foreground border-warning/40",
+  },
   high: { label: "High Impact", chip: "bg-critical/15 text-critical border-critical/30" },
-  critical: { label: "Critical Impact", chip: "bg-destructive/15 text-destructive border-destructive/30" },
+  critical: {
+    label: "Critical Impact",
+    chip: "bg-destructive/15 text-destructive border-destructive/30",
+  },
 };
 
 export const VARIANCE_STATUS_META: Record<VarianceStatus, { label: string; chip: string }> = {
