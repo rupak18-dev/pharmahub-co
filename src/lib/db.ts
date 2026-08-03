@@ -250,6 +250,7 @@ function seed(): DB {
       name: `Test Medicine ${i + 1} 500mg`,
       generic: `Generic Alpha ${i + 1}`,
       brand: `PharmaBrand ${i % 5}`,
+      prefix: "TM",
       cat: [catAnalg.id, catAntib.id, catCardio.id, catVit.id][i % 4],
       mfr: [mfr1.id, mfr2.id, mfr3.id][i % 3],
       hsn: "3004",
@@ -277,8 +278,6 @@ function seed(): DB {
     name: m.name,
     genericName: m.generic,
     brandName: m.brand,
-    strength: m.strength,
-    dosageForm: m.dosage,
     categoryId: m.cat,
     manufacturerId: m.mfr,
     hsnCode: m.hsn,
@@ -289,7 +288,7 @@ function seed(): DB {
     isActive: true,
     prefix: m.prefix,
     createdAt: now,
-    
+
     // Enterprise fields mapped
     saltComposition: m.salt,
     strength: m.strength,
@@ -327,6 +326,7 @@ function seed(): DB {
       sellingPrice: 38 + i * 14,
       supplierId: suppliers[i % 2],
       currentStock: 0,
+      status: "active" as const,
       createdAt: now,
     };
     // Batch B - near expiry (spread across the warning windows)
@@ -341,6 +341,7 @@ function seed(): DB {
       sellingPrice: 38 + i * 14,
       supplierId: suppliers[(i + 1) % 2],
       currentStock: 0,
+      status: "near_expiry" as const,
       createdAt: now,
     };
     // Batch C - expired (only some)
@@ -356,6 +357,7 @@ function seed(): DB {
         sellingPrice: 38 + i * 14,
         supplierId: suppliers[i % 2],
         currentStock: 0,
+        status: "expired" as const,
         createdAt: now,
       };
       return [a, b, c];
@@ -402,7 +404,7 @@ function seed(): DB {
     batchId: s.batchId,
     movementType: "Purchase Inward" as const,
     quantityChange: s.quantityOnHand,
-    userId: owner.id,
+    userId: "system",
     timestamp: now,
   }));
 
@@ -418,7 +420,7 @@ function seed(): DB {
     medicineId: b.medicineId,
     batchId: b.id,
     movementType: "in" as const,
-    quantity: b.quantityReceived,
+    quantity: b.currentStock,
     reason: "Initial stock received",
     createdBy: "system",
     createdAt: now,
@@ -426,9 +428,48 @@ function seed(): DB {
 
   const activityLogs: DB["activityLogs"] = [];
 
+  const profiles: Profile[] = [
+    {
+      id: uid(),
+      name: "Store Owner",
+      email: "owner@PharmaHub.demo",
+      role: "Owner",
+      active: true,
+      orgName: "PharmaHub",
+      createdAt: now,
+    },
+    {
+      id: uid(),
+      name: "Demo Pharmacist",
+      email: "pharmacist@PharmaHub.demo",
+      role: "Pharmacist",
+      active: true,
+      orgName: "PharmaHub",
+      createdAt: now,
+    },
+    {
+      id: uid(),
+      name: "Demo Cashier",
+      email: "cashier@PharmaHub.demo",
+      role: "Cashier",
+      active: true,
+      orgName: "PharmaHub",
+      createdAt: now,
+    },
+    {
+      id: uid(),
+      name: "Inventory Manager",
+      email: "inventory@PharmaHub.demo",
+      role: "Inventory Manager",
+      active: true,
+      orgName: "PharmaHub",
+      createdAt: now,
+    },
+  ];
+
   return {
     version: 2,
-    profiles: [], // No dummy profiles. Production database initialized clean.
+    profiles,
     categories: [catAnalg, catAntib, catCardio, catVit],
     manufacturers: [mfr1, mfr2, mfr3],
     suppliers: [sup1, sup2],
@@ -438,17 +479,17 @@ function seed(): DB {
     inventoryLedger,
     stockMovements,
     activityLogs,
-    sales,
-    purchaseOrders,
+    sales: [],
+    purchaseOrders: [],
     grns: [],
     writeOffs: [],
     creditNotes: [],
     transfers: [],
     reportSchedules: [],
-    audits,
-    auditCounts,
-    variances,
-    adjustments,
+    audits: [],
+    auditCounts: [],
+    variances: [],
+    adjustments: [],
     notificationsRead: [],
     settings: {
       currency: "₹",
@@ -544,7 +585,6 @@ function load(): DB {
         grns: loaded.grns ?? [],
         notificationsRead: loaded.notificationsRead ?? [],
       } as DB;
-      if (hadMojibake) save(cache);
       return cache;
     }
   } catch {
