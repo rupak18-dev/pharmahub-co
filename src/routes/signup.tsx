@@ -10,7 +10,14 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/signup")({
-  head: () => ({ meta: [{ title: "Create account · PharmacyOS" }] }),
+  head: () => ({
+    meta: [
+      { title: "Create account · PharmaHub" },
+      { name: "description", content: "Create a new PharmaHub account to start managing your pharmacy." },
+      { property: "og:title", content: "Create account · PharmaHub" },
+      { property: "og:description", content: "Create a new PharmaHub account to start managing your pharmacy." },
+    ],
+  }),
   component: SignupPage,
 });
 

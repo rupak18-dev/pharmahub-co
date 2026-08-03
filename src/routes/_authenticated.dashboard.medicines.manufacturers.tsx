@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_authenticated/dashboard/medicines/manufacturers")({
-  head: () => ({ meta: [{ title: "Manufacturers · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Manufacturers · PharmaHub" }] }),
   component: ManufacturersPage,
 });
 

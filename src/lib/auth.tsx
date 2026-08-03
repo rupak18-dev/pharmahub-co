@@ -2,7 +2,7 @@ import { createContext, useContext, useEffect, useState, type ReactNode } from "
 import { db } from "./db";
 import type { Profile, RoleName } from "./types";
 
-const SESSION_KEY = "pharmacyos_session_v1";
+const SESSION_KEY = "PharmaHub_session_v1";
 
 interface AuthContextValue {
   user: Profile | null;

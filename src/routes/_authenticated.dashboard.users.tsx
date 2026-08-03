@@ -65,7 +65,7 @@ import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/dashboard/users")({
-  head: () => ({ meta: [{ title: "Users & Roles · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Users & Roles · PharmaHub" }] }),
   component: UsersPage,
 });
 

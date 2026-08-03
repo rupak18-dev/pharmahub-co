@@ -1,4 +1,4 @@
-import { useAuth } from "@/lib/auth";
+﻿import { useAuth } from "@/lib/auth";
 import { useDb } from "@/hooks/useDb";
 import { can } from "@/lib/permissions";
 import type { ModuleKey, PermissionAction } from "@/lib/types";
