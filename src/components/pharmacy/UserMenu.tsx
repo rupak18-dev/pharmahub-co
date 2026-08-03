@@ -1,7 +1,9 @@
 import { useNavigate } from "@tanstack/react-router";
-import { LogOut, User as UserIcon, Repeat } from "lucide-react";
+import { LogOut, User as UserIcon, Repeat, Store } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { useState } from "react";
+import { toast } from "sonner";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,9 +18,26 @@ import {
 import { useAuth } from "@/lib/auth";
 import { ALL_ROLES } from "@/lib/permissions";
 
+const BRANCHES = [
+  { id: "main", name: "Main Branch (HQ)" },
+  { id: "downtown", name: "Downtown Pharmacy" },
+  { id: "westside", name: "Westside Clinic" },
+];
+
 export function UserMenu() {
   const { user, signOut, switchRole } = useAuth();
   const navigate = useNavigate();
+  const [activeBranch, setActiveBranch] = useState(() => {
+    return localStorage.getItem("PharmaHub_branch") || "main";
+  });
+
+  const handleBranchChange = (branchId: string) => {
+    setActiveBranch(branchId);
+    localStorage.setItem("PharmaHub_branch", branchId);
+    const branchName = BRANCHES.find(b => b.id === branchId)?.name;
+    toast.success(`Switched branch to ${branchName}`);
+  };
+
   if (!user) return null;
   const initials = user.name
     .split(" ")
@@ -58,6 +77,19 @@ export function UserMenu() {
               <DropdownMenuItem key={r} onClick={() => switchRole(r)}>
                 <UserIcon className="mr-2 h-4 w-4" /> {r}
                 {r === user.role && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Store className="mr-2 h-4 w-4" /> Switch branch
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            {BRANCHES.map((b) => (
+              <DropdownMenuItem key={b.id} onClick={() => handleBranchChange(b.id)}>
+                <Store className="mr-2 h-4 w-4" /> {b.name}
+                {b.id === activeBranch && <span className="ml-auto text-xs">✓</span>}
               </DropdownMenuItem>
             ))}
           </DropdownMenuSubContent>

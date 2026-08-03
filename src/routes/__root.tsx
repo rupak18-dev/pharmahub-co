@@ -50,8 +50,13 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
           This page didn't load
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Something went wrong. If your saved data is from an older version, use "Reset app data" below.
         </p>
+        {error.message ? (
+          <pre className="mt-4 max-h-40 overflow-auto rounded-md border border-border bg-muted p-3 text-left font-mono text-xs text-destructive">
+            {error.message}
+          </pre>
+        ) : null}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
             onClick={() => {
@@ -61,6 +66,20 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
             Try again
+          </button>
+          <button
+            onClick={() => {
+              try {
+                localStorage.removeItem("PharmaHub_db_v2");
+                localStorage.removeItem("PharmaHub_session_v1");
+              } catch {
+                // ignore
+              }
+              window.location.href = "/login";
+            }}
+            className="inline-flex items-center justify-center rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20"
+          >
+            Reset app data
           </button>
           <a
             href="/"
@@ -79,14 +98,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PharmacyOS — Modern Pharmacy Management System" },
+      { title: "PharmaHub — Modern Pharmacy Management System" },
       {
         name: "description",
         content:
-          "PharmacyOS is a full-featured pharmacy management platform for batch tracking, expiry alerts, GST billing, and role-based operations.",
+          "PharmaHub is a full-featured pharmacy management platform for batch tracking, expiry alerts, GST billing, and role-based operations.",
       },
-      { name: "author", content: "PharmacyOS" },
-      { property: "og:title", content: "PharmacyOS — Modern Pharmacy Management System" },
+      { name: "author", content: "PharmaHub" },
+      { property: "og:title", content: "PharmaHub — Modern Pharmacy Management System" },
       {
         property: "og:description",
         content:
@@ -97,7 +116,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
-      { rel: "icon", href: "/favicon.ico", type: "image/x-icon" },
+      { rel: "icon", href: "/favicon.webp", type: "image/webp" },
+      { rel: "shortcut icon", href: "/favicon.webp", type: "image/webp" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {

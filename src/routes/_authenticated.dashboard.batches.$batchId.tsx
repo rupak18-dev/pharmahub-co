@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useParams } from "@tanstack/react-router";
-import { format, formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow, isValid } from "date-fns";
 import { ArrowLeft } from "lucide-react";
 import { useDb } from "@/hooks/useDb";
 import { PageHeader } from "@/components/pharmacy/PageHeader";
@@ -8,8 +8,14 @@ import { EmptyState } from "@/components/pharmacy/EmptyState";
 import { computeBatchStatus } from "@/lib/stock";
 import { Button } from "@/components/ui/button";
 
+const safeFormat = (dateStr: string | undefined | null, fmt: string) => {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  return isValid(d) ? format(d, fmt) : "—";
+};
+
 export const Route = createFileRoute("/_authenticated/dashboard/batches/$batchId")({
-  head: () => ({ meta: [{ title: "Batch detail · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "Batch detail · PharmaHub" }] }),
   component: BatchDetailPage,
 });
 
@@ -19,7 +25,8 @@ function BatchDetailPage() {
   const settings = useDb((d) => d.settings);
   const med = useDb((d) => (batch ? d.medicines.find((m) => m.id === batch.medicineId) : undefined));
   const supplier = useDb((d) => (batch?.supplierId ? d.suppliers.find((s) => s.id === batch.supplierId) : undefined));
-  const movements = useDb((d) => d.stockMovements.filter((m) => m.batchId === batchId));
+  const ledger = useDb((d) => d.inventoryLedger.filter((m) => m.batchId === batchId));
+  const stock = useDb((d) => d.inventoryStock.filter((s) => s.batchId === batchId));
 
   if (!batch) {
     return (
@@ -32,7 +39,8 @@ function BatchDetailPage() {
     );
   }
 
-  const status = computeBatchStatus(batch, settings.nearExpiryDays);
+  const totalStock = stock.reduce((sum, s) => sum + s.quantityOnHand, 0);
+  const status = computeBatchStatus(batch, totalStock, settings.nearExpiryDays);
 
   return (
     <div className="space-y-6">
@@ -50,19 +58,19 @@ function BatchDetailPage() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <InfoTile label="Manufacture" value={format(new Date(batch.mfgDate), "dd MMM yyyy")} />
-        <InfoTile label="Expiry" value={format(new Date(batch.expiryDate), "dd MMM yyyy")} />
+        <InfoTile label="Manufacture" value={safeFormat(batch.mfgDate, "dd MMM yyyy")} />
+        <InfoTile label="Expiry" value={safeFormat(batch.expiryDate, "dd MMM yyyy")} />
         <InfoTile
           label="Current stock"
-          value={`${batch.currentStock} / ${batch.quantityReceived}`}
+          value={`${totalStock}`}
         />
         <InfoTile label="Supplier" value={supplier?.name ?? "—"} />
         <InfoTile label="MRP" value={`${settings.currency}${batch.mrp.toFixed(2)}`} />
         <InfoTile label="Purchase price" value={`${settings.currency}${batch.purchasePrice.toFixed(2)}`} />
         <InfoTile label="Selling price" value={`${settings.currency}${batch.sellingPrice.toFixed(2)}`} />
         <InfoTile
-          label="Stock value"
-          value={`${settings.currency}${(batch.currentStock * batch.purchasePrice).toFixed(2)}`}
+          label="Total stock value"
+          value={`${settings.currency}${(totalStock * (batch.purchasePrice || 0)).toFixed(2)}`}
         />
       </div>
 
@@ -71,19 +79,19 @@ function BatchDetailPage() {
           <h3 className="text-sm font-semibold">Lifecycle</h3>
           <p className="text-xs text-muted-foreground">Every stock movement recorded for this batch.</p>
         </div>
-        {movements.length === 0 ? (
+        {ledger.length === 0 ? (
           <div className="p-6">
             <EmptyState title="No movements yet" />
           </div>
         ) : (
           <ol className="divide-y divide-border">
-            {movements.map((m) => (
+            {ledger.map((m) => (
               <li key={m.id} className="flex items-start gap-3 px-4 py-3">
                 <span
                   className={`mt-1 h-2 w-2 rounded-full ${
-                    m.movementType === "in"
+                    m.quantityChange > 0
                       ? "bg-success"
-                      : m.movementType === "out"
+                      : m.quantityChange < 0
                         ? "bg-destructive"
                         : "bg-warning"
                   }`}
@@ -95,10 +103,12 @@ function BatchDetailPage() {
                       {m.quantity}
                     </div>
                     <div className="text-xs text-muted-foreground">
-                      {formatDistanceToNow(new Date(m.createdAt), { addSuffix: true })}
+                      {formatDistanceToNow(new Date(m.timestamp), { addSuffix: true })}
                     </div>
                   </div>
-                  <p className="text-xs text-muted-foreground">{m.reason}</p>
+                  {m.referenceDocId && (
+                    <p className="text-xs text-muted-foreground">Ref: {m.referenceDocId}</p>
+                  )}
                 </div>
               </li>
             ))}

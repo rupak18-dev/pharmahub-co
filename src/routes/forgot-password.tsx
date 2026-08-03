@@ -11,7 +11,14 @@ import { useAuth } from "@/lib/auth";
 import { CheckCircle2 } from "lucide-react";
 
 export const Route = createFileRoute("/forgot-password")({
-  head: () => ({ meta: [{ title: "Reset password · PharmacyOS" }] }),
+  head: () => ({
+    meta: [
+      { title: "Reset password · PharmaHub" },
+      { name: "description", content: "Reset your PharmaHub account password." },
+      { property: "og:title", content: "Reset password · PharmaHub" },
+      { property: "og:description", content: "Reset your PharmaHub account password." },
+    ],
+  }),
   component: ForgotPage,
 });
 

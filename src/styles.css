@@ -1,4 +1,4 @@
-@import "tailwindcss" source(none);
+﻿@import "tailwindcss" source(none);
 @source "../src";
 @import "tw-animate-css";
 
@@ -37,6 +37,8 @@
   --color-success-foreground: var(--success-foreground);
   --color-warning: var(--warning);
   --color-warning-foreground: var(--warning-foreground);
+  --color-critical: var(--critical);
+  --color-critical-foreground: var(--critical-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
 
@@ -59,7 +61,8 @@
 :root {
   --radius: 0.5rem;
 
-  --background: oklch(0.99 0.003 180);
+  /* Deep Forest Teal / Emerald */
+  --background: #f8fafc;
   --foreground: oklch(0.18 0.02 220);
 
   --card: oklch(1 0 0);
@@ -68,8 +71,7 @@
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.18 0.02 220);
 
-  /* Medical teal #0F766E */
-  --primary: oklch(0.5 0.09 180);
+  --primary: #007a5a;
   --primary-foreground: oklch(0.99 0.003 180);
 
   --secondary: oklch(0.96 0.01 200);
@@ -78,8 +80,9 @@
   --muted: oklch(0.965 0.008 220);
   --muted-foreground: oklch(0.5 0.02 220);
 
-  --accent: oklch(0.94 0.03 180);
-  --accent-foreground: oklch(0.3 0.06 180);
+  /* Mint ice */
+  --accent: #e6f4f1;
+  --accent-foreground: #0b3d31;
 
   --destructive: oklch(0.58 0.22 25);
   --destructive-foreground: oklch(0.99 0 0);
@@ -90,12 +93,15 @@
   --warning: oklch(0.75 0.15 75);
   --warning-foreground: oklch(0.2 0.05 75);
 
+  --critical: oklch(0.66 0.19 45);
+  --critical-foreground: oklch(0.99 0 0);
+
   --info: oklch(0.6 0.15 240);
   --info-foreground: oklch(0.99 0 0);
 
-  --border: oklch(0.92 0.008 220);
-  --input: oklch(0.92 0.008 220);
-  --ring: oklch(0.5 0.09 180);
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #007a5a;
 
   --chart-1: oklch(0.5 0.09 180);
   --chart-2: oklch(0.6 0.15 240);
@@ -103,14 +109,13 @@
   --chart-4: oklch(0.75 0.15 75);
   --chart-5: oklch(0.58 0.22 25);
 
-  --sidebar: oklch(0.985 0.005 200);
+  --sidebar: oklch(1 0 0);
   --sidebar-foreground: oklch(0.25 0.02 220);
-  --sidebar-primary: oklch(0.5 0.09 180);
-  --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.94 0.02 200);
-  --sidebar-accent-foreground: oklch(0.25 0.05 200);
-  --sidebar-border: oklch(0.92 0.008 220);
-  --sidebar-ring: oklch(0.5 0.09 180);
+  --sidebar-primary: oklch(0.48 0.08 180);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.96 0.01 200);
+  --sidebar-accent-foreground: oklch(0.25 0.03 220);
+  --sidebar-border: oklch(0.95 0.005 200);
 }
 
 .dark {
@@ -134,6 +139,8 @@
   --success-foreground: oklch(0.1 0 0);
   --warning: oklch(0.78 0.15 75);
   --warning-foreground: oklch(0.15 0.05 75);
+  --critical: oklch(0.7 0.19 45);
+  --critical-foreground: oklch(0.15 0.03 45);
   --info: oklch(0.65 0.15 240);
   --info-foreground: oklch(0.99 0 0);
   --border: oklch(1 0 0 / 12%);
@@ -166,3 +173,11 @@
     font-variant-numeric: tabular-nums;
   }
 }
+
+/* Hide minor (Y-axis) recharts tick labels on small screens */
+@media (max-width: 767px) {
+  .recharts-yAxis .recharts-cartesian-axis-tick-value {
+    display: none;
+  }
+}
+

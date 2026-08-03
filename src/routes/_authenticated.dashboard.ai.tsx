@@ -7,7 +7,7 @@ import { EmptyState } from "@/components/pharmacy/EmptyState";
 import { differenceInDays, subDays } from "date-fns";
 
 export const Route = createFileRoute("/_authenticated/dashboard/ai")({
-  head: () => ({ meta: [{ title: "AI Insights · PharmacyOS" }] }),
+  head: () => ({ meta: [{ title: "AI Insights · PharmaHub" }] }),
   component: AiPage,
 });
 
@@ -25,15 +25,16 @@ function AiPage() {
     const last7 = subDays(new Date(), 7).getTime();
     const prev7 = subDays(new Date(), 14).getTime();
 
-    // Aggregate outgoing per medicine per window (sales + adjustments outgoing)
     const w1 = new Map<string, number>(); // last 7d
     const w2 = new Map<string, number>(); // 8-14d
-    data.stockMovements.forEach((m) => {
-      if (m.movementType === "in") return;
-      const q = Math.abs(m.quantity);
-      const t = new Date(m.createdAt).getTime();
-      if (t >= last7) w1.set(m.medicineId, (w1.get(m.medicineId) ?? 0) + q);
-      else if (t >= prev7) w2.set(m.medicineId, (w2.get(m.medicineId) ?? 0) + q);
+    data.inventoryLedger.forEach((m) => {
+      if (m.movementType === "Purchase Inward" || m.movementType === "Customer Return" || (m.movementType === "Adjustment" && m.quantityChange > 0)) return;
+      const b = data.batches.find(b => b.id === m.batchId);
+      if (!b) return;
+      const q = Math.abs(m.quantityChange);
+      const t = new Date(m.timestamp).getTime();
+      if (t >= last7) w1.set(b.medicineId, (w1.get(b.medicineId) ?? 0) + q);
+      else if (t >= prev7) w2.set(b.medicineId, (w2.get(b.medicineId) ?? 0) + q);
     });
 
     const trend: { id: string; delta: number; recent: number; prior: number }[] = [];
@@ -47,11 +48,10 @@ function AiPage() {
     const gainers = [...trend].filter((t) => t.recent >= 5 && t.delta > 10).sort((a, b) => b.delta - a.delta).slice(0, 5);
     const losers = [...trend].filter((t) => t.prior >= 5 && t.delta < -10).sort((a, b) => a.delta - b.delta).slice(0, 5);
 
-    // Reorder suggestions: burn / day > 0, project to 0 within N days
     const stockByMed = new Map<string, number>();
-    data.batches.forEach((b) => {
-      if (b.status === "disposed") return;
-      stockByMed.set(b.medicineId, (stockByMed.get(b.medicineId) ?? 0) + b.currentStock);
+    data.inventoryStock.forEach((s) => {
+      const b = data.batches.find(b => b.id === s.batchId);
+      if (b) stockByMed.set(b.medicineId, (stockByMed.get(b.medicineId) ?? 0) + s.quantityOnHand);
     });
     const reorder = data.medicines
       .filter((m) => m.isActive)
@@ -67,11 +67,15 @@ function AiPage() {
 
     // Expiry risk: batches whose remaining days < projected days-to-sell
     const risk = data.batches
-      .filter((b) => b.currentStock > 0 && b.status !== "disposed")
       .map((b) => {
+        const stock = data.inventoryStock.filter(s => s.batchId === b.id).reduce((sum, s) => sum + s.quantityOnHand, 0);
+        return { b, stock };
+      })
+      .filter(({ stock }) => stock > 0)
+      .map(({ b, stock }) => {
         const daily = (w1.get(b.medicineId) ?? 0) / 7;
         const daysLeft = differenceInDays(new Date(b.expiryDate), new Date());
-        const daysToSell = daily > 0 ? b.currentStock / daily : Infinity;
+        const daysToSell = daily > 0 ? stock / daily : Infinity;
         return { b, daysLeft, daysToSell, daily };
       })
       .filter((r) => r.daysLeft > 0 && r.daysLeft < r.daysToSell && r.daysLeft < 180)

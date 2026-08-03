@@ -17,6 +17,9 @@ routeTree.gen.ts
 .nitro
 *.local
 
+# TanStack Router generated route tree
+src/routeTree.gen.ts
+
 # Wrangler / Cloudflare
 .wrangler/
 .dev.vars

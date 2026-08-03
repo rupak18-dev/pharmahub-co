@@ -15,12 +15,21 @@ import { BrandMark } from "@/components/pharmacy/BrandMark";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "PharmacyOS — Modern Pharmacy Management Software" },
+      { title: "PharmaHub — Modern Pharmacy Management Software" },
       {
         name: "description",
         content:
           "Run your pharmacy end-to-end: batch tracking with FEFO, expiry alerts, GST-ready billing, and role-based access — all in one clean, fast system.",
       },
+      { property: "og:title", content: "PharmaHub — Modern Pharmacy Management Software" },
+      {
+        property: "og:description",
+        content:
+          "Run your pharmacy end-to-end: batch tracking with FEFO, expiry alerts, GST-ready billing, and role-based access.",
+      },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://PharmaHub.demo/" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
   component: Landing,
@@ -83,7 +92,7 @@ function Landing() {
         </div>
       </header>
 
-      <section className="relative overflow-hidden">
+      <main className="relative overflow-hidden">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,var(--color-accent),transparent_60%)]" />
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
@@ -94,7 +103,7 @@ function Landing() {
               The operating system for <span className="text-primary">modern pharmacies</span>.
             </h1>
             <p className="mt-6 text-lg leading-relaxed text-muted-foreground">
-              PharmacyOS keeps every batch, expiry, and invoice under one roof — so your staff move
+              PharmaHub keeps every batch, expiry, and invoice under one roof — so your staff move
               faster, your shelves stay clean, and your books stay accurate.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -119,7 +128,7 @@ function Landing() {
                 <span className="h-2.5 w-2.5 rounded-full bg-warning/70" />
                 <span className="h-2.5 w-2.5 rounded-full bg-success/70" />
               </div>
-              <span className="text-xs text-muted-foreground">pharmacyos.app / dashboard</span>
+              <span className="text-xs text-muted-foreground">PharmaHub.app / dashboard</span>
             </div>
             <div className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-4 sm:p-6">
               {[
@@ -140,7 +149,7 @@ function Landing() {
             </div>
           </div>
         </div>
-      </section>
+      </main>
 
       <section id="features" className="border-t border-border bg-muted/30">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
@@ -149,7 +158,7 @@ function Landing() {
               Everything a pharmacy actually needs.
             </h2>
             <p className="mt-4 text-muted-foreground">
-              No consumer fluff. PharmacyOS is designed like real back-office software — dense,
+              No consumer fluff. PharmaHub is designed like real back-office software — dense,
               accurate, and fast.
             </p>
           </div>
@@ -245,7 +254,7 @@ function Landing() {
         <div className="mx-auto flex max-w-7xl flex-col gap-4 px-4 py-8 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <BrandMark size="sm" />
           <p className="text-xs text-muted-foreground">
-            © {new Date().getFullYear()} PharmacyOS. All rights reserved.
+            © {new Date().getFullYear()} PharmaHub. All rights reserved.
           </p>
           <div className="flex gap-4 text-xs text-muted-foreground">
             <a href="#" className="hover:text-foreground">Privacy</a>
