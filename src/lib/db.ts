@@ -29,40 +29,6 @@ function daysFromNow(days: number): string {
 function seed(): DB {
   const now = new Date().toISOString();
 
-  const owner = {
-    id: uid(),
-    name: "Alex Morgan",
-    email: "owner@PharmaHub.demo",
-    role: "Owner" as const,
-    active: true,
-    orgName: "PharmaHub Demo",
-    createdAt: now,
-  };
-  const pharm = {
-    id: uid(),
-    name: "Priya Shah",
-    email: "pharmacist@PharmaHub.demo",
-    role: "Pharmacist" as const,
-    active: true,
-    createdAt: now,
-  };
-  const cashier = {
-    id: uid(),
-    name: "Sam Chen",
-    email: "cashier@PharmaHub.demo",
-    role: "Cashier" as const,
-    active: true,
-    createdAt: now,
-  };
-  const inv = {
-    id: uid(),
-    name: "Diego Ruiz",
-    email: "inventory@PharmaHub.demo",
-    role: "Inventory Manager" as const,
-    active: true,
-    createdAt: now,
-  };
-
   const catAnalg = { id: uid(), name: "Analgesics" };
   const catAntib = { id: uid(), name: "Antibiotics" };
   const catCardio = { id: uid(), name: "Cardiovascular" };
@@ -284,6 +250,7 @@ function seed(): DB {
       name: `Test Medicine ${i + 1} 500mg`,
       generic: `Generic Alpha ${i + 1}`,
       brand: `PharmaBrand ${i % 5}`,
+      prefix: "TM",
       cat: [catAnalg.id, catAntib.id, catCardio.id, catVit.id][i % 4],
       mfr: [mfr1.id, mfr2.id, mfr3.id][i % 3],
       hsn: "3004",
@@ -311,8 +278,6 @@ function seed(): DB {
     name: m.name,
     genericName: m.generic,
     brandName: m.brand,
-    strength: m.strength,
-    dosageForm: m.dosage,
     categoryId: m.cat,
     manufacturerId: m.mfr,
     hsnCode: m.hsn,
@@ -323,7 +288,7 @@ function seed(): DB {
     isActive: true,
     prefix: m.prefix,
     createdAt: now,
-    
+
     // Enterprise fields mapped
     saltComposition: m.salt,
     strength: m.strength,
@@ -361,6 +326,7 @@ function seed(): DB {
       sellingPrice: 38 + i * 14,
       supplierId: suppliers[i % 2],
       currentStock: 0,
+      status: "active" as const,
       createdAt: now,
     };
     // Batch B - near expiry (spread across the warning windows)
@@ -375,6 +341,7 @@ function seed(): DB {
       sellingPrice: 38 + i * 14,
       supplierId: suppliers[(i + 1) % 2],
       currentStock: 0,
+      status: "near_expiry" as const,
       createdAt: now,
     };
     // Batch C - expired (only some)
@@ -390,6 +357,7 @@ function seed(): DB {
         sellingPrice: 38 + i * 14,
         supplierId: suppliers[i % 2],
         currentStock: 0,
+        status: "expired" as const,
         createdAt: now,
       };
       return [a, b, c];
@@ -436,7 +404,7 @@ function seed(): DB {
     batchId: s.batchId,
     movementType: "Purchase Inward" as const,
     quantityChange: s.quantityOnHand,
-    userId: owner.id,
+    userId: "system",
     timestamp: now,
   }));
 
@@ -453,398 +421,75 @@ function seed(): DB {
     batchId: b.id,
     movementType: "in" as const,
     quantity: b.currentStock,
-    reason: "Purchase Inward (seed)",
-    createdBy: owner.id,
-    createdAt: b.createdAt,
+    reason: "Initial stock received",
+    createdBy: "system",
+    createdAt: now,
   }));
 
-  const batchA = (i: number) => batches[i * 2];
+  const activityLogs: DB["activityLogs"] = [];
 
-  const audits: Audit[] = [];
-  const auditCounts: AuditCount[] = [];
-  const variances: VarianceItem[] = [];
-  const adjustments: StockAdjustment[] = [];
-
-  const medNameOf = (batchId: string) =>
-    medicines.find((m) => m.id === batches.find((x) => x.id === batchId)?.medicineId)?.name ?? "—";
-
-  const a1: Audit = {
-    id: uid(),
-    auditNumber: "AUD-0001",
-    type: "full",
-    title: "HQ · Full Store Audit",
-    branch: branchNames[0],
-    batchIds: batches.slice(0, 10).map((x) => x.id),
-    assignedUserIds: [pharm.id, inv.id],
-    scheduledDate: daysFromNow(-6),
-    status: "completed",
-    createdBy: owner.id,
-    createdByName: owner.name,
-    createdAt: daysFromNow(-7),
-    startedAt: daysFromNow(-5),
-    submittedAt: daysFromNow(-3),
-    completedAt: daysFromNow(-3),
-    timeline: [
-      { id: uid(), action: "created", at: daysFromNow(-7), byUserId: owner.id, byName: owner.name },
-      { id: uid(), action: "started", at: daysFromNow(-5), byUserId: pharm.id, byName: pharm.name },
-      { id: uid(), action: "submitted", at: daysFromNow(-3), byUserId: pharm.id, byName: pharm.name },
-      { id: uid(), action: "approved", at: daysFromNow(-3), byUserId: inv.id, byName: inv.name },
-      { id: uid(), action: "completed", at: daysFromNow(-3), byUserId: owner.id, byName: owner.name },
-    ],
-  };
-  audits.push(a1);
-
-  a1.batchIds.forEach((bid, i) => {
-    const b = batches.find((x) => x.id === bid);
-    if (!b) return;
-    const delta = i === 2 ? -12 : i === 5 ? 9 : i === 8 ? -5 : 0;
-    auditCounts.push({
-      id: uid(),
-      auditId: a1.id,
-      batchId: b.id,
-      medicineId: b.medicineId,
-      medicineName: medNameOf(b.id),
-      batchNumber: b.batchNumber,
-      shelf: "—",
-      expectedQty: b.currentStock,
-      physicalQty: b.currentStock + delta,
-      countedBy: pharm.id,
-      countedByName: pharm.name,
-      countedAt: daysFromNow(-4),
-      device: "Scanner USB",
-    });
-  });
-
-  const varianceOf = (
-    batch: Batch,
-    audit: Audit,
-    delta: number,
-    reason: VarianceReason,
-    extra?: Partial<VarianceItem>,
-  ): VarianceItem => ({
-    id: uid(),
-    auditId: audit.id,
-    batchId: batch.id,
-    medicineId: batch.medicineId,
-    medicineName: medNameOf(batch.id),
-    batchNumber: batch.batchNumber,
-    expectedQty: batch.currentStock,
-    actualQty: batch.currentStock + delta,
-    difference: delta,
-    unitCost: batch.purchasePrice,
-    varianceValue: Math.abs(delta) * batch.purchasePrice,
-    severity: Math.abs(delta) >= 10 ? "high" : "medium",
-    reason,
-    recommendedAction: reason === "theft" ? "approve" : reason === "billing_error" ? "reject" : "write_off",
-    managerComment:
-      reason === "theft"
-        ? "Reconciled against CCTV — confirmed missing."
-        : reason === "billing_error"
-          ? "Counter check showed no error — book stock unchanged."
-          : "Bottles cracked in transit.",
-    verifiedBy: pharm.id,
-    verifiedByName: pharm.name,
-    status: "approved",
-    createdAt: daysFromNow(-4),
-    ...extra,
-  });
-
-  const v1 = varianceOf(batches[2], a1, -12, "theft");
-  const v2 = varianceOf(batches[5], a1, 9, "damaged");
-  const v3 = varianceOf(batches[8], a1, -5, "billing_error", { status: "rejected" });
-  variances.push(v1, v2, v3);
-
-  adjustments.push({
-    id: uid(),
-    auditId: a1.id,
-    batchId: batches[2].id,
-    medicineId: batches[2].medicineId,
-    medicineName: medNameOf(batches[2].id),
-    batchNumber: batches[2].batchNumber,
-    action: "adjust",
-    quantity: 12,
-    unitCost: batches[2].purchasePrice,
-    varianceId: v1.id,
-    reason: "theft",
-    severity: "high",
-    submittedBy: pharm.id,
-    submittedByName: pharm.name,
-    createdAt: daysFromNow(-4),
-    status: "applied",
-    approverName: owner.name,
-    approvedAt: daysFromNow(-3),
-    appliedAt: daysFromNow(-3),
-    appliedBy: owner.id,
-    appliedByName: owner.name,
-    history: [
-      { id: uid(), action: "Submitted by staff", userId: pharm.id, userName: pharm.name, at: daysFromNow(-4) },
-      { id: uid(), action: "Approved (Manager)", userId: owner.id, userName: owner.name, at: daysFromNow(-3) },
-    ],
-  });
-
-  const a2: Audit = {
-    id: uid(),
-    auditNumber: "AUD-0002",
-    type: "category",
-    title: "HQ · Antibiotics Category Audit",
-    branch: branchNames[0],
-    categoryId: catAntib.id,
-    batchIds: batches.slice(1, 7).map((x) => x.id),
-    assignedUserIds: [pharm.id],
-    scheduledDate: daysFromNow(-1),
-    status: "paused",
-    createdBy: owner.id,
-    createdByName: owner.name,
-    createdAt: daysFromNow(-3),
-    startedAt: daysFromNow(-2),
-    pausedAt: now,
-    timeline: [
-      { id: uid(), action: "created", at: daysFromNow(-3), byUserId: owner.id, byName: owner.name },
-      { id: uid(), action: "started", at: daysFromNow(-2), byUserId: pharm.id, byName: pharm.name },
-      { id: uid(), action: "paused", at: now, byUserId: pharm.id, byName: pharm.name, note: "Shift ended — resuming tomorrow" },
-    ],
-  };
-  audits.push(a2);
-
-  const a3: Audit = {
-    id: uid(),
-    auditNumber: "AUD-0003",
-    type: "batch",
-    title: "Downtown Annex · Batch Audit",
-    branch: branchNames[1],
-    batchIds: batches.slice(2, 8).map((x) => x.id),
-    assignedUserIds: [pharm.id],
-    scheduledDate: daysFromNow(-1),
-    status: "pending_review",
-    createdBy: owner.id,
-    createdByName: owner.name,
-    createdAt: daysFromNow(-2),
-    startedAt: daysFromNow(-1),
-    submittedAt: now,
-    timeline: [
-      { id: uid(), action: "created", at: daysFromNow(-2), byUserId: owner.id, byName: owner.name },
-      { id: uid(), action: "started", at: daysFromNow(-1), byUserId: pharm.id, byName: pharm.name },
-      { id: uid(), action: "submitted", at: now, byUserId: pharm.id, byName: pharm.name },
-    ],
-  };
-  audits.push(a3);
-
-  const activityLogs = [
+  const profiles: Profile[] = [
     {
       id: uid(),
-      userId: owner.id,
-      userName: owner.name,
-      action: "Seeded demo data",
-      entityType: "system",
+      name: "Store Owner",
+      email: "owner@PharmaHub.demo",
+      role: "Owner",
+      active: true,
+      orgName: "PharmaHub",
       createdAt: now,
     },
     {
       id: uid(),
-      userId: inv.id,
-      userName: inv.name,
-      action: "Audit created · AUD-0001",
-      entityType: "audit",
-      entityId: a1.id,
-      auditId: a1.id,
-      details: { type: "full", branch: branchNames[0] },
-      branch: branchNames[0],
-      device: "Web · Chrome",
-      createdAt: daysFromNow(-7),
-    },
-    {
-      id: uid(),
-      userId: pharm.id,
-      userName: pharm.name,
-      action: "Audit started · AUD-0001",
-      entityType: "audit",
-      entityId: a1.id,
-      auditId: a1.id,
-      oldValue: "scheduled",
-      newValue: "in_progress",
-      branch: branchNames[0],
-      device: "iPhone · Scanner",
-      createdAt: daysFromNow(-5),
-    },
-    {
-      id: uid(),
-      userId: pharm.id,
-      userName: pharm.name,
-      action: "Count recorded · Paracetamol 500mg · 168",
-      entityType: "audit_count",
-      auditId: a1.id,
-      details: { batch: batchA(0).batchNumber, expected: batchA(0).currentStock, physical: 168 },
-      reason: "Cycle count",
-      branch: branchNames[0],
-      device: "Scanner USB",
-      createdAt: daysFromNow(-4),
-    },
-    {
-      id: uid(),
-      userId: pharm.id,
-      userName: pharm.name,
-      action: "Audit paused · AUD-0002",
-      entityType: "audit",
-      entityId: a2.id,
-      auditId: a2.id,
-      oldValue: "in_progress",
-      newValue: "paused",
-      reason: "Shift ended — resuming tomorrow",
-      branch: branchNames[0],
-      device: "Android · Web",
+      name: "Demo Pharmacist",
+      email: "pharmacist@PharmaHub.demo",
+      role: "Pharmacist",
+      active: true,
+      orgName: "PharmaHub",
       createdAt: now,
     },
     {
       id: uid(),
-      userId: pharm.id,
-      userName: pharm.name,
-      action: "Audit submitted for review · AUD-0003",
-      entityType: "audit",
-      entityId: a3.id,
-      auditId: a3.id,
-      oldValue: "in_progress",
-      newValue: "pending_review",
-      branch: branchNames[0],
-      device: "iPhone · Camera",
-      createdAt: daysFromNow(-1),
-    },
-    {
-      id: uid(),
-      userId: pharm.id,
-      userName: pharm.name,
-      action: "Adjustment submitted · Azithromycin 500mg",
-      entityType: "adjustment",
-      auditId: a3.id,
-      details: { reason: "supplier_short_supply", qty: -16 },
-      reason: "Supplier short supply",
-      branch: branchNames[0],
-      device: "Web · Chrome",
+      name: "Demo Cashier",
+      email: "cashier@PharmaHub.demo",
+      role: "Cashier",
+      active: true,
+      orgName: "PharmaHub",
       createdAt: now,
     },
     {
       id: uid(),
-      userId: inv.id,
-      userName: inv.name,
-      action: "Adjustment approved (Supervisor) · Amoxicillin + Clavulanate 625mg",
-      entityType: "adjustment",
-      auditId: a3.id,
-      oldValue: "pending_supervisor",
-      newValue: "pending_manager",
-      branch: branchNames[0],
-      device: "Web · Chrome",
+      name: "Inventory Manager",
+      email: "inventory@PharmaHub.demo",
+      role: "Inventory Manager",
+      active: true,
+      orgName: "PharmaHub",
       createdAt: now,
-    },
-    {
-      id: uid(),
-      userId: owner.id,
-      userName: owner.name,
-      action: "Inventory updated · AUD-0001",
-      entityType: "audit",
-      entityId: a1.id,
-      auditId: a1.id,
-      oldValue: "approved",
-      newValue: "applied",
-      reason: "Theft write-down posted",
-      branch: branchNames[0],
-      device: "Web · Chrome",
-      createdAt: daysFromNow(-3),
     },
   ];
 
-    const pastMonths = Array.from({ length: 6 }, (_, i) => {
-      const d = new Date();
-      d.setMonth(d.getMonth() - i);
-      return d;
-    }).reverse();
-
-    const sales: any[] = [];
-    pastMonths.forEach((date, mIndex) => {
-      const salesCount = 15 + Math.floor(Math.random() * 20); // 15 to 35 sales per month
-      for (let i = 0; i < salesCount; i++) {
-        const d = new Date(date);
-        d.setDate(Math.floor(Math.random() * 28) + 1); // random day in month
-        const b = batches[Math.floor(Math.random() * batches.length)];
-        const qty = Math.floor(Math.random() * 3) + 1;
-        const lineTotal = b.sellingPrice * qty;
-        sales.push({
-          id: uid(),
-          invoiceNo: `INV-${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}-${Math.floor(Math.random() * 1000).toString().padStart(3, '0')}`,
-          customerName: `Customer ${Math.floor(Math.random() * 100)}`,
-          customerPhone: `98765${Math.floor(Math.random() * 90000) + 10000}`,
-          items: [{
-            medicineId: b.medicineId,
-            batchId: b.id,
-            medicineName: medicines.find(m => m.id === b.medicineId)?.name || 'Unknown',
-            batchNumber: b.batchNumber,
-            quantity: qty,
-            unitPrice: b.sellingPrice,
-            discountPct: 0,
-            gstRate: medicines.find(m => m.id === b.medicineId)?.gstRate || 12,
-            lineTotal: lineTotal
-          }],
-          subtotal: lineTotal,
-          discountTotal: 0,
-          gstTotal: lineTotal * 0.12,
-          roundOff: 0,
-          grandTotal: lineTotal * 1.12,
-          paymentMode: Math.random() > 0.3 ? "upi" : "cash",
-          tender: lineTotal * 1.12,
-          change: 0,
-          status: "completed",
-          createdBy: owner.id,
-          createdByName: owner.name,
-          createdAt: d.toISOString(),
-        });
-      }
-    });
-
-    const purchaseOrders: any[] = [];
-    pastMonths.forEach((date, mIndex) => {
-      if (Math.random() > 0.5) {
-        const d = new Date(date);
-        d.setDate(Math.floor(Math.random() * 28) + 1);
-        purchaseOrders.push({
-          id: uid(),
-          poNumber: `PO-${d.getFullYear()}${(d.getMonth() + 1).toString().padStart(2, '0')}-${Math.floor(Math.random() * 100).toString().padStart(3, '0')}`,
-          supplierId: sup1.id,
-          expectedDate: daysFromNow(7),
-          items: [
-            {
-              medicineId: medicines[0].id,
-              medicineName: medicines[0].name,
-              quantity: 50,
-              expectedPrice: 25,
-            }
-          ],
-          status: mIndex === pastMonths.length - 1 ? "placed" : "received",
-          createdBy: owner.id,
-          createdAt: d.toISOString(),
-        });
-      }
-    });
-
   return {
     version: 2,
-    profiles: [owner, pharm, cashier, inv],
-    categories: [catAnalg, catAntib, catCardio, catVit, catGastro, catResp, catDiabetic],
-    manufacturers: [mfr1, mfr2, mfr3, mfr4, mfr5, mfr6, mfr7],
-    suppliers: [sup1, sup2, sup3],
+    profiles,
+    categories: [catAnalg, catAntib, catCardio, catVit],
+    manufacturers: [mfr1, mfr2, mfr3],
+    suppliers: [sup1, sup2],
     medicines,
     batches,
     inventoryStock,
     inventoryLedger,
     stockMovements,
     activityLogs,
-    sales,
-    purchaseOrders,
+    sales: [],
+    purchaseOrders: [],
     grns: [],
     writeOffs: [],
     creditNotes: [],
     transfers: [],
     reportSchedules: [],
-    audits,
-    auditCounts,
-    variances,
-    adjustments,
+    audits: [],
+    auditCounts: [],
+    variances: [],
+    adjustments: [],
     notificationsRead: [],
     settings: {
       currency: "₹",
@@ -923,42 +568,23 @@ function load(): DB {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const parsed = JSON.parse(raw) as Partial<DB>;
-      const hadMojibake =
-        JSON.stringify(parsed) !== JSON.stringify(fixMojibake(parsed));
-      const loaded = fixMojibake(parsed) as Partial<DB>;
-      // Migrate missing fields from older versions
+      const loaded = JSON.parse(raw) as Partial<DB>;
+      // Strip any legacy dummy profiles ending in @pharmacyos.demo or placeholder names
+      const cleanProfiles = (loaded.profiles ?? []).filter(
+        (p) =>
+          !p.email.endsWith("@pharmacyos.demo") &&
+          !["Alex Morgan", "Priya Shah", "Sam Chen", "Diego Ruiz"].includes(p.name),
+      );
+
       cache = {
         ...seed(),
         ...loaded,
-        profiles: mergeProfiles(seed().profiles, loaded.profiles),
-        categories: asArray(loaded.categories),
-        manufacturers: asArray(loaded.manufacturers),
-        suppliers: asArray(loaded.suppliers),
-        medicines: asArray(loaded.medicines),
-        batches: asArray(loaded.batches),
-        activityLogs: asArray(loaded.activityLogs),
-        inventoryStock: asArray(loaded.inventoryStock),
-        inventoryLedger: asArray(loaded.inventoryLedger),
-        stockMovements: asArray(loaded.stockMovements),
-        sales: asArray(loaded.sales),
-        purchaseOrders: asArray(loaded.purchaseOrders),
-        grns: asArray(loaded.grns),
-        writeOffs: asArray(loaded.writeOffs),
-        creditNotes: asArray(loaded.creditNotes),
-        transfers: asArray(loaded.transfers),
-        reportSchedules: asArray(loaded.reportSchedules),
-        audits: asArray(loaded.audits),
-        auditCounts: asArray(loaded.auditCounts),
-        variances: asArray(loaded.variances),
-        adjustments: asArray(loaded.adjustments),
-        notificationsRead: asArray(loaded.notificationsRead),
-        settings: {
-          ...seed().settings,
-          ...(loaded.settings ?? {}),
-        },
+        profiles: cleanProfiles,
+        sales: loaded.sales ?? [],
+        purchaseOrders: loaded.purchaseOrders ?? [],
+        grns: loaded.grns ?? [],
+        notificationsRead: loaded.notificationsRead ?? [],
       } as DB;
-      if (hadMojibake) save(cache);
       return cache;
     }
   } catch {
