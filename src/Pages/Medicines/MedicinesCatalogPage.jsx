@@ -373,7 +373,7 @@ export default function MedicinesCatalogPage() {
   };
   const currency = useDb((d) => d.settings.currency);
   return (
-    <div className="space-y-6 pb-12 bg-white min-h-screen p-6 rounded-2xl shadow-sm border border-border/40">
+    <div className="space-y-6 pb-12 bg-white h-full p-6 rounded-2xl shadow-sm border border-border/40">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border/65 pb-5">
         <PageHeader
           title="Medicine Master Catalog"
@@ -402,14 +402,14 @@ export default function MedicinesCatalogPage() {
 
       {/* FILTERS PANEL */}
       <div className="bg-muted/20 border border-border/60 rounded-xl p-4 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
             <Filter className="w-3.5 h-3.5" /> Workspace Filters
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="md:hidden text-xs font-semibold text-[#2563EB]"
+              className="md:hidden text-xs font-semibold text-[#2563EB] border border-[#2563EB]/20 rounded-md px-2 py-1 hover:bg-[#2563EB]/5"
             >
               {showMobileFilters ? "Hide Filters" : "Show Filters"}
             </button>
@@ -425,7 +425,7 @@ export default function MedicinesCatalogPage() {
                 setActiveFilter("all");
                 setQ("");
               }}
-              className="text-xs text-[#2563EB] hover:underline"
+              className="text-xs text-[#2563EB] hover:underline px-1"
             >
               Reset All
             </button>
@@ -446,7 +446,7 @@ export default function MedicinesCatalogPage() {
 
         {/* Dropdown Filters (collapsible on mobile) */}
         <div
-          className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 ${showMobileFilters ? "block" : "hidden md:grid"}`}
+          className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 ${showMobileFilters ? "grid" : "hidden md:grid"}`}
         >
           <Select value={catFilter} onValueChange={setCatFilter}>
             <SelectTrigger className="bg-white">

@@ -86,9 +86,9 @@ export default function AppLayout() {
   };
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full bg-background overflow-hidden">
+      <div className="flex flex-1 h-full w-full bg-background overflow-hidden">
         <AppSidebar />
-        <div ref={scrollRef} className="flex min-w-0 flex-1 flex-col h-screen overflow-y-auto">
+        <div ref={scrollRef} className="flex min-w-0 flex-1 flex-col overflow-y-auto">
           <header className="sticky top-0 z-30 shrink-0 flex h-16 items-center gap-4 border-b border-border bg-background px-4 sm:px-6 shadow-sm">
             <SidebarTrigger />
             <BrandMark size="sm" showText={false} className="hidden sm:block" />

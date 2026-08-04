@@ -608,31 +608,36 @@ export default function MedicinesCatalogPage() {
     setConfirmDeactivate(null);
   };
   return (
-    <div className="space-y-6 pb-12 bg-white min-h-screen p-6 rounded-2xl shadow-sm border border-border/40">
+    <div className="space-y-6 pb-12 bg-white h-full p-6 rounded-2xl shadow-sm border border-border/40">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border/65 pb-5">
-        <PageHeader
-          title={showWishlist ? "Your Wishlist" : "Medicine Catalogue"}
-          description={
-            showWishlist
-              ? "Manage your favorite medicines."
-              : "Browse and manage all medicines available in your catalogue."
-          }
-        />
-        <div className="flex items-center gap-2">
-          {showWishlist ? (
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          {showWishlist && (
             <Button
               size="sm"
               variant="outline"
-              className="rounded-lg gap-1"
+              className="rounded-lg gap-1 flex items-center shrink-0"
               onClick={() => setShowWishlist(false)}
             >
-              <ArrowLeft className="h-4 w-4" /> Back to Catalog
+              <ArrowLeft className="h-4 w-4" /> Back
             </Button>
-          ) : (
+          )}
+          <div className="min-w-0">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+              {showWishlist ? "Your Wishlist" : "Medicine Catalogue"}
+            </h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {showWishlist
+                ? "Manage your favorite medicines."
+                : "Browse and manage all medicines available in your catalogue."}
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+          {!showWishlist && (
             <Button
               size="sm"
               variant="outline"
-              className="rounded-lg gap-1 text-slate-600"
+              className="rounded-lg gap-1 text-slate-600 flex-1 md:flex-none justify-center"
               onClick={() => setShowWishlist(true)}
             >
               <Heart className="h-4 w-4" fill="none" /> Wishlist
@@ -642,7 +647,7 @@ export default function MedicinesCatalogPage() {
             <Button
               size="sm"
               onClick={openCreate}
-              className="bg-[#007A87] hover:bg-[#007A87]/90 text-white rounded-lg gap-1"
+              className="bg-[#007A87] hover:bg-[#007A87]/90 text-white rounded-lg gap-1 flex-1 md:flex-none justify-center"
             >
               <Plus className="h-4 w-4" /> Add Medicine
             </Button>
@@ -651,7 +656,7 @@ export default function MedicinesCatalogPage() {
             <Button
               variant="outline"
               size="sm"
-              className="rounded-lg gap-1 text-emerald-600 border-emerald-600/20 hover:bg-emerald-50"
+              className="rounded-lg gap-1 text-emerald-600 border-emerald-600/20 hover:bg-emerald-50 flex-1 md:flex-none justify-center"
               onClick={() => setIsExportModalOpen(true)}
             >
               <FileSpreadsheet className="h-4 w-4" /> Export Sheet
@@ -728,11 +733,11 @@ export default function MedicinesCatalogPage() {
       {/* FILTERS PANEL */}
       {!showWishlist && (
         <div className="bg-muted/20 border border-border/60 rounded-xl p-4 space-y-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
               <Filter className="w-3.5 h-3.5" /> Workspace Filters
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               {/* View Mode Toggle */}
               <div className="flex items-center gap-1 border border-border/80 rounded-xl p-0.5 bg-white shadow-sm shrink-0">
                 <Button
@@ -757,7 +762,7 @@ export default function MedicinesCatalogPage() {
 
               <button
                 onClick={() => setShowMobileFilters(!showMobileFilters)}
-                className="md:hidden text-xs font-semibold text-[#007A87]"
+                className="md:hidden text-xs font-semibold text-[#007A87] border border-[#007A87]/20 rounded-md px-2 py-1 hover:bg-[#007A87]/5"
               >
                 {showMobileFilters ? "Hide Filters" : "Show Filters"}
               </button>
@@ -773,7 +778,7 @@ export default function MedicinesCatalogPage() {
                   setSortBy("name-asc");
                   setQ("");
                 }}
-                className="text-xs text-[#007A87] hover:underline"
+                className="text-xs text-[#007A87] hover:underline px-1"
               >
                 Reset All
               </button>
@@ -794,7 +799,7 @@ export default function MedicinesCatalogPage() {
 
           {/* Fixed Filters */}
           <div
-            className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 ${showMobileFilters ? "block" : "hidden md:grid"}`}
+            className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 ${showMobileFilters ? "grid" : "hidden md:grid"}`}
           >
             <Select value={catFilter} onValueChange={setCatFilter}>
               <SelectTrigger className="bg-white">
