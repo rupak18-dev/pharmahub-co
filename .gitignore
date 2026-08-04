@@ -16,6 +16,11 @@ build/
 .nitro
 *.local
 
+# React Router framework + Cloudflare (legacy)
+.react-router/
+.wrangler/
+.dev.vars
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
