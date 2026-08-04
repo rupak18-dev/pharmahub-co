@@ -32,4 +32,5 @@ build/
 *.sln
 *.sw?
 .vercel
+.vercel.*
 .env*

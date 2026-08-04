@@ -11,10 +11,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: 'npm'
@@ -39,10 +39,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: 'npm'
@@ -51,10 +51,10 @@ jobs:
         run: npm ci
 
       - name: Pull Vercel project settings
-        run: npx vercel pull --yes --environment=production
+        run: npx vercel pull --yes --environment=production --token $VERCEL_TOKEN
 
       - name: Build for Vercel
-        run: npx vercel build --prod
+        run: npx vercel build --prod --token $VERCEL_TOKEN
 
       - name: Deploy to Vercel
-        run: npx vercel deploy --prebuilt --prod
+        run: npx vercel deploy --prebuilt --prod --token $VERCEL_TOKEN
