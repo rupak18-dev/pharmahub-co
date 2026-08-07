@@ -41,7 +41,7 @@ import {
 } from "@/Components/ui/select";
 import { Popover, PopoverTrigger, PopoverContent } from "@/Components/ui/popover";
 import { format, addDays } from "date-fns";
-export const handle = { title: "PharmacyOS · Purchases" };
+export const handle = { title: "PharmaHub · Purchases" };
 /** Clickable info icon that shows a small popover with description text */
 function InfoTip({ text, size = "sm" }) {
   return (
@@ -1233,7 +1233,7 @@ export default function PurchasesPage() {
               {/* Header Store & Invoice Details */}
               <div className="flex justify-between items-start border-b border-border pb-4">
                 <div>
-                  <h2 className="text-lg font-black tracking-tight text-primary">PharmacyOS</h2>
+                  <h2 className="text-lg font-black tracking-tight text-primary">PharmaHub</h2>
                   <p className="text-xs text-muted-foreground">Official Purchase Invoice Receipt</p>
                 </div>
                 <div className="text-right font-mono space-y-0.5">

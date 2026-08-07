@@ -34,7 +34,7 @@ import {
   reportRows,
   windowLabel,
 } from "@/lib/expiry";
-export const handle = { title: "Medicine Expiry · PharmacyOS" };
+export const handle = { title: "Medicine Expiry · PharmaHub" };
 export default function ExpiryPage() {
   const { user } = useAuth();
   const has = usePermission();
@@ -540,7 +540,7 @@ export default function ExpiryPage() {
       `<div><div class="meta"><span>Batch <b>${row.batchNumber}</b></span><span>Shelf <b>${row.shelf}</b></span></div>`,
       `<div class="exp">Exp ${new Date(row.expiryDate).toLocaleDateString()} — ${row.days < 0 ? `overdue ${Math.abs(row.days)}d` : `${row.days}d left`}</div></div>`,
       `<div class="price"><span class="sell">${currency}${row.batch.sellingPrice.toFixed(2)}</span><span class="mrp">MRP ${currency}${row.batch.mrp.toFixed(2)}</span></div>`,
-      `<div class="foot"><span>PharmacyOS · ${branchName}</span><span>${new Date().toLocaleDateString()}</span></div>`,
+      `<div class="foot"><span>PharmaHub · ${branchName}</span><span>${new Date().toLocaleDateString()}</span></div>`,
       "</div></body></html>",
     ].join("");
     printHtml(html, () => toast.error("Label printing unavailable in this browser"));
@@ -612,7 +612,7 @@ export default function ExpiryPage() {
       "@media print{body{print-color-adjust:exact}}",
       "</style></head><body>",
       `<h1>${title}</h1>`,
-      `<div class="sub">PharmacyOS · Generated ${new Date().toLocaleString()} · ${data.length} batches</div>`,
+      `<div class="sub">PharmaHub · Generated ${new Date().toLocaleString()} · ${data.length} batches</div>`,
       "<table><thead><tr>",
       ["Medicine", "Batch", "Manufacturer", "Supplier", "Expiry", "Days", "Qty", "Value", "Shelf"]
         .map((h) => `<th>${h}</th>`)
