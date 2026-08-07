@@ -88,7 +88,7 @@ export function AccessPreview({ roleName, permissions }) {
           <div className="h-4 w-4 rounded bg-primary flex items-center justify-center text-[10px] font-bold text-primary-foreground">
             +
           </div>
-          <span className="font-semibold text-foreground tracking-tight text-xs">PharmacyOS</span>
+          <span className="font-semibold text-foreground tracking-tight text-xs">PharmaHub</span>
         </div>
 
         {/* Grouped Links */}

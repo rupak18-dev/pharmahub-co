@@ -10,5 +10,5 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "src"),
     },
   },
-  server: { port: 5000, strictPort: true },
+  server: { port: 5100, strictPort: true, host: true },
 });
