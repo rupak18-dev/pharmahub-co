@@ -20,6 +20,7 @@ import {
   Activity,
   ArrowDownUp,
   ArrowLeft,
+  Trash2,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -226,7 +227,7 @@ export default function MedicinesCatalogPage() {
   };
   const [editing, setEditing] = useState(null);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [confirmDeactivate, setConfirmDeactivate] = useState(null);
+  const [confirmDelete, setConfirmDelete] = useState(null);
   const [viewMode, setViewMode] = useState("list");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -591,25 +592,25 @@ export default function MedicinesCatalogPage() {
     }
     setSheetOpen(false);
   };
-  const toggleActive = (m) => {
+  const deleteMedicine = (m) => {
     db.set((d) => {
-      const t = d.medicines.find((x) => x.id === m.id);
-      if (t) t.isActive = !t.isActive;
+      d.medicines = d.medicines.filter((x) => x.id !== m.id);
     });
     if (user)
       logActivity({
         userId: user.id,
         userName: user.name,
-        action: `${m.isActive ? "Deactivated" : "Activated"} medicine ${m.name}`,
+        action: `Deleted medicine ${m.name}`,
         entityType: "medicine",
         entityId: m.id,
       });
-    toast.success(`Medicine ${m.isActive ? "deactivated" : "activated"}`);
-    setConfirmDeactivate(null);
+    toast.success(`Medicine ${m.name} deleted`);
+    setConfirmDelete(null);
   };
   return (
-    <div className="space-y-6 pb-12 bg-white h-full p-6 rounded-2xl shadow-sm border border-border/40">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border/65 pb-5">
+    <div className="flex flex-col h-full gap-6">
+      <div className="space-y-6 pb-12 bg-white p-6 rounded-2xl shadow-sm border border-border/40">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border/65 pb-5">
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           {showWishlist && (
             <Button
@@ -1195,15 +1196,11 @@ export default function MedicinesCatalogPage() {
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="h-8 w-8 hover:bg-destructive/10"
-                                  onClick={() => setConfirmDeactivate(m)}
-                                  title={m.isActive ? "Deactivate" : "Activate"}
+                                  className="h-8 w-8 hover:bg-destructive/10 text-destructive"
+                                  onClick={() => setConfirmDelete(m)}
+                                  title="Delete"
                                 >
-                                  {m.isActive ? (
-                                    <PowerOff className="h-4 w-4 text-destructive" />
-                                  ) : (
-                                    <Power className="h-4 w-4 text-emerald-600" />
-                                  )}
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               )}
                             </div>
@@ -1318,13 +1315,10 @@ export default function MedicinesCatalogPage() {
                             size="sm"
                             variant="outline"
                             className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10"
-                            onClick={() => setConfirmDeactivate(m)}
+                            onClick={() => setConfirmDelete(m)}
+                            title="Delete"
                           >
-                            {m.isActive ? (
-                              <PowerOff className="h-3.5 w-3.5" />
-                            ) : (
-                              <Power className="h-3.5 w-3.5 text-emerald-600" />
-                            )}
+                            <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         )}
                       </div>
@@ -1467,10 +1461,13 @@ export default function MedicinesCatalogPage() {
               })}
             </div>
           )}
+        </>
+      )}
+      </div>
 
-          {totalPages > 1 && (
-            <div className="mt-8 border-t border-border/40 pt-6">
-              <Pagination>
+      {totalPages > 1 && (
+        <div className="bg-white p-4 rounded-2xl shadow-sm border border-border/40 flex justify-center mt-auto">
+          <Pagination>
                 <PaginationContent>
                   <PaginationItem>
                     <PaginationPrevious
@@ -1526,9 +1523,7 @@ export default function MedicinesCatalogPage() {
                   </PaginationItem>
                 </PaginationContent>
               </Pagination>
-            </div>
-          )}
-        </>
+        </div>
       )}
 
       {/* RENDER SHEET DRAWER FORM */}
@@ -1576,27 +1571,25 @@ export default function MedicinesCatalogPage() {
 
       {/* CONFIRMATION POPUP */}
       <AlertDialog
-        open={!!confirmDeactivate}
-        onOpenChange={(o) => !o && setConfirmDeactivate(null)}
+        open={!!confirmDelete}
+        onOpenChange={(o) => !o && setConfirmDelete(null)}
       >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmDeactivate?.isActive ? "Deactivate" : "Activate"} master config?
+              Delete medicine?
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {confirmDeactivate?.isActive
-                ? "This medicine will be hidden from sales forms and stock reports. Active batches will remain registered but unavailable."
-                : "Re-activating this medicine makes it selectable in billing forms immediately."}
+              Are you sure you want to delete this medicine? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              className="bg-[#2563EB] hover:bg-blue-700"
-              onClick={() => confirmDeactivate && toggleActive(confirmDeactivate)}
+              className="bg-destructive hover:bg-destructive/90 text-white"
+              onClick={() => confirmDelete && deleteMedicine(confirmDelete)}
             >
-              Confirm
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
