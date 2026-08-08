@@ -1,5 +1,4 @@
-﻿@import "tailwindcss" source(none);
-@source "../src";
+@import "tailwindcss";
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
@@ -183,4 +182,72 @@
   .recharts-yAxis .recharts-cartesian-axis-tick-value {
     display: none;
   }
+}
+
+/* Scoped font-family styling for authentication & onboarding flow */
+.auth-layout,
+.onboarding-layout {
+  font-family: "Poppins", var(--font-sans), sans-serif !important;
+}
+
+/* Centralized typography system utility classes */
+.auth-title {
+  font-size: 48px !important;
+  font-weight: 700 !important;
+  line-height: 1.25 !important;
+  letter-spacing: -0.03em !important;
+}
+
+.auth-section-title {
+  font-size: 28px !important;
+  font-weight: 600 !important;
+  line-height: 1.375 !important;
+}
+
+.auth-subtitle {
+  font-size: 18px !important;
+  font-weight: 400 !important;
+  color: #64748b !important; /* slate-500 */
+  line-height: 1.75rem !important; /* leading-7 */
+}
+
+.auth-label {
+  font-size: 12px !important; /* text-xs */
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  color: #64748b !important; /* text-slate-500 */
+}
+
+.auth-input-text {
+  font-size: 16px !important; /* text-base */
+  font-weight: 500 !important;
+}
+
+.auth-card-title {
+  font-size: 20px !important; /* text-xl */
+  font-weight: 600 !important;
+}
+
+.auth-card-desc {
+  font-size: 14px !important; /* text-sm */
+  line-height: 1.5rem !important; /* leading-6 */
+  color: #64748b !important; /* text-slate-500 */
+}
+
+.auth-button-text {
+  font-size: 16px !important; /* text-base */
+  font-weight: 600 !important;
+}
+
+.auth-sidebar-active {
+  font-size: 16px !important; /* text-base */
+  font-weight: 600 !important;
+  color: #ffffff !important;
+}
+
+.auth-sidebar-inactive {
+  font-size: 14px !important; /* text-sm */
+  font-weight: 500 !important;
+  color: rgba(255, 255, 255, 0.6) !important;
 }

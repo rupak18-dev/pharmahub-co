@@ -18,6 +18,7 @@ export const router = createBrowserRouter([
       { path: "/", lazy: lazyPage(() => import("@/Pages/Landing/LandingPage")) },
       { path: "/login", lazy: lazyPage(() => import("@/Pages/Auth/LoginPage")) },
       { path: "/signup", lazy: lazyPage(() => import("@/Pages/Auth/SignupPage")) },
+      { path: "/onboarding", lazy: lazyPage(() => import("@/Pages/Onboarding/OnboardingPage")) },
       {
         path: "/forgot-password",
         lazy: lazyPage(() => import("@/Pages/Auth/ForgotPasswordPage")),

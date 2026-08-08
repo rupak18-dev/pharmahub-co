@@ -42,7 +42,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/Components/ui/alert-dialog";
-export const handle = { title: "Master Catalog · PharmacyOS" };
+export const handle = { title: "Master Catalog · PharmaHub" };
 const schema = z.object({
   name: z.string().trim().min(2, "Required").max(120),
   genericName: z.string().trim().max(120).optional().or(z.literal("")),

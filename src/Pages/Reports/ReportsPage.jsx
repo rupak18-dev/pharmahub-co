@@ -62,7 +62,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/Components/ui/select";
-export const handle = { title: "Reports Center · PharmacyOS Enterprise" };
+export const handle = { title: "Reports Center · PharmaHub Enterprise" };
 /* =====================================================================
    CURATED ENTERPRISE REPORT CATALOG (6 REALISTIC CORE REPORTS)
    ===================================================================== */
