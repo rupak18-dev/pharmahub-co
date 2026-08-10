@@ -1,5 +1,5 @@
 import { DEFAULT_PERMISSIONS } from "./permissions";
-const STORAGE_KEY = "PharmaHub_db_v2";
+const STORAGE_KEY = "PharmaHub_db_v3";
 const uid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -285,7 +285,7 @@ function seed() {
   }));
   const batchCode = (prefix, year, month, seq) =>
     `${prefix}-${String(year).slice(-2)}${String(month).padStart(2, "0")}-${String(seq).padStart(2, "0")}`;
-  const nearExpiryDays = 90;
+  const nearExpiryDaysPool = [0, 2, 5, 12, 25, 45, 80];
   const batches = medicines.flatMap((m, i) => {
     const suppliers = [sup1.id, sup2.id];
     const seq = i + 1;
@@ -310,7 +310,7 @@ function seed() {
       medicineId: m.id,
       batchNumber: batchCode(m.prefix, 24, ((i * 2 + 4) % 12) + 1, seq),
       mfgDate: daysFromNow(-300),
-      expiryDate: daysFromNow(nearExpiryDays),
+      expiryDate: daysFromNow(nearExpiryDaysPool[i % nearExpiryDaysPool.length]),
       mrp: 40 + i * 15,
       purchasePrice: 25 + i * 10,
       sellingPrice: 38 + i * 14,
@@ -535,10 +535,10 @@ function load() {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const loaded = JSON.parse(raw);
-      // Strip any legacy dummy profiles ending in @pharmacyos.demo or placeholder names
+      // Strip any legacy dummy profiles ending in @pharmahub.demo or placeholder names
       const cleanProfiles = (loaded.profiles ?? []).filter(
         (p) =>
-          !p.email.endsWith("@pharmacyos.demo") &&
+          !p.email.endsWith("@pharmahub.demo") &&
           !["Alex Morgan", "Priya Shah", "Sam Chen", "Diego Ruiz"].includes(p.name),
       );
       cache = {

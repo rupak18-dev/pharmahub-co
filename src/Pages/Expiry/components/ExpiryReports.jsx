@@ -190,9 +190,7 @@ export function ExpiryReports({ rows, currency, onExport, onSaveSchedule }) {
                 <SelectContent>
                   <SelectItem value="owner@pharmahub.demo">owner@pharmahub.demo</SelectItem>
                   <SelectItem value="manager@pharmahub.demo">manager@pharmahub.demo</SelectItem>
-                  <SelectItem value="inventory@pharmahub.demo">
-                    inventory@pharmahub.demo
-                  </SelectItem>
+                  <SelectItem value="inventory@pharmahub.demo">inventory@pharmahub.demo</SelectItem>
                 </SelectContent>
               </Select>
             </div>
