@@ -53,6 +53,7 @@ export const router = createBrowserRouter([
           { path: "/sales", lazy: lazyPage(() => import("@/Pages/Sales/SalesPage")) },
           { path: "/sales/:saleId", lazy: lazyPage(() => import("@/Pages/Sales/SaleDetailPage")) },
           { path: "/purchases", lazy: lazyPage(() => import("@/Pages/Purchases/PurchasesPage")) },
+          { path: "/shortbook", lazy: lazyPage(() => import("@/Pages/Shortbook/ShortbookPage")) },
           { path: "/inventory", lazy: lazyPage(() => import("@/Pages/Inventory/InventoryPage")) },
           { path: "/expiry", lazy: lazyPage(() => import("@/Pages/Expiry/ExpiryPage")) },
           { path: "/audit", lazy: lazyPage(() => import("@/Pages/Audit/AuditPage")) },
@@ -64,6 +65,10 @@ export const router = createBrowserRouter([
             lazy: lazyPage(() => import("@/Pages/Notifications/NotificationsPage")),
           },
           { path: "/admin", lazy: lazyPage(() => import("@/Pages/Admin/AdminPage")) },
+          {
+            path: "/integrations",
+            lazy: lazyPage(() => import("@/Pages/Integrations/IntegrationsPage")),
+          },
         ],
       },
     ],

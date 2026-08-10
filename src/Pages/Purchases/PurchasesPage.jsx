@@ -643,9 +643,9 @@ export default function PurchasesPage() {
             </div>
 
             {/* Items Table Container */}
-            <div className="bg-card rounded-b-lg border border-border/60 overflow-hidden flex flex-col">
+            <div className="bg-card rounded-b-lg border border-border/60 overflow-x-auto flex flex-col">
               {/* Table Column Headers */}
-              <div className="bg-muted/40 border-b border-border text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2 grid grid-cols-12 gap-1 items-center">
+              <div className="bg-muted/40 border-b border-border text-[11px] font-semibold text-muted-foreground uppercase tracking-wider px-3 py-2 grid grid-cols-12 gap-1 items-center min-w-[720px]">
                 {/* Item Name + Tax Mode Toggle */}
                 <div className="col-span-3 flex items-center justify-between pr-2">
                   <span className="text-foreground">Item Name</span>
@@ -813,7 +813,7 @@ export default function PurchasesPage() {
                     return (
                       <div
                         key={item.id}
-                        className="px-3 py-2 grid grid-cols-12 gap-1 items-center text-xs hover:bg-muted/30 transition-colors"
+                        className="px-3 py-2 grid grid-cols-12 gap-1 items-center text-xs hover:bg-muted/30 transition-colors min-w-[720px]"
                       >
                         {/* Medicine Name */}
                         <div className="col-span-3 pr-2">
@@ -997,8 +997,8 @@ export default function PurchasesPage() {
             )}
           </div>
 
-          <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
-            <table className="w-full text-xs">
+          <div className="overflow-x-auto rounded-lg border border-border bg-card shadow-sm">
+            <table className="w-full text-xs min-w-[640px]">
               <thead className="border-b border-border bg-muted/50 text-left uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-4 py-3 font-semibold">GRN / Bill #</th>
@@ -1270,8 +1270,8 @@ export default function PurchasesPage() {
               </div>
 
               {/* Items Table */}
-              <div className="border border-border rounded-lg overflow-hidden">
-                <table className="w-full text-xs">
+              <div className="border border-border rounded-lg overflow-x-auto">
+                <table className="w-full text-xs min-w-[560px]">
                   <thead className="bg-muted text-muted-foreground font-semibold border-b border-border uppercase text-[10px]">
                     <tr>
                       <th className="p-2 text-left">Item Name</th>

@@ -1,5 +1,5 @@
 import { Link } from "react-router";
-import { Pill } from "lucide-react";
+import { TbPill } from "react-icons/tb";
 import { cn } from "@/lib/utils";
 export function BrandMark({ className, showText = true, size = "md" }) {
   const sz = size === "sm" ? "h-7 w-7" : size === "lg" ? "h-10 w-10" : "h-8 w-8";
@@ -12,11 +12,11 @@ export function BrandMark({ className, showText = true, size = "md" }) {
           sz,
         )}
       >
-        <Pill className="h-4 w-4" strokeWidth={2.5} />
+        <TbPill className="h-4 w-4" strokeWidth={2.5} />
       </span>
       {showText && (
         <span className={cn("text-foreground", text)}>
-          Pharmacy<span className="text-primary">OS</span>
+          Pharma<span className="text-primary">Hub</span>
         </span>
       )}
     </Link>

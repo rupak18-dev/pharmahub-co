@@ -3,52 +3,51 @@ import {
   LayoutDashboard,
   Pill,
   Layers,
-  Boxes,
-  ShoppingCart,
+  ShoppingBag,
   Receipt,
-  CalendarClock,
+  AlertTriangle,
   ClipboardCheck,
   Users,
   BarChart3,
-  Bell,
-  Sparkles,
   Settings,
+  PackageSearch,
   Lock,
   CheckCircle2,
 } from "lucide-react";
 import { ALL_MODULES } from "@/lib/permissions";
 const NAV_GROUPS = [
   {
-    label: "Operations",
+    label: "Home",
     items: [
       { key: "dashboard", title: "Dashboard", icon: LayoutDashboard },
       { key: "medicines", title: "Medicines", icon: Pill },
+    ],
+  },
+  {
+    label: "Stock Management",
+    items: [
       { key: "batches", title: "Batches", icon: Layers },
-      { key: "inventory", title: "Inventory", icon: Boxes },
+      { key: "expiry", title: "Expiry", icon: AlertTriangle },
+      { key: "audit", title: "Stock Monitor", icon: ClipboardCheck },
     ],
   },
   {
-    label: "Commerce",
+    label: "Purchase & Trades",
     items: [
-      { key: "purchases", title: "Purchases", icon: ShoppingCart },
+      { key: "purchases", title: "Orders", icon: ShoppingBag },
       { key: "sales", title: "Sales & POS", icon: Receipt },
+      { key: "shortbook", title: "Shortbook", icon: PackageSearch },
     ],
   },
   {
-    label: "Compliance",
-    items: [
-      { key: "expiry", title: "Expiry", icon: CalendarClock },
-      { key: "audit", title: "Stock Audit", icon: ClipboardCheck },
-      { key: "reports", title: "Reports", icon: BarChart3 },
-    ],
+    label: "Analytics",
+    items: [{ key: "reports", title: "Reports", icon: BarChart3 }],
   },
   {
-    label: "System",
+    label: "Access Management",
     items: [
       { key: "users", title: "Users & Roles", icon: Users },
-      { key: "notifications", title: "Notifications", icon: Bell },
-      { key: "ai", title: "AI Insights", icon: Sparkles },
-      { key: "admin", title: "System Admin", icon: Settings },
+      { key: "admin", title: "Profile", icon: Settings },
     ],
   },
 ];
@@ -77,7 +76,9 @@ export function AccessPreview({ roleName, permissions }) {
         </div>
         <div className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-mono text-foreground">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-          <span>{visibleCount} / 13 Modules Visible</span>
+          <span>
+            {visibleCount} / {ALL_MODULES.length} Modules Visible
+          </span>
         </div>
       </div>
 

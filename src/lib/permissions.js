@@ -12,6 +12,7 @@ export const ALL_MODULES = [
   { key: "batches", label: "Batches" },
   { key: "inventory", label: "Inventory" },
   { key: "purchases", label: "Purchases" },
+  { key: "shortbook", label: "Shortbook" },
   { key: "sales", label: "Sales & POS" },
   { key: "expiry", label: "Expiry" },
   { key: "audit", label: "Stock Audit" },
@@ -20,6 +21,7 @@ export const ALL_MODULES = [
   { key: "notifications", label: "Notifications" },
   { key: "ai", label: "AI Insights" },
   { key: "admin", label: "System Admin" },
+  { key: "integrations", label: "Integrations" },
 ];
 export const ALL_ACTIONS = ["view", "create", "update", "delete", "approve", "export"];
 const all = () => ({
@@ -54,11 +56,13 @@ export const DEFAULT_PERMISSIONS = {
     return view();
   }),
   Cashier: role((m) => {
+    if (m === "shortbook") return view();
     if (m === "sales") return { ...none(), view: true, create: true };
     if (["dashboard", "medicines", "batches"].includes(m)) return view();
     return none();
   }),
   "Store Keeper": role((m) => {
+    if (m === "shortbook") return view();
     if (["inventory", "batches"].includes(m)) return { ...view(), create: true, update: true };
     if (["dashboard", "medicines", "expiry", "audit", "notifications"].includes(m)) return view();
     return none();

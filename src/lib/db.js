@@ -512,6 +512,19 @@ function fixMojibake(value) {
   }
   return value;
 }
+function mergePermissions(stored) {
+  return Object.fromEntries(
+    Object.keys(DEFAULT_PERMISSIONS).map((role) => {
+      const defaults = DEFAULT_PERMISSIONS[role];
+      const saved = stored?.[role] ?? {};
+      const merged = {};
+      for (const module of Object.keys(defaults)) {
+        merged[module] = { ...defaults[module], ...(saved[module] ?? {}) };
+      }
+      return [role, merged];
+    }),
+  );
+}
 function load() {
   if (cache) return cache;
   if (!isBrowser()) {
@@ -531,6 +544,7 @@ function load() {
       cache = {
         ...seed(),
         ...loaded,
+        permissions: mergePermissions(loaded.permissions),
         profiles: cleanProfiles,
         sales: loaded.sales ?? [],
         purchaseOrders: loaded.purchaseOrders ?? [],
