@@ -37,7 +37,7 @@ import { Approvals } from "@/Pages/Audit/components/Approvals";
 import { ActivityLogView } from "@/Pages/Audit/components/ActivityLogView";
 import { CreateAuditSheet } from "@/Pages/Audit/components/CreateAuditSheet";
 import { AuditDrawer } from "@/Pages/Audit/components/AuditDrawer";
-export const handle = { title: "Stock Audit · PharmacyOS" };
+export const handle = { title: "Stock Audit · PharmaHub" };
 const VIEW_LABELS = {
   overview: "Overview",
   calendar: "Calendar",

@@ -57,36 +57,38 @@ export default function ReceiptPage() {
           </div>
         </div>
 
-        <table className="w-full text-sm">
-          <thead className="border-y border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-            <tr>
-              <th className="py-2 font-medium">Item</th>
-              <th className="py-2 font-medium">Batch</th>
-              <th className="py-2 font-medium text-right">Qty</th>
-              <th className="py-2 font-medium text-right">Price</th>
-              <th className="py-2 font-medium text-right">GST</th>
-              <th className="py-2 font-medium text-right">Total</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-border">
-            {sale.items.map((it, i) => (
-              <tr key={i}>
-                <td className="py-2">{it.medicineName}</td>
-                <td className="py-2 font-mono text-xs text-muted-foreground">{it.batchNumber}</td>
-                <td className="py-2 text-right font-mono">{it.quantity}</td>
-                <td className="py-2 text-right font-mono">
-                  {currency}
-                  {it.unitPrice.toFixed(2)}
-                </td>
-                <td className="py-2 text-right font-mono">{it.gstRate}%</td>
-                <td className="py-2 text-right font-mono font-semibold">
-                  {currency}
-                  {it.lineTotal.toFixed(2)}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[480px]">
+            <thead className="border-y border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+              <tr>
+                <th className="py-2 font-medium">Item</th>
+                <th className="py-2 font-medium">Batch</th>
+                <th className="py-2 font-medium text-right">Qty</th>
+                <th className="py-2 font-medium text-right">Price</th>
+                <th className="py-2 font-medium text-right">GST</th>
+                <th className="py-2 font-medium text-right">Total</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-border">
+              {sale.items.map((it, i) => (
+                <tr key={i}>
+                  <td className="py-2">{it.medicineName}</td>
+                  <td className="py-2 font-mono text-xs text-muted-foreground">{it.batchNumber}</td>
+                  <td className="py-2 text-right font-mono">{it.quantity}</td>
+                  <td className="py-2 text-right font-mono">
+                    {currency}
+                    {it.unitPrice.toFixed(2)}
+                  </td>
+                  <td className="py-2 text-right font-mono">{it.gstRate}%</td>
+                  <td className="py-2 text-right font-mono font-semibold">
+                    {currency}
+                    {it.lineTotal.toFixed(2)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
         <dl className="mt-4 space-y-1 text-sm">
           <div className="flex justify-between">

@@ -2,6 +2,7 @@ import { Suspense, useEffect } from "react";
 import { Outlet, isRouteErrorResponse, useMatches } from "react-router";
 import { Toaster } from "@/Components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
+import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
 
 const DEFAULT_TITLE = "PharmaHub — Modern Pharmacy Management System";
 
@@ -20,7 +21,7 @@ export function AppRoot() {
   }, [matches]);
   return (
     <AuthProvider>
-      <Suspense fallback={null}>
+      <Suspense fallback={<FullScreenSkeleton />}>
         <Outlet />
       </Suspense>
       <Toaster richColors position="top-right" />

@@ -47,7 +47,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/Components/ui/select";
-export const handle = { title: "Batches · PharmacyOS" };
+export const handle = { title: "Batches · PharmaHub" };
 const safeFormat = (dateStr, fmt) => {
   if (!dateStr) return "—";
   const d = new Date(dateStr);

@@ -160,7 +160,7 @@ export default function UsersPage() {
         description="Manage team access and configure permissions per role."
       />
       <Tabs defaultValue="users">
-        <TabsList className="h-10 rounded-lg border border-border bg-muted/40 p-1">
+        <TabsList className="h-10 max-w-full justify-start overflow-x-auto no-scrollbar rounded-lg border border-border bg-muted/40 p-1 sm:justify-center">
           <TabsTrigger
             value="users"
             className="rounded-md px-5 text-sm font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm"
@@ -344,8 +344,8 @@ function UsersTab() {
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
-        <table className="w-full text-sm">
+      <div className="overflow-x-auto rounded-xl border border-border bg-white shadow-sm">
+        <table className="w-full text-sm min-w-[760px]">
           <thead className="border-b border-border bg-muted/30">
             <tr>
               <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -1010,7 +1010,7 @@ function PolicyModal({ role, onClose, userCount }) {
     <Dialog open onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="max-w-3xl p-0 gap-0 overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-4 py-4 sm:px-6">
           <div className="flex items-center gap-3">
             <div
               className={`flex h-10 w-10 items-center justify-center rounded-xl border ${meta.bg}`}
@@ -1034,7 +1034,7 @@ function PolicyModal({ role, onClose, userCount }) {
 
         {/* Sub-tabs */}
         <div className="border-b border-border bg-muted/20 px-6">
-          <div className="flex gap-1">
+          <div className="flex gap-1 overflow-x-auto no-scrollbar">
             {[
               { key: "builder", label: "Policy Builder" },
               { key: "preview", label: "Live Access Preview" },
@@ -1057,11 +1057,11 @@ function PolicyModal({ role, onClose, userCount }) {
         </div>
 
         {/* Content */}
-        <div className="flex flex-1 overflow-hidden min-h-0">
+        <div className="flex flex-1 min-h-0 flex-col overflow-hidden lg:flex-row">
           {activeTab === "builder" && (
             <>
               {/* Left: Module list */}
-              <div className="w-56 shrink-0 border-r border-border flex flex-col">
+              <div className="flex max-h-56 w-full shrink-0 flex-col border-b border-border lg:max-h-none lg:w-56 lg:border-b-0 lg:border-r">
                 <div className="p-3">
                   <div className="relative">
                     <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -1104,7 +1104,7 @@ function PolicyModal({ role, onClose, userCount }) {
 
               {/* Right: Permission editor */}
               <div className="flex-1 overflow-y-auto p-5">
-                <div className="mb-4 flex items-center justify-between">
+                <div className="flex flex-wrap items-center justify-between gap-2">
                   <div>
                     <h4 className="font-semibold">
                       {ALL_MODULES.find((m) => m.key === selectedModule)?.label}
@@ -1398,9 +1398,9 @@ function PolicyBuilderTab() {
         </div>
       )}
 
-      <div className="flex overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+      <div className="flex flex-col overflow-hidden rounded-xl border border-border bg-white shadow-sm lg:flex-row">
         {/* Left: Module navigation */}
-        <div className="w-60 shrink-0 border-r border-border flex flex-col">
+        <div className="flex max-h-56 w-full shrink-0 flex-col border-b border-border lg:max-h-none lg:w-60 lg:border-b-0 lg:border-r">
           <div className="border-b border-border px-3 py-3">
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -1454,8 +1454,8 @@ function PolicyBuilderTab() {
         </div>
 
         {/* Right: Permission editor */}
-        <div className="flex-1 p-6">
-          <div className="mb-5 flex items-center justify-between">
+        <div className="flex-1 p-4 sm:p-6">
+          <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
             <div>
               <div className="flex items-center gap-2">
                 {(() => {

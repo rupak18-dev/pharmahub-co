@@ -31,7 +31,7 @@ import {
 import { LOSS_RATIO } from "@/lib/expiry";
 export function ExpiryReports({ rows, currency, onExport, onSaveSchedule }) {
   const [frequency, setFrequency] = useState("weekly");
-  const [email, setEmail] = useState("owner@pharmacyos.demo");
+  const [email, setEmail] = useState("owner@pharmahub.demo");
   const [whatsapp, setWhatsapp] = useState(true);
   const [prefs, setPrefs] = useState({
     near: true,
@@ -188,10 +188,10 @@ export function ExpiryReports({ rows, currency, onExport, onSaveSchedule }) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="owner@pharmacyos.demo">owner@pharmacyos.demo</SelectItem>
-                  <SelectItem value="manager@pharmacyos.demo">manager@pharmacyos.demo</SelectItem>
-                  <SelectItem value="inventory@pharmacyos.demo">
-                    inventory@pharmacyos.demo
+                  <SelectItem value="owner@pharmahub.demo">owner@pharmahub.demo</SelectItem>
+                  <SelectItem value="manager@pharmahub.demo">manager@pharmahub.demo</SelectItem>
+                  <SelectItem value="inventory@pharmahub.demo">
+                    inventory@pharmahub.demo
                   </SelectItem>
                 </SelectContent>
               </Select>

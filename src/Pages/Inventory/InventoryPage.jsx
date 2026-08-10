@@ -178,7 +178,7 @@ export default function InventoryPage() {
       </div>
 
       <Tabs defaultValue="valuation">
-        <TabsList>
+        <TabsList className="max-w-full justify-start overflow-x-auto no-scrollbar sm:justify-center">
           <TabsTrigger value="valuation">Valuation</TabsTrigger>
           <TabsTrigger value="reorder">Reorder alerts</TabsTrigger>
           <TabsTrigger value="movement">Fast / slow</TabsTrigger>
@@ -187,8 +187,8 @@ export default function InventoryPage() {
         </TabsList>
 
         <TabsContent value="valuation" className="mt-4">
-          <div className="overflow-hidden rounded-lg border border-border bg-card">
-            <table className="w-full text-sm">
+          <div className="overflow-x-auto rounded-lg border border-border bg-card">
+            <table className="w-full text-sm min-w-[560px]">
               <thead className="border-b border-border bg-muted/50 text-left text-xs uppercase tracking-wide text-muted-foreground">
                 <tr>
                   <th className="px-4 py-2.5">Medicine</th>
