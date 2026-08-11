@@ -48,7 +48,7 @@ const NAV_GROUPS = [
       { key: "users", title: "Users & Roles", icon: Users },
       { key: "notifications", title: "Notifications", icon: Bell },
       { key: "ai", title: "AI Insights", icon: Sparkles },
-      { key: "admin", title: "System Admin", icon: Settings },
+      { key: "admin", title: "Profile", icon: Settings },
     ],
   },
 ];

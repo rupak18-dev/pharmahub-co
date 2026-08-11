@@ -1,4 +1,5 @@
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Pill,
@@ -12,6 +13,7 @@ import {
   Bell,
   Sparkles,
   Settings,
+  ChevronRight,
   Layers,
 } from "lucide-react";
 import {
@@ -22,12 +24,18 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
   useSidebar,
 } from "@/Components/ui/sidebar";
 import { BrandMark } from "./BrandMark";
 import { usePermission } from "@/hooks/usePermission";
+import { cn } from "@/lib/utils";
+import { PROFILE_SECTIONS } from "@/lib/profileSections";
 const groups = [
   {
     label: "Operations",
@@ -64,17 +72,32 @@ const groups = [
       { key: "users", title: "Users & Roles", url: "/users", icon: Users },
       { key: "notifications", title: "Notifications", url: "/notifications", icon: Bell },
       { key: "ai", title: "AI Insights", url: "/ai", icon: Sparkles },
-      { key: "admin", title: "System Admin", url: "/admin", icon: Settings },
     ],
   },
 ];
 export function AppSidebar() {
-  const { state } = useSidebar();
+  const { state, setOpenMobile } = useSidebar();
   const collapsed = state === "collapsed";
-  const { pathname } = useLocation();
+  const { pathname, hash } = useLocation();
+  const navigate = useNavigate();
   const has = usePermission();
   const isActive = (url) =>
     url === "/dashboard" ? pathname === "/dashboard" : pathname.startsWith(url);
+
+  const profileEnabled = has("admin", "view");
+  const onProfilePage =
+    pathname.startsWith("/profile") ||
+    pathname.startsWith("/integrations") ||
+    pathname.startsWith("/settings") ||
+    pathname.startsWith("/organizations") ||
+    pathname.startsWith("/security") ||
+    pathname.startsWith("/admin");
+
+  const goToProfileUrl = (url) => {
+    navigate(url);
+    setOpenMobile(false);
+  };
+
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b border-sidebar-border">
@@ -117,6 +140,15 @@ export function AppSidebar() {
                       </SidebarMenuItem>
                     );
                   })}
+
+                  {group.label === "System" && profileEnabled && (
+                    <ProfileSidebarItem
+                      collapsed={collapsed}
+                      onProfilePage={onProfilePage}
+                      currentPath={pathname}
+                      onNavigate={goToProfileUrl}
+                    />
+                  )}
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
@@ -145,5 +177,76 @@ export function AppSidebar() {
         </div>
       )}
     </Sidebar>
+  );
+}
+
+function ProfileSidebarItem({ collapsed, onProfilePage, currentPath, onNavigate }) {
+  const { hash } = useLocation();
+  const [hoverCapable] = useState(
+    () =>
+      typeof window !== "undefined" &&
+      window.matchMedia("(hover: hover) and (pointer: fine)").matches,
+  );
+  const [clickOpen, setClickOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
+  const open = hoverCapable ? hovered : clickOpen;
+
+  const handleProfileClick = () => {
+    if (collapsed) {
+      onNavigate("/profile");
+      return;
+    }
+    if (hoverCapable) {
+      onNavigate("/profile");
+      return;
+    }
+    setClickOpen((prev) => !prev);
+  };
+
+  return (
+    <SidebarMenuItem onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}>
+      <SidebarMenuButton
+        onClick={handleProfileClick}
+        isActive={onProfilePage}
+        tooltip="Profile"
+        className={
+          onProfilePage
+            ? "bg-[#007A87] text-white hover:bg-[#007A87] hover:text-white! [&_svg]:text-white"
+            : "hover:bg-[#007A87]/10 hover:text-[#007A87] [&_svg]:hover:text-[#007A87]"
+        }
+      >
+        <Settings className="h-4 w-4" />
+        <span className="flex-1 truncate">Profile</span>
+      </SidebarMenuButton>
+      <SidebarMenuAction
+        onClick={handleProfileClick}
+        aria-label={open ? "Collapse Profile menu" : "Expand Profile menu"}
+      >
+        <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", open && "rotate-90")} />
+      </SidebarMenuAction>
+      {open && (
+        <SidebarMenuSub>
+          {PROFILE_SECTIONS.map(({ id, label, icon: Icon, path }) => {
+            const targetPath = path || `/integrations`;
+            const isCurrent = currentPath === targetPath || currentPath.startsWith(targetPath);
+            return (
+              <SidebarMenuSubItem key={id}>
+                <SidebarMenuSubButton
+                  isActive={isCurrent}
+                  onClick={() => onNavigate(targetPath)}
+                  className={
+                    isCurrent ? "bg-[#007A87]/10 text-[#007A87] [&_svg]:text-[#007A87]" : undefined
+                  }
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{label}</span>
+                </SidebarMenuSubButton>
+              </SidebarMenuSubItem>
+            );
+          })}
+        </SidebarMenuSub>
+      )}
+    </SidebarMenuItem>
   );
 }

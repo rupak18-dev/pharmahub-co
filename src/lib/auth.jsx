@@ -80,13 +80,51 @@ export function AuthProvider({ children }) {
     });
     setUser({ ...user, role });
   };
+
   const requestPasswordReset = async () => {
     // Mock — always succeed
     await new Promise((r) => setTimeout(r, 400));
   };
+
+  const updateProfile = (updatedFields) => {
+    if (!user) return null;
+    let updatedUser = null;
+    db.set((d) => {
+      let p = d.profiles.find((x) => x.id === user.id);
+      if (!p && d.profiles.length > 0) {
+        // Fallback to active owner profile if user session is attached to default owner
+        p = d.profiles[0];
+      }
+      if (p) {
+        Object.assign(p, updatedFields);
+        updatedUser = { ...p };
+      }
+      d.activityLogs.unshift({
+        id: db.uid(),
+        userId: user.id,
+        userName: user.name,
+        action: "Updated profile details",
+        entityType: "profile",
+        createdAt: new Date().toISOString(),
+      });
+    });
+    const finalUser = updatedUser || { ...user, ...updatedFields };
+    setUser(finalUser);
+    return finalUser;
+  };
+
   return (
     <AuthContext.Provider
-      value={{ user, loading, signIn, signUp, signOut, switchRole, requestPasswordReset }}
+      value={{
+        user,
+        loading,
+        signIn,
+        signUp,
+        signOut,
+        switchRole,
+        requestPasswordReset,
+        updateProfile,
+      }}
     >
       {children}
     </AuthContext.Provider>

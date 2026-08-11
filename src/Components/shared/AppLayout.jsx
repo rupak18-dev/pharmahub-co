@@ -3,6 +3,7 @@ import { useEffect, useState, useMemo, useRef } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/Components/ui/sidebar";
 import { AppSidebar } from "@/Components/shared/AppSidebar";
 import { UserMenu } from "@/Components/shared/UserMenu";
+import { InviteStaffDrawer } from "@/Components/shared/InviteStaffDrawer";
 import { useAuth } from "@/lib/auth";
 import { useDb } from "@/hooks/useDb";
 import { BrandMark } from "@/Components/shared/BrandMark";
@@ -269,6 +270,7 @@ export default function AppLayout() {
           </main>
         </div>
       </div>
+      <InviteStaffDrawer />
     </SidebarProvider>
   );
 }

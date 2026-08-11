@@ -402,6 +402,7 @@ function seed() {
       role: "Owner",
       active: true,
       orgName: "PharmaHub",
+      isDemo: true,
       createdAt: now,
     },
     {
@@ -411,6 +412,7 @@ function seed() {
       role: "Pharmacist",
       active: true,
       orgName: "PharmaHub",
+      isDemo: true,
       createdAt: now,
     },
     {
@@ -420,6 +422,7 @@ function seed() {
       role: "Cashier",
       active: true,
       orgName: "PharmaHub",
+      isDemo: true,
       createdAt: now,
     },
     {
@@ -429,6 +432,7 @@ function seed() {
       role: "Inventory Manager",
       active: true,
       orgName: "PharmaHub",
+      isDemo: true,
       createdAt: now,
     },
   ];
@@ -463,6 +467,9 @@ function seed() {
       deadStockDays: 90,
       lowStockDefault: 20,
       autoSwap: false,
+      operatingHours: { open: "09:00", close: "21:00" },
+      defaultLocation: "",
+      invoicePreferences: { showGst: true, showPharmacyDetails: true },
     },
     permissions: DEFAULT_PERMISSIONS,
   };
@@ -523,15 +530,22 @@ function load() {
     if (raw) {
       const loaded = JSON.parse(raw);
       // Strip any legacy dummy profiles ending in @pharmacyos.demo or placeholder names
-      const cleanProfiles = (loaded.profiles ?? []).filter(
-        (p) =>
-          !p.email.endsWith("@pharmacyos.demo") &&
-          !["Alex Morgan", "Priya Shah", "Sam Chen", "Diego Ruiz"].includes(p.name),
-      );
+      const cleanProfiles = (loaded.profiles ?? [])
+        .map((p) => ({
+          ...p,
+          isDemo: Boolean(p.isDemo) || p.email?.toLowerCase().endsWith("@pharmahub.demo"),
+          role: p.role === "Admin" ? "Administrator" : p.role,
+        }))
+        .filter(
+          (p) =>
+            !p.email.endsWith("@pharmacyos.demo") &&
+            !["Alex Morgan", "Priya Shah", "Sam Chen", "Diego Ruiz"].includes(p.name),
+        );
       cache = {
         ...seed(),
         ...loaded,
         profiles: cleanProfiles,
+        permissions: { ...DEFAULT_PERMISSIONS, ...(loaded.permissions ?? {}) },
         sales: loaded.sales ?? [],
         purchaseOrders: loaded.purchaseOrders ?? [],
         grns: loaded.grns ?? [],
