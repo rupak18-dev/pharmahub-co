@@ -38,9 +38,9 @@ const viewExport = () => ({ ...view(), export: true });
 function role(fn) {
   return Object.fromEntries(ALL_MODULES.map((m) => [m.key, fn(m.key)]));
 }
+
 export const DEFAULT_PERMISSIONS = {
-  Owner: role(() => all()),
-  Administrator: role(() => all()),
+  // 1. Pharmacy Manager — full access across all modules
   "Pharmacy Manager": role((m) => {
     if (["medicines", "batches", "sales"].includes(m)) return { ...all(), delete: false };
     if (["inventory", "purchases", "expiry", "audit", "notifications"].includes(m)) return all();
@@ -49,6 +49,8 @@ export const DEFAULT_PERMISSIONS = {
     if (m === "admin") return { ...view(), update: true };
     return none();
   }),
+
+  // 2. Senior Pharmacist — clinical access, can supervise pharmacists
   "Senior Pharmacist": role((m) => {
     if (m === "sales") return { ...all(), delete: false };
     if (["medicines", "batches", "inventory", "expiry"].includes(m))
@@ -59,6 +61,8 @@ export const DEFAULT_PERMISSIONS = {
     if (m === "admin") return { ...view(), update: true };
     return none();
   }),
+
+  // 3. Pharmacist — dispensing, prescriptions, basic inventory
   Pharmacist: role((m) => {
     if (m === "sales") return { ...all(), delete: false, approve: false };
     if (["medicines", "batches", "inventory", "expiry", "notifications"].includes(m))
@@ -66,92 +70,34 @@ export const DEFAULT_PERMISSIONS = {
     if (["dashboard", "reports", "ai"].includes(m)) return viewExport();
     return view();
   }),
+
+  // 4. Pharmacy Technician — dispensing support, inventory updates
   "Pharmacy Technician": role((m) => {
     if (["medicines", "batches"].includes(m)) return viewExport();
     if (m === "inventory") return { ...viewExport(), create: true, update: true };
     if (["dashboard", "expiry", "sales", "notifications"].includes(m)) return view();
     return none();
   }),
-  "Store Keeper": role((m) => {
-    if (["inventory", "batches"].includes(m)) return { ...view(), create: true, update: true };
-    if (["dashboard", "medicines", "expiry", "audit", "notifications"].includes(m)) return view();
-    return none();
-  }),
+
+  // 5. Inventory Manager — full inventory, batches, purchases, expiry
   "Inventory Manager": role((m) => {
     if (["medicines", "batches", "inventory", "expiry", "audit", "purchases"].includes(m))
       return { ...all(), delete: m === "batches" };
     if (["dashboard", "reports", "notifications", "ai"].includes(m)) return viewExport();
     return view();
   }),
-  "Procurement / Purchase Manager": role((m) => {
-    if (m === "purchases") return { ...all(), delete: false };
-    if (["medicines", "batches", "expiry", "reports", "notifications"].includes(m))
-      return viewExport();
-    if (m === "inventory") return { ...viewExport(), update: true };
-    if (["dashboard", "audit", "sales", "ai"].includes(m)) return view();
-    if (m === "admin") return view();
+
+  // 6. Cashier / Sales Executive — sales, billing, POS
+  "Cashier / Sales Executive": role((m) => {
+    if (m === "sales") return { ...none(), view: true, create: true, approve: true };
+    if (["dashboard", "medicines", "batches", "notifications"].includes(m)) return view();
     return none();
   }),
-  "Sales & POS Executive": role((m) => {
-    if (m === "sales") return { ...all(), delete: false };
-    if (["medicines", "inventory"].includes(m)) return viewExport();
-    if (["dashboard", "batches", "notifications"].includes(m)) return view();
-    return none();
-  }),
-  "Cashier / Billing Executive": role((m) => {
-    if (m === "sales") return { ...none(), view: true, create: true };
-    if (["dashboard", "medicines", "batches"].includes(m)) return view();
-    return none();
-  }),
-  "Accounts / Finance Manager": role((m) => {
-    if (["sales", "purchases", "reports", "audit"].includes(m)) return viewExport();
-    if (
-      ["dashboard", "medicines", "batches", "inventory", "expiry", "notifications", "ai"].includes(
-        m,
-      )
-    )
-      return view();
-    if (m === "users") return view();
-    if (m === "admin") return { ...view(), update: true };
-    return none();
-  }),
-  "Warehouse Manager": role((m) => {
-    if (["inventory", "batches"].includes(m)) return all();
-    if (m === "purchases") return { ...viewExport(), update: true };
-    if (["medicines", "expiry", "audit", "notifications"].includes(m)) return viewExport();
-    if (["dashboard", "reports", "sales"].includes(m)) return view();
-    if (m === "admin") return view();
-    return none();
-  }),
-  "Quality & Compliance Officer": role((m) => {
-    if (["expiry", "audit"].includes(m)) return all();
-    if (["medicines", "batches", "inventory", "reports", "notifications"].includes(m))
-      return viewExport();
-    if (["dashboard", "purchases", "sales", "ai"].includes(m)) return view();
-    if (m === "admin") return view();
-    return none();
-  }),
-  Auditor: role((m) => {
-    if (["audit", "reports"].includes(m)) return viewExport();
-    if (
-      [
-        "dashboard",
-        "medicines",
-        "batches",
-        "inventory",
-        "purchases",
-        "sales",
-        "expiry",
-        "users",
-        "notifications",
-        "ai",
-      ].includes(m)
-    )
-      return view();
-    if (m === "admin") return { ...view(), update: true };
-    return none();
-  }),
+
+  // 7. Store Administrator — users, roles, settings, full admin
+  "Store Administrator": role(() => all()),
 };
+
 export function can(matrix, role, module, action) {
   return matrix[role]?.[module]?.[action] ?? false;
 }

@@ -86,6 +86,29 @@ export function AuthProvider({ children }) {
     await new Promise((r) => setTimeout(r, 400));
   };
 
+  const changePassword = async (currentPassword, newPassword) => {
+    if (!user) throw new Error("Not signed in");
+    await new Promise((r) => setTimeout(r, 350));
+    // Verify current password: if a password is stored, check it; otherwise allow any value for demo accounts
+    const profile = db.get().profiles.find((p) => p.id === user.id);
+    if (profile?.password && profile.password !== currentPassword) {
+      throw new Error("Incorrect current password");
+    }
+    // Save new password in the profile
+    db.set((d) => {
+      const p = d.profiles.find((x) => x.id === user.id);
+      if (p) p.password = newPassword;
+      d.activityLogs.unshift({
+        id: db.uid(),
+        userId: user.id,
+        userName: user.name,
+        action: "Changed password",
+        entityType: "auth",
+        createdAt: new Date().toISOString(),
+      });
+    });
+  };
+
   const updateProfile = (updatedFields) => {
     if (!user) return null;
     let updatedUser = null;
@@ -123,6 +146,7 @@ export function AuthProvider({ children }) {
         signOut,
         switchRole,
         requestPasswordReset,
+        changePassword,
         updateProfile,
       }}
     >

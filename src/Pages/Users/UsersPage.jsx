@@ -348,7 +348,7 @@ function UsersTab() {
               size="sm"
               className={`h-8 w-8 p-0 rounded-md transition-all ${
                 viewMode === "list"
-                  ? "bg-[#007A87]/10 text-[#007A87] font-semibold"
+                  ? "bg-primary/10 text-primary font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setViewMode("list")}
@@ -361,7 +361,7 @@ function UsersTab() {
               size="sm"
               className={`h-8 w-8 p-0 rounded-md transition-all ${
                 viewMode === "grid"
-                  ? "bg-[#007A87]/10 text-[#007A87] font-semibold"
+                  ? "bg-primary/10 text-primary font-semibold"
                   : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setViewMode("grid")}
@@ -390,20 +390,20 @@ function UsersTab() {
               return (
                 <div
                   key={p.id}
-                  className="group relative flex flex-col justify-between rounded-xl border border-border/80 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-[#007A87]/40"
+                  className="group relative flex flex-col justify-between rounded-xl border border-border/80 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-primary/40"
                 >
                   <div className="space-y-4">
                     {/* Header: Avatar + Info + Actions */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-[#007A87]/20 bg-[#007A87]/10 text-sm font-bold text-[#007A87] shadow-2xs">
+                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-sm font-bold text-primary shadow-2xs">
                           {getInitials(p.name)}
                         </div>
                         <div className="min-w-0">
                           <h3 className="font-bold text-sm text-foreground truncate flex items-center gap-1.5">
                             {p.name}
                             {isSelf && (
-                              <span className="rounded bg-[#007A87]/10 px-1.5 py-0.5 text-[10px] font-semibold text-[#007A87]">
+                              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
                                 You
                               </span>
                             )}
@@ -499,23 +499,23 @@ function UsersTab() {
                     {/* Meta Details */}
                     <div className="space-y-2 text-xs border-t border-border/60 pt-3">
                       <div className="flex items-center gap-2 text-muted-foreground truncate">
-                        <Mail className="h-3.5 w-3.5 shrink-0 text-[#007A87]" />
+                        <Mail className="h-3.5 w-3.5 shrink-0 text-primary" />
                         <span className="truncate">{p.email}</span>
                       </div>
                       {p.phone && (
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <Phone className="h-3.5 w-3.5 shrink-0 text-[#007A87]" />
+                          <Phone className="h-3.5 w-3.5 shrink-0 text-primary" />
                           <span>{p.phone}</span>
                         </div>
                       )}
                       {p.department && (
                         <div className="flex items-center gap-2 text-muted-foreground">
-                          <Building2 className="h-3.5 w-3.5 shrink-0 text-[#007A87]" />
+                          <Building2 className="h-3.5 w-3.5 shrink-0 text-primary" />
                           <span>{p.department}</span>
                         </div>
                       )}
                       <div className="flex items-center gap-2 text-muted-foreground">
-                        <CalendarDays className="h-3.5 w-3.5 shrink-0 text-[#007A87]" />
+                        <CalendarDays className="h-3.5 w-3.5 shrink-0 text-primary" />
                         <span>Joined {formatDate(p.createdAt)}</span>
                       </div>
                     </div>

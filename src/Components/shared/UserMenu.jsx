@@ -82,11 +82,11 @@ export function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem onClick={() => navigate("/profile")} className="cursor-pointer font-medium">
-          <UserRound className="mr-2 h-4 w-4 text-[#007A87]" /> Profile
+          <UserRound className="mr-2 h-4 w-4 text-primary" /> Profile
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={() => navigate("/profile/edit")} className="cursor-pointer">
-          <Edit3 className="mr-2 h-4 w-4 text-[#007A87]" /> Edit Profile
+          <Edit3 className="mr-2 h-4 w-4 text-primary" /> Edit Profile
         </DropdownMenuItem>
 
         <DropdownMenuItem onClick={() => openInviteStaff()} className="cursor-pointer font-medium">
