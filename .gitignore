@@ -12,11 +12,12 @@ dist
 dist-ssr
 .output
 .vinxi
-.tanstack/**
+build/
 .nitro
 *.local
 
-# Wrangler / Cloudflare
+# React Router framework + Cloudflare (legacy)
+.react-router/
 .wrangler/
 .dev.vars
 
@@ -30,3 +31,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+.vercel
+.vercel.*
+.env*
