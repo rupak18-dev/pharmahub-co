@@ -87,7 +87,12 @@ function ProductThumbnail({ type = "tablet", name = "" }) {
     );
   }
 
-  if (lower.includes("chocolate") || lower.includes("packet") || lower.includes("bites") || lower.includes("rice")) {
+  if (
+    lower.includes("chocolate") ||
+    lower.includes("packet") ||
+    lower.includes("bites") ||
+    lower.includes("rice")
+  ) {
     return (
       <div className="h-9 w-9 shrink-0 rounded bg-amber-50 border border-amber-200 flex items-center justify-center p-1 shadow-xs">
         <svg viewBox="0 0 24 24" fill="none" stroke="#D97706" strokeWidth="1.8" className="w-6 h-6">
@@ -209,7 +214,15 @@ export default function ShortbookPage() {
     if (stockFilter !== "all") count++;
     if (tableSearchQuery.trim()) count++;
     return count;
-  }, [priorityFilter, sourceFilter, statusFilter, distributorFilter, manufFilter, stockFilter, tableSearchQuery]);
+  }, [
+    priorityFilter,
+    sourceFilter,
+    statusFilter,
+    distributorFilter,
+    manufFilter,
+    stockFilter,
+    tableSearchQuery,
+  ]);
 
   // Reset All Filters Handler
   const handleResetAllFilters = () => {
@@ -323,10 +336,12 @@ export default function ShortbookPage() {
       if (priorityFilter !== "all" && item.priority !== priorityFilter) return false;
 
       // Source Filter
-      if (sourceFilter !== "all" && item.source?.toLowerCase() !== sourceFilter.toLowerCase()) return false;
+      if (sourceFilter !== "all" && item.source?.toLowerCase() !== sourceFilter.toLowerCase())
+        return false;
 
       // Status Filter
-      if (statusFilter !== "all" && item.status?.toLowerCase() !== statusFilter.toLowerCase()) return false;
+      if (statusFilter !== "all" && item.status?.toLowerCase() !== statusFilter.toLowerCase())
+        return false;
 
       // Distributor Filter
       if (distributorFilter !== "all" && item.distributorName !== distributorFilter) return false;
@@ -381,7 +396,20 @@ export default function ShortbookPage() {
     }
 
     return items;
-  }, [rawShortbook, tableSearchQuery, priorityFilter, sourceFilter, statusFilter, distributorFilter, manufFilter, stockFilter, startDate, endDate, sortColumn, sortDirection]);
+  }, [
+    rawShortbook,
+    tableSearchQuery,
+    priorityFilter,
+    sourceFilter,
+    statusFilter,
+    distributorFilter,
+    manufFilter,
+    stockFilter,
+    startDate,
+    endDate,
+    sortColumn,
+    sortDirection,
+  ]);
 
   // Chart Data Aggregations
   const distributorChartData = useMemo(() => {
@@ -420,16 +448,14 @@ export default function ShortbookPage() {
         (m) =>
           m.name?.toLowerCase().includes(q) ||
           m.genericName?.toLowerCase().includes(q) ||
-          m.barcode?.includes(q)
+          m.barcode?.includes(q),
       )
       .slice(0, 6);
   }, [addNewQuery, medicines]);
 
   // Toggle selection for individual item
   const toggleSelect = (id) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+    setSelectedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]));
   };
 
   // Select / Deselect all
@@ -450,7 +476,10 @@ export default function ShortbookPage() {
 
     const newItem = {
       id: db.uid(),
-      date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" }) + " " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date:
+        new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" }) +
+        " " +
+        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       dateIso: new Date().toISOString(),
       itemName: med.name,
       itemSubtitle: med.packSize || "1 Strip of 10 Tablet",
@@ -480,7 +509,10 @@ export default function ShortbookPage() {
     if (!addNewQuery.trim()) return;
     const newItem = {
       id: db.uid(),
-      date: new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" }) + " " + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      date:
+        new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "2-digit" }) +
+        " " +
+        new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
       dateIso: new Date().toISOString(),
       itemName: addNewQuery.trim(),
       itemSubtitle: "1 Unit",
