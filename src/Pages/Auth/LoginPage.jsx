@@ -86,7 +86,7 @@ export default function LoginPage() {
             <div>cashier@PharmaHub.demo</div>
             <div>inventory@PharmaHub.demo</div>
           </div>
-          <div className="mt-1">Any password works in demo mode.</div>
+          <div className="mt-1">Password for all demo accounts is <strong>password123</strong>.</div>
           <Button
             type="button"
             variant="outline"

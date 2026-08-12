@@ -197,7 +197,7 @@ export default function MedicinesCatalogPage() {
   }, [searchParams.focusSearch, navigate]);
   const [therapeuticFilter, setTherapeuticFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortBy, setSortBy] = useState("name-asc");
+  const [sortBy, setSortBy] = useState("newest");
   const [visibleFields, setVisibleFields] = useState([]);
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
   const CUSTOMIZABLE_FILTERS = [
@@ -349,7 +349,10 @@ export default function MedicinesCatalogPage() {
       );
     });
     const sorted = [...result];
-    if (sortBy === "name-asc") {
+    if (sortBy === "newest") {
+      // Backend already returns newest first, or we can explicitly sort by createdAt
+      sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    } else if (sortBy === "name-asc") {
       sorted.sort((a, b) => a.name.localeCompare(b.name));
     } else if (sortBy === "name-desc") {
       sorted.sort((a, b) => b.name.localeCompare(a.name));
@@ -667,6 +670,7 @@ export default function MedicinesCatalogPage() {
                     <SelectValue placeholder="Sort by" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="newest">Newest First</SelectItem>
                     <SelectItem value="name-asc">Name A-Z</SelectItem>
                     <SelectItem value="name-desc">Name Z-A</SelectItem>
                     <SelectItem value="stock-asc">Stock Low-High</SelectItem>
@@ -1495,8 +1499,8 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           name: editing.name,
           genericName: editing.genericName ?? "",
           brandName: editing.brandName ?? "",
-          categoryId: editing.categoryId ?? "",
-          manufacturerId: editing.manufacturerId ?? "",
+          categoryId: (typeof editing.categoryId === 'object' ? editing.categoryId?._id : editing.categoryId) ?? "",
+          manufacturerId: (typeof editing.manufacturerId === 'object' ? editing.manufacturerId?._id : editing.manufacturerId) ?? "",
           hsnCode: editing.hsnCode ?? "",
           gstRate: editing.gstRate,
           storageRequirements: editing.storageRequirements ?? "",
@@ -1554,12 +1558,20 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           </SheetDescription>
         </SheetHeader>
         <form
-          onSubmit={handleSubmit((v) => {
-            onSubmit(v);
-            reset();
-          })}
-          className="flex-1 overflow-y-auto space-y-5 py-4 pr-1"
-        >
+            id="medicine-form"
+            onSubmit={handleSubmit((v) => {
+              onSubmit(v);
+              reset();
+            }, (errors) => {
+              const firstError = Object.values(errors)[0];
+              if (firstError) {
+                toast.error(`Validation Error: ${firstError.message}`);
+              } else {
+                toast.error("Please fill all required fields correctly.");
+              }
+            })}
+            className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6"
+          >
           {/* GENERAL INFO */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">
