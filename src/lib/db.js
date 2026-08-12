@@ -754,7 +754,8 @@ function load() {
         sales: loaded.sales ?? [],
         purchaseOrders: loaded.purchaseOrders ?? [],
         grns: loaded.grns ?? [],
-        shortbook: loaded.shortbook && loaded.shortbook.length > 0 ? loaded.shortbook : seeded.shortbook,
+        shortbook:
+          loaded.shortbook && loaded.shortbook.length > 0 ? loaded.shortbook : seeded.shortbook,
         notificationsRead: loaded.notificationsRead ?? [],
       });
       return cache;
