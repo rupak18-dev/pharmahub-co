@@ -41,10 +41,13 @@ export default function AppLayout() {
   }
   if (!user) return null;
   return (
-    <SidebarProvider>
-      <div className="flex h-screen w-full bg-background overflow-hidden">
+    <SidebarProvider className="h-svh overflow-hidden">
+      <div className="flex h-svh w-full bg-background overflow-hidden">
         <AppSidebar />
-        <div ref={scrollRef} className="flex min-w-0 flex-1 flex-col h-screen overflow-y-auto">
+        <div
+          ref={scrollRef}
+          className="flex min-w-0 flex-1 flex-col h-svh overflow-y-auto overflow-x-hidden"
+        >
           <header className="sticky top-0 z-30 shrink-0 flex h-16 items-center gap-4 border-b border-border bg-background px-4 sm:px-6 shadow-sm">
             <SidebarTrigger />
             <div className="ml-auto flex items-center gap-2">

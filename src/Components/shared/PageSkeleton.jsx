@@ -171,7 +171,7 @@ const SHELL_MENU_GROUPS = [6, 3, 2];
 
 export function AppShellSkeleton({ pathname = "", className }) {
   return (
-    <div className={cn("flex h-screen w-full overflow-hidden bg-background", className)}>
+    <div className={cn("flex h-svh w-full overflow-hidden bg-background", className)}>
       <aside className="hidden w-60 shrink-0 flex-col border-r border-sidebar-border bg-sidebar md:flex">
         <div className="flex h-11 items-center gap-2 border-b border-sidebar-border px-3">
           <Skeleton className="h-7 w-7 shrink-0 rounded-md" />

@@ -55,7 +55,7 @@ export function LoginForm({ onSubmit, register, errors, isSubmitting, onDemoClic
 
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center space-x-2">
-            <Checkbox id="remember-me" className="rounded-sm border-muted-foreground/40" />
+            <Checkbox id="remember-me" />
             <Label
               htmlFor="remember-me"
               className="text-sm font-medium text-muted-foreground leading-none"
