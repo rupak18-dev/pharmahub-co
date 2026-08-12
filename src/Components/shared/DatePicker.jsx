@@ -10,6 +10,7 @@ export function DatePicker({
   placeholder = "DD/MM/YYYY",
   fromYear = new Date().getFullYear() - 5,
   toYear = new Date().getFullYear() + 5,
+  disabled,
 }) {
   const [open, setOpen] = useState(false);
   const parsed = value ? parse(value, "yyyy-MM-dd", new Date()) : undefined;
@@ -31,6 +32,7 @@ export function DatePicker({
         <Calendar
           mode="single"
           selected={selected}
+          disabled={disabled}
           onSelect={(d) => {
             if (d) {
               onChange(format(d, "yyyy-MM-dd"));

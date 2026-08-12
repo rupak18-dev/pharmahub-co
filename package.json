@@ -8,7 +8,10 @@
     "build": "vite build",
     "preview": "vite preview",
     "lint": "eslint .",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "schema:apply": "node scripts/apply-batch-schema.js",
+    "seed:medicines": "node scripts/seed-medicines.js",
+    "seed:batches": "node scripts/seed-batches.js"
   },
   "dependencies": {
     "@fontsource/poppins": "^5.3.0",
@@ -52,7 +55,9 @@
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
     "lucide-react": "^0.575.0",
+    "mongodb": "^7.5.0",
     "picomatch": "^4.0.5",
+    "qrcode": "^1.5.4",
     "react": "^19.2.0",
     "react-day-picker": "^9.14.0",
     "react-dom": "^19.2.0",

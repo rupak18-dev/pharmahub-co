@@ -1,5 +1,6 @@
 import { DEFAULT_PERMISSIONS } from "./permissions";
-const STORAGE_KEY = "PharmaHub_db_v3";
+const STORAGE_KEY = "PharmaHub_db_v4";
+const DEMO_BATCHES = false; // set to true to re-enable the generated demo batches
 const uid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -286,59 +287,61 @@ function seed() {
   const batchCode = (prefix, year, month, seq) =>
     `${prefix}-${String(year).slice(-2)}${String(month).padStart(2, "0")}-${String(seq).padStart(2, "0")}`;
   const nearExpiryDaysPool = [0, 2, 5, 12, 25, 45, 80];
-  const batches = medicines.flatMap((m, i) => {
-    const suppliers = [sup1.id, sup2.id];
-    const seq = i + 1;
-    // Batch A - healthy
-    const a = {
-      id: uid(),
-      medicineId: m.id,
-      batchNumber: batchCode(m.prefix, 24, ((i * 2) % 12) + 1, seq),
-      mfgDate: daysFromNow(-180),
-      expiryDate: daysFromNow(365 + i * 20),
-      mrp: 40 + i * 15,
-      purchasePrice: 25 + i * 10,
-      sellingPrice: 38 + i * 14,
-      supplierId: suppliers[i % 2],
-      currentStock: 0,
-      status: "active",
-      createdAt: now,
-    };
-    // Batch B - near expiry (spread across the warning windows)
-    const b = {
-      id: uid(),
-      medicineId: m.id,
-      batchNumber: batchCode(m.prefix, 24, ((i * 2 + 4) % 12) + 1, seq),
-      mfgDate: daysFromNow(-300),
-      expiryDate: daysFromNow(nearExpiryDaysPool[i % nearExpiryDaysPool.length]),
-      mrp: 40 + i * 15,
-      purchasePrice: 25 + i * 10,
-      sellingPrice: 38 + i * 14,
-      supplierId: suppliers[(i + 1) % 2],
-      currentStock: 0,
-      status: "near_expiry",
-      createdAt: now,
-    };
-    // Batch C - expired (only some)
-    if (i % 3 === 0) {
-      const c = {
-        id: uid(),
-        medicineId: m.id,
-        batchNumber: batchCode(m.prefix, 23, ((i * 3 + 9) % 12) + 1, seq),
-        mfgDate: daysFromNow(-500),
-        expiryDate: daysFromNow(-10 - i),
-        mrp: 40 + i * 15,
-        purchasePrice: 25 + i * 10,
-        sellingPrice: 38 + i * 14,
-        supplierId: suppliers[i % 2],
-        currentStock: 0,
-        status: "expired",
-        createdAt: now,
-      };
-      return [a, b, c];
-    }
-    return [a, b];
-  });
+  const batches = DEMO_BATCHES
+    ? medicines.flatMap((m, i) => {
+        const suppliers = [sup1.id, sup2.id];
+        const seq = i + 1;
+        // Batch A - healthy
+        const a = {
+          id: uid(),
+          medicineId: m.id,
+          batchNumber: batchCode(m.prefix, 24, ((i * 2) % 12) + 1, seq),
+          mfgDate: daysFromNow(-180),
+          expiryDate: daysFromNow(365 + i * 20),
+          mrp: 40 + i * 15,
+          purchasePrice: 25 + i * 10,
+          sellingPrice: 38 + i * 14,
+          supplierId: suppliers[i % 2],
+          currentStock: 0,
+          status: "active",
+          createdAt: now,
+        };
+        // Batch B - near expiry (spread across the warning windows)
+        const b = {
+          id: uid(),
+          medicineId: m.id,
+          batchNumber: batchCode(m.prefix, 24, ((i * 2 + 4) % 12) + 1, seq),
+          mfgDate: daysFromNow(-300),
+          expiryDate: daysFromNow(nearExpiryDaysPool[i % nearExpiryDaysPool.length]),
+          mrp: 40 + i * 15,
+          purchasePrice: 25 + i * 10,
+          sellingPrice: 38 + i * 14,
+          supplierId: suppliers[(i + 1) % 2],
+          currentStock: 0,
+          status: "near_expiry",
+          createdAt: now,
+        };
+        // Batch C - expired (only some)
+        if (i % 3 === 0) {
+          const c = {
+            id: uid(),
+            medicineId: m.id,
+            batchNumber: batchCode(m.prefix, 23, ((i * 3 + 9) % 12) + 1, seq),
+            mfgDate: daysFromNow(-500),
+            expiryDate: daysFromNow(-10 - i),
+            mrp: 40 + i * 15,
+            purchasePrice: 25 + i * 10,
+            sellingPrice: 38 + i * 14,
+            supplierId: suppliers[i % 2],
+            currentStock: 0,
+            status: "expired",
+            createdAt: now,
+          };
+          return [a, b, c];
+        }
+        return [a, b];
+      })
+    : [];
   const stockQty = [180, 96, 42, 210, 75, 160, 110];
   const locPool = [
     "Front Shelf",
@@ -463,6 +466,7 @@ function seed() {
       deadStockDays: 90,
       lowStockDefault: 20,
       autoSwap: false,
+      racks: [],
     },
     permissions: DEFAULT_PERMISSIONS,
   };
@@ -525,10 +529,18 @@ function mergePermissions(stored) {
     }),
   );
 }
+function hideMockBatches(data) {
+  if (DEMO_BATCHES) return data;
+  data.batches = [];
+  data.inventoryStock = [];
+  data.inventoryLedger = [];
+  data.stockMovements = [];
+  return data;
+}
 function load() {
   if (cache) return cache;
   if (!isBrowser()) {
-    cache = seed();
+    cache = hideMockBatches(seed());
     return cache;
   }
   try {
@@ -541,7 +553,7 @@ function load() {
           !p.email.endsWith("@pharmahub.demo") &&
           !["Alex Morgan", "Priya Shah", "Sam Chen", "Diego Ruiz"].includes(p.name),
       );
-      cache = {
+      cache = hideMockBatches({
         ...seed(),
         ...loaded,
         permissions: mergePermissions(loaded.permissions),
@@ -550,13 +562,13 @@ function load() {
         purchaseOrders: loaded.purchaseOrders ?? [],
         grns: loaded.grns ?? [],
         notificationsRead: loaded.notificationsRead ?? [],
-      };
+      });
       return cache;
     }
   } catch {
     // ignore
   }
-  cache = seed();
+  cache = hideMockBatches(seed());
   save(cache);
   return cache;
 }
@@ -586,7 +598,7 @@ export const db = {
     };
   },
   reset: () => {
-    cache = seed();
+    cache = hideMockBatches(seed());
     save(cache);
   },
   uid,
