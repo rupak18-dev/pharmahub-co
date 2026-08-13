@@ -23,7 +23,7 @@ import {
 import { db } from "@/lib/db";
 import { useDb } from "@/hooks/useDb";
 import { ALL_MODULES, ALL_ROLES } from "@/lib/permissions";
-import { getRoleDescription, getRoleIcon } from "./RoleCard";
+import { getRoleDescription, getRoleIcon } from "@/lib/roleCatalog";
 import { toast } from "sonner";
 const ACTION_GROUPS = [
   {
