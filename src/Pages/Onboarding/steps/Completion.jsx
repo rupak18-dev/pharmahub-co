@@ -1,15 +1,54 @@
 import React, { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router";
+import { useAuth } from "@/lib/auth";
+import { mapJobTitleToRole } from "@/lib/roles";
+import { saveOnboarding } from "@/lib/onboardingApi";
 import { Check, Loader2 } from "lucide-react";
 
-export function Completion() {
+export function Completion({ onboarding }) {
   const navigate = useNavigate();
+  const { updateProfile } = useAuth();
   const [activeStep, setActiveStep] = useState(0);
+  const [syncError, setSyncError] = useState(null);
 
   const steps = ["Configuring organization", "Preparing dashboard", "Applying business settings"];
 
   useEffect(() => {
+    const personal = onboarding?.personal || {};
+    const workspace = onboarding?.workspace || {};
+    const name = [personal.firstName, personal.lastName].filter(Boolean).join(" ").trim();
+    const orgName = workspace.organizationName?.trim();
+
+    const body = { onboarded: true };
+    if (name) body.name = name;
+    if (personal.jobTitle) body.role = mapJobTitleToRole(personal.jobTitle);
+    if (orgName) body.orgName = orgName;
+
+    const onboardingPayload = {
+      ...(onboarding.businessType ? { businessType: onboarding.businessType } : {}),
+      ...(Object.keys(personal).length ? { personal } : {}),
+      ...(Object.keys(workspace).length ? { workspace } : {}),
+      ...(Array.isArray(onboarding.quickStart) && onboarding.quickStart.length
+        ? { quickStart: onboarding.quickStart }
+        : {}),
+      completedAt: new Date().toISOString(),
+    };
+
+    let cancelled = false;
+
+    const syncProfile = async () => {
+      try {
+        await updateProfile(body);
+        await saveOnboarding(onboardingPayload);
+      } catch {
+        if (!cancelled) {
+          setSyncError("Couldn't sync your profile. You can update it later in Settings.");
+        }
+      }
+    };
+    const syncPromise = syncProfile();
+
     // Reveal step 1 after 0.5s
     const t1 = setTimeout(() => setActiveStep(1), 500);
     // Reveal step 2 after 1.2s
@@ -18,19 +57,21 @@ export function Completion() {
     const t3 = setTimeout(() => setActiveStep(3), 1900);
     // Complete sequence after 2.6s
     const t4 = setTimeout(() => setActiveStep(4), 2600);
-    // Navigate after 3.2s
-    const t5 = setTimeout(() => {
-      window.location.href = "/dashboard";
+    // Navigate after 3.2s — wait for the profile sync so `onboarded` is true
+    const t5 = setTimeout(async () => {
+      await syncPromise;
+      if (!cancelled) navigate("/dashboard");
     }, 3200);
 
     return () => {
+      cancelled = true;
       clearTimeout(t1);
       clearTimeout(t2);
       clearTimeout(t3);
       clearTimeout(t4);
       clearTimeout(t5);
     };
-  }, [navigate]);
+  }, [navigate, updateProfile, onboarding]);
 
   return (
     <div className="flex flex-col justify-center min-h-[60vh] max-w-md mx-auto">
@@ -95,6 +136,18 @@ export function Completion() {
             transition={{ duration: 3, ease: "easeInOut" }}
           />
         </div>
+
+        {syncError && (
+          <AnimatePresence>
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="mt-6 text-center text-sm font-medium text-destructive"
+            >
+              {syncError}
+            </motion.p>
+          </AnimatePresence>
+        )}
       </motion.div>
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { OnboardingLayout } from "./components/OnboardingLayout";
 import { BusinessType } from "./steps/BusinessType";
 import { PersonalInfo } from "./steps/PersonalInfo";
@@ -16,9 +16,10 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/Components/ui/alert-dialog";
+import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
+import { getOnboarding, saveOnboarding } from "@/lib/onboardingApi";
+import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router";
-
-const STORAGE_KEY = "pharmahub_onboarding_state";
 
 const INITIAL_STATE = {
   businessType: null,
@@ -30,25 +31,64 @@ const INITIAL_STATE = {
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
 
-  // Initialize state from localStorage or default
-  const [onboarding, setOnboarding] = useState(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        return JSON.parse(saved);
-      }
-    } catch (e) {
-      console.error("Failed to parse onboarding state from local storage");
-    }
-    return INITIAL_STATE;
-  });
+  useEffect(() => {
+    if (loading) return;
+    if (!user) navigate("/login");
+    else if (user.onboarded) navigate("/dashboard");
+  }, [user, loading, navigate]);
 
+  const [onboarding, setOnboarding] = useState(INITIAL_STATE);
   const [showExitDialog, setShowExitDialog] = useState(false);
 
-  // Auto-save on every state change
+  // Hydrate from backend — the Mongo `onboardings` collection is the sole store.
+  const hydratedRef = useRef(false);
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(onboarding));
+    if (loading) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const remote = await getOnboarding();
+        if (cancelled || !remote) return;
+        setOnboarding({
+          businessType: remote.businessType ?? null,
+          personal: { ...(remote.personal || {}) },
+          workspace: { ...(remote.workspace || {}) },
+          quickStart: Array.isArray(remote.quickStart) ? remote.quickStart : [],
+          currentStep: Number.isInteger(remote.currentStep) ? remote.currentStep : 0,
+        });
+      } catch {
+        // Backend unreachable — stay on defaults.
+      } finally {
+        hydratedRef.current = true;
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [loading]);
+
+  // Auto-save to the backend after a debounce.
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const payload = {
+      ...(onboarding.businessType ? { businessType: onboarding.businessType } : {}),
+      ...(onboarding.personal && Object.keys(onboarding.personal).length
+        ? { personal: onboarding.personal }
+        : {}),
+      ...(onboarding.workspace && Object.keys(onboarding.workspace).length
+        ? { workspace: onboarding.workspace }
+        : {}),
+      ...(onboarding.quickStart && onboarding.quickStart.length
+        ? { quickStart: onboarding.quickStart }
+        : {}),
+      currentStep: onboarding.currentStep,
+    };
+    const timer = setTimeout(() => {
+      saveOnboarding(payload).catch(() => {});
+    }, 500);
+    return () => clearTimeout(timer);
   }, [onboarding]);
 
   // Handle accidental reload warning natively (optional, but requested exit dialog implies on internal navigation or reload)
@@ -76,12 +116,14 @@ export default function OnboardingPage() {
   };
 
   const handleExit = () => {
-    localStorage.removeItem(STORAGE_KEY);
     navigate("/login");
   };
 
   const safeStepIndex = Math.min(onboarding.currentStep, ONBOARDING_STEPS.length - 1);
   const currentStepData = ONBOARDING_STEPS[safeStepIndex];
+
+  if (loading) return <FullScreenSkeleton />;
+  if (!user) return null;
 
   return (
     <>
@@ -113,7 +155,7 @@ export default function OnboardingPage() {
             prevStep={prevStep}
           />
         )}
-        {currentStepData?.id === "completion" && <Completion />}
+        {currentStepData?.id === "completion" && <Completion onboarding={onboarding} />}
       </OnboardingLayout>
 
       <AlertDialog open={showExitDialog} onOpenChange={setShowExitDialog}>

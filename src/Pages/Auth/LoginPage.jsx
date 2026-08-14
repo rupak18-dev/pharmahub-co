@@ -5,7 +5,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { db } from "@/lib/db";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { LoginForm } from "./components/Login/LoginForm";
 import { motion, AnimatePresence } from "framer-motion";
@@ -24,44 +23,27 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(schema) });
 
+  const afterAuthPath = (currentUser) => (currentUser.onboarded ? "/dashboard" : "/onboarding");
+
   useEffect(() => {
-    if (user) navigate("/dashboard");
+    if (user) navigate(afterAuthPath(user));
   }, [user, navigate]);
 
   const onSubmit = async (data) => {
     try {
-      await signIn(data.email, data.password);
+      const signedIn = await signIn(data.email, data.password);
       toast.success("Welcome back to PharmaHub");
-      navigate("/dashboard");
+      navigate(afterAuthPath(signedIn));
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Sign in failed");
     }
   };
 
-  const handleDemoLogin = async () => {
-    // Fill credentials and attempt login
-    setValue("email", "owner@PharmaHub.demo");
-    setValue("password", "demo");
-
-    try {
-      await signIn("owner@PharmaHub.demo", "demo");
-      toast.success("Welcome to the Demo Workspace!");
-      navigate("/dashboard");
-    } catch (e) {
-      // If demo fails, maybe the DB needs resetting. Let's reset it and try again.
-      db.reset();
-      try {
-        localStorage.removeItem("PharmaHub_session_v1");
-      } catch {
-        // ignore
-      }
-      toast.success("Database reset to defaults. Please try logging in again.");
-      setTimeout(() => window.location.reload(), 1000);
-    }
+  const handleGoogleClick = () => {
+    toast.info("Google sign-in is coming soon");
   };
 
   return (
@@ -80,7 +62,7 @@ export default function LoginPage() {
             register={register}
             errors={errors}
             isSubmitting={isSubmitting}
-            onDemoClick={handleDemoLogin}
+            onGoogleClick={handleGoogleClick}
           />
         </motion.div>
       </AnimatePresence>

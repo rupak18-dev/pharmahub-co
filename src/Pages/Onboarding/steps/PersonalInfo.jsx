@@ -93,7 +93,7 @@ export function PersonalInfo({ onboarding, updateData, nextStep, prevStep }) {
       />
 
       <div className="space-y-5 mt-8">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-4">
           <InputField
             id="firstName"
             name="firstName"
