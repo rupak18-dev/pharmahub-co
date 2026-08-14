@@ -1319,14 +1319,7 @@ export default function ShortbookPage() {
                 <p className="text-xs text-slate-500">Visual order breakdown, distributor demands, priority splits, and manufacturer stats</p>
               </div>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setViewMode("classical")}
-              className="text-xs text-slate-700 hover:bg-slate-100"
-            >
-              Back to Classical Table
-            </Button>
+
           </div>
 
           {/* Metric Summary Cards */}
@@ -1846,6 +1839,33 @@ export default function ShortbookPage() {
           </DialogContent>
         )}
       </Dialog>
+
+      {/* ── Floating Back to Top button (all screens) ── */}
+      <button
+        type="button"
+        onClick={(e) => {
+          // The page scrolls inside the AppLayout div, not window —
+          // walk up the DOM to find the first scrollable ancestor and scroll it.
+          let el = e.currentTarget?.parentElement;
+          while (el && el !== document.body) {
+            const overflow = window.getComputedStyle(el).overflowY;
+            if (overflow === "auto" || overflow === "scroll") {
+              el.scrollTo({ top: 0, behavior: "smooth" });
+              return;
+            }
+            el = el.parentElement;
+          }
+          // Fallback in case nothing was found
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        aria-label="Back to top"
+        className="fixed bottom-6 right-4 z-50 flex items-center gap-1.5 bg-[#0F3A70] hover:bg-[#0A2A52] active:scale-95 text-white text-xs font-semibold px-3.5 py-2 rounded-full shadow-lg transition-all"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+        </svg>
+        Back to Top
+      </button>
     </div>
   );
 }
