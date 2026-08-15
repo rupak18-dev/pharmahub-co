@@ -25,6 +25,7 @@ const INITIAL_STATE = {
   businessType: null,
   personal: {},
   workspace: {},
+  branding: {},
   quickStart: [],
   currentStep: 0,
 };
@@ -33,14 +34,15 @@ export default function OnboardingPage() {
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
+  const [onboarding, setOnboarding] = useState(INITIAL_STATE);
+  const [showExitDialog, setShowExitDialog] = useState(false);
+
   useEffect(() => {
     if (loading) return;
     if (!user) navigate("/login");
-    else if (user.onboarded) navigate("/dashboard");
-  }, [user, loading, navigate]);
-
-  const [onboarding, setOnboarding] = useState(INITIAL_STATE);
-  const [showExitDialog, setShowExitDialog] = useState(false);
+    else if (user.onboarded && onboarding.currentStep < ONBOARDING_STEPS.length - 1)
+      navigate("/dashboard");
+  }, [user, loading, navigate, onboarding.currentStep]);
 
   // Hydrate from backend — the Mongo `onboardings` collection is the sole store.
   const hydratedRef = useRef(false);
@@ -55,6 +57,7 @@ export default function OnboardingPage() {
           businessType: remote.businessType ?? null,
           personal: { ...(remote.personal || {}) },
           workspace: { ...(remote.workspace || {}) },
+          branding: { ...(remote.branding || {}) },
           quickStart: Array.isArray(remote.quickStart) ? remote.quickStart : [],
           currentStep: Number.isInteger(remote.currentStep) ? remote.currentStep : 0,
         });
@@ -79,6 +82,9 @@ export default function OnboardingPage() {
         : {}),
       ...(onboarding.workspace && Object.keys(onboarding.workspace).length
         ? { workspace: onboarding.workspace }
+        : {}),
+      ...(onboarding.branding && Object.keys(onboarding.branding).length
+        ? { branding: onboarding.branding }
         : {}),
       ...(onboarding.quickStart && onboarding.quickStart.length
         ? { quickStart: onboarding.quickStart }

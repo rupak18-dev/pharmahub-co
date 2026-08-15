@@ -1,10 +1,11 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { API_BASE } from "@/lib/api";
 import { SignupForm } from "./components/Shared/SignupForm";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { AnimatePresence, motion } from "framer-motion";
@@ -34,7 +35,7 @@ const schema = z
   });
 
 export default function SignupPage() {
-  const { signUp, user } = useAuth();
+  const { signUp } = useAuth();
   const navigate = useNavigate();
 
   const {
@@ -48,45 +49,43 @@ export default function SignupPage() {
 
   const passwordValue = watch("password");
 
-  useEffect(() => {
-    if (user) navigate(user.onboarded ? "/dashboard" : "/onboarding");
-  }, [user, navigate]);
-
   const onSubmit = async (data) => {
     try {
-      const signedUp = await signUp({ email: data.email, password: data.password });
-      toast.success("Account created — welcome to PharmaHub");
-      navigate(signedUp?.onboarded ? "/dashboard" : "/onboarding");
+      const created = await signUp({ email: data.email, password: data.password });
+      toast.success("Successfully signed up!");
+      navigate(created?.onboarded ? "/dashboard" : "/onboarding");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Account creation failed");
     }
   };
 
   const handleGoogleClick = () => {
-    toast.info("Google sign-in is coming soon");
+    window.location.href = `${API_BASE}/auth/google`;
   };
 
   return (
-    <AuthLayout>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key="signup"
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -50 }}
-          transition={{ duration: 0.4, ease: "easeInOut" }}
-          className="w-full"
-        >
-          <SignupForm
-            onSubmit={handleSubmit(onSubmit)}
-            register={register}
-            errors={errors}
-            isSubmitting={isSubmitting}
-            passwordValue={passwordValue}
-            onGoogleClick={handleGoogleClick}
-          />
-        </motion.div>
-      </AnimatePresence>
-    </AuthLayout>
+    <>
+      <AuthLayout>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key="signup"
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.4, ease: "easeInOut" }}
+            className="w-full"
+          >
+            <SignupForm
+              onSubmit={handleSubmit(onSubmit)}
+              register={register}
+              errors={errors}
+              isSubmitting={isSubmitting}
+              passwordValue={passwordValue}
+              onGoogleClick={handleGoogleClick}
+            />
+          </motion.div>
+        </AnimatePresence>
+      </AuthLayout>
+    </>
   );
 }

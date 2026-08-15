@@ -1,6 +1,7 @@
 import { createBrowserRouter } from "react-router";
 import { AppRoot, AppRootErrorBoundary } from "@/Components/shared/AppRoot";
 import AppLayout from "@/Components/shared/AppLayout";
+import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
 
 const lazyPage = (loader) => () =>
   loader().then((mod) => ({ Component: mod.default, handle: mod.handle }));
@@ -8,11 +9,20 @@ const lazyPage = (loader) => () =>
 export const router = createBrowserRouter([
   {
     Component: AppRoot,
+    HydrateFallback: () => <FullScreenSkeleton />,
     ErrorBoundary: AppRootErrorBoundary,
     children: [
       { path: "/", lazy: lazyPage(() => import("@/Pages/Landing/LandingPage")) },
       { path: "/login", lazy: lazyPage(() => import("@/Pages/Auth/LoginPage")) },
       { path: "/signup", lazy: lazyPage(() => import("@/Pages/Auth/SignupPage")) },
+      {
+        path: "/auth/callback",
+        lazy: lazyPage(() => import("@/Pages/Auth/GoogleCallbackPage")),
+      },
+      {
+        path: "/verify-email",
+        lazy: lazyPage(() => import("@/Pages/Auth/VerifyEmailPage")),
+      },
       { path: "/onboarding", lazy: lazyPage(() => import("@/Pages/Onboarding/OnboardingPage")) },
       {
         path: "/forgot-password",

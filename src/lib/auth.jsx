@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { apiRequest } from "./api";
 
 const SESSION_KEY = "PharmaHub_session_v2";
@@ -35,12 +35,18 @@ export function AuthProvider({ children }) {
         const me = await apiRequest("/auth/me");
         if (cancelled) return;
         const stored = readSession();
-        if (stored?.token) writeSession({ token: stored.token, user: me });
-        setUser(me);
+        // The deployed backend may still run a dev-bypass that returns a
+        // hardcoded demo user on /auth/me. Don't let that clobber a real
+        // stored session (which may carry `onboarded` and the user's profile).
+        const isDevBypass = !!me && me.email === "owner@pharmahub.demo";
+        const nextUser = stored?.token && isDevBypass && stored.user ? stored.user : me;
+        if (stored?.token) writeSession({ token: stored.token, user: nextUser });
+        setUser(nextUser);
       } catch {
-        // No valid session (token missing/expired) — stay signed out.
+        // No valid session (token missing/expired) — stay signed out or restore cached.
         if (cancelled) return;
-        setUser(null);
+        const stored = readSession();
+        setUser(stored?.user ?? null);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -50,7 +56,7 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const signIn = async (email, password) => {
+  const signIn = useCallback(async (email, password) => {
     const data = await apiRequest("/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
@@ -58,17 +64,43 @@ export function AuthProvider({ children }) {
     writeSession({ token: data.token, user: data.user });
     setUser(data.user);
     return data.user;
-  };
+  }, []);
 
-  const signUp = async ({ email, password }) => {
-    await apiRequest("/auth/register", {
+  const signUp = useCallback(async ({ email, password, name }) => {
+    const data = await apiRequest("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({
+        email,
+        password,
+        name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
+      }),
     });
-    return signIn(email, password);
-  };
+    writeSession({ token: data.token, user: data.user });
+    setUser(data.user);
+    return data.user;
+  }, []);
 
-  const signOut = async () => {
+  // Used by the Google redirect callback page to restore the session handed
+  // back via the URL fragment.
+  const restoreSession = useCallback(async ({ token, user }) => {
+    writeSession({ token, user });
+    setUser(user);
+    return user;
+  }, []);
+
+  // Final step of a Google sign-up: verify the emailed OTP, then the backend
+  // creates the account and returns a fresh session.
+  const completeGoogleOtp = useCallback(async ({ token, code }) => {
+    const data = await apiRequest("/auth/google/verify-otp", {
+      method: "POST",
+      body: JSON.stringify({ token, code }),
+    });
+    writeSession({ token: data.token, user: data.user });
+    setUser(data.user);
+    return data.user;
+  }, []);
+
+  const signOut = useCallback(async () => {
     try {
       await apiRequest("/auth/logout", { method: "POST" });
     } catch {
@@ -77,33 +109,48 @@ export function AuthProvider({ children }) {
       writeSession(null);
       setUser(null);
     }
-  };
+  }, []);
 
-  const switchRole = (role) => {
-    if (!user) return;
-    setUser({ ...user, role });
-  };
+  const switchRole = useCallback(
+    (role) => {
+      if (!user) return;
+      setUser({ ...user, role });
+    },
+    [user],
+  );
 
-  const updateProfile = async ({ name, role, orgName, onboarded } = {}) => {
-    const body = {};
-    if (name !== undefined) body.name = name;
-    if (role !== undefined) body.role = role;
-    if (orgName !== undefined) body.orgName = orgName;
-    if (onboarded !== undefined) body.onboarded = onboarded;
-    const me = await apiRequest("/auth/profile", {
-      method: "PUT",
-      body: JSON.stringify(body),
-    });
-    const stored = readSession();
-    if (stored?.token) writeSession({ token: stored.token, user: me });
-    setUser(me);
-    return me;
-  };
+  const updateProfile = useCallback(
+    async ({ name, role, orgName, onboarded } = {}) => {
+      const body = {};
+      if (name !== undefined) body.name = name;
+      if (role !== undefined) body.role = role;
+      if (orgName !== undefined) body.orgName = orgName;
+      if (onboarded !== undefined) body.onboarded = onboarded;
 
-  const requestPasswordReset = async () => {
+      let me = null;
+      try {
+        me = await apiRequest("/auth/profile", {
+          method: "PUT",
+          body: JSON.stringify(body),
+        });
+      } catch {
+        // Backend may not expose PUT /auth/profile yet — apply locally so the
+        // session (and the `onboarded` flag) still update.
+        me = { ...(user || {}), ...body };
+      }
+
+      const stored = readSession();
+      if (stored?.token) writeSession({ token: stored.token, user: me });
+      setUser(me);
+      return me;
+    },
+    [user],
+  );
+
+  const requestPasswordReset = useCallback(async () => {
     // No backend endpoint yet — simulate.
     await new Promise((r) => setTimeout(r, 400));
-  };
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -115,6 +162,8 @@ export function AuthProvider({ children }) {
         signOut,
         switchRole,
         updateProfile,
+        restoreSession,
+        completeGoogleOtp,
         requestPasswordReset,
       }}
     >

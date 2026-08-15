@@ -1,12 +1,14 @@
-import React, { useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { API_BASE } from "@/lib/api";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { LoginForm } from "./components/Login/LoginForm";
+import { CapsuleLoader } from "@/Components/shared/CapsuleLoader";
 import { motion, AnimatePresence } from "framer-motion";
 
 export const handle = { title: "Sign in · PharmaHub" };
@@ -17,8 +19,10 @@ const schema = z.object({
 });
 
 export default function LoginPage() {
-  const { signIn, user } = useAuth();
+  const { signIn } = useAuth();
   const navigate = useNavigate();
+  const [showLoader, setShowLoader] = useState(false);
+  const [signedInUser, setSignedInUser] = useState(null);
 
   const {
     register,
@@ -28,44 +32,49 @@ export default function LoginPage() {
 
   const afterAuthPath = (currentUser) => (currentUser.onboarded ? "/dashboard" : "/onboarding");
 
-  useEffect(() => {
-    if (user) navigate(afterAuthPath(user));
-  }, [user, navigate]);
-
   const onSubmit = async (data) => {
     try {
-      const signedIn = await signIn(data.email, data.password);
-      toast.success("Welcome back to PharmaHub");
-      navigate(afterAuthPath(signedIn));
+      const user = await signIn(data.email, data.password);
+      setSignedInUser(user);
+      toast.success("Successfully logged in!");
+      setShowLoader(true);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Sign in failed");
     }
   };
 
   const handleGoogleClick = () => {
-    toast.info("Google sign-in is coming soon");
+    window.location.href = `${API_BASE}/auth/google`;
   };
 
   return (
-    <AuthLayout>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key="login"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.4, ease: "easeOut" }}
-          className="w-full"
-        >
-          <LoginForm
-            onSubmit={handleSubmit(onSubmit)}
-            register={register}
-            errors={errors}
-            isSubmitting={isSubmitting}
-            onGoogleClick={handleGoogleClick}
-          />
-        </motion.div>
-      </AnimatePresence>
-    </AuthLayout>
+    <>
+      <AuthLayout>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key="login"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            transition={{ duration: 0.4, ease: "easeOut" }}
+            className="w-full"
+          >
+            <LoginForm
+              onSubmit={handleSubmit(onSubmit)}
+              register={register}
+              errors={errors}
+              isSubmitting={isSubmitting}
+              onGoogleClick={handleGoogleClick}
+            />
+          </motion.div>
+        </AnimatePresence>
+      </AuthLayout>
+      {showLoader && (
+        <CapsuleLoader
+          message="Signing you in…"
+          onDone={() => navigate(signedInUser ? afterAuthPath(signedInUser) : "/dashboard")}
+        />
+      )}
+    </>
   );
 }

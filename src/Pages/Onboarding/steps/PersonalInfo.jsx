@@ -169,9 +169,11 @@ export function PersonalInfo({ onboarding, updateData, nextStep, prevStep }) {
               </button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-[--radix-popover-trigger-width] p-1.5 rounded-[16px] shadow-xl border-border bg-popover z-[100]"
+              className="w-[var(--radix-popover-trigger-width)] p-1.5 rounded-[16px] shadow-xl border-border bg-popover z-[100]"
               align="start"
+              side="bottom"
               sideOffset={8}
+              avoidCollisions={false}
             >
               <Command className="bg-transparent">
                 <CommandInput

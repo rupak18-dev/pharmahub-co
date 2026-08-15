@@ -2,7 +2,36 @@ import React, { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
 import { StepHeader } from "../components/StepHeader";
 import { StepNavigation } from "../components/StepNavigation";
-import { CheckCircle2, Image as ImageIcon, FileText } from "lucide-react";
+import { CheckCircle2, Image as ImageIcon, FileText, SkipForward } from "lucide-react";
+
+const MAX_LOGO_DIMENSION = 512;
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function downscaleImage(file, maxDim = MAX_LOGO_DIMENSION) {
+  const dataUrl = await fileToDataUrl(file);
+  const img = new Image();
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+  const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+  const w = Math.max(1, Math.round(img.width * scale));
+  const h = Math.max(1, Math.round(img.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", 0.9);
+}
 
 export function Branding({ onboarding, updateData, nextStep, prevStep }) {
   const [logoFile, setLogoFile] = useState(null);
@@ -21,7 +50,7 @@ export function Branding({ onboarding, updateData, nextStep, prevStep }) {
     };
   }, [logoPreview]);
 
-  const processLogoFile = (file) => {
+  const processLogoFile = async (file) => {
     if (!file) return;
     const validExtensions = [".png", ".jpg", ".jpeg", ".svg"];
     const extension = file.name.substring(file.name.lastIndexOf(".")).toLowerCase();
@@ -41,6 +70,17 @@ export function Branding({ onboarding, updateData, nextStep, prevStep }) {
       URL.revokeObjectURL(logoPreview);
     }
     setLogoPreview(URL.createObjectURL(file));
+    try {
+      // SVG is stored as-is (canvas can't reliably rasterize it); raster
+      // images are downscaled to keep the stored base64 small.
+      const dataUrl =
+        file.type === "image/svg+xml" ? await fileToDataUrl(file) : await downscaleImage(file);
+      updateData({
+        branding: { ...(onboarding.branding || {}), logo: dataUrl },
+      });
+    } catch {
+      setErrors((prev) => ({ ...prev, logo: "❌ Couldn't process this image" }));
+    }
   };
 
   const processBrochureFile = (file) => {
@@ -72,7 +112,16 @@ export function Branding({ onboarding, updateData, nextStep, prevStep }) {
   };
 
   return (
-    <div>
+    <div className="relative">
+      <button
+        type="button"
+        onClick={nextStep}
+        className="absolute right-0 top-1 z-10 inline-flex h-10 items-center gap-1.5 rounded-full border border-border/60 bg-background/80 px-4 text-[14px] font-semibold text-muted-foreground shadow-sm transition-all hover:text-primary hover:border-primary/40"
+      >
+        <SkipForward className="w-4 h-4" />
+        Skip for now
+      </button>
+
       <StepHeader
         title="Branding"
         subtitle="Add your business logo and business brochure to customize your workspace."

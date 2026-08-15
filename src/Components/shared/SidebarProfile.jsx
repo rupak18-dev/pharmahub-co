@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router";
 import { ChevronsUpDown, LogOut, Settings, User as UserIcon, Repeat, Store } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { Avatar, AvatarFallback } from "@/Components/ui/avatar";
+import { Avatar, AvatarImage, AvatarFallback } from "@/Components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +16,7 @@ import {
 } from "@/Components/ui/dropdown-menu";
 import { useSidebar } from "@/Components/ui/sidebar";
 import { useAuth } from "@/lib/auth";
+import { getStoredOnboarding, getOnboarding } from "@/lib/onboardingApi";
 import { ALL_ROLES } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 const BRANCHES = [
@@ -32,6 +33,17 @@ export function SidebarProfile() {
   const [activeBranch, setActiveBranch] = useState(() => {
     return localStorage.getItem("PharmaHub_branch") || "main";
   });
+  // Fast first paint from the local copy, then Mongo (server) is authoritative.
+  const [logo, setLogo] = useState(getStoredOnboarding()?.branding?.logo || null);
+  useEffect(() => {
+    let cancelled = false;
+    getOnboarding().then((data) => {
+      if (!cancelled) setLogo(data?.branding?.logo || null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   if (!user) return null;
   const initials = user.name
     .split(" ")
@@ -74,6 +86,13 @@ export function SidebarProfile() {
               )}
             >
               <Avatar className="h-full w-full">
+                {logo ? (
+                  <AvatarImage
+                    src={logo}
+                    alt="Business logo"
+                    className="bg-white object-contain p-0.5"
+                  />
+                ) : null}
                 <AvatarFallback className="bg-white text-xs font-semibold text-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
                   {initials}
                 </AvatarFallback>
