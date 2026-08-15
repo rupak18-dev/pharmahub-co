@@ -1,5 +1,5 @@
 import { Suspense, useEffect } from "react";
-import { Outlet, isRouteErrorResponse, useMatches } from "react-router";
+import { Outlet, isRouteErrorResponse, useMatches, useRouteError } from "react-router";
 import { Toaster } from "@/Components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
 import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
@@ -29,8 +29,10 @@ export function AppRoot() {
   );
 }
 
-export function AppRootErrorBoundary({ error }) {
-  console.error(error);
+export function AppRootErrorBoundary(props) {
+  const routeError = useRouteError();
+  const error = props?.error || routeError;
+  console.error("AppRootErrorBoundary caught error:", error);
   if (isRouteErrorResponse(error) && error.status === 404) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -62,9 +64,9 @@ export function AppRootErrorBoundary({ error }) {
           Something went wrong. If your saved data is from an older version, use "Reset app data"
           below.
         </p>
-        {error instanceof Error && error.message ? (
-          <pre className="mt-4 max-h-40 overflow-auto rounded-md border border-border bg-muted p-3 text-left font-mono text-xs text-destructive">
-            {error.message}
+        {error ? (
+          <pre className="mt-4 max-h-48 overflow-auto rounded-md border border-border bg-muted p-3 text-left font-mono text-[11px] text-destructive leading-relaxed whitespace-pre-wrap break-all">
+            {String(error?.stack || error?.message || error)}
           </pre>
         ) : null}
         <div className="mt-6 flex flex-wrap justify-center gap-2">
@@ -77,12 +79,14 @@ export function AppRootErrorBoundary({ error }) {
           <button
             onClick={() => {
               try {
+                localStorage.removeItem("PharmaHub_db_v3");
                 localStorage.removeItem("PharmaHub_db_v2");
                 localStorage.removeItem("PharmaHub_session_v1");
+                localStorage.clear();
               } catch {
                 // ignore
               }
-              window.location.href = "/login";
+              window.location.href = "/sales";
             }}
             className="inline-flex items-center justify-center rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20"
           >

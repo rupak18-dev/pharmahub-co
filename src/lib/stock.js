@@ -124,31 +124,45 @@ export function logActivity(input) {
   });
 }
 export function pickBatchesFEFO(batches, inventoryOrMedicineId, medicineIdOrQty, qty) {
+  if (!Array.isArray(batches)) return [];
   const hasInventory = Array.isArray(inventoryOrMedicineId);
   const medicineId = hasInventory ? medicineIdOrQty : inventoryOrMedicineId;
   const wanted = hasInventory ? qty : medicineIdOrQty;
   const inventory = hasInventory
     ? inventoryOrMedicineId
     : batches
-        .filter((b) => b.medicineId === medicineId && b.currentStock > 0)
+        .filter((b) => b && b.medicineId === medicineId && (b.currentStock || 0) > 0)
         .map((b, i) => ({
           id: `stock-${i}`,
           batchId: b.id,
           locationType: DEFAULT_LOCATION,
           rackCode: DEFAULT_RACK,
-          quantityOnHand: b.currentStock,
+          quantityOnHand: b.currentStock || 0,
           reservedQuantity: 0,
-          createdAt: b.createdAt,
+          createdAt: b.createdAt || new Date().toISOString(),
         }));
   const now = Date.now();
   const candidates = batches
-    .filter((b) => b.medicineId === medicineId && new Date(b.expiryDate).getTime() > now)
-    .sort((a, b) => new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime());
+    .filter((b) => {
+      if (!b || b.medicineId !== medicineId) return false;
+      try {
+        return b.expiryDate ? new Date(b.expiryDate).getTime() > now : true;
+      } catch {
+        return true;
+      }
+    })
+    .sort((a, b) => {
+      try {
+        return new Date(a.expiryDate).getTime() - new Date(b.expiryDate).getTime();
+      } catch {
+        return 0;
+      }
+    });
   const picks = [];
   let remaining = wanted;
   for (const b of candidates) {
     if (remaining <= 0) break;
-    const stocks = inventory.filter((s) => s.batchId === b.id && s.quantityOnHand > 0);
+    const stocks = inventory.filter((s) => s && s.batchId === b.id && s.quantityOnHand > 0);
     for (const s of stocks) {
       if (remaining <= 0) break;
       const take = Math.min(s.quantityOnHand, remaining);

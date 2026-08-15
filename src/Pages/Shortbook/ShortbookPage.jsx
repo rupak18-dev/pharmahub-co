@@ -142,14 +142,16 @@ function ProductThumbnail({ type = "tablet", name = "" }) {
   );
 }
 
+const EMPTY_ARRAY = [];
+
 export default function ShortbookPage() {
   const { user } = useAuth();
   const { token } = theme.useToken();
 
   // Load state from DB
-  const rawShortbook = useDb((d) => d.shortbook || []);
-  const medicines = useDb((d) => d.medicines || []);
-  const suppliers = useDb((d) => d.suppliers || []);
+  const rawShortbook = useDb((d) => d?.shortbook) ?? EMPTY_ARRAY;
+  const medicines = useDb((d) => d?.medicines) ?? EMPTY_ARRAY;
+  const suppliers = useDb((d) => d?.suppliers) ?? EMPTY_ARRAY;
 
   // Mode View: 'classical' (exact screenshot table) vs 'graphical'
   const [viewMode, setViewMode] = useState("classical");
