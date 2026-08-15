@@ -185,6 +185,25 @@
   font-variation-settings: "slnt" 0, "wdth" 100, "GRAD" 0, "ROND" 0;
 }
 
+/* Auth screen headings */
+.auth-title {
+  font-family: var(--font-sans);
+  font-size: clamp(1.75rem, 3.5vw, 2.25rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--color-primary);
+  text-align: left;
+}
+
+.auth-subtitle {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: var(--color-muted-foreground);
+  text-align: left;
+}
+
 /* Hide minor (Y-axis) recharts tick labels on small screens */
 @media (max-width: 767px) {
   .recharts-yAxis .recharts-cartesian-axis-tick-value {

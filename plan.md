@@ -3,9 +3,60 @@
 **Date:** 2026-08-12
 **Scope:** Make the frontend **Batches** feature (list, detail, add) fully backed by the `pharmahub-server` Express API (`/api/v1`), with real JWT login. Migrate the backend's flat Batch model to the nested "agreed schema" defined in `pharmahub-co/src/lib/batch-schema.js`.
 
-**Repos**
-- Backend: `C:\Users\amrut\OneDrive\Desktop\Pharma-backend\pharmahub-server` (Express + Mongoose, `:5000`, prefix `/api/v1`)
-- Frontend: `C:\Users\amrut\pharmahub-co` (Vite React SPA, `:5100`)
+---
+
+# PharmaHub — Real Authentication Plan (end-to-end, no demo accounts)
+
+**Date:** 2026-08-13
+**Branch:** frontend `auth` (`pharmahub-co`) · backend `Auth` (`pharmahub-server`)
+**Scope:** Replace the localStorage mock auth with real JWT auth against the existing Express backend. Signup takes **only email / password / confirm**; the user's **name, role and org are collected in onboarding** and synced via a new self-profile endpoint. No demo accounts anywhere (frontend UI, backend seed, dev-bypass).
+
+**Backend already provides (no work):**
+- `POST /api/v1/auth/register` · `POST /api/v1/auth/login` · `GET /api/v1/auth/me` · `POST /api/v1/auth/change-password` (bcrypt + JWT).
+- Envelope `{ success, message, data, meta }`; JWT payload `{ sub: userId }`, expiry `7d`.
+
+## Backend changes — `pharmahub-server` (Auth branch)
+
+| File | Change |
+|---|---|
+| `scripts/seed.js` | Remove the demo `users` array, the user-creation loop, and the "Sign-in accounts" console block. No demo users are seeded. |
+| `src/types/index.js` | `authSchemas.register`: make `name` optional (`z.string().trim().max(120).optional()`). Add `authSchemas.profile = z.object({ name?, role?, orgName? })`. |
+| `src/services/auth.service.js` | `registerUser`: default `name` to the email local-part when absent; role stays `"Pharmacist"`. Add `updateProfile(userId, { name, role, orgName })` → update + return `toPublicUser`. |
+| `src/controllers/auth.controller.js` | Add `updateProfile` handler (self-update, `ok(...)`, `recordAudit`). |
+| `src/routes/auth.routes.js` | Add `PUT /auth/profile` (`auth`, `validate(authSchemas.profile)`). |
+| `src/middlewares/auth.js` | Remove `devBypassEnabled` / `devFallbackUser` and both bypass branches — a valid Bearer JWT is always required (even in dev). |
+
+Notes:
+- Self role change via `PUT /auth/profile` is required so onboarding can assign the role. Acceptable while the app bootstraps; flag for hardening later.
+- Backend tests create their own users dynamically — removing the seed demo users does **not** break them.
+
+## Frontend changes — `pharmahub-co` (auth branch)
+
+| File | Change |
+|---|---|
+| `.env.local` | Add `VITE_API_URL=http://localhost:5000/api/v1`. |
+| `src/lib/auth.jsx` | Rewrite to real JWT via `apiRequest`: session `PharmaHub_session_v2 = { token, user }`; boot restores cached user then hydrates via `GET /auth/me` (invalid → clear); `signIn(email, password)` → `POST /auth/login`; `signUp({ email, password })` → `POST /auth/register` then auto-login; `signOut()` clears; `switchRole(role)` stays a frontend-only demo toggle; add `updateProfile({ name, role, orgName })` → `PUT /auth/profile`. Context keeps all existing keys so no consumers break. |
+| `src/Pages/Auth/LoginPage.jsx` | Remove demo login handler, `db.reset()` fallback, `setValue`, `PharmaHub_session_v1` cleanup. |
+| `src/Pages/Auth/components/Login/LoginForm.jsx` | Remove the demo accounts box, `onDemoClick` prop, and fake social buttons + divider. |
+| `src/Pages/Auth/SignupPage.jsx` | Schema: email + password + confirm + terms. `onSubmit` → real `signUp({ email, password })` → auto-login → `navigate("/onboarding")`. Remove the fake verify-email step. |
+| `src/Pages/Auth/components/Shared/SignupForm.jsx` | Only Email / Password / Confirm (+ Terms). Remove fake Google button + divider. |
+| `src/Pages/Onboarding/OnboardingPage.jsx` + `steps/Completion.jsx` | On completion call `updateProfile({ name: firstName + " " + lastName, role: mapJobTitle(jobTitle), orgName: organizationName })` before navigating to `/dashboard`. Job title → system role map: exact matches Owner/Pharmacist/Cashier/Inventory Manager, admin-ish titles → Admin, everything else → Pharmacist. |
+| `src/Components/shared/AppRoot.jsx` | Reset handler also clears `PharmaHub_session_v2`. |
+
+## Verification
+1. Backend: `npm run lint`, `npm test`, restart `npm run dev`.
+2. Frontend: `npm run lint`, `npm run build`.
+3. Manual: signup (email/password/confirm) → auto-login → onboarding (name/role/org) → dashboard shows updated profile → sign out → sign in works; wrong password and duplicate-email show real backend errors.
+
+## Decisions / notes
+- **Terms checkbox is retained** on signup (legal consent) — signup still only *collects* email/password/confirm.
+- **Forgot-password stays simulated** (`requestPasswordReset` mock) — no backend endpoint yet; out of scope.
+- First registered user self-selects `Owner` in onboarding; subsequent signups default to `Pharmacist` until they complete onboarding.
+- Only auth moves to the backend in this task; medicines/inventory/sales/etc. stay in the localStorage db (Batches already talks to the API).
+
+---
+
+# Legacy: Batches plan (see below)
 
 **Current state (verified by research)**
 - Frontend batches read/write MongoDB **directly** via Vercel-style `api/` handlers (`api/batches.js`, `api/batches/[id].js`, `api/medicines.js`) using the **nested** schema. Auth is localStorage-only demo profiles (`src/lib/auth.jsx`). Frontend `apiRequest` expects `{ data }` / `{ error }` envelopes.

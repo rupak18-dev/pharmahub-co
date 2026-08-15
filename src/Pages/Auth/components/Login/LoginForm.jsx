@@ -1,31 +1,33 @@
 import React from "react";
 import { Link } from "react-router";
 import { Logo } from "../Shared/Logo";
-import { SocialButtons } from "../Shared/SocialButtons";
-import { Divider } from "../Shared/Divider";
+import { GoogleAuthButton } from "../Shared/GoogleAuthButton";
 import { InputField } from "../Shared/InputField";
 import { PasswordField } from "../Shared/PasswordField";
 import { Button } from "@/Components/ui/button";
 import { Checkbox } from "@/Components/ui/checkbox";
 import { Label } from "@/Components/ui/label";
-import { motion } from "framer-motion";
 
-export function LoginForm({ onSubmit, register, errors, isSubmitting, onDemoClick }) {
+export function LoginForm({ onSubmit, register, errors, isSubmitting, onGoogleClick }) {
   return (
     <div className="w-full max-w-[420px] mx-auto flex flex-col justify-center min-h-[100dvh] py-12 px-4 sm:px-6">
-      {/* Optional: You can keep Logo here if needed for branding */}
       <div className="mb-10 flex flex-col justify-center lg:justify-start">
         <Logo />
-        <h1 className="auth-title mt-4">Welcome Back 👋</h1>
-        <p className="auth-subtitle mt-4">
-          Access your pharmacy workspace to manage inventory, expiry alerts, stock audits, purchases
-          and sales.
-        </p>
+        <h1 className="auth-title mt-6">Welcome</h1>
       </div>
 
-      <SocialButtons />
+      <GoogleAuthButton onClick={onGoogleClick} disabled={isSubmitting} />
 
-      <Divider />
+      <div className="relative my-6">
+        <div className="absolute inset-0 flex items-center">
+          <span className="w-full border-t border-border/60" />
+        </div>
+        <div className="relative flex justify-center text-sm">
+          <span className="bg-background px-3 text-muted-foreground font-medium">
+            Or sign in with email
+          </span>
+        </div>
+      </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
         <div className="space-y-5">
@@ -86,17 +88,6 @@ export function LoginForm({ onSubmit, register, errors, isSubmitting, onDemoClic
               Create your account &rarr;
             </Link>
           </p>
-        </div>
-
-        <div className="mt-8 rounded-2xl border border-dashed border-border bg-muted/40 p-4 text-xs text-muted-foreground">
-          <div className="font-semibold text-foreground mb-2">Demo accounts</div>
-          <div className="space-y-1 font-mono">
-            <div>owner@PharmaHub.demo</div>
-            <div>pharmacist@PharmaHub.demo</div>
-            <div>cashier@PharmaHub.demo</div>
-            <div>inventory@PharmaHub.demo</div>
-          </div>
-          <div className="mt-2 text-[11px]">Any password works in demo mode.</div>
         </div>
       </form>
     </div>
