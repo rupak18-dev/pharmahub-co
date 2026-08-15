@@ -1,21 +1,26 @@
 import React from "react";
-import { Activity } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function Logo({ isWhite }) {
-  return (
-    <div className="flex items-center gap-2">
-      <div
-        className={`flex items-center justify-center w-10 h-10 rounded-xl shadow-md ${
-          isWhite ? "bg-white text-primary" : "bg-primary text-primary-foreground shadow-primary/20"
-        }`}
-      >
-        <Activity className="w-6 h-6" />
+const TAGLINE = "The Infrastructure for Modern Pharma.";
+
+export function Logo({ tagline = TAGLINE, className, imgClassName, isWhite }) {
+  if (isWhite) {
+    return (
+      <div className={cn("flex flex-col items-start gap-2.5", className)}>
+        <span className="text-2xl font-bold tracking-tight text-white">PharmaHub</span>
+        {tagline && <p className="text-sm font-medium text-white/80">{tagline}</p>}
       </div>
-      <span
-        className={`text-xl font-bold tracking-tight ${isWhite ? "text-white" : "text-foreground"}`}
-      >
-        PharmaHub
-      </span>
+    );
+  }
+
+  return (
+    <div className={cn("flex flex-col items-start gap-2.5", className)}>
+      <img
+        src="/PharmaHub__logo_cropped.webp"
+        alt="PharmaHub Logo"
+        className={cn("h-12 w-auto object-contain mix-blend-multiply", imgClassName)}
+      />
+      {tagline && <p className="text-sm font-medium text-muted-foreground">{tagline}</p>}
     </div>
   );
 }

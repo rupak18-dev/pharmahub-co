@@ -1,7 +1,16 @@
 import { db } from "./db";
 export function computeBatchStatus(batch, totalStock, nearExpiryDays) {
   const now = Date.now();
-  const exp = new Date(batch.expiryDate).getTime();
+  // New Mongo schema nests these; legacy shape is flat.
+  const expiry = batch.dates?.expiryDate ?? batch.expiryDate;
+  const exp = new Date(expiry).getTime();
+  const quarantined = batch.stock?.quarantined ?? batch.quarantined ?? 0;
+  const state = batch.status?.state ?? batch.statusState;
+  // Recall / retired-disposed statuses are merged into existing statuses for
+  // now (they'll be reintroduced later): RECALLED -> quarantined, RETIRED -> sold_out.
+  if (state === "RECALLED") return "quarantined";
+  if (state === "RETIRED") return "sold_out";
+  if (state === "QUARANTINED" || quarantined > 0) return "quarantined";
   if (totalStock <= 0 && exp >= now) return "sold_out";
   if (exp < now) return "expired";
   const daysLeft = (exp - now) / (1000 * 60 * 60 * 24);

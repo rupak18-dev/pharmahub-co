@@ -7,7 +7,10 @@ const map = {
   },
   expired: { label: "Expired", cls: "bg-[#FEE2E2] text-[#DC2626] border-[#DC2626]/25" },
   sold_out: { label: "Sold out", cls: "bg-[#F1F5F9] text-[#64748B] border-slate-200" },
-  disposed: { label: "Disposed", cls: "bg-[#F1F5F9] text-[#64748B] border-slate-200" },
+  quarantined: {
+    label: "Quarantined",
+    cls: "bg-[#FEF3C7] text-[#D97706] border-[#D97706]/25",
+  },
   low: { label: "Low stock", cls: "bg-[#FEF3C7] text-[#D97706] border-[#D97706]/25" },
   out: { label: "Out of stock", cls: "bg-[#FEE2E2] text-[#DC2626] border-[#DC2626]/25" },
   healthy: { label: "In stock", cls: "bg-[#E6F4F1] text-[#007A5A] border-[#007A5A]/20" },
