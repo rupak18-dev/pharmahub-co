@@ -93,7 +93,7 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5100,
+    port: 6001,
     strictPort: true,
     host: true,
     proxy: {
