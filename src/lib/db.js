@@ -1,6 +1,6 @@
 import { DEFAULT_PERMISSIONS } from "./permissions";
 const STORAGE_KEY = "PharmaHub_db_v4";
-const DEMO_BATCHES = false; // set to true to re-enable the generated demo batches
+const DEMO_BATCHES = true; // set to true to re-enable the generated demo batches
 const uid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()

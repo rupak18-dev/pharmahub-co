@@ -821,6 +821,7 @@ function StatusDonutCard({ data, total, currency, activePill, onDrill, windowLab
                 <ChartTooltip
                   animationDuration={150}
                   content={<DonutTooltip currency={currency} />}
+                  wrapperStyle={{ zIndex: 100 }}
                 />
               </PieChart>
             </ChartContainer>
