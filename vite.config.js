@@ -105,8 +105,10 @@ export default defineConfig({
     ],
   },
   server: {
-    port: 6000,
-    // Non-strict: if 6000 is busy Vite picks 6001, then 6002, and so on.
+    // Port 8080 is browser-safe. (6000 is NOT — Chromium blocks it with
+    // ERR_UNSAFE_PORT, so it can never open in Chrome/Edge.) Non-strict: if
+    // 8080 is busy Vite picks 8081, then 8082, and so on.
+    port: 8080,
     strictPort: false,
     host: true,
     proxy: {
