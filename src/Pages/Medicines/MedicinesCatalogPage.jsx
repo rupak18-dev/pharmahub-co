@@ -7,6 +7,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useDb } from "@/hooks/useDb";
 import { db } from "@/lib/db";
+import { useCatalogData } from "@/hooks/useCatalogData";
 import { usePermission } from "@/hooks/usePermission";
 import { logActivity } from "@/lib/stock";
 import { useAuth } from "@/lib/auth";
@@ -78,11 +79,7 @@ export default function MedicinesCatalogPage() {
     focusSearch: urlSearchParams.get("focusSearch") ?? "",
     filter: urlSearchParams.get("filter") ?? "",
   };
-  const medicines = useDb((d) => d.medicines);
-  const categories = useDb((d) => d.categories);
-  const manufacturers = useDb((d) => d.manufacturers);
-  const batches = useDb((d) => d.batches);
-  const suppliers = useDb((d) => d.suppliers);
+  const { medicines, categories, manufacturers, batches, suppliers, loading, addMedicine, updateMedicine, deactivateMedicine } = useCatalogData();
   const has = usePermission();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -278,12 +275,10 @@ export default function MedicinesCatalogPage() {
     setEditing(m);
     setSheetOpen(true);
   };
-  const submit = (values) => {
-    if (editing) {
-      db.set((d) => {
-        const m = d.medicines.find((x) => x.id === editing.id);
-        if (!m) return;
-        Object.assign(m, {
+  const submit = async (values) => {
+    try {
+      if (editing) {
+        await updateMedicine(editing.id, {
           ...values,
           genericName: values.genericName || undefined,
           brandName: values.brandName || undefined,
@@ -304,32 +299,27 @@ export default function MedicinesCatalogPage() {
           sideEffects: values.sideEffects || undefined,
           rackLocation: values.rackLocation || undefined,
         });
-      });
-      if (user)
-        logActivity({
-          userId: user.id,
-          userName: user.name,
-          action: `Updated medicine ${values.name} details`,
-          entityType: "medicine",
-          entityId: editing.id,
-        });
-      toast.success("Medicine details updated");
-    } else {
-      const id = db.uid();
-      const now = new Date().toISOString();
-      db.set((d) => {
-        d.medicines.push({
-          id,
-          isActive: true,
-          createdAt: now,
+        if (user) {
+          logActivity({
+            userId: user.id,
+            userName: user.name,
+            action: `Updated medicine ${values.name} details`,
+            entityType: "medicine",
+            entityId: editing.id,
+          });
+        }
+        toast.success("Medicine details updated");
+      } else {
+        await addMedicine({
           ...values,
+          isActive: true,
           genericName: values.genericName || undefined,
           brandName: values.brandName || undefined,
           categoryId: values.categoryId || undefined,
           manufacturerId: values.manufacturerId || undefined,
           hsnCode: values.hsnCode || undefined,
           storageRequirements: values.storageRequirements || undefined,
-          barcode: values.barcode || `PH-${Math.random().toString(36).slice(2, 10).toUpperCase()}`,
+          barcode: values.barcode || undefined,
           saltComposition: values.saltComposition || undefined,
           strength: values.strength || undefined,
           dosageForm: values.dosageForm || undefined,
@@ -342,38 +332,43 @@ export default function MedicinesCatalogPage() {
           sideEffects: values.sideEffects || undefined,
           rackLocation: values.rackLocation || undefined,
         });
-      });
-      if (user)
+        if (user) {
+          logActivity({
+            userId: user.id,
+            userName: user.name,
+            action: `Added new medicine ${values.name} to catalog`,
+            entityType: "medicine",
+            entityId: "new",
+          });
+        }
+        toast.success("Medicine added to catalog");
+      }
+      setSheetOpen(false);
+    } catch (err) {
+      toast.error(err.message || "Failed to save medicine");
+    }
+  };
+  const toggleActive = async (m) => {
+    try {
+      await updateMedicine(m.id, { isActive: !m.isActive });
+      if (user) {
         logActivity({
           userId: user.id,
           userName: user.name,
-          action: `Added new medicine ${values.name} to catalog`,
+          action: `${m.isActive ? "Deactivated" : "Activated"} medicine ${m.name}`,
           entityType: "medicine",
-          entityId: id,
+          entityId: m.id,
         });
-      toast.success("Medicine added to catalog");
+      }
+      toast.success(`Medicine ${m.isActive ? "deactivated" : "activated"}`);
+      setConfirmDeactivate(null);
+    } catch (err) {
+      toast.error("Failed to update status");
     }
-    setSheetOpen(false);
-  };
-  const toggleActive = (m) => {
-    db.set((d) => {
-      const t = d.medicines.find((x) => x.id === m.id);
-      if (t) t.isActive = !t.isActive;
-    });
-    if (user)
-      logActivity({
-        userId: user.id,
-        userName: user.name,
-        action: `${m.isActive ? "Deactivated" : "Activated"} medicine ${m.name}`,
-        entityType: "medicine",
-        entityId: m.id,
-      });
-    toast.success(`Medicine ${m.isActive ? "deactivated" : "activated"}`);
-    setConfirmDeactivate(null);
   };
   const currency = useDb((d) => d.settings.currency);
   return (
-    <div className="space-y-6 pb-12 bg-white min-h-screen p-6 rounded-2xl shadow-sm border border-border/40">
+    <div className="space-y-6 pb-12 bg-white h-full p-6 rounded-2xl shadow-sm border border-border/40">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-border/65 pb-5">
         <PageHeader
           title="Medicine Master Catalog"
@@ -402,14 +397,14 @@ export default function MedicinesCatalogPage() {
 
       {/* FILTERS PANEL */}
       <div className="bg-muted/20 border border-border/60 rounded-xl p-4 space-y-3">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs font-bold text-muted-foreground uppercase tracking-wider">
             <Filter className="w-3.5 h-3.5" /> Workspace Filters
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => setShowMobileFilters(!showMobileFilters)}
-              className="md:hidden text-xs font-semibold text-[#2563EB]"
+              className="md:hidden text-xs font-semibold text-[#2563EB] border border-[#2563EB]/20 rounded-md px-2 py-1 hover:bg-[#2563EB]/5"
             >
               {showMobileFilters ? "Hide Filters" : "Show Filters"}
             </button>
@@ -425,7 +420,7 @@ export default function MedicinesCatalogPage() {
                 setActiveFilter("all");
                 setQ("");
               }}
-              className="text-xs text-[#2563EB] hover:underline"
+              className="text-xs text-[#2563EB] hover:underline px-1"
             >
               Reset All
             </button>
@@ -446,7 +441,7 @@ export default function MedicinesCatalogPage() {
 
         {/* Dropdown Filters (collapsible on mobile) */}
         <div
-          className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 ${showMobileFilters ? "block" : "hidden md:grid"}`}
+          className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 ${showMobileFilters ? "grid" : "hidden md:grid"}`}
         >
           <Select value={catFilter} onValueChange={setCatFilter}>
             <SelectTrigger className="bg-white">
@@ -968,8 +963,8 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           name: editing.name,
           genericName: editing.genericName ?? "",
           brandName: editing.brandName ?? "",
-          categoryId: editing.categoryId ?? "",
-          manufacturerId: editing.manufacturerId ?? "",
+          categoryId: (typeof editing.categoryId === 'object' ? editing.categoryId?._id : editing.categoryId) ?? "",
+          manufacturerId: (typeof editing.manufacturerId === 'object' ? editing.manufacturerId?._id : editing.manufacturerId) ?? "",
           hsnCode: editing.hsnCode ?? "",
           gstRate: editing.gstRate,
           storageRequirements: editing.storageRequirements ?? "",
@@ -1030,6 +1025,13 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           onSubmit={handleSubmit((v) => {
             onSubmit(v);
             reset();
+          }, (errors) => {
+              const firstError = Object.values(errors)[0];
+              if (firstError) {
+                toast.error(`Validation Error: ${firstError.message}`);
+              } else {
+                toast.error("Please fill all required fields correctly.");
+              }
           })}
           className="flex-1 overflow-y-auto space-y-5 py-4 pr-1"
         >
