@@ -1467,7 +1467,7 @@ function TopAtRiskCard({ top10, currency, windowLabelText, onDrill }) {
         </div>
       </div>
       <div className="w-full overflow-x-auto rounded-xl border border-border">
-        <table className="w-full text-left text-xs min-w-[800px] md:min-w-0">
+        <table className="w-full text-left text-xs min-w-0 md:min-w-0">
           <thead className="bg-muted/70 font-semibold text-muted-foreground border-b border-border">
             <tr>
               <th className="p-2.5 whitespace-nowrap">Medicine</th>
@@ -3192,7 +3192,7 @@ export function ExpiryOverview({
             </div>
 
             <div className="w-full overflow-x-auto rounded-xl border border-border">
-              <table className="w-full text-left text-xs min-w-[800px] md:min-w-0">
+              <table className="w-full text-left text-xs min-w-0 md:min-w-0">
                 <thead className="bg-muted/70 font-semibold text-muted-foreground border-b border-border">
                   <tr>
                     <th className="p-2.5 whitespace-nowrap">Supplier</th>
@@ -3311,7 +3311,7 @@ export function ExpiryOverview({
             </div>
 
             <div className="w-full overflow-x-auto rounded-xl border border-border">
-              <table className="w-full text-left text-xs min-w-[800px] md:min-w-0">
+              <table className="w-full text-left text-xs min-w-0 md:min-w-0">
                 <thead className="bg-muted/70 font-semibold text-muted-foreground border-b border-border">
                   <tr>
                     <th className="p-2.5 whitespace-nowrap">Category</th>
