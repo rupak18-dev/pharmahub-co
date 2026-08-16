@@ -51,13 +51,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/Components/ui/dialog";
-import {
-  Sheet,
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/Components/ui/sheet";
+import { Sheet, SheetContent, SheetFooter, SheetHeader, SheetTitle } from "@/Components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -65,11 +59,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/Components/ui/select";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/Components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/Components/ui/popover";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -192,11 +182,11 @@ export default function SalesPage() {
   const activeCustomerKey = (customerName || customerQuery || "").trim().toLowerCase();
   const customerFamilyMembers = useMemo(() => {
     if (!activeCustomerKey) return [];
-    return (familyRecords || []).filter((fm) =>
-      fm && (
-        fm.customerKey === activeCustomerKey ||
-        (customerPhone && fm.customerPhone === customerPhone)
-      )
+    return (familyRecords || []).filter(
+      (fm) =>
+        fm &&
+        (fm.customerKey === activeCustomerKey ||
+          (customerPhone && fm.customerPhone === customerPhone)),
     );
   }, [familyRecords, activeCustomerKey, customerPhone]);
 
@@ -219,11 +209,12 @@ export default function SalesPage() {
     if (!q) return [];
     return (medicines || [])
       .filter((m) => m && m.isActive !== false)
-      .filter((m) =>
-        m.name?.toLowerCase().includes(q) ||
-        (m.brandName ?? "").toLowerCase().includes(q) ||
-        (m.genericName ?? "").toLowerCase().includes(q) ||
-        (m.barcode ?? "").toLowerCase().includes(q)
+      .filter(
+        (m) =>
+          m.name?.toLowerCase().includes(q) ||
+          (m.brandName ?? "").toLowerCase().includes(q) ||
+          (m.genericName ?? "").toLowerCase().includes(q) ||
+          (m.barcode ?? "").toLowerCase().includes(q),
       )
       .slice(0, 8);
   }, [medicines, query]);
@@ -245,7 +236,10 @@ export default function SalesPage() {
     relevantSales.forEach((s) => {
       s?.items?.forEach((it) => {
         if (!it) return;
-        const med = (medicines || []).find((m) => m && m.id === it.medicineId) || { id: it.medicineId || "m-def", name: it.medicineName || "Medicine" };
+        const med = (medicines || []).find((m) => m && m.id === it.medicineId) || {
+          id: it.medicineId || "m-def",
+          name: it.medicineName || "Medicine",
+        };
         if (!med || !med.id) return;
         const prev = medMap.get(med.id) || { med, count: 0, lastQty: it.quantity || 1 };
         medMap.set(med.id, { med, count: prev.count + 1, lastQty: it.quantity || 1 });
@@ -272,17 +266,22 @@ export default function SalesPage() {
     relevantSales.forEach((s) => {
       s?.items?.forEach((it) => {
         if (!it) return;
-        const med = (medicines || []).find((m) => m && m.id === it.medicineId) || { id: it.medicineId || "m-def", name: it.medicineName || "Medicine" };
+        const med = (medicines || []).find((m) => m && m.id === it.medicineId) || {
+          id: it.medicineId || "m-def",
+          name: it.medicineName || "Medicine",
+        };
         const key = med.id || it.medicineName || "Medicine";
         const prev = medMap.get(key) || { med, times: 0, totalQty: 0, totalAmount: 0 };
         prev.times += 1;
         prev.totalQty += it.quantity || 1;
-        prev.totalAmount += it.lineTotal || ((it.unitPrice || 0) * (it.quantity || 1));
+        prev.totalAmount += it.lineTotal || (it.unitPrice || 0) * (it.quantity || 1);
         medMap.set(key, prev);
       });
     });
 
-    return Array.from(medMap.values()).sort((a, b) => b.times - a.times || b.totalAmount - a.totalAmount);
+    return Array.from(medMap.values()).sort(
+      (a, b) => b.times - a.times || b.totalAmount - a.totalAmount,
+    );
   }, [sales, medicines, searchedCustomer, customerPhone]);
 
   // Data formatting for Customer Order History Graph Modal
@@ -304,22 +303,30 @@ export default function SalesPage() {
 
     // Collect all distinct item names across customer orders
     const allItemNamesSet = new Set();
-    const chartData = matchedSales.slice(0, 10).reverse().map((s) => {
-      let dateLabel = "Today";
-      try {
-        if (s?.createdAt) dateLabel = format(new Date(s.createdAt), "dd MMM yyyy");
-      } catch {
-        dateLabel = "Today";
-      }
-      const entry = { date: dateLabel, billNo: s?.billNo || s?.invoiceNo || "BILL", grandTotal: s?.grandTotal || 0 };
-      s?.items?.forEach((it) => {
-        if (!it) return;
-        const name = it.medicineName || "Medicine";
-        allItemNamesSet.add(name);
-        entry[name] = (entry[name] || 0) + (it.lineTotal || ((it.unitPrice || 0) * (it.quantity || 1)));
+    const chartData = matchedSales
+      .slice(0, 10)
+      .reverse()
+      .map((s) => {
+        let dateLabel = "Today";
+        try {
+          if (s?.createdAt) dateLabel = format(new Date(s.createdAt), "dd MMM yyyy");
+        } catch {
+          dateLabel = "Today";
+        }
+        const entry = {
+          date: dateLabel,
+          billNo: s?.billNo || s?.invoiceNo || "BILL",
+          grandTotal: s?.grandTotal || 0,
+        };
+        s?.items?.forEach((it) => {
+          if (!it) return;
+          const name = it.medicineName || "Medicine";
+          allItemNamesSet.add(name);
+          entry[name] =
+            (entry[name] || 0) + (it.lineTotal || (it.unitPrice || 0) * (it.quantity || 1));
+        });
+        return entry;
       });
-      return entry;
-    });
 
     return {
       chartData,
@@ -362,17 +369,32 @@ export default function SalesPage() {
       // Voided filter
       if (!filterShowVoided && s.status === "voided") return false;
       // Status filter
-      if (historyStatusFilter === "due" && s.status !== "due" && s.paymentMode !== "due") return false;
-      if (historyStatusFilter === "paid" && (s.status === "due" || s.paymentMode === "due")) return false;
+      if (historyStatusFilter === "due" && s.status !== "due" && s.paymentMode !== "due")
+        return false;
+      if (historyStatusFilter === "paid" && (s.status === "due" || s.paymentMode === "due"))
+        return false;
       // Payment mode filter
-      if (filterPaymentMode !== "all" && (s.paymentMode || "").toLowerCase() !== filterPaymentMode) return false;
+      if (filterPaymentMode !== "all" && (s.paymentMode || "").toLowerCase() !== filterPaymentMode)
+        return false;
       // Bill No search
       const billNoStr = String(s.billNo || s.invoiceNo || "").toLowerCase();
       if (q && !billNoStr.includes(q)) return false;
       // Doctor name filter
-      if (docQ && !String(s.doctorName || "").toLowerCase().includes(docQ)) return false;
+      if (
+        docQ &&
+        !String(s.doctorName || "")
+          .toLowerCase()
+          .includes(docQ)
+      )
+        return false;
       // Entry by / cashier filter
-      if (entryQ && !String(s.createdByName || "").toLowerCase().includes(entryQ)) return false;
+      if (
+        entryQ &&
+        !String(s.createdByName || "")
+          .toLowerCase()
+          .includes(entryQ)
+      )
+        return false;
       // Amount range filter
       const amt = s.grandTotal || 0;
       if (minAmt !== null && amt < minAmt) return false;
@@ -422,8 +444,20 @@ export default function SalesPage() {
       const tsB = new Date(b.createdAt || 0).getTime();
       return tsB - tsA;
     });
-  }, [sales, historySearchQuery, historyStatusFilter, historyStartDate, historyEndDate, historySortBy,
-      filterDoctorName, filterEntryBy, filterPaymentMode, filterMinAmount, filterMaxAmount, filterShowVoided]);
+  }, [
+    sales,
+    historySearchQuery,
+    historyStatusFilter,
+    historyStartDate,
+    historyEndDate,
+    historySortBy,
+    filterDoctorName,
+    filterEntryBy,
+    filterPaymentMode,
+    filterMinAmount,
+    filterMaxAmount,
+    filterShowVoided,
+  ]);
 
   const historyTotalAmount = useMemo(() => {
     return filteredHistorySales.reduce((acc, s) => acc + (s?.grandTotal || 0), 0);
@@ -440,14 +474,18 @@ export default function SalesPage() {
       if (!s) return false;
       const sName = (s.customerName || "").trim().toLowerCase();
       const sPhone = (s.customerPhone || "").trim();
-      return (name && sName.includes(name.toLowerCase())) || (customerPhone.trim() && sPhone.includes(customerPhone.trim()));
+      return (
+        (name && sName.includes(name.toLowerCase())) ||
+        (customerPhone.trim() && sPhone.includes(customerPhone.trim()))
+      );
     });
     if (!hasHistory) toast.info(`No past purchases found for "${name || customerPhone.trim()}"`);
     else toast.success(`Loaded purchase history for ${name || customerPhone.trim()}`);
   };
 
   const handleGraphOpen = () => {
-    if ((customerName || customerQuery).trim()) setSearchedCustomer((customerName || customerQuery).trim());
+    if ((customerName || customerQuery).trim())
+      setSearchedCustomer((customerName || customerQuery).trim());
     setGraphOpen(true);
   };
 
@@ -456,7 +494,9 @@ export default function SalesPage() {
       const picks = pickBatchesFEFO(batches || [], medicineId, 1);
       return picks.length ? (batches || []).find((b) => b && b.id === picks[0].batchId) : undefined;
     } catch {
-      return (batches || []).find((b) => b && b.medicineId === medicineId && (b.currentStock || 0) > 0);
+      return (batches || []).find(
+        (b) => b && b.medicineId === medicineId && (b.currentStock || 0) > 0,
+      );
     }
   };
 
@@ -473,19 +513,31 @@ export default function SalesPage() {
       const existing = prev.find((l) => l.medicineId === medicine.id);
       if (existing) {
         return prev.map((l) =>
-          l.medicineId === medicine.id ? { ...l, quantity: l.quantity + 1 } : l
+          l.medicineId === medicine.id ? { ...l, quantity: l.quantity + 1 } : l,
         );
       }
       if (flaggedDisc > 0) toast.info(`${flaggedDisc}% discount applied`);
-      return [...prev, { medicineId: medicine.id, medicine, batch, quantity: 1, discountPct: flaggedDisc }];
+      return [
+        ...prev,
+        { medicineId: medicine.id, medicine, batch, quantity: 1, discountPct: flaggedDisc },
+      ];
     });
     setQuery("");
   };
 
   const findByBarcode = (code) => {
-    const c = String(code || "").trim().toLowerCase();
+    const c = String(code || "")
+      .trim()
+      .toLowerCase();
     if (!c) return undefined;
-    return medicines.find((m) => m && m.isActive !== false && String(m.barcode || "").trim().toLowerCase() === c);
+    return medicines.find(
+      (m) =>
+        m &&
+        m.isActive !== false &&
+        String(m.barcode || "")
+          .trim()
+          .toLowerCase() === c,
+    );
   };
 
   const addByBarcode = (code) => {
@@ -518,20 +570,27 @@ export default function SalesPage() {
       setScanReady(false);
       const scanner = scannerRef.current;
       if (scanner) {
-        scanner.stop().then(() => scanner.clear()).catch(() => {}).finally(() => { scannerRef.current = null; });
+        scanner
+          .stop()
+          .then(() => scanner.clear())
+          .catch(() => {})
+          .finally(() => {
+            scannerRef.current = null;
+          });
       }
       return;
     }
     const scanner = new Html5Qrcode("qr-reader");
     scannerRef.current = scanner;
-    scanner.start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: { width: 220, height: 220 } },
-      (decodedText) => {
-        if (addByBarcodeRef.current(decodedText)) setScanOpen(false);
-      },
-      () => {}
-    )
+    scanner
+      .start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 220, height: 220 } },
+        (decodedText) => {
+          if (addByBarcodeRef.current(decodedText)) setScanOpen(false);
+        },
+        () => {},
+      )
       .then(() => setScanReady(true))
       .catch(() => {
         toast.error("Camera not accessible. Check permissions or use the search bar.");
@@ -547,15 +606,26 @@ export default function SalesPage() {
     return () => {
       const scanner = scannerRef.current;
       if (scanner) {
-        try { scanner.stop().catch(() => {}); } catch { /* ignore */ }
-        try { scanner.clear(); } catch { /* ignore */ }
+        try {
+          scanner.stop().catch(() => {});
+        } catch {
+          /* ignore */
+        }
+        try {
+          scanner.clear();
+        } catch {
+          /* ignore */
+        }
         scannerRef.current = null;
       }
     };
   }, []);
 
   const totals = useMemo(() => {
-    let totalQty = 0, subtotal = 0, discountTotal = 0, gstTotal = 0;
+    let totalQty = 0,
+      subtotal = 0,
+      discountTotal = 0,
+      gstTotal = 0;
     const details = [];
     cart.forEach((line) => {
       const med = medicines.find((m) => m.id === line.medicineId) || line.medicine;
@@ -576,7 +646,16 @@ export default function SalesPage() {
     });
     const grossTotal = subtotal - discountTotal + gstTotal;
     const grandTotal = Math.round(grossTotal);
-    return { totalQty, itemCount: cart.length, subtotal, discountTotal, gstTotal, grandTotal, roundOff: grandTotal - grossTotal, details };
+    return {
+      totalQty,
+      itemCount: cart.length,
+      subtotal,
+      discountTotal,
+      gstTotal,
+      grandTotal,
+      roundOff: grandTotal - grossTotal,
+      details,
+    };
   }, [cart, medicines, batches]);
 
   const clearCart = () => {
@@ -592,13 +671,31 @@ export default function SalesPage() {
   };
 
   const confirmCheckout = () => {
-    if (!cart.length) { toast.error("Cart is empty"); return; }
-    if (!customerName.trim()) { toast.error("Customer Name is required"); return; }
-    if (!customerPhone.trim()) { toast.error("Mobile Number is required"); return; }
-    if (!/^\d{10}$/.test(customerPhone.replace(/\D/g, ""))) { toast.error("Mobile Number must be exactly 10 digits"); return; }
-    if (!doctorName.trim()) { toast.error("Doctor Name is required"); return; }
+    if (!cart.length) {
+      toast.error("Cart is empty");
+      return;
+    }
+    if (!customerName.trim()) {
+      toast.error("Customer Name is required");
+      return;
+    }
+    if (!customerPhone.trim()) {
+      toast.error("Mobile Number is required");
+      return;
+    }
+    if (!/^\d{10}$/.test(customerPhone.replace(/\D/g, ""))) {
+      toast.error("Mobile Number must be exactly 10 digits");
+      return;
+    }
+    if (!doctorName.trim()) {
+      toast.error("Doctor Name is required");
+      return;
+    }
     const tenderNum = Number(tender || totals.grandTotal);
-    if (payment === "cash" && tenderNum < totals.grandTotal) { toast.error("Tender is less than total"); return; }
+    if (payment === "cash" && tenderNum < totals.grandTotal) {
+      toast.error("Tender is less than total");
+      return;
+    }
 
     const currentBatches = db.get()?.batches || [];
     const items = [];
@@ -608,10 +705,22 @@ export default function SalesPage() {
       const med = medicines.find((m) => m.id === line.medicineId) || line.medicine;
       if (!med) return;
       let picks = [];
-      try { picks = pickBatchesFEFO(currentBatches, line.medicineId, line.quantity); } catch { picks = []; }
+      try {
+        picks = pickBatchesFEFO(currentBatches, line.medicineId, line.quantity);
+      } catch {
+        picks = [];
+      }
       if (!picks.length) {
         const fb = currentBatches.find((b) => b.medicineId === med.id);
-        if (fb) picks = [{ batchId: fb.id, locationType: "Front Shelf", rackCode: "A-01", quantity: line.quantity }];
+        if (fb)
+          picks = [
+            {
+              batchId: fb.id,
+              locationType: "Front Shelf",
+              rackCode: "A-01",
+              quantity: line.quantity,
+            },
+          ];
       }
       picks.forEach((p) => {
         stockPicks.push(p);
@@ -621,23 +730,42 @@ export default function SalesPage() {
         const discount = (gross * (line.discountPct || 0)) / 100;
         const net = gross - discount;
         const gst = (net * (med.gstRate || 0)) / 100;
-        items.push({ medicineId: med.id, batchId: b?.id || `b-${med.id}`, medicineName: med.name, batchNumber: b?.batchNumber || "BT-2025", quantity: p.quantity, unitPrice: unit, discountPct: line.discountPct || 0, gstRate: med.gstRate || 0, lineTotal: net + gst });
+        items.push({
+          medicineId: med.id,
+          batchId: b?.id || `b-${med.id}`,
+          medicineName: med.name,
+          batchNumber: b?.batchNumber || "BT-2025",
+          quantity: p.quantity,
+          unitPrice: unit,
+          discountPct: line.discountPct || 0,
+          gstRate: med.gstRate || 0,
+          lineTotal: net + gst,
+        });
       });
     });
 
     const invoiceNo = `INV-${Date.now().toString().slice(-8)}`;
     const grand = totals.grandTotal;
     const sale = {
-      id: db.uid(), invoiceNo,
+      id: db.uid(),
+      invoiceNo,
       customerName: customerName.trim() || customerQuery.trim() || "Counter Bill",
       customerPhone: customerPhone.trim() || undefined,
       doctorName: doctorName.trim() || undefined,
       billingFor: billingFor,
-      items, subtotal: totals.subtotal, discountTotal: totals.discountTotal,
-      gstTotal: totals.gstTotal, roundOff: totals.roundOff, grandTotal: grand,
-      paymentMode: payment, tender: tenderNum, change: Math.max(0, tenderNum - grand),
-      status: "completed", createdBy: user?.id || "u-system",
-      createdByName: user?.name || "Cashier", createdAt: new Date().toISOString(),
+      items,
+      subtotal: totals.subtotal,
+      discountTotal: totals.discountTotal,
+      gstTotal: totals.gstTotal,
+      roundOff: totals.roundOff,
+      grandTotal: grand,
+      paymentMode: payment,
+      tender: tenderNum,
+      change: Math.max(0, tenderNum - grand),
+      status: "completed",
+      createdBy: user?.id || "u-system",
+      createdByName: user?.name || "Cashier",
+      createdAt: new Date().toISOString(),
       billDate: billDate.isValid() ? billDate.toISOString() : new Date().toISOString(),
     };
 
@@ -646,13 +774,33 @@ export default function SalesPage() {
       d.activityLogs = d.activityLogs || [];
       sale.billNo = genBillNo(d.sales);
       d.sales.unshift(sale);
-      d.activityLogs.unshift({ id: db.uid(), userId: user?.id, userName: user?.name, action: `Sale ${invoiceNo} · ${currency}${grand.toLocaleString()}`, entityType: "sale", entityId: sale.id, details: { invoiceNo, grandTotal: grand, items: items.length }, createdAt: new Date().toISOString() });
+      d.activityLogs.unshift({
+        id: db.uid(),
+        userId: user?.id,
+        userName: user?.name,
+        action: `Sale ${invoiceNo} · ${currency}${grand.toLocaleString()}`,
+        entityType: "sale",
+        entityId: sale.id,
+        details: { invoiceNo, grandTotal: grand, items: items.length },
+        createdAt: new Date().toISOString(),
+      });
     });
 
     stockPicks.forEach((p) => {
       try {
-        applyStockMovement({ batchId: p.batchId, locationType: p.locationType || "Front Shelf", rackCode: p.rackCode || "A-01", movementType: "Sales Outward", quantityChange: -Math.abs(p.quantity), referenceDocId: sale.id, userId: user?.id, userName: user?.name });
-      } catch { /* ignore */ }
+        applyStockMovement({
+          batchId: p.batchId,
+          locationType: p.locationType || "Front Shelf",
+          rackCode: p.rackCode || "A-01",
+          movementType: "Sales Outward",
+          quantityChange: -Math.abs(p.quantity),
+          referenceDocId: sale.id,
+          userId: user?.id,
+          userName: user?.name,
+        });
+      } catch {
+        /* ignore */
+      }
     });
 
     toast.success(`Sale #${sale.billNo} completed`);
@@ -662,7 +810,10 @@ export default function SalesPage() {
   };
 
   const handleSaveFamilyMember = () => {
-    if (!familyMemberName.trim()) { toast.error("Family member name is required"); return; }
+    if (!familyMemberName.trim()) {
+      toast.error("Family member name is required");
+      return;
+    }
     const newMember = {
       id: db.uid(),
       customerKey: activeCustomerKey || "default",
@@ -691,7 +842,20 @@ export default function SalesPage() {
     const label = sale.billNo || sale.invoiceNo;
     if (!confirm(`Delete bill ${label}? Sold stock will be returned to inventory.`)) return;
     sale.items?.forEach((it) => {
-      try { applyStockMovement({ batchId: it.batchId, locationType: "Front Shelf", rackCode: "Returns", movementType: "Customer Return", quantityChange: Math.abs(it.quantity), referenceDocId: sale.id, userId: user?.id, userName: user?.name }); } catch { /* ignore */ }
+      try {
+        applyStockMovement({
+          batchId: it.batchId,
+          locationType: "Front Shelf",
+          rackCode: "Returns",
+          movementType: "Customer Return",
+          quantityChange: Math.abs(it.quantity),
+          referenceDocId: sale.id,
+          userId: user?.id,
+          userName: user?.name,
+        });
+      } catch {
+        /* ignore */
+      }
     });
     db.set((d) => {
       d.sales = (d.sales || []).filter((x) => x.id !== sale.id);
@@ -702,9 +866,9 @@ export default function SalesPage() {
   const handleBillLookup = () => {
     const q = billSearch.trim().toLowerCase();
     if (!q) return;
-    const match = sales.find((s) =>
-      String(s.billNo || "").toLowerCase() === q ||
-      String(s.invoiceNo || "").toLowerCase() === q
+    const match = sales.find(
+      (s) =>
+        String(s.billNo || "").toLowerCase() === q || String(s.invoiceNo || "").toLowerCase() === q,
     );
     if (match) {
       setBillSearch("");
@@ -715,9 +879,21 @@ export default function SalesPage() {
   };
 
   const todayStr = new Date().toDateString();
-  const todaysSales = sales.filter((s) => { try { return new Date(s.createdAt).toDateString() === todayStr; } catch { return false; } });
+  const todaysSales = sales.filter((s) => {
+    try {
+      return new Date(s.createdAt).toDateString() === todayStr;
+    } catch {
+      return false;
+    }
+  });
 
-  const formatExpiry = (d) => { try { return d ? format(new Date(d), "MM/yy") : "12/26"; } catch { return "12/26"; } };
+  const formatExpiry = (d) => {
+    try {
+      return d ? format(new Date(d), "MM/yy") : "12/26";
+    } catch {
+      return "12/26";
+    }
+  };
 
   return (
     <div className="flex flex-col gap-0 pb-6 text-sm text-foreground">
@@ -769,20 +945,33 @@ export default function SalesPage() {
               <div className="flex items-center">
                 <button
                   type="button"
-                  onClick={() => { if (!cart.length) { toast.error("Cart is empty"); return; } setCheckoutOpen(true); }}
+                  onClick={() => {
+                    if (!cart.length) {
+                      toast.error("Cart is empty");
+                      return;
+                    }
+                    setCheckoutOpen(true);
+                  }}
                   className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-3.5 rounded-l-md text-xs flex items-center gap-1.5 transition-colors"
                 >
                   Save
                 </button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <button type="button" className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white px-1.5 rounded-r-md border-l border-emerald-500 transition-colors">
+                    <button
+                      type="button"
+                      className="h-8 bg-emerald-600 hover:bg-emerald-700 text-white px-1.5 rounded-r-md border-l border-emerald-500 transition-colors"
+                    >
                       <ChevronDown className="h-3.5 w-3.5" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setCheckoutOpen(true)}>Save & Checkout</DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => toast.success("Draft saved")}>Save as Draft</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setCheckoutOpen(true)}>
+                      Save & Checkout
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => toast.success("Draft saved")}>
+                      Save as Draft
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -836,7 +1025,11 @@ export default function SalesPage() {
                 </span>
                 <button
                   type="button"
-                  onClick={() => { setCustomerQuery("Counter Bill"); setCustomerName("Counter Bill"); toast.info("Created as Counter Bill"); }}
+                  onClick={() => {
+                    setCustomerQuery("Counter Bill");
+                    setCustomerName("Counter Bill");
+                    toast.info("Created as Counter Bill");
+                  }}
                   className="text-[11px] bg-blue-50 text-blue-600 dark:bg-blue-950 dark:text-blue-300 px-2 py-0.5 rounded-full flex items-center gap-1 hover:underline font-semibold"
                 >
                   <Mail className="h-3 w-3" /> Create as Counter Bill
@@ -846,8 +1039,13 @@ export default function SalesPage() {
                 <Input
                   placeholder="Customer Mobile / Name / Card Number"
                   value={customerQuery}
-                  onChange={(e) => { setCustomerQuery(e.target.value); setCustomerName(e.target.value); }}
-                  onKeyDown={(e) => { if (e.key === "Enter") handleCustomerSearch(); }}
+                  onChange={(e) => {
+                    setCustomerQuery(e.target.value);
+                    setCustomerName(e.target.value);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") handleCustomerSearch();
+                  }}
                   className="h-9 text-xs bg-background pr-10"
                 />
                 <button
@@ -871,14 +1069,27 @@ export default function SalesPage() {
                     className="h-9 w-full flex items-center justify-between px-3 text-xs font-medium bg-background border border-input rounded-md hover:bg-muted transition-colors"
                   >
                     <span>{billDate ? billDate.format("DD-MM-YYYY") : "Select date"}</span>
-                    <svg className="h-3.5 w-3.5 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" /><line x1="16" y1="2" x2="16" y2="6" /><line x1="8" y1="2" x2="8" y2="6" /><line x1="3" y1="10" x2="21" y2="10" /></svg>
+                    <svg
+                      className="h-3.5 w-3.5 text-muted-foreground"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <rect x="3" y="4" width="18" height="18" rx="2" />
+                      <line x1="16" y1="2" x2="16" y2="6" />
+                      <line x1="8" y1="2" x2="8" y2="6" />
+                      <line x1="3" y1="10" x2="21" y2="10" />
+                    </svg>
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="w-auto p-0 z-50" align="start">
                   <AntdCalendar
                     fullscreen={false}
                     value={billDate}
-                    onSelect={(date) => { setBillDate(date); setCalendarOpen(false); }}
+                    onSelect={(date) => {
+                      setBillDate(date);
+                      setCalendarOpen(false);
+                    }}
                     className="rounded-lg overflow-hidden"
                     style={{ width: 300 }}
                   />
@@ -889,30 +1100,42 @@ export default function SalesPage() {
             {/* Billing For — Dropdown with Saved Family Members + Add Family Option */}
             <div className="w-full sm:w-[180px] space-y-1">
               <Label className="text-xs font-medium text-muted-foreground">Billing for</Label>
-              <Select value={billingFor} onValueChange={(val) => {
-                if (val === "__ADD_NEW_FAMILY__") {
-                  setAddFamilyOpen(true);
-                } else {
-                  setBillingFor(val);
-                }
-              }}>
+              <Select
+                value={billingFor}
+                onValueChange={(val) => {
+                  if (val === "__ADD_NEW_FAMILY__") {
+                    setAddFamilyOpen(true);
+                  } else {
+                    setBillingFor(val);
+                  }
+                }}
+              >
                 <SelectTrigger className="h-9 text-xs bg-background w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Self">Self (20%)</SelectItem>
-                  {customerFamilyMembers.filter((fm) => fm && fm.name).map((fm, idx) => (
-                    <SelectItem key={fm.id || `fm-${idx}`} value={`${fm.name} (${fm.relation || "Member"})`}>
-                      <div className="flex flex-col">
-                        <span className="font-semibold">{fm.name}</span>
-                        <span className="text-[10px] text-muted-foreground">{fm.relation || "Member"} · {fm.phone || "No phone"}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                  <SelectItem value="__ADD_NEW_FAMILY__" className="text-emerald-600 font-bold border-t border-border/50 mt-1 pt-1">
+                  {customerFamilyMembers
+                    .filter((fm) => fm && fm.name)
+                    .map((fm, idx) => (
+                      <SelectItem
+                        key={fm.id || `fm-${idx}`}
+                        value={`${fm.name} (${fm.relation || "Member"})`}
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-semibold">{fm.name}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            {fm.relation || "Member"} · {fm.phone || "No phone"}
+                          </span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  <SelectItem
+                    value="__ADD_NEW_FAMILY__"
+                    className="text-emerald-600 font-bold border-t border-border/50 mt-1 pt-1"
+                  >
                     <span className="flex items-center gap-1">
-                      <UserPlus className="h-3.5 w-3.5" />
-                      + Add New Family Member
+                      <UserPlus className="h-3.5 w-3.5" />+ Add New Family Member
                     </span>
                   </SelectItem>
                 </SelectContent>
@@ -948,7 +1171,10 @@ export default function SalesPage() {
               />
               <button
                 type="button"
-                onClick={() => { setScanMode("choose"); setScanOpen(true); }}
+                onClick={() => {
+                  setScanMode("choose");
+                  setScanOpen(true);
+                }}
                 className="flex items-center gap-1.5 shrink-0 rounded-full bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white px-3 py-1.5 text-xs font-bold shadow-sm hover:shadow transition-colors"
                 title="Scan barcode"
               >
@@ -985,8 +1211,13 @@ export default function SalesPage() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="font-bold text-emerald-700">{currency}{priceNum.toFixed(2)}</div>
-                        <div className="text-[10px] font-semibold text-emerald-600">Stock: {stock}</div>
+                        <div className="font-bold text-emerald-700">
+                          {currency}
+                          {priceNum.toFixed(2)}
+                        </div>
+                        <div className="text-[10px] font-semibold text-emerald-600">
+                          Stock: {stock}
+                        </div>
                       </div>
                     </button>
                   );
@@ -1005,9 +1236,15 @@ export default function SalesPage() {
                     UNIT/PACK <InfoTip text="Pack size of the medicine, e.g. 10 Tabs, 30 Gm" />
                   </th>
                   <th className="py-2.5 px-2">LOC.</th>
-                  <th className="py-2.5 px-3">BATCH <InfoTip text="Batch number assigned during purchase" /></th>
-                  <th className="py-2.5 px-3">EXPIRY <InfoTip text="Expiry date of the batch" /></th>
-                  <th className="py-2.5 px-3 text-right">MRP <InfoTip text="Maximum Retail Price printed on the pack" /></th>
+                  <th className="py-2.5 px-3">
+                    BATCH <InfoTip text="Batch number assigned during purchase" />
+                  </th>
+                  <th className="py-2.5 px-3">
+                    EXPIRY <InfoTip text="Expiry date of the batch" />
+                  </th>
+                  <th className="py-2.5 px-3 text-right">
+                    MRP <InfoTip text="Maximum Retail Price printed on the pack" />
+                  </th>
                   <th className="py-2.5 px-3 text-center">
                     QTY. <InfoTip text="Quantity of units to sell" />
                   </th>
@@ -1032,20 +1269,47 @@ export default function SalesPage() {
                     <tr key={line.medicineId} className="hover:bg-muted/30 transition-colors">
                       <td className="py-2.5 px-3">
                         <div className="font-semibold text-foreground">{med.name}</div>
-                        <div className="text-[11px] text-muted-foreground">{med.genericName || med.brandName || "—"}</div>
+                        <div className="text-[11px] text-muted-foreground">
+                          {med.genericName || med.brandName || "—"}
+                        </div>
                       </td>
-                      <td className="py-2.5 px-3 text-muted-foreground">{med.packSize || "1 Strip"}</td>
-                      <td className="py-2.5 px-2 font-mono text-muted-foreground text-[11px]">{med.rack || "A-01"}</td>
-                      <td className="py-2.5 px-3 font-mono font-semibold">{batch?.batchNumber || "BT-2025"}</td>
-                      <td className="py-2.5 px-3 text-muted-foreground">{formatExpiry(batch?.expiryDate)}</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-muted-foreground">{currency}{mrp.toFixed(2)}</td>
+                      <td className="py-2.5 px-3 text-muted-foreground">
+                        {med.packSize || "1 Strip"}
+                      </td>
+                      <td className="py-2.5 px-2 font-mono text-muted-foreground text-[11px]">
+                        {med.rack || "A-01"}
+                      </td>
+                      <td className="py-2.5 px-3 font-mono font-semibold">
+                        {batch?.batchNumber || "BT-2025"}
+                      </td>
+                      <td className="py-2.5 px-3 text-muted-foreground">
+                        {formatExpiry(batch?.expiryDate)}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-muted-foreground">
+                        {currency}
+                        {mrp.toFixed(2)}
+                      </td>
                       <td className="py-2.5 px-3 text-center">
                         <Input
                           type="number"
                           min={1}
                           max={available}
                           value={line.quantity}
-                          onChange={(e) => setCart((p) => p.map((l) => l.medicineId === line.medicineId ? { ...l, quantity: Math.max(1, Math.min(Number(e.target.value) || 1, available)) } : l))}
+                          onChange={(e) =>
+                            setCart((p) =>
+                              p.map((l) =>
+                                l.medicineId === line.medicineId
+                                  ? {
+                                      ...l,
+                                      quantity: Math.max(
+                                        1,
+                                        Math.min(Number(e.target.value) || 1, available),
+                                      ),
+                                    }
+                                  : l,
+                              ),
+                            )
+                          }
                           className="w-14 mx-auto text-center font-mono font-bold text-xs text-foreground border-none shadow-none bg-transparent p-0 focus-visible:ring-0 focus-visible:border-none no-spin"
                         />
                       </td>
@@ -1055,17 +1319,41 @@ export default function SalesPage() {
                           min={0}
                           max={100}
                           value={line.discountPct || 0}
-                          onChange={(e) => setCart((p) => p.map((l) => l.medicineId === line.medicineId ? { ...l, discountPct: Math.min(100, Math.max(0, Number(e.target.value) || 0)) } : l))}
+                          onChange={(e) =>
+                            setCart((p) =>
+                              p.map((l) =>
+                                l.medicineId === line.medicineId
+                                  ? {
+                                      ...l,
+                                      discountPct: Math.min(
+                                        100,
+                                        Math.max(0, Number(e.target.value) || 0),
+                                      ),
+                                    }
+                                  : l,
+                              ),
+                            )
+                          }
                           className="w-12 ml-auto text-right font-mono text-xs text-foreground border-none shadow-none bg-transparent p-0 focus-visible:ring-0 focus-visible:border-none no-spin"
                         />
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono">{currency}{dPrice.toFixed(2)}</td>
-                      <td className="py-2.5 px-3 text-right font-mono text-muted-foreground">{med.gstRate || 0}%</td>
-                      <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">{currency}{lineTotal.toFixed(2)}</td>
+                      <td className="py-2.5 px-3 text-right font-mono">
+                        {currency}
+                        {dPrice.toFixed(2)}
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono text-muted-foreground">
+                        {med.gstRate || 0}%
+                      </td>
+                      <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">
+                        {currency}
+                        {lineTotal.toFixed(2)}
+                      </td>
                       <td className="py-2.5 px-3 text-center">
                         <button
                           type="button"
-                          onClick={() => setCart((p) => p.filter((l) => l.medicineId !== line.medicineId))}
+                          onClick={() =>
+                            setCart((p) => p.filter((l) => l.medicineId !== line.medicineId))
+                          }
                           className="text-muted-foreground/60 hover:text-red-500 transition-colors"
                         >
                           <Trash2 className="h-3.5 w-3.5" />
@@ -1082,7 +1370,9 @@ export default function SalesPage() {
               <div className="py-12 text-center">
                 <Receipt className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
                 <p className="text-sm font-semibold text-muted-foreground">No items in bill yet</p>
-                <p className="text-xs text-muted-foreground/70 mt-1">Search and select medicines from the bar above to start billing.</p>
+                <p className="text-xs text-muted-foreground/70 mt-1">
+                  Search and select medicines from the bar above to start billing.
+                </p>
               </div>
             )}
           </div>
@@ -1095,7 +1385,9 @@ export default function SalesPage() {
                   <History className="h-3.5 w-3.5 text-emerald-600" />
                   Previously Purchased by {searchedCustomer}
                 </span>
-                <span className="text-[11px] text-muted-foreground/80">Click any item thumbnail to quick-add to bill</span>
+                <span className="text-[11px] text-muted-foreground/80">
+                  Click any item thumbnail to quick-add to bill
+                </span>
               </div>
               <div className="flex items-center gap-3 overflow-x-auto pb-2 pt-1 no-scrollbar">
                 {customerPastPurchases.map((item, idx) => {
@@ -1116,9 +1408,16 @@ export default function SalesPage() {
                       <div className="h-10 w-10 rounded-lg bg-emerald-100/80 dark:bg-emerald-950 text-emerald-700 flex items-center justify-center font-bold text-xs group-hover:scale-105 transition-transform mb-1 shadow-2xs">
                         {medName ? medName.slice(0, 2).toUpperCase() : "MED"}
                       </div>
-                      <span className="text-[11px] font-semibold text-foreground line-clamp-1 w-full">{medName}</span>
-                      <span className="text-[10px] text-muted-foreground line-clamp-1">{packSize}</span>
-                      <span className="text-[11px] font-bold text-emerald-700 mt-0.5">{currency}{priceNum.toFixed(2)}</span>
+                      <span className="text-[11px] font-semibold text-foreground line-clamp-1 w-full">
+                        {medName}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground line-clamp-1">
+                        {packSize}
+                      </span>
+                      <span className="text-[11px] font-bold text-emerald-700 mt-0.5">
+                        {currency}
+                        {priceNum.toFixed(2)}
+                      </span>
                     </button>
                   );
                 })}
@@ -1286,18 +1585,28 @@ export default function SalesPage() {
                         }`}
                       >
                         <Filter className="h-3.5 w-3.5" />
-                        <span>More Filters{moreActiveCount > 0 ? ` (${moreActiveCount})` : ""}</span>
+                        <span>
+                          More Filters{moreActiveCount > 0 ? ` (${moreActiveCount})` : ""}
+                        </span>
                       </button>
                     </PopoverTrigger>
 
-                    <PopoverContent align="end" className="w-56 p-1.5 rounded-lg border border-border shadow-lg bg-card z-50 max-h-96 overflow-y-auto">
+                    <PopoverContent
+                      align="end"
+                      className="w-56 p-1.5 rounded-lg border border-border shadow-lg bg-card z-50 max-h-96 overflow-y-auto"
+                    >
                       {/* Section 1: Sort Options (A-Z, Price, Priority) */}
-                      <p className="px-2 pt-1 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Sort & Order</p>
+                      <p className="px-2 pt-1 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        Sort & Order
+                      </p>
                       {SORT_OPTIONS.map((opt) => (
                         <button
                           key={opt.value}
                           type="button"
-                          onClick={() => { setHistorySortBy(opt.value); setMoreFiltersOpen(false); }}
+                          onClick={() => {
+                            setHistorySortBy(opt.value);
+                            setMoreFiltersOpen(false);
+                          }}
                           className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs flex items-center justify-between transition-colors ${
                             historySortBy === opt.value
                               ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold"
@@ -1305,19 +1614,26 @@ export default function SalesPage() {
                           }`}
                         >
                           {opt.label}
-                          {historySortBy === opt.value && <span className="text-emerald-600 font-bold">✓</span>}
+                          {historySortBy === opt.value && (
+                            <span className="text-emerald-600 font-bold">✓</span>
+                          )}
                         </button>
                       ))}
 
                       <div className="my-1 border-t border-border/50" />
 
                       {/* Section 2: Payment Mode */}
-                      <p className="px-2 pt-1 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">Payment Mode</p>
+                      <p className="px-2 pt-1 pb-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+                        Payment Mode
+                      </p>
                       {PAYMENT_OPTIONS.map((opt) => (
                         <button
                           key={opt.value}
                           type="button"
-                          onClick={() => { setFilterPaymentMode(opt.value); setMoreFiltersOpen(false); }}
+                          onClick={() => {
+                            setFilterPaymentMode(opt.value);
+                            setMoreFiltersOpen(false);
+                          }}
                           className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs flex items-center justify-between transition-colors ${
                             filterPaymentMode === opt.value
                               ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold"
@@ -1325,7 +1641,9 @@ export default function SalesPage() {
                           }`}
                         >
                           {opt.label}
-                          {filterPaymentMode === opt.value && <span className="text-emerald-600 font-bold">✓</span>}
+                          {filterPaymentMode === opt.value && (
+                            <span className="text-emerald-600 font-bold">✓</span>
+                          )}
                         </button>
                       ))}
 
@@ -1334,7 +1652,9 @@ export default function SalesPage() {
                       {/* Section 3: Show Voided */}
                       <button
                         type="button"
-                        onClick={() => { setFilterShowVoided((v) => !v); }}
+                        onClick={() => {
+                          setFilterShowVoided((v) => !v);
+                        }}
                         className={`w-full text-left px-2.5 py-1.5 rounded-md text-xs flex items-center justify-between transition-colors ${
                           filterShowVoided
                             ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 font-semibold"
@@ -1382,21 +1702,31 @@ export default function SalesPage() {
                 <thead>
                   <tr className="bg-emerald-900/10 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-bold uppercase text-[11px] tracking-wide border-b border-emerald-200 dark:border-emerald-900">
                     <th className="px-3.5 py-2.5">
-                      <span className="inline-flex items-center gap-1">Bill No. <InfoTip text="Unique bill number for this sale" /></span>
+                      <span className="inline-flex items-center gap-1">
+                        Bill No. <InfoTip text="Unique bill number for this sale" />
+                      </span>
                     </th>
                     <th className="px-3.5 py-2.5">
-                      <span className="inline-flex items-center gap-1">Entry Date <InfoTip text="Date and time the bill was recorded" /></span>
+                      <span className="inline-flex items-center gap-1">
+                        Entry Date <InfoTip text="Date and time the bill was recorded" />
+                      </span>
                     </th>
                     <th className="px-3.5 py-2.5">
-                      <span className="inline-flex items-center gap-1">Bill Date <InfoTip text="Billing date selected for the bill" /></span>
+                      <span className="inline-flex items-center gap-1">
+                        Bill Date <InfoTip text="Billing date selected for the bill" />
+                      </span>
                     </th>
                     <th className="px-3.5 py-2.5">Entry By</th>
                     <th className="px-3.5 py-2.5">
-                      <span className="inline-flex items-center gap-1">Patient <InfoTip text="Customer / patient for whom the bill was raised" /></span>
+                      <span className="inline-flex items-center gap-1">
+                        Patient <InfoTip text="Customer / patient for whom the bill was raised" />
+                      </span>
                     </th>
                     <th className="px-3.5 py-2.5">Mobile</th>
                     <th className="px-3.5 py-2.5 text-right">
-                      <span className="inline-flex items-center gap-1 justify-end">Bill Amount <InfoTip text="Total payable after discounts and GST" /></span>
+                      <span className="inline-flex items-center gap-1 justify-end">
+                        Bill Amount <InfoTip text="Total payable after discounts and GST" />
+                      </span>
                     </th>
                     <th className="px-3.5 py-2.5 text-center w-28">Actions</th>
                   </tr>
@@ -1407,20 +1737,32 @@ export default function SalesPage() {
                       <td colSpan={8} className="py-12 text-center text-muted-foreground">
                         <Receipt className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
                         <p className="font-semibold">No sales records found</p>
-                        <p className="text-xs text-muted-foreground/70 mt-1">Click "+ New" to create a new sale bill.</p>
+                        <p className="text-xs text-muted-foreground/70 mt-1">
+                          Click "+ New" to create a new sale bill.
+                        </p>
                       </td>
                     </tr>
                   ) : (
                     filteredHistorySales.map((s, idx) => {
-                      const billDisplay = s.billNo || s.invoiceNo || `BILL-${idx+1}`;
-                      const entryDateStr = s.createdAt ? format(new Date(s.createdAt), "dd-MM-yy hh:mm a") : "—";
-                      const billDateStr = s.createdAt ? format(new Date(s.createdAt), "dd-MM-yy") : "—";
+                      const billDisplay = s.billNo || s.invoiceNo || `BILL-${idx + 1}`;
+                      const entryDateStr = s.createdAt
+                        ? format(new Date(s.createdAt), "dd-MM-yy hh:mm a")
+                        : "—";
+                      const billDateStr = s.createdAt
+                        ? format(new Date(s.createdAt), "dd-MM-yy")
+                        : "—";
                       const isDue = s.status === "due" || s.paymentMode === "due";
                       return (
-                        <tr key={s.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 transition-colors group">
+                        <tr
+                          key={s.id}
+                          className="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 transition-colors group"
+                        >
                           {/* Bill No */}
                           <td className="px-3.5 py-2.5 font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                            <Link to={`/sales/${s.id}`} className="hover:underline flex items-center gap-1">
+                            <Link
+                              to={`/sales/${s.id}`}
+                              className="hover:underline flex items-center gap-1"
+                            >
                               <User className="h-3 w-3 text-emerald-600/70" />
                               {billDisplay}
                             </Link>
@@ -1445,7 +1787,9 @@ export default function SalesPage() {
                           <td className="px-3.5 py-2.5 font-semibold text-foreground">
                             {s.customerName || "Counter Sale"}
                             {s.billingFor && s.billingFor !== "Self" && (
-                              <span className="ml-1 text-[10px] text-emerald-600 font-normal">({s.billingFor})</span>
+                              <span className="ml-1 text-[10px] text-emerald-600 font-normal">
+                                ({s.billingFor})
+                              </span>
                             )}
                           </td>
 
@@ -1457,7 +1801,10 @@ export default function SalesPage() {
                           {/* Bill Amount */}
                           <td className="px-3.5 py-2.5 text-right font-mono font-bold text-foreground">
                             <div className="flex items-center justify-end gap-1.5">
-                              <span>{currency}{(s.grandTotal || 0).toLocaleString()}</span>
+                              <span>
+                                {currency}
+                                {(s.grandTotal || 0).toLocaleString()}
+                              </span>
                               {isDue ? (
                                 <span className="rounded-xs bg-red-100 dark:bg-red-950 text-red-700 dark:text-red-300 px-1.5 py-0.5 text-[10px] font-bold flex items-center gap-0.5">
                                   Due ✕
@@ -1475,7 +1822,9 @@ export default function SalesPage() {
                             <div className="flex items-center justify-center gap-2">
                               <button
                                 type="button"
-                                onClick={() => { navigate(`/sales/${s.id}`); }}
+                                onClick={() => {
+                                  navigate(`/sales/${s.id}`);
+                                }}
                                 className="text-muted-foreground hover:text-emerald-600 transition-colors p-1"
                                 title="Print / View Invoice"
                               >
@@ -1517,7 +1866,13 @@ export default function SalesPage() {
             {/* Footer bar showing Total Amount */}
             <div className="bg-emerald-900/90 dark:bg-emerald-950 text-white px-4 py-2 flex items-center justify-between text-xs font-bold">
               <span>Total Records: {filteredHistorySales.length}</span>
-              <span className="font-mono text-sm">Total Amount: {currency}{historyTotalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              <span className="font-mono text-sm">
+                Total Amount: {currency}
+                {historyTotalAmount.toLocaleString(undefined, {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </span>
             </div>
           </div>
         </div>
@@ -1528,16 +1883,30 @@ export default function SalesPage() {
         <div className="sticky bottom-0 z-30 bg-card border-t border-border/60 px-4 py-2.5 flex items-center justify-between text-xs shadow-md mt-4 rounded-b-lg border-x">
           <div className="flex items-center gap-3">
             {cart.length > 0 && (
-              <button type="button" onClick={clearCart} className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+              <button
+                type="button"
+                onClick={clearCart}
+                className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+              >
                 Clear Cart
               </button>
             )}
             <button
               type="button"
-              onClick={() => { if (!cart.length) { toast.error("Cart is empty"); return; } setCheckoutOpen(true); }}
+              onClick={() => {
+                if (!cart.length) {
+                  toast.error("Cart is empty");
+                  return;
+                }
+                setCheckoutOpen(true);
+              }}
               className="flex items-center gap-2 font-bold text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg transition-colors"
             >
-              Net Payable: <span className="font-mono">{currency}{totals.grandTotal.toFixed(2)}</span>
+              Net Payable:{" "}
+              <span className="font-mono">
+                {currency}
+                {totals.grandTotal.toFixed(2)}
+              </span>
               <ChevronUp className="h-3.5 w-3.5" />
             </button>
           </div>
@@ -1559,12 +1928,24 @@ export default function SalesPage() {
             {/* Stats row */}
             <div className="grid grid-cols-2 gap-2">
               <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-center">
-                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Total Orders</p>
-                <p className="text-lg font-extrabold text-slate-800">{customerGraphData.totalOrders}</p>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                  Total Orders
+                </p>
+                <p className="text-lg font-extrabold text-slate-800">
+                  {customerGraphData.totalOrders}
+                </p>
               </div>
               <div className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-center">
-                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Total Spent</p>
-                <p className="text-lg font-extrabold text-emerald-600">{currency}{customerGraphData.totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                <p className="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">
+                  Total Spent
+                </p>
+                <p className="text-lg font-extrabold text-emerald-600">
+                  {currency}
+                  {customerGraphData.totalSpent.toLocaleString(undefined, {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                </p>
               </div>
             </div>
 
@@ -1595,24 +1976,44 @@ export default function SalesPage() {
                   const widthPct = Math.max(8, Math.round((entry.times / maxTimes) * 100));
                   const medName = entry.med?.name || "Medicine";
                   return (
-                    <div key={entry.med?.id || `tp-${idx}`} className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
+                    <div
+                      key={entry.med?.id || `tp-${idx}`}
+                      className="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2"
+                    >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="shrink-0 h-5 w-5 rounded-md text-[11px] font-bold flex items-center justify-center text-white" style={{ backgroundColor: ITEM_COLORS[idx % ITEM_COLORS.length] }}>
+                          <span
+                            className="shrink-0 h-5 w-5 rounded-md text-[11px] font-bold flex items-center justify-center text-white"
+                            style={{ backgroundColor: ITEM_COLORS[idx % ITEM_COLORS.length] }}
+                          >
                             {idx + 1}
                           </span>
-                          <span className="font-semibold text-slate-800 text-sm truncate">{medName}</span>
+                          <span className="font-semibold text-slate-800 text-sm truncate">
+                            {medName}
+                          </span>
                         </div>
                         <span className="shrink-0 text-[11px] font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
                           {entry.times}×
                         </span>
                       </div>
                       <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-200 overflow-hidden">
-                        <div className="h-full rounded-full" style={{ width: `${widthPct}%`, backgroundColor: ITEM_COLORS[idx % ITEM_COLORS.length] }} />
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${widthPct}%`,
+                            backgroundColor: ITEM_COLORS[idx % ITEM_COLORS.length],
+                          }}
+                        />
                       </div>
                       <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
                         <span>{entry.totalQty} units bought</span>
-                        <span className="font-mono font-semibold text-slate-700">{currency}{entry.totalAmount.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        <span className="font-mono font-semibold text-slate-700">
+                          {currency}
+                          {entry.totalAmount.toLocaleString(undefined, {
+                            minimumFractionDigits: 2,
+                            maximumFractionDigits: 2,
+                          })}
+                        </span>
                       </div>
                     </div>
                   );
@@ -1622,7 +2023,9 @@ export default function SalesPage() {
               <div className="py-10 text-center text-slate-500">
                 <BarChart2 className="h-10 w-10 text-slate-300 mx-auto mb-2" />
                 <p className="text-sm font-semibold">No order history available</p>
-                <p className="text-xs text-slate-400 mt-1">Complete a bill for this customer to view their top purchases.</p>
+                <p className="text-xs text-slate-400 mt-1">
+                  Complete a bill for this customer to view their top purchases.
+                </p>
               </div>
             )}
           </div>
@@ -1641,7 +2044,9 @@ export default function SalesPage() {
 
           <div className="space-y-3 py-2 text-xs">
             <div className="space-y-1">
-              <Label className="font-semibold">Person Name <span className="text-red-500">*</span></Label>
+              <Label className="font-semibold">
+                Person Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 placeholder="e.g. Hamid Girach"
                 value={familyMemberName}
@@ -1682,8 +2087,22 @@ export default function SalesPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {["Brother", "Sister", "Wife", "Husband", "Father", "Mother", "Son", "Daughter", "Grandfather", "Grandmother", "Other"].map((rel) => (
-                    <SelectItem key={rel} value={rel}>{rel}</SelectItem>
+                  {[
+                    "Brother",
+                    "Sister",
+                    "Wife",
+                    "Husband",
+                    "Father",
+                    "Mother",
+                    "Son",
+                    "Daughter",
+                    "Grandfather",
+                    "Grandmother",
+                    "Other",
+                  ].map((rel) => (
+                    <SelectItem key={rel} value={rel}>
+                      {rel}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -1691,10 +2110,18 @@ export default function SalesPage() {
           </div>
 
           <DialogFooter className="gap-2 pt-2">
-            <Button variant="outline" size="sm" onClick={() => setAddFamilyOpen(false)} className="text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAddFamilyOpen(false)}
+              className="text-xs"
+            >
               Cancel
             </Button>
-            <Button onClick={handleSaveFamilyMember} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4">
+            <Button
+              onClick={handleSaveFamilyMember}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4"
+            >
               Save Family Member
             </Button>
           </DialogFooter>
@@ -1702,7 +2129,13 @@ export default function SalesPage() {
       </Dialog>
 
       {/* ─── SCAN DIALOG ────────────────────────────────────── */}
-      <Dialog open={scanOpen} onOpenChange={(o) => { setScanOpen(o); if (!o) setScanMode("choose"); }}>
+      <Dialog
+        open={scanOpen}
+        onOpenChange={(o) => {
+          setScanOpen(o);
+          if (!o) setScanMode("choose");
+        }}
+      >
         <DialogContent className="max-w-md p-6">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold flex items-center gap-2">
@@ -1720,7 +2153,9 @@ export default function SalesPage() {
               >
                 <Camera className="h-7 w-7 text-emerald-600" />
                 <span className="text-sm font-bold text-foreground">Camera Scanner</span>
-                <span className="text-[11px] leading-snug text-muted-foreground">Point your phone or laptop camera at the barcode</span>
+                <span className="text-[11px] leading-snug text-muted-foreground">
+                  Point your phone or laptop camera at the barcode
+                </span>
               </button>
               <button
                 type="button"
@@ -1729,16 +2164,23 @@ export default function SalesPage() {
               >
                 <Keyboard className="h-7 w-7 text-emerald-600" />
                 <span className="text-sm font-bold text-foreground">Scanner / Keyboard</span>
-                <span className="text-[11px] leading-snug text-muted-foreground">Use a USB scanner or type the barcode and press Enter</span>
+                <span className="text-[11px] leading-snug text-muted-foreground">
+                  Use a USB scanner or type the barcode and press Enter
+                </span>
               </button>
             </div>
           )}
 
           {scanMode === "camera" && (
             <div className="space-y-3 py-2 text-xs">
-              <div id="qr-reader" className="w-full overflow-hidden rounded-lg border border-border/60 [&_video]:rounded-lg" />
+              <div
+                id="qr-reader"
+                className="w-full overflow-hidden rounded-lg border border-border/60 [&_video]:rounded-lg"
+              />
               <p className="text-center text-muted-foreground">
-                {scanReady ? "Point the camera at a medicine barcode to add it to the cart." : "Starting camera…"}
+                {scanReady
+                  ? "Point the camera at a medicine barcode to add it to the cart."
+                  : "Starting camera…"}
               </p>
             </div>
           )}
@@ -1759,17 +2201,33 @@ export default function SalesPage() {
                 className="h-10 text-sm font-mono"
               />
               <p className="text-center text-muted-foreground">
-                USB scanners type the code automatically. Scan or type a barcode and press Enter to add it to the cart.
+                USB scanners type the code automatically. Scan or type a barcode and press Enter to
+                add it to the cart.
               </p>
             </div>
           )}
 
           <DialogFooter className="gap-2 pt-1">
-            <Button variant="outline" size="sm" onClick={() => { if (scanMode === "choose") setScanOpen(false); else setScanMode("choose"); }} className="text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (scanMode === "choose") setScanOpen(false);
+                else setScanMode("choose");
+              }}
+              className="text-xs"
+            >
               {scanMode === "choose" ? "Close" : "Back"}
             </Button>
             {scanMode !== "choose" && (
-              <Button variant="outline" size="sm" onClick={() => setScanOpen(false)} className="text-xs">Close</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setScanOpen(false)}
+                className="text-xs"
+              >
+                Close
+              </Button>
             )}
           </DialogFooter>
         </DialogContent>
@@ -1787,23 +2245,54 @@ export default function SalesPage() {
           <div className="flex-1 overflow-y-auto space-y-4 py-4 pr-1 text-xs">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
-                <Label htmlFor="cust-name" className="font-semibold">Customer Name <span className="text-red-500">*</span></Label>
-                <Input id="cust-name" required value={customerName} onChange={(e) => setCustomerName(e.target.value)} placeholder="Counter Bill / Walk-in" className="h-9 text-xs" />
+                <Label htmlFor="cust-name" className="font-semibold">
+                  Customer Name <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="cust-name"
+                  required
+                  value={customerName}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                  placeholder="Counter Bill / Walk-in"
+                  className="h-9 text-xs"
+                />
               </div>
               <div className="space-y-1">
-                <Label htmlFor="cust-phone" className="font-semibold">Mobile Number <span className="text-red-500">*</span></Label>
-                <Input id="cust-phone" required maxLength={10} inputMode="numeric" value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} placeholder="Phone number" className="h-9 text-xs" />
+                <Label htmlFor="cust-phone" className="font-semibold">
+                  Mobile Number <span className="text-red-500">*</span>
+                </Label>
+                <Input
+                  id="cust-phone"
+                  required
+                  maxLength={10}
+                  inputMode="numeric"
+                  value={customerPhone}
+                  onChange={(e) => setCustomerPhone(e.target.value)}
+                  placeholder="Phone number"
+                  className="h-9 text-xs"
+                />
               </div>
             </div>
             <div className="space-y-1">
-              <Label htmlFor="doc-name" className="font-semibold">Doctor Name <span className="text-red-500">*</span></Label>
-              <Input id="doc-name" required value={doctorName} onChange={(e) => setDoctorName(e.target.value)} placeholder="Dr. Name" className="h-9 text-xs" />
+              <Label htmlFor="doc-name" className="font-semibold">
+                Doctor Name <span className="text-red-500">*</span>
+              </Label>
+              <Input
+                id="doc-name"
+                required
+                value={doctorName}
+                onChange={(e) => setDoctorName(e.target.value)}
+                placeholder="Dr. Name"
+                className="h-9 text-xs"
+              />
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="space-y-1">
                 <Label className="font-semibold">Payment Method</Label>
                 <Select value={payment} onValueChange={setPayment}>
-                  <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="cash">💵 Cash</SelectItem>
                     <SelectItem value="upi">📱 UPI</SelectItem>
@@ -1813,27 +2302,54 @@ export default function SalesPage() {
               </div>
               {payment === "cash" && (
                 <div className="space-y-1">
-                  <Label htmlFor="tender" className="font-semibold">Cash Received</Label>
-                  <Input id="tender" type="number" value={tender} onChange={(e) => setTender(e.target.value)} placeholder={String(totals.grandTotal)} className="h-9 text-xs font-mono no-spin" />
+                  <Label htmlFor="tender" className="font-semibold">
+                    Cash Received
+                  </Label>
+                  <Input
+                    id="tender"
+                    type="number"
+                    value={tender}
+                    onChange={(e) => setTender(e.target.value)}
+                    placeholder={String(totals.grandTotal)}
+                    className="h-9 text-xs font-mono no-spin"
+                  />
                 </div>
               )}
             </div>
             <div className="rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 p-4 space-y-2 border border-emerald-200/50">
               <div className="flex justify-between items-center text-sm">
                 <span className="font-bold">Total Net Payable:</span>
-                <span className="font-mono text-xl font-extrabold text-emerald-700">{currency}{totals.grandTotal.toFixed(2)}</span>
+                <span className="font-mono text-xl font-extrabold text-emerald-700">
+                  {currency}
+                  {totals.grandTotal.toFixed(2)}
+                </span>
               </div>
               {payment === "cash" && (
                 <div className="flex justify-between items-center text-xs border-t border-emerald-200/40 pt-2">
                   <span className="text-muted-foreground font-semibold">Change to Return:</span>
-                  <span className="font-mono font-bold text-sm">{currency}{Math.max(0, Number(tender || totals.grandTotal) - totals.grandTotal).toFixed(2)}</span>
+                  <span className="font-mono font-bold text-sm">
+                    {currency}
+                    {Math.max(0, Number(tender || totals.grandTotal) - totals.grandTotal).toFixed(
+                      2,
+                    )}
+                  </span>
                 </div>
               )}
             </div>
           </div>
           <SheetFooter className="mt-4 border-t border-border/60 pt-4 flex-row gap-3">
-            <Button variant="outline" size="sm" onClick={() => setCheckoutOpen(false)} className="text-xs">Cancel</Button>
-            <Button onClick={confirmCheckout} className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCheckoutOpen(false)}
+              className="text-xs"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmCheckout}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-4 flex items-center gap-2"
+            >
               <Receipt className="h-4 w-4" />
               Complete Sale & Print Bill
             </Button>

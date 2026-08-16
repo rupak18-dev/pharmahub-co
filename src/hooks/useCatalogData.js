@@ -15,17 +15,32 @@ export function useCatalogData() {
     try {
       setLoading(true);
       const [medRes, catRes, mfrRes, supRes, batchRes] = await Promise.all([
-        api.get("/medicines?limit=1000").catch((err) => { console.error("Med error:", err); return { data: [] }; }),
-        api.get("/categories?limit=100").catch((err) => { console.error("Cat error:", err); return { data: [] }; }),
-        api.get("/manufacturers?limit=100").catch((err) => { console.error("Mfr error:", err); return { data: [] }; }),
-        api.get("/suppliers?limit=100").catch((err) => { console.error("Sup error:", err); return { data: [] }; }),
-        api.get("/batches?limit=1000").catch((err) => { console.error("Batch error:", err); return { data: [] }; }),
+        api.get("/medicines?limit=1000").catch((err) => {
+          console.error("Med error:", err);
+          return { data: [] };
+        }),
+        api.get("/categories?limit=100").catch((err) => {
+          console.error("Cat error:", err);
+          return { data: [] };
+        }),
+        api.get("/manufacturers?limit=100").catch((err) => {
+          console.error("Mfr error:", err);
+          return { data: [] };
+        }),
+        api.get("/suppliers?limit=100").catch((err) => {
+          console.error("Sup error:", err);
+          return { data: [] };
+        }),
+        api.get("/batches?limit=1000").catch((err) => {
+          console.error("Batch error:", err);
+          return { data: [] };
+        }),
       ]);
 
       console.log("API Responses ->", { medRes, catRes, mfrRes, supRes, batchRes });
 
       const mapId = (item) => ({ ...item, id: item._id });
-      
+
       setData({
         medicines: (medRes.data || []).map(mapId),
         categories: (catRes.data || []).map(mapId),

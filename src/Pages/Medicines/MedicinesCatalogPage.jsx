@@ -79,7 +79,17 @@ export default function MedicinesCatalogPage() {
     focusSearch: urlSearchParams.get("focusSearch") ?? "",
     filter: urlSearchParams.get("filter") ?? "",
   };
-  const { medicines, categories, manufacturers, batches, suppliers, loading, addMedicine, updateMedicine, deactivateMedicine } = useCatalogData();
+  const {
+    medicines,
+    categories,
+    manufacturers,
+    batches,
+    suppliers,
+    loading,
+    addMedicine,
+    updateMedicine,
+    deactivateMedicine,
+  } = useCatalogData();
   const has = usePermission();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -963,8 +973,14 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           name: editing.name,
           genericName: editing.genericName ?? "",
           brandName: editing.brandName ?? "",
-          categoryId: (typeof editing.categoryId === 'object' ? editing.categoryId?._id : editing.categoryId) ?? "",
-          manufacturerId: (typeof editing.manufacturerId === 'object' ? editing.manufacturerId?._id : editing.manufacturerId) ?? "",
+          categoryId:
+            (typeof editing.categoryId === "object"
+              ? editing.categoryId?._id
+              : editing.categoryId) ?? "",
+          manufacturerId:
+            (typeof editing.manufacturerId === "object"
+              ? editing.manufacturerId?._id
+              : editing.manufacturerId) ?? "",
           hsnCode: editing.hsnCode ?? "",
           gstRate: editing.gstRate,
           storageRequirements: editing.storageRequirements ?? "",
@@ -1022,17 +1038,20 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           </SheetDescription>
         </SheetHeader>
         <form
-          onSubmit={handleSubmit((v) => {
-            onSubmit(v);
-            reset();
-          }, (errors) => {
+          onSubmit={handleSubmit(
+            (v) => {
+              onSubmit(v);
+              reset();
+            },
+            (errors) => {
               const firstError = Object.values(errors)[0];
               if (firstError) {
                 toast.error(`Validation Error: ${firstError.message}`);
               } else {
                 toast.error("Please fill all required fields correctly.");
               }
-          })}
+            },
+          )}
           className="flex-1 overflow-y-auto space-y-5 py-4 pr-1"
         >
           {/* GENERAL INFO */}

@@ -14,7 +14,7 @@ export function useMedicines() {
       if (res && res.success) {
         // Backend returns `{ success: true, data: [...], meta: ... }`
         // We map `_id` to `id` for frontend compatibility
-        const mapped = (res.data || []).map(m => ({
+        const mapped = (res.data || []).map((m) => ({
           ...m,
           id: m._id,
           categoryId: m.categoryId?._id || m.categoryId,

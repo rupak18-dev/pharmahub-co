@@ -811,4 +811,3 @@ export function genBillNo(sales = []) {
   } while (existing.has(code));
   return code;
 }
-

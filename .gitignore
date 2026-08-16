@@ -34,3 +34,7 @@ build/
 .vercel
 .vercel.*
 .env*
+
+# Tool-generated junk
+.tanstack
+.kilo

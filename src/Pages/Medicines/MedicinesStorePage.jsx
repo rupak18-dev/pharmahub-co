@@ -334,9 +334,13 @@ export default function MedicinesCatalogPage() {
         }
       }
       if (statusFilter !== "all") {
-        const isDraft = m.status === "draft" || (!m.genericName && !m.brandName && !m.categoryId && !m.manufacturerId);
-        if (statusFilter === "active" && (!m.isActive || stockLevel <= minLevel || isDraft)) return false;
-        if (statusFilter === "low" && (stockLevel > minLevel || stockLevel === 0 || isDraft)) return false;
+        const isDraft =
+          m.status === "draft" ||
+          (!m.genericName && !m.brandName && !m.categoryId && !m.manufacturerId);
+        if (statusFilter === "active" && (!m.isActive || stockLevel <= minLevel || isDraft))
+          return false;
+        if (statusFilter === "low" && (stockLevel > minLevel || stockLevel === 0 || isDraft))
+          return false;
         if (statusFilter === "out" && (stockLevel > 0 || isDraft)) return false;
         if (statusFilter === "draft" && !isDraft) return false;
       }
@@ -633,12 +637,10 @@ export default function MedicinesCatalogPage() {
 
       {/* Main white container */}
       <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-border/40 flex flex-col flex-1 overflow-hidden">
-        
         {/* Top Controls Bar */}
         {!showWishlist && (
           <div className="p-4 border-b border-border/40 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
-              
               {/* Left side filters */}
               <div className="flex flex-wrap items-center gap-3">
                 <Select value={catFilter} onValueChange={setCatFilter}>
@@ -654,7 +656,7 @@ export default function MedicinesCatalogPage() {
                     ))}
                   </SelectContent>
                 </Select>
-                
+
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-[140px] h-9 text-xs bg-white rounded-md border-border/80">
                     <SelectValue placeholder="Status" />
@@ -687,7 +689,9 @@ export default function MedicinesCatalogPage() {
                   className={`h-9 px-3 text-xs rounded-md gap-2 ${statusFilter === "draft" ? "bg-[#007A87] text-white hover:bg-[#007A87]/90" : "bg-white text-slate-700 border-border/80"}`}
                   onClick={() => setStatusFilter(statusFilter === "draft" ? "all" : "draft")}
                 >
-                  <Filter className={`w-3.5 h-3.5 ${statusFilter === "draft" ? "text-white" : "text-muted-foreground"}`} />
+                  <Filter
+                    className={`w-3.5 h-3.5 ${statusFilter === "draft" ? "text-white" : "text-muted-foreground"}`}
+                  />
                   {statusFilter === "draft" ? "Drafts Only" : "Draft Medicine"}
                 </Button>
               </div>
@@ -742,7 +746,7 @@ export default function MedicinesCatalogPage() {
                   <span className="text-xs font-medium text-muted-foreground">
                     {filtered.length}/{medicines.length}
                   </span>
-                  
+
                   <div className="flex items-center border border-border/80 rounded-md bg-white shadow-sm shrink-0 overflow-hidden">
                     <Button
                       variant="ghost"
@@ -781,79 +785,394 @@ export default function MedicinesCatalogPage() {
             </div>
           </div>
         )}
-        
-        <div className="flex-1 overflow-y-auto p-0">
 
-      {filtered.length === 0 ? (
-        <EmptyState
-          title={showWishlist ? "Your wishlist is empty" : "No medicines matched filters"}
-          description={
-            showWishlist
-              ? "You haven't added any medicines to your wishlist yet."
-              : "Refine your criteria or add a new medicine configuration to the master catalog."
-          }
-          action={
-            has("medicines", "create") &&
-            !showWishlist && (
-              <Button
-                onClick={openCreate}
-                className="bg-[#007A87] hover:bg-[#007A87]/90 text-white"
-              >
-                <Plus className="mr-1 h-4 w-4" /> Add medicine
-              </Button>
-            )
-          }
-        />
-      ) : (
-        <>
-          {viewMode === "list" ? (
+        <div className="flex-1 overflow-y-auto p-0">
+          {filtered.length === 0 ? (
+            <EmptyState
+              title={showWishlist ? "Your wishlist is empty" : "No medicines matched filters"}
+              description={
+                showWishlist
+                  ? "You haven't added any medicines to your wishlist yet."
+                  : "Refine your criteria or add a new medicine configuration to the master catalog."
+              }
+              action={
+                has("medicines", "create") &&
+                !showWishlist && (
+                  <Button
+                    onClick={openCreate}
+                    className="bg-[#007A87] hover:bg-[#007A87]/90 text-white"
+                  >
+                    <Plus className="mr-1 h-4 w-4" /> Add medicine
+                  </Button>
+                )
+              }
+            />
+          ) : (
             <>
-              {/* Desktop table view */}
-              <div className="hidden md:block overflow-x-auto border border-border/80 rounded-2xl shadow-sm bg-white">
-                <table className="w-full text-[13px] border-collapse whitespace-nowrap">
-                  <thead className="border-b border-border/40 bg-white text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    <tr>
-                      <th className="px-4 py-3">
-                        <div className="flex items-center gap-1">Medicine Name <ArrowDownUp className="w-3 h-3 opacity-50"/></div>
-                      </th>
-                      {isFieldVisible("brand") && <th className="px-4 py-3"><div className="flex items-center gap-1">Brand <ArrowDownUp className="w-3 h-3 opacity-50"/></div></th>}
-                      {isFieldVisible("genericName") && <th className="px-4 py-3"><div className="flex items-center gap-1">Generic Name <ArrowDownUp className="w-3 h-3 opacity-50"/></div></th>}
-                      {isFieldVisible("saltComposition") && (
-                        <th className="px-4 py-3"><div className="flex items-center gap-1">Salt / Composition <ArrowDownUp className="w-3 h-3 opacity-50"/></div></th>
-                      )}
-                      {isFieldVisible("category") && <th className="px-4 py-3"><div className="flex items-center gap-1">Category <Filter className="w-3 h-3 opacity-50"/></div></th>}
-                      {isFieldVisible("strength") && <th className="px-4 py-3">Strength</th>}
-                      {isFieldVisible("form") && <th className="px-4 py-3">Form</th>}
-                      {isFieldVisible("packSize") && <th className="px-4 py-3">Pack Size</th>}
-                      {isFieldVisible("barcode") && <th className="px-4 py-3">GTIN / Barcode</th>}
-                      {isFieldVisible("batch") && <th className="px-4 py-3">Active Batch</th>}
-                      {isFieldVisible("mrp") && <th className="px-4 py-3 text-right"><div className="flex items-center justify-end gap-1">MRP <ArrowDownUp className="w-3 h-3 opacity-50"/></div></th>}
-                      {isFieldVisible("ptr") && <th className="px-4 py-3 text-right">PTR</th>}
-                      {isFieldVisible("purchasePrice") && (
-                        <th className="px-4 py-3 text-right">Purchase Price</th>
-                      )}
-                      {isFieldVisible("sellingPrice") && (
-                        <th className="px-4 py-3 text-right">Selling Price</th>
-                      )}
-                      {isFieldVisible("currentStock") && (
-                        <th className="px-4 py-3 text-right">Current Stock</th>
-                      )}
-                      {isFieldVisible("minStock") && (
-                        <th className="px-4 py-3 text-right">Min Stock</th>
-                      )}
-                      {isFieldVisible("expiryDate") && <th className="px-4 py-3"><div className="flex items-center gap-1">Expiry Date <ArrowDownUp className="w-3 h-3 opacity-50"/></div></th>}
-                      {isFieldVisible("rack") && <th className="px-4 py-3">Rack</th>}
-                      {isFieldVisible("supplier") && <th className="px-4 py-3">Supplier</th>}
-                      {isFieldVisible("availability") && (
-                        <th className="px-4 py-3"><div className="flex items-center gap-1">Status <Filter className="w-3 h-3 opacity-50"/></div></th>
-                      )}
-                      <th className="px-4 py-3 text-center sticky right-0 bg-white border-l border-border/40">
-                        <div className="flex items-center justify-center gap-1">Actions <Activity className="w-3 h-3 opacity-50"/></div>
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/80">
-                    {paginatedData.map((m) => {
+              {viewMode === "list" ? (
+                <>
+                  {/* Desktop table view */}
+                  <div className="hidden md:block overflow-x-auto border border-border/80 rounded-2xl shadow-sm bg-white">
+                    <table className="w-full text-[13px] border-collapse whitespace-nowrap">
+                      <thead className="border-b border-border/40 bg-white text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3">
+                            <div className="flex items-center gap-1">
+                              Medicine Name <ArrowDownUp className="w-3 h-3 opacity-50" />
+                            </div>
+                          </th>
+                          {isFieldVisible("brand") && (
+                            <th className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                Brand <ArrowDownUp className="w-3 h-3 opacity-50" />
+                              </div>
+                            </th>
+                          )}
+                          {isFieldVisible("genericName") && (
+                            <th className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                Generic Name <ArrowDownUp className="w-3 h-3 opacity-50" />
+                              </div>
+                            </th>
+                          )}
+                          {isFieldVisible("saltComposition") && (
+                            <th className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                Salt / Composition <ArrowDownUp className="w-3 h-3 opacity-50" />
+                              </div>
+                            </th>
+                          )}
+                          {isFieldVisible("category") && (
+                            <th className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                Category <Filter className="w-3 h-3 opacity-50" />
+                              </div>
+                            </th>
+                          )}
+                          {isFieldVisible("strength") && <th className="px-4 py-3">Strength</th>}
+                          {isFieldVisible("form") && <th className="px-4 py-3">Form</th>}
+                          {isFieldVisible("packSize") && <th className="px-4 py-3">Pack Size</th>}
+                          {isFieldVisible("barcode") && (
+                            <th className="px-4 py-3">GTIN / Barcode</th>
+                          )}
+                          {isFieldVisible("batch") && <th className="px-4 py-3">Active Batch</th>}
+                          {isFieldVisible("mrp") && (
+                            <th className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                MRP <ArrowDownUp className="w-3 h-3 opacity-50" />
+                              </div>
+                            </th>
+                          )}
+                          {isFieldVisible("ptr") && <th className="px-4 py-3 text-right">PTR</th>}
+                          {isFieldVisible("purchasePrice") && (
+                            <th className="px-4 py-3 text-right">Purchase Price</th>
+                          )}
+                          {isFieldVisible("sellingPrice") && (
+                            <th className="px-4 py-3 text-right">Selling Price</th>
+                          )}
+                          {isFieldVisible("currentStock") && (
+                            <th className="px-4 py-3 text-right">Current Stock</th>
+                          )}
+                          {isFieldVisible("minStock") && (
+                            <th className="px-4 py-3 text-right">Min Stock</th>
+                          )}
+                          {isFieldVisible("expiryDate") && (
+                            <th className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                Expiry Date <ArrowDownUp className="w-3 h-3 opacity-50" />
+                              </div>
+                            </th>
+                          )}
+                          {isFieldVisible("rack") && <th className="px-4 py-3">Rack</th>}
+                          {isFieldVisible("supplier") && <th className="px-4 py-3">Supplier</th>}
+                          {isFieldVisible("availability") && (
+                            <th className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                Status <Filter className="w-3 h-3 opacity-50" />
+                              </div>
+                            </th>
+                          )}
+                          <th className="px-4 py-3 text-center sticky right-0 bg-white border-l border-border/40">
+                            <div className="flex items-center justify-center gap-1">
+                              Actions <Activity className="w-3 h-3 opacity-50" />
+                            </div>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border/80">
+                        {paginatedData.map((m) => {
+                          const meta = stockByMed.get(m.id);
+                          const stockTone =
+                            (meta?.current || 0) === 0
+                              ? "out"
+                              : (meta?.current || 0) <= (meta?.min || 0)
+                                ? "low"
+                                : "healthy";
+                          return (
+                            <tr
+                              key={m.id}
+                              className="group hover:bg-muted/10 transition-colors duration-200 bg-white border-b border-border/40 last:border-b-0"
+                            >
+                              {/* Medicine Info */}
+                              <td className="px-4 py-3 font-semibold text-foreground group-hover:text-[#007A87] transition-colors">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="shrink-0 w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-border/40 select-none overflow-hidden">
+                                    <img
+                                      src={getImageForMedicine(m.id, m.dosageForm)}
+                                      alt={`${m.name} packaging`}
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <Link
+                                      to={`/medicines/${m.id}`}
+                                      className="truncate block text-sm font-bold"
+                                    >
+                                      {m.name}
+                                    </Link>
+                                    <span className="text-[10px] font-mono text-muted-foreground block">
+                                      {m.id.slice(0, 8).toUpperCase()}
+                                    </span>
+                                  </div>
+                                </div>
+                              </td>
+
+                              {/* Brand */}
+                              {isFieldVisible("brand") && (
+                                <td className="px-4 py-3 text-muted-foreground">
+                                  {m.brandName || "—"}
+                                </td>
+                              )}
+
+                              {/* Generic */}
+                              {isFieldVisible("genericName") && (
+                                <td className="px-4 py-3 text-muted-foreground">
+                                  {m.genericName || "—"}
+                                </td>
+                              )}
+
+                              {/* Salt */}
+                              {isFieldVisible("saltComposition") && (
+                                <td
+                                  className="px-4 py-3 text-muted-foreground max-w-[200px] truncate"
+                                  title={m.saltComposition}
+                                >
+                                  {m.saltComposition || "—"}
+                                </td>
+                              )}
+
+                              {/* Category */}
+                              {isFieldVisible("category") && (
+                                <td className="px-4 py-3">
+                                  <span className="inline-flex items-center justify-center rounded-full bg-blue-50 text-blue-600 px-2.5 py-0.5 text-xs font-semibold border border-blue-100">
+                                    {categories.find((c) => c.id === m.categoryId)?.name ?? "—"}
+                                  </span>
+                                </td>
+                              )}
+
+                              {/* Strength */}
+                              {isFieldVisible("strength") && (
+                                <td className="px-4 py-3 text-muted-foreground">
+                                  {m.strength || "—"}
+                                </td>
+                              )}
+
+                              {/* Form */}
+                              {isFieldVisible("form") && (
+                                <td className="px-4 py-3 text-muted-foreground">
+                                  {m.dosageForm || "—"}
+                                </td>
+                              )}
+
+                              {/* Pack */}
+                              {isFieldVisible("packSize") && (
+                                <td className="px-4 py-3 text-muted-foreground">
+                                  {m.packSize || "—"}
+                                </td>
+                              )}
+
+                              {/* GTIN / Barcode */}
+                              {isFieldVisible("barcode") && (
+                                <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
+                                  <div>G: {m.gtin || "—"}</div>
+                                  <div>B: {m.barcode || "—"}</div>
+                                </td>
+                              )}
+
+                              {/* Active Batch */}
+                              {isFieldVisible("batch") && (
+                                <td className="px-4 py-3 font-mono text-xs">
+                                  {meta?.batchNo || "—"}
+                                </td>
+                              )}
+
+                              {/* MRP */}
+                              {isFieldVisible("mrp") && (
+                                <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
+                                  {currency}
+                                  {meta?.mrp?.toFixed(2) || "0.00"}
+                                </td>
+                              )}
+
+                              {/* PTR */}
+                              {isFieldVisible("ptr") && (
+                                <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                                  {currency}
+                                  {m.ptr?.toFixed(2) || "0.00"}
+                                </td>
+                              )}
+
+                              {/* Purchase */}
+                              {isFieldVisible("purchasePrice") && (
+                                <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                                  {currency}
+                                  {meta?.pur?.toFixed(2) || "0.00"}
+                                </td>
+                              )}
+
+                              {/* Selling */}
+                              {isFieldVisible("sellingPrice") && (
+                                <td className="px-4 py-3 text-right font-mono font-semibold text-emerald-600">
+                                  {currency}
+                                  {meta?.sell?.toFixed(2) || "0.00"}
+                                </td>
+                              )}
+
+                              {/* Stock */}
+                              {isFieldVisible("currentStock") && (
+                                <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
+                                  {meta?.current} units
+                                </td>
+                              )}
+
+                              {/* Min Stock */}
+                              {isFieldVisible("minStock") && (
+                                <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                                  {m.reorderThreshold} units
+                                </td>
+                              )}
+
+                              {/* Expiry */}
+                              {isFieldVisible("expiryDate") && (
+                                <td className="px-4 py-3">
+                                  <span
+                                    className={
+                                      meta?.expired
+                                        ? "text-destructive font-bold"
+                                        : meta?.nearExp
+                                          ? "text-amber-500 font-semibold"
+                                          : "text-muted-foreground"
+                                    }
+                                  >
+                                    {meta?.expiry !== "—"
+                                      ? new Date(meta?.expiry || "").toLocaleDateString(undefined, {
+                                          month: "short",
+                                          year: "numeric",
+                                        })
+                                      : "—"}
+                                  </span>
+                                </td>
+                              )}
+
+                              {/* Rack */}
+                              {isFieldVisible("rack") && (
+                                <td className="px-4 py-3 text-muted-foreground font-mono">
+                                  {m.rackLocation || "—"}
+                                </td>
+                              )}
+
+                              {/* Supplier */}
+                              {isFieldVisible("supplier") && (
+                                <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px]">
+                                  {meta?.supplier || "—"}
+                                </td>
+                              )}
+
+                              {/* Availability */}
+                              {isFieldVisible("availability") && (
+                                <td className="px-4 py-3">
+                                  {m.isActive ? (
+                                    <span
+                                      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
+                                        stockTone === "out"
+                                          ? "bg-red-50 text-red-700 border-red-100"
+                                          : stockTone === "low"
+                                            ? "bg-amber-50 text-amber-700 border-amber-100"
+                                            : "bg-emerald-50 text-emerald-700 border-emerald-100"
+                                      }`}
+                                    >
+                                      <span
+                                        className={`h-1.5 w-1.5 rounded-full ${
+                                          stockTone === "out"
+                                            ? "bg-red-500"
+                                            : stockTone === "low"
+                                              ? "bg-amber-500"
+                                              : "bg-emerald-500"
+                                        }`}
+                                      />
+                                      {stockTone === "out"
+                                        ? "Out of Stock"
+                                        : stockTone === "low"
+                                          ? "Low Stock"
+                                          : "Active"}
+                                    </span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2.5 py-0.5 text-xs font-semibold">
+                                      <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
+                                      Inactive
+                                    </span>
+                                  )}
+                                </td>
+                              )}
+
+                              {/* Actions */}
+                              <td className="px-4 py-3 text-center sticky right-0 bg-white border-l border-border/40">
+                                <div className="flex items-center justify-center gap-2">
+                                  <Button
+                                    asChild
+                                    variant="outline"
+                                    size="sm"
+                                    className="h-7 px-2.5 text-xs text-slate-600 hover:text-slate-900 border-border/60 hover:bg-slate-50 rounded-md gap-1 font-medium"
+                                    title="View details"
+                                  >
+                                    <Link to={`/medicines/${m.id}`}>
+                                      <Eye className="h-3.5 w-3.5" /> View
+                                    </Link>
+                                  </Button>
+                                  {has("medicines", "update") && (
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-7 w-7 text-slate-600 border-border/60 hover:bg-slate-50 hover:text-slate-900 rounded-md"
+                                      onClick={() => openEdit(m)}
+                                      title="Edit Configuration"
+                                    >
+                                      <Pencil className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                  {has("medicines", "delete") && (
+                                    <Button
+                                      variant="outline"
+                                      size="icon"
+                                      className="h-7 w-7 text-destructive border-border/60 hover:bg-destructive/10 rounded-md"
+                                      onClick={() => setConfirmDelete(m)}
+                                      title="Delete"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  )}
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Mobile responsive card list view */}
+                  <div className="md:hidden space-y-4">
+                    {filtered.map((m) => {
                       const meta = stockByMed.get(m.id);
                       const stockTone =
                         (meta?.current || 0) === 0
@@ -862,500 +1181,249 @@ export default function MedicinesCatalogPage() {
                             ? "low"
                             : "healthy";
                       return (
-                        <tr
+                        <div
                           key={m.id}
-                          className="group hover:bg-muted/10 transition-colors duration-200 bg-white border-b border-border/40 last:border-b-0"
+                          className="bg-white border border-border/80 rounded-2xl p-4 shadow-sm space-y-3"
                         >
-                          {/* Medicine Info */}
-                          <td className="px-4 py-3 font-semibold text-foreground group-hover:text-[#007A87] transition-colors">
-                            <div className="flex items-center gap-3 min-w-0">
-                              <div className="shrink-0 w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-border/40 select-none overflow-hidden">
-                                <img
-                                  src={getImageForMedicine(m.id, m.dosageForm)}
-                                  alt={`${m.name} packaging`}
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                              <div className="min-w-0">
-                                <Link
-                                  to={`/medicines/${m.id}`}
-                                  className="truncate block text-sm font-bold"
-                                >
-                                  {m.name}
-                                </Link>
-                                <span className="text-[10px] font-mono text-muted-foreground block">
-                                  {m.id.slice(0, 8).toUpperCase()}
-                                </span>
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Brand */}
-                          {isFieldVisible("brand") && (
-                            <td className="px-4 py-3 text-muted-foreground">
-                              {m.brandName || "—"}
-                            </td>
-                          )}
-
-                          {/* Generic */}
-                          {isFieldVisible("genericName") && (
-                            <td className="px-4 py-3 text-muted-foreground">
-                              {m.genericName || "—"}
-                            </td>
-                          )}
-
-                          {/* Salt */}
-                          {isFieldVisible("saltComposition") && (
-                            <td
-                              className="px-4 py-3 text-muted-foreground max-w-[200px] truncate"
-                              title={m.saltComposition}
-                            >
-                              {m.saltComposition || "—"}
-                            </td>
-                          )}
-
-                          {/* Category */}
-                          {isFieldVisible("category") && (
-                            <td className="px-4 py-3">
-                              <span className="inline-flex items-center justify-center rounded-full bg-blue-50 text-blue-600 px-2.5 py-0.5 text-xs font-semibold border border-blue-100">
-                                {categories.find((c) => c.id === m.categoryId)?.name ?? "—"}
+                          <div className="flex justify-between items-start">
+                            <div className="min-w-0">
+                              <Link
+                                to={`/medicines/${m.id}`}
+                                className="font-bold text-foreground hover:underline text-sm truncate block"
+                              >
+                                {m.name}
+                              </Link>
+                              <span className="text-[10px] text-muted-foreground font-mono">
+                                {m.genericName || "Generic"}
                               </span>
-                            </td>
-                          )}
+                            </div>
+                            {m.isActive ? (
+                              <StatusBadge status={stockTone} />
+                            ) : (
+                              <span className="rounded-full bg-gray-100 text-gray-800 px-2 py-0.5 text-[10px] font-semibold">
+                                Inactive
+                              </span>
+                            )}
+                          </div>
 
-                          {/* Strength */}
-                          {isFieldVisible("strength") && (
-                            <td className="px-4 py-3 text-muted-foreground">{m.strength || "—"}</td>
-                          )}
-
-                          {/* Form */}
-                          {isFieldVisible("form") && (
-                            <td className="px-4 py-3 text-muted-foreground">
-                              {m.dosageForm || "—"}
-                            </td>
-                          )}
-
-                          {/* Pack */}
-                          {isFieldVisible("packSize") && (
-                            <td className="px-4 py-3 text-muted-foreground">{m.packSize || "—"}</td>
-                          )}
-
-                          {/* GTIN / Barcode */}
-                          {isFieldVisible("barcode") && (
-                            <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
-                              <div>G: {m.gtin || "—"}</div>
-                              <div>B: {m.barcode || "—"}</div>
-                            </td>
-                          )}
-
-                          {/* Active Batch */}
-                          {isFieldVisible("batch") && (
-                            <td className="px-4 py-3 font-mono text-xs">{meta?.batchNo || "—"}</td>
-                          )}
-
-                          {/* MRP */}
-                          {isFieldVisible("mrp") && (
-                            <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
-                              {currency}
-                              {meta?.mrp?.toFixed(2) || "0.00"}
-                            </td>
-                          )}
-
-                          {/* PTR */}
-                          {isFieldVisible("ptr") && (
-                            <td className="px-4 py-3 text-right font-mono text-muted-foreground">
-                              {currency}
-                              {m.ptr?.toFixed(2) || "0.00"}
-                            </td>
-                          )}
-
-                          {/* Purchase */}
-                          {isFieldVisible("purchasePrice") && (
-                            <td className="px-4 py-3 text-right font-mono text-muted-foreground">
-                              {currency}
-                              {meta?.pur?.toFixed(2) || "0.00"}
-                            </td>
-                          )}
-
-                          {/* Selling */}
-                          {isFieldVisible("sellingPrice") && (
-                            <td className="px-4 py-3 text-right font-mono font-semibold text-emerald-600">
-                              {currency}
-                              {meta?.sell?.toFixed(2) || "0.00"}
-                            </td>
-                          )}
-
-                          {/* Stock */}
-                          {isFieldVisible("currentStock") && (
-                            <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
-                              {meta?.current} units
-                            </td>
-                          )}
-
-                          {/* Min Stock */}
-                          {isFieldVisible("minStock") && (
-                            <td className="px-4 py-3 text-right font-mono text-muted-foreground">
-                              {m.reorderThreshold} units
-                            </td>
-                          )}
-
-                          {/* Expiry */}
-                          {isFieldVisible("expiryDate") && (
-                            <td className="px-4 py-3">
+                          <div className="grid grid-cols-2 gap-2 text-xs border-t border-b py-2 my-2">
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">
+                                Stock Level
+                              </span>
+                              <span className="font-semibold text-foreground font-mono">
+                                {meta?.current} units
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">
+                                Rack Location
+                              </span>
+                              <span className="font-semibold text-foreground font-mono">
+                                {m.rackLocation || "—"}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">
+                                Selling Price
+                              </span>
+                              <span className="font-semibold text-emerald-600 font-mono">
+                                {currency}
+                                {meta?.sell?.toFixed(2)}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground block text-[10px]">
+                                Expiry
+                              </span>
                               <span
-                                className={
-                                  meta?.expired
-                                    ? "text-destructive font-bold"
-                                    : meta?.nearExp
-                                      ? "text-amber-500 font-semibold"
-                                      : "text-muted-foreground"
-                                }
+                                className={`font-semibold font-mono ${meta?.expired ? "text-destructive" : meta?.nearExp ? "text-amber-500" : "text-muted-foreground"}`}
                               >
                                 {meta?.expiry !== "—"
                                   ? new Date(meta?.expiry || "").toLocaleDateString(undefined, {
                                       month: "short",
-                                      year: "numeric",
+                                      year: "2-digit",
                                     })
                                   : "—"}
                               </span>
-                            </td>
-                          )}
-
-                          {/* Rack */}
-                          {isFieldVisible("rack") && (
-                            <td className="px-4 py-3 text-muted-foreground font-mono">
-                              {m.rackLocation || "—"}
-                            </td>
-                          )}
-
-                          {/* Supplier */}
-                          {isFieldVisible("supplier") && (
-                            <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px]">
-                              {meta?.supplier || "—"}
-                            </td>
-                          )}
-
-                          {/* Availability */}
-                          {isFieldVisible("availability") && (
-                            <td className="px-4 py-3">
-                              {m.isActive ? (
-                                <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold border ${
-                                  stockTone === "out" ? "bg-red-50 text-red-700 border-red-100" :
-                                  stockTone === "low" ? "bg-amber-50 text-amber-700 border-amber-100" :
-                                  "bg-emerald-50 text-emerald-700 border-emerald-100"
-                                }`}>
-                                  <span className={`h-1.5 w-1.5 rounded-full ${
-                                    stockTone === "out" ? "bg-red-500" :
-                                    stockTone === "low" ? "bg-amber-500" :
-                                    "bg-emerald-500"
-                                  }`} />
-                                  {stockTone === "out" ? "Out of Stock" : stockTone === "low" ? "Low Stock" : "Active"}
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-50 text-gray-700 border border-gray-200 px-2.5 py-0.5 text-xs font-semibold">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-gray-400" />
-                                  Inactive
-                                </span>
-                              )}
-                            </td>
-                          )}
-
-                          {/* Actions */}
-                          <td className="px-4 py-3 text-center sticky right-0 bg-white border-l border-border/40">
-                            <div className="flex items-center justify-center gap-2">
-                              <Button
-                                asChild
-                                variant="outline"
-                                size="sm"
-                                className="h-7 px-2.5 text-xs text-slate-600 hover:text-slate-900 border-border/60 hover:bg-slate-50 rounded-md gap-1 font-medium"
-                                title="View details"
-                              >
-                                <Link to={`/medicines/${m.id}`}>
-                                  <Eye className="h-3.5 w-3.5" /> View
-                                </Link>
-                              </Button>
-                              {has("medicines", "update") && (
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-7 w-7 text-slate-600 border-border/60 hover:bg-slate-50 hover:text-slate-900 rounded-md"
-                                  onClick={() => openEdit(m)}
-                                  title="Edit Configuration"
-                                >
-                                  <Pencil className="h-3 w-3" />
-                                </Button>
-                              )}
-                              {has("medicines", "delete") && (
-                                <Button
-                                  variant="outline"
-                                  size="icon"
-                                  className="h-7 w-7 text-destructive border-border/60 hover:bg-destructive/10 rounded-md"
-                                  onClick={() => setConfirmDelete(m)}
-                                  title="Delete"
-                                >
-                                  <Trash2 className="h-3 w-3" />
-                                </Button>
-                              )}
                             </div>
-                          </td>
-                        </tr>
+                          </div>
+
+                          <div className="flex gap-2">
+                            <Button
+                              asChild
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs gap-1 rounded-lg h-9"
+                            >
+                              <Link to={`/medicines/${m.id}`}>
+                                <Eye className="h-3.5 w-3.5" /> View Specs
+                              </Link>
+                            </Button>
+                            {has("medicines", "update") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"
+                                onClick={() => openEdit(m)}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                            {has("medicines", "delete") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10"
+                                onClick={() => setConfirmDelete(m)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       );
                     })}
-                  </tbody>
-                </table>
-              </div>
-
-              {/* Mobile responsive card list view */}
-              <div className="md:hidden space-y-4">
-                {filtered.map((m) => {
-                  const meta = stockByMed.get(m.id);
-                  const stockTone =
-                    (meta?.current || 0) === 0
-                      ? "out"
-                      : (meta?.current || 0) <= (meta?.min || 0)
-                        ? "low"
-                        : "healthy";
-                  return (
-                    <div
-                      key={m.id}
-                      className="bg-white border border-border/80 rounded-2xl p-4 shadow-sm space-y-3"
-                    >
-                      <div className="flex justify-between items-start">
-                        <div className="min-w-0">
-                          <Link
-                            to={`/medicines/${m.id}`}
-                            className="font-bold text-foreground hover:underline text-sm truncate block"
-                          >
-                            {m.name}
-                          </Link>
-                          <span className="text-[10px] text-muted-foreground font-mono">
-                            {m.genericName || "Generic"}
-                          </span>
-                        </div>
-                        {m.isActive ? (
-                          <StatusBadge status={stockTone} />
-                        ) : (
-                          <span className="rounded-full bg-gray-100 text-gray-800 px-2 py-0.5 text-[10px] font-semibold">
-                            Inactive
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-xs border-t border-b py-2 my-2">
-                        <div>
-                          <span className="text-muted-foreground block text-[10px]">
-                            Stock Level
-                          </span>
-                          <span className="font-semibold text-foreground font-mono">
-                            {meta?.current} units
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block text-[10px]">
-                            Rack Location
-                          </span>
-                          <span className="font-semibold text-foreground font-mono">
-                            {m.rackLocation || "—"}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block text-[10px]">
-                            Selling Price
-                          </span>
-                          <span className="font-semibold text-emerald-600 font-mono">
-                            {currency}
-                            {meta?.sell?.toFixed(2)}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block text-[10px]">Expiry</span>
-                          <span
-                            className={`font-semibold font-mono ${meta?.expired ? "text-destructive" : meta?.nearExp ? "text-amber-500" : "text-muted-foreground"}`}
-                          >
-                            {meta?.expiry !== "—"
-                              ? new Date(meta?.expiry || "").toLocaleDateString(undefined, {
-                                  month: "short",
-                                  year: "2-digit",
-                                })
-                              : "—"}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="flex gap-2">
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 text-xs gap-1 rounded-lg h-9"
-                        >
-                          <Link to={`/medicines/${m.id}`}>
-                            <Eye className="h-3.5 w-3.5" /> View Specs
-                          </Link>
-                        </Button>
-                        {has("medicines", "update") && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"
-                            onClick={() => openEdit(m)}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                        {has("medicines", "delete") && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10"
-                            onClick={() => setConfirmDelete(m)}
-                            title="Delete"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </>
-          ) : (
-            /* Grid View */
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {paginatedData.map((m) => {
-                const meta = stockByMed.get(m.id);
-                const stockTone =
-                  (meta?.current || 0) === 0
-                    ? "out"
-                    : (meta?.current || 0) <= (meta?.min || 0)
-                      ? "low"
-                      : "healthy";
-                return (
-                  <div
-                    key={m.id}
-                    className="bg-white border border-border/80 rounded-2xl p-5 shadow-sm space-y-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative flex flex-col justify-between overflow-hidden group"
-                  >
-                    <div>
-                      {/* Top Actions */}
-                      <div className="flex justify-between items-start">
-                        <span className="text-[10px] text-muted-foreground font-mono">
-                          {m.id.slice(0, 8).toUpperCase()}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`h-8 w-8 rounded-full ${wishlist.includes(m.id) ? "text-red-500" : "text-muted-foreground hover:text-red-500"}`}
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            toggleWishlist(m.id);
-                            if (!wishlist.includes(m.id))
-                              toast.success(`${m.name} added to favorites`);
-                          }}
-                        >
-                          <Heart
-                            className="h-4 w-4"
-                            fill={wishlist.includes(m.id) ? "currentColor" : "none"}
-                          />
-                        </Button>
-                      </div>
-
-                      {/* Medicine Visual Representation */}
-                      <div className="w-full h-32 bg-slate-50 rounded-xl flex items-center justify-center mb-4 border border-border/40 relative overflow-hidden">
-                        <img
-                          src={getImageForMedicine(m.id, m.dosageForm)}
-                          alt={`${m.name} packaging`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                        />
-                      </div>
-
-                      {/* Details */}
-                      <div className="space-y-1">
-                        <Link
-                          to={`/medicines/${m.id}`}
-                          className="font-bold text-foreground hover:underline text-base truncate block"
-                        >
-                          {m.name}
-                        </Link>
-                        <p className="text-xs text-muted-foreground font-medium truncate">
-                          {m.brandName || "No Brand"}
-                        </p>
-
-                        {/* Category badge */}
-                        <div className="pt-1.5 flex flex-wrap gap-1">
-                          <span className="rounded-md bg-[#007A87]/10 text-[#007A87] px-2 py-0.5 text-[10px] font-semibold">
-                            {categories.find((c) => c.id === m.categoryId)?.name ?? "Uncategorized"}
-                          </span>
-                        </div>
-
-                        <p className="text-xs text-muted-foreground pt-1.5 font-medium">
-                          {m.strength || "—"} | {m.packSize || "—"}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div>
-                      {/* Prices & Stocks */}
-                      <div className="flex justify-between items-end border-t border-border/40 pt-3 mt-3">
-                        <div>
-                          <span className="text-[10px] text-muted-foreground block font-medium">
-                            Price (MRP)
-                          </span>
-                          <span className="font-extrabold text-slate-800 text-sm">
-                            {currency}
-                            {meta?.mrp?.toFixed(2) || "0.00"}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="text-[10px] text-muted-foreground block font-medium">
-                            Stock Level
-                          </span>
-                          <span
-                            className={`text-xs font-black ${
-                              stockTone === "out"
-                                ? "text-red-500"
-                                : stockTone === "low"
-                                  ? "text-amber-500"
-                                  : "text-emerald-600"
-                            }`}
-                          >
-                            {meta?.current || 0} units
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Card Actions */}
-                      <div className="flex gap-2 mt-4 pt-1">
-                        <Button
-                          asChild
-                          size="sm"
-                          variant="outline"
-                          className="flex-1 text-xs gap-1 rounded-xl h-9 border-[#007A87]/20 text-[#007A87] hover:bg-[#007A87]/5"
-                        >
-                          <Link to={`/medicines/${m.id}`}>
-                            <Eye className="h-3.5 w-3.5" /> View Details
-                          </Link>
-                        </Button>
-                        {has("medicines", "update") && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="h-9 w-9 p-0 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground"
-                            onClick={() => openEdit(m)}
-                          >
-                            <Pencil className="h-3.5 w-3.5" />
-                          </Button>
-                        )}
-                      </div>
-                    </div>
                   </div>
-                );
-              })}
-            </div>
+                </>
+              ) : (
+                /* Grid View */
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                  {paginatedData.map((m) => {
+                    const meta = stockByMed.get(m.id);
+                    const stockTone =
+                      (meta?.current || 0) === 0
+                        ? "out"
+                        : (meta?.current || 0) <= (meta?.min || 0)
+                          ? "low"
+                          : "healthy";
+                    return (
+                      <div
+                        key={m.id}
+                        className="bg-white border border-border/80 rounded-2xl p-5 shadow-sm space-y-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative flex flex-col justify-between overflow-hidden group"
+                      >
+                        <div>
+                          {/* Top Actions */}
+                          <div className="flex justify-between items-start">
+                            <span className="text-[10px] text-muted-foreground font-mono">
+                              {m.id.slice(0, 8).toUpperCase()}
+                            </span>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className={`h-8 w-8 rounded-full ${wishlist.includes(m.id) ? "text-red-500" : "text-muted-foreground hover:text-red-500"}`}
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                toggleWishlist(m.id);
+                                if (!wishlist.includes(m.id))
+                                  toast.success(`${m.name} added to favorites`);
+                              }}
+                            >
+                              <Heart
+                                className="h-4 w-4"
+                                fill={wishlist.includes(m.id) ? "currentColor" : "none"}
+                              />
+                            </Button>
+                          </div>
+
+                          {/* Medicine Visual Representation */}
+                          <div className="w-full h-32 bg-slate-50 rounded-xl flex items-center justify-center mb-4 border border-border/40 relative overflow-hidden">
+                            <img
+                              src={getImageForMedicine(m.id, m.dosageForm)}
+                              alt={`${m.name} packaging`}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          </div>
+
+                          {/* Details */}
+                          <div className="space-y-1">
+                            <Link
+                              to={`/medicines/${m.id}`}
+                              className="font-bold text-foreground hover:underline text-base truncate block"
+                            >
+                              {m.name}
+                            </Link>
+                            <p className="text-xs text-muted-foreground font-medium truncate">
+                              {m.brandName || "No Brand"}
+                            </p>
+
+                            {/* Category badge */}
+                            <div className="pt-1.5 flex flex-wrap gap-1">
+                              <span className="rounded-md bg-[#007A87]/10 text-[#007A87] px-2 py-0.5 text-[10px] font-semibold">
+                                {categories.find((c) => c.id === m.categoryId)?.name ??
+                                  "Uncategorized"}
+                              </span>
+                            </div>
+
+                            <p className="text-xs text-muted-foreground pt-1.5 font-medium">
+                              {m.strength || "—"} | {m.packSize || "—"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div>
+                          {/* Prices & Stocks */}
+                          <div className="flex justify-between items-end border-t border-border/40 pt-3 mt-3">
+                            <div>
+                              <span className="text-[10px] text-muted-foreground block font-medium">
+                                Price (MRP)
+                              </span>
+                              <span className="font-extrabold text-slate-800 text-sm">
+                                {currency}
+                                {meta?.mrp?.toFixed(2) || "0.00"}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="text-[10px] text-muted-foreground block font-medium">
+                                Stock Level
+                              </span>
+                              <span
+                                className={`text-xs font-black ${
+                                  stockTone === "out"
+                                    ? "text-red-500"
+                                    : stockTone === "low"
+                                      ? "text-amber-500"
+                                      : "text-emerald-600"
+                                }`}
+                              >
+                                {meta?.current || 0} units
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Card Actions */}
+                          <div className="flex gap-2 mt-4 pt-1">
+                            <Button
+                              asChild
+                              size="sm"
+                              variant="outline"
+                              className="flex-1 text-xs gap-1 rounded-xl h-9 border-[#007A87]/20 text-[#007A87] hover:bg-[#007A87]/5"
+                            >
+                              <Link to={`/medicines/${m.id}`}>
+                                <Eye className="h-3.5 w-3.5" /> View Details
+                              </Link>
+                            </Button>
+                            {has("medicines", "update") && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-9 w-9 p-0 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground"
+                                onClick={() => openEdit(m)}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
           )}
-        </>
-      )}
         </div>
       </div>
 
@@ -1363,14 +1431,15 @@ export default function MedicinesCatalogPage() {
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto py-2">
           <div className="flex items-center gap-3">
             <span className="text-[13px] text-slate-500 font-medium">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} medicines
+              Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+              {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} medicines
             </span>
             <div className="flex items-center gap-2 border border-border/60 rounded-md bg-white px-2.5 py-1.5 cursor-not-allowed opacity-70">
               <span className="text-[13px] text-slate-600 font-medium">10 per page</span>
               <ChevronsUpDown className="w-3.5 h-3.5 text-slate-400" />
             </div>
           </div>
-          
+
           <div className="flex items-center gap-1.5">
             <button
               onClick={(e) => {
@@ -1382,7 +1451,7 @@ export default function MedicinesCatalogPage() {
             >
               Previous
             </button>
-            
+
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
               .map((p, i, arr) => (
@@ -1464,15 +1533,10 @@ export default function MedicinesCatalogPage() {
       </Dialog>
 
       {/* CONFIRMATION POPUP */}
-      <AlertDialog
-        open={!!confirmDelete}
-        onOpenChange={(o) => !o && setConfirmDelete(null)}
-      >
+      <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              Delete medicine?
-            </AlertDialogTitle>
+            <AlertDialogTitle>Delete medicine?</AlertDialogTitle>
             <AlertDialogDescription>
               Are you sure you want to delete this medicine? This action cannot be undone.
             </AlertDialogDescription>
@@ -1510,8 +1574,14 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           name: editing.name,
           genericName: editing.genericName ?? "",
           brandName: editing.brandName ?? "",
-          categoryId: (typeof editing.categoryId === 'object' ? editing.categoryId?._id : editing.categoryId) ?? "",
-          manufacturerId: (typeof editing.manufacturerId === 'object' ? editing.manufacturerId?._id : editing.manufacturerId) ?? "",
+          categoryId:
+            (typeof editing.categoryId === "object"
+              ? editing.categoryId?._id
+              : editing.categoryId) ?? "",
+          manufacturerId:
+            (typeof editing.manufacturerId === "object"
+              ? editing.manufacturerId?._id
+              : editing.manufacturerId) ?? "",
           hsnCode: editing.hsnCode ?? "",
           gstRate: editing.gstRate,
           storageRequirements: editing.storageRequirements ?? "",
@@ -1569,20 +1639,23 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           </SheetDescription>
         </SheetHeader>
         <form
-            id="medicine-form"
-            onSubmit={handleSubmit((v) => {
+          id="medicine-form"
+          onSubmit={handleSubmit(
+            (v) => {
               onSubmit(v);
               reset();
-            }, (errors) => {
+            },
+            (errors) => {
               const firstError = Object.values(errors)[0];
               if (firstError) {
                 toast.error(`Validation Error: ${firstError.message}`);
               } else {
                 toast.error("Please fill all required fields correctly.");
               }
-            })}
-            className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6"
-          >
+            },
+          )}
+          className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6"
+        >
           {/* GENERAL INFO */}
           <div className="space-y-3">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">
