@@ -92,9 +92,22 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "src"),
     },
   },
+  // The dev server must NOT pre-bundle @vercel/analytics: the package ships a
+  // top-level `isProduction` in several entry files, and the optimizer merging
+  // them into one module scope throws `Identifier 'isProduction' has already
+  // been declared`. Excluding keeps them served as-is (they're valid ESM).
+  optimizeDeps: {
+    exclude: [
+      "@vercel/analytics",
+      "@vercel/analytics/react",
+      "@vercel/speed-insights",
+      "@vercel/speed-insights/react",
+    ],
+  },
   server: {
-    port: 5100,
-    strictPort: true,
+    port: 6000,
+    // Non-strict: if 6000 is busy Vite picks 6001, then 6002, and so on.
+    strictPort: false,
     host: true,
     proxy: {
       "/api/v1": {

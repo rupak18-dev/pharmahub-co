@@ -801,3 +801,13 @@ export const db = {
 export function useDbUid() {
   return uid();
 }
+
+export function genBillNo(sales = []) {
+  const existing = new Set((sales || []).map((s) => s.billNo || s.invoiceNo));
+  let code = "";
+  do {
+    const num = Math.floor(100000 + Math.random() * 900000); // 6-digit random number
+    code = String(num);
+  } while (existing.has(code));
+  return code;
+}

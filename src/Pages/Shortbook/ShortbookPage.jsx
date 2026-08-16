@@ -138,14 +138,16 @@ function ProductThumbnail({ type = "tablet", name = "" }) {
   );
 }
 
+const EMPTY_ARRAY = [];
+
 export default function ShortbookPage() {
   const { user } = useAuth();
   const { token } = theme.useToken();
 
   // Load state from DB
-  const rawShortbook = useDb((d) => d.shortbook || []);
-  const medicines = useDb((d) => d.medicines || []);
-  const suppliers = useDb((d) => d.suppliers || []);
+  const rawShortbook = useDb((d) => d?.shortbook) ?? EMPTY_ARRAY;
+  const medicines = useDb((d) => d?.medicines) ?? EMPTY_ARRAY;
+  const suppliers = useDb((d) => d?.suppliers) ?? EMPTY_ARRAY;
 
   // Mode View: 'classical' (exact screenshot table) vs 'graphical'
   const [viewMode, setViewMode] = useState("classical");
@@ -719,20 +721,20 @@ export default function ShortbookPage() {
           <button
             type="button"
             onClick={() => handleSort(colKey)}
-            className="flex items-center gap-1 hover:text-blue-700 focus:outline-none font-bold"
+            className="flex items-center gap-1 hover:text-emerald-700 focus:outline-none font-bold"
             title={`Sort by ${label}`}
           >
-            <span className={isActive ? "text-blue-700 font-extrabold" : "text-slate-800"}>
+            <span className={isActive ? "text-emerald-700 font-extrabold" : "text-slate-800"}>
               {label}
             </span>
             {isActive ? (
               sortDirection === "asc" ? (
-                <ArrowUp className="h-3.5 w-3.5 text-blue-600 font-bold" />
+                <ArrowUp className="h-3.5 w-3.5 text-emerald-600 font-bold" />
               ) : (
-                <ArrowDown className="h-3.5 w-3.5 text-blue-600 font-bold" />
+                <ArrowDown className="h-3.5 w-3.5 text-emerald-600 font-bold" />
               )
             ) : (
-              <ArrowUpDown className="h-3 w-3 text-slate-400 group-hover:text-blue-600 transition-colors" />
+              <ArrowUpDown className="h-3 w-3 text-slate-400 group-hover:text-emerald-600 transition-colors" />
             )}
           </button>
 
@@ -741,7 +743,7 @@ export default function ShortbookPage() {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="text-slate-400 hover:text-blue-600 p-0.5 rounded focus:outline-none transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-emerald-600 p-0.5 rounded focus:outline-none transition-colors cursor-pointer"
                   title={`Click for ${label} details`}
                 >
                   <Info className="h-3.5 w-3.5" />
@@ -751,8 +753,8 @@ export default function ShortbookPage() {
                 align="center"
                 className="w-64 bg-slate-900 text-white p-3 rounded-lg text-xs shadow-xl space-y-1 z-50"
               >
-                <div className="font-bold flex items-center gap-1.5 text-blue-300">
-                  <Info className="h-3.5 w-3.5 text-blue-400" /> {label} Details
+                <div className="font-bold flex items-center gap-1.5 text-emerald-300">
+                  <Info className="h-3.5 w-3.5 text-emerald-400" /> {label} Details
                 </div>
                 <p className="text-slate-200 leading-snug">{infoText}</p>
               </PopoverContent>
@@ -765,18 +767,18 @@ export default function ShortbookPage() {
   return (
     <div className="space-y-4 pb-12 select-none font-google-sans-flex text-slate-800">
       {/* TOP HEADER / BAR */}
-      <div className="bg-white rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-2xs border border-border/50">
         {/* Left Side: ShortBook Title + Info + Mode Switch */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 font-bold text-lg text-slate-900 tracking-tight">
+          <div className="flex items-center gap-1.5 font-extrabold text-xl text-slate-900 tracking-tight">
             <span>ShortBook</span>
             <button
               onClick={() =>
                 toast.info("Shortbook lists medicines with low stock or required for re-ordering.")
               }
-              className="text-blue-600 hover:text-blue-700 transition-colors focus:outline-none"
+              className="text-emerald-600 hover:text-emerald-700 transition-colors focus:outline-none cursor-pointer"
             >
-              <Info className="h-4 w-4 fill-blue-600/10" />
+              <Info className="h-4 w-4 fill-emerald-600/10" />
             </button>
           </div>
 
@@ -784,9 +786,9 @@ export default function ShortbookPage() {
           <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 text-xs font-medium">
             <button
               onClick={() => setViewMode("graphical")}
-              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1 ${
+              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1 cursor-pointer ${
                 viewMode === "graphical"
-                  ? "bg-[#007A87] text-white font-semibold shadow-xs"
+                  ? "bg-emerald-600 text-white font-semibold shadow-xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -796,10 +798,10 @@ export default function ShortbookPage() {
 
             <button
               onClick={() => setViewMode(viewMode === "classical" ? "graphical" : "classical")}
-              className="px-1 focus:outline-none"
+              className="px-1 focus:outline-none cursor-pointer"
               title="Toggle View Mode"
             >
-              <div className="w-8 h-4 bg-blue-500 rounded-full relative p-0.5 transition-colors">
+              <div className="w-8 h-4 bg-emerald-600 rounded-full relative p-0.5 transition-colors">
                 <div
                   className={`w-3 h-3 bg-white rounded-full transition-transform ${
                     viewMode === "classical" ? "translate-x-4" : "translate-x-0"
@@ -810,9 +812,9 @@ export default function ShortbookPage() {
 
             <button
               onClick={() => setViewMode("classical")}
-              className={`px-3 py-1 rounded-full transition-all ${
+              className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
                 viewMode === "classical"
-                  ? "bg-blue-600 text-white font-semibold shadow-xs"
+                  ? "bg-emerald-600 text-white font-semibold shadow-xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -825,7 +827,7 @@ export default function ShortbookPage() {
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setAutoPoDialogOpen(true)}
-            className="bg-[#0F3A70] hover:bg-[#0A2A52] text-white text-xs font-semibold px-4 py-1.5 rounded-md shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-4 py-1.5 rounded-md shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             Auto PO
           </Button>
@@ -834,10 +836,10 @@ export default function ShortbookPage() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="bg-[#EBF3FA] border-[#C5DCF2] text-[#0F3A70] hover:bg-[#D9E9F8] text-xs font-medium px-3 py-1.5 rounded-md flex items-center gap-1 cursor-pointer"
+                className="bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold px-3 py-1.5 rounded-md flex items-center gap-1 cursor-pointer"
               >
                 <span>Download</span>
-                <ChevronDown className="h-3.5 w-3.5 text-[#0F3A70]" />
+                <ChevronDown className="h-3.5 w-3.5 text-emerald-700" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44 text-xs">
@@ -875,7 +877,7 @@ export default function ShortbookPage() {
                 onFocus={() => setShowAddNewDropdown(true)}
                 className="h-9 pr-9 text-xs bg-slate-50 border-slate-200 placeholder:text-slate-400 focus:bg-white transition-colors"
               />
-              <Search className="absolute right-2.5 h-4 w-4 text-blue-500 pointer-events-none" />
+              <Search className="absolute right-2.5 h-4 w-4 text-emerald-600 pointer-events-none" />
             </div>
 
             {/* Add New Item Dropdown */}
@@ -885,17 +887,17 @@ export default function ShortbookPage() {
                   <button
                     key={med.id}
                     onClick={() => handleAddItem(med)}
-                    className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center justify-between text-xs transition-colors group"
+                    className="w-full px-3 py-2 text-left hover:bg-emerald-50 flex items-center justify-between text-xs transition-colors group cursor-pointer"
                   >
                     <div>
-                      <div className="font-medium text-slate-900 group-hover:text-blue-700">
+                      <div className="font-medium text-slate-900 group-hover:text-emerald-700">
                         {med.name}
                       </div>
                       <div className="text-[11px] text-slate-500">
                         {med.packSize || med.genericName || "1 Strip"}
                       </div>
                     </div>
-                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
+                    <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">
                       + Add
                     </span>
                   </button>
@@ -903,7 +905,7 @@ export default function ShortbookPage() {
 
                 <button
                   onClick={handleAddCustomItem}
-                  className="w-full px-3 py-2.5 text-left bg-slate-50 hover:bg-blue-100/50 flex items-center gap-2 text-xs text-blue-700 font-semibold transition-colors"
+                  className="w-full px-3 py-2.5 text-left bg-slate-50 hover:bg-emerald-100/50 flex items-center gap-2 text-xs text-emerald-700 font-semibold transition-colors cursor-pointer"
                 >
                   <Plus className="h-3.5 w-3.5" />
                   Add custom item "{addNewQuery}"
@@ -927,7 +929,7 @@ export default function ShortbookPage() {
 
             <Button
               onClick={() => toast.info(`Filtered results for "${tableSearchQuery}"`)}
-              className="h-9 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold px-3.5 rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer"
+              className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer"
             >
               <span>Search</span>
               <span className="text-sm font-light">↵</span>
@@ -938,11 +940,11 @@ export default function ShortbookPage() {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="h-9 px-3 bg-white border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 rounded-md text-xs font-medium text-slate-700 flex items-center gap-2 shadow-2xs cursor-pointer transition-all focus:outline-none"
+                  className="h-9 px-3 bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 rounded-md text-xs font-medium text-slate-700 flex items-center gap-2 shadow-2xs cursor-pointer transition-all focus:outline-none"
                   title="Click to select Date Range"
                 >
                   <span className="text-slate-800 font-semibold">{formattedDateRangeLabel}</span>
-                  <CalendarIcon className="h-3.5 w-3.5 text-blue-600 ml-1" />
+                  <CalendarIcon className="h-3.5 w-3.5 text-emerald-600 ml-1" />
                 </button>
               </PopoverTrigger>
               <PopoverContent
@@ -952,12 +954,12 @@ export default function ShortbookPage() {
                 {/* Header */}
                 <div className="flex items-center justify-between mb-2 px-1">
                   <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                    <CalendarIcon className="h-4 w-4 text-blue-600" />
+                    <CalendarIcon className="h-4 w-4 text-emerald-600" />
                     Select Date Range
                   </div>
                   <button
                     onClick={() => setDatePopoverOpen(false)}
-                    className="text-slate-400 hover:text-slate-600 p-0.5 rounded"
+                    className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -992,7 +994,7 @@ export default function ShortbookPage() {
                       toast.success("Date filter cleared — showing all dates");
                       setDatePopoverOpen(false);
                     }}
-                    className="text-xs text-slate-500 hover:text-red-600 font-medium"
+                    className="text-xs text-slate-500 hover:text-red-600 font-medium cursor-pointer"
                   >
                     Clear Filter
                   </button>
@@ -1002,7 +1004,7 @@ export default function ShortbookPage() {
                       setDatePopoverOpen(false);
                       toast.success(`Date filter applied: ${formattedDateRangeLabel}`);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1 cursor-pointer"
                   >
                     Apply Filter
                   </Button>
@@ -1017,11 +1019,11 @@ export default function ShortbookPage() {
                   variant="outline"
                   className={`h-9 text-xs font-medium px-3 rounded-md border-slate-200 flex items-center gap-1.5 cursor-pointer transition-all ${
                     activeFiltersCount > 0
-                      ? "bg-blue-50 border-blue-400 text-blue-700 font-semibold shadow-xs"
+                      ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-semibold shadow-xs"
                       : "bg-white text-slate-700 hover:bg-slate-50"
                   }`}
                 >
-                  <SlidersHorizontal className="h-3.5 w-3.5 text-blue-600" />
+                  <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-600" />
                   <span>More Filters ({activeFiltersCount})</span>
                 </Button>
               </PopoverTrigger>
@@ -1031,17 +1033,17 @@ export default function ShortbookPage() {
               >
                 <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
                   <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-blue-600" />
+                    <Filter className="h-4 w-4 text-emerald-600" />
                     Filter Options List
                     {activeFiltersCount > 0 && (
-                      <span className="bg-blue-100 text-blue-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                      <span className="bg-emerald-100 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
                         {activeFiltersCount} Active
                       </span>
                     )}
                   </div>
                   <button
                     onClick={() => setMoreFiltersOpen(false)}
-                    className="text-slate-400 hover:text-slate-600 p-0.5 rounded"
+                    className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
                   >
                     <X className="h-4 w-4" />
                   </button>
@@ -1055,9 +1057,9 @@ export default function ShortbookPage() {
                   <div className="grid grid-cols-3 gap-1.5">
                     <button
                       onClick={() => setPriorityFilter("all")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         priorityFilter === "all"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
+                          ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                       }`}
                     >
@@ -1065,7 +1067,7 @@ export default function ShortbookPage() {
                     </button>
                     <button
                       onClick={() => setPriorityFilter("high")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         priorityFilter === "high"
                           ? "bg-red-50 border-red-400 text-red-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
@@ -1075,7 +1077,7 @@ export default function ShortbookPage() {
                     </button>
                     <button
                       onClick={() => setPriorityFilter("low")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         priorityFilter === "low"
                           ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
@@ -1094,9 +1096,9 @@ export default function ShortbookPage() {
                   <div className="grid grid-cols-3 gap-1.5">
                     <button
                       onClick={() => setStatusFilter("all")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         statusFilter === "all"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
+                          ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                       }`}
                     >
@@ -1104,7 +1106,7 @@ export default function ShortbookPage() {
                     </button>
                     <button
                       onClick={() => setStatusFilter("pending")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         statusFilter === "pending"
                           ? "bg-amber-50 border-amber-400 text-amber-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
@@ -1114,9 +1116,9 @@ export default function ShortbookPage() {
                     </button>
                     <button
                       onClick={() => setStatusFilter("po created")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         statusFilter === "po created"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
+                          ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                       }`}
                     >
@@ -1133,9 +1135,9 @@ export default function ShortbookPage() {
                   <div className="grid grid-cols-3 gap-1.5">
                     <button
                       onClick={() => setSourceFilter("all")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         sourceFilter === "all"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
+                          ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                       }`}
                     >
@@ -1143,9 +1145,9 @@ export default function ShortbookPage() {
                     </button>
                     <button
                       onClick={() => setSourceFilter("shortbook")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         sourceFilter === "shortbook"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
+                          ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                       }`}
                     >
@@ -1153,9 +1155,9 @@ export default function ShortbookPage() {
                     </button>
                     <button
                       onClick={() => setSourceFilter("inventory")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         sourceFilter === "inventory"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
+                          ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                       }`}
                     >
@@ -1172,7 +1174,7 @@ export default function ShortbookPage() {
                   <select
                     value={distributorFilter}
                     onChange={(e) => setDistributorFilter(e.target.value)}
-                    className="w-full h-8 bg-slate-50 border border-slate-200 rounded px-2 text-xs font-medium focus:bg-white"
+                    className="w-full h-8 bg-slate-50 border border-slate-200 rounded px-2 text-xs font-medium focus:bg-white cursor-pointer"
                   >
                     <option value="all">All Distributors ({uniqueDistributors.length})</option>
                     {uniqueDistributors.map((d) => (
@@ -1191,7 +1193,7 @@ export default function ShortbookPage() {
                   <select
                     value={manufFilter}
                     onChange={(e) => setManufFilter(e.target.value)}
-                    className="w-full h-8 bg-slate-50 border border-slate-200 rounded px-2 text-xs font-medium focus:bg-white"
+                    className="w-full h-8 bg-slate-50 border border-slate-200 rounded px-2 text-xs font-medium focus:bg-white cursor-pointer"
                   >
                     <option value="all">All Manufacturers ({uniqueManufacturers.length})</option>
                     {uniqueManufacturers.map((m) => (
@@ -1210,9 +1212,9 @@ export default function ShortbookPage() {
                   <div className="grid grid-cols-3 gap-1.5">
                     <button
                       onClick={() => setStockFilter("all")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         stockFilter === "all"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
+                          ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
                       }`}
                     >
@@ -1220,7 +1222,7 @@ export default function ShortbookPage() {
                     </button>
                     <button
                       onClick={() => setStockFilter("outOfStock")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         stockFilter === "outOfStock"
                           ? "bg-red-50 border-red-400 text-red-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
@@ -1230,7 +1232,7 @@ export default function ShortbookPage() {
                     </button>
                     <button
                       onClick={() => setStockFilter("inStock")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
+                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
                         stockFilter === "inStock"
                           ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
                           : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
@@ -1245,7 +1247,7 @@ export default function ShortbookPage() {
                   <button
                     type="button"
                     onClick={handleResetAllFilters}
-                    className="text-xs text-slate-500 hover:text-red-600 font-medium"
+                    className="text-xs text-slate-500 hover:text-red-600 font-medium cursor-pointer"
                   >
                     Reset All Filters
                   </button>
@@ -1255,7 +1257,7 @@ export default function ShortbookPage() {
                       setMoreFiltersOpen(false);
                       toast.success(`Filters applied (${activeFiltersCount} active)`);
                     }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-1"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-1 cursor-pointer"
                   >
                     Done
                   </Button>
@@ -1267,69 +1269,90 @@ export default function ShortbookPage() {
 
         {/* ACTIVE FILTERS CHIPS BAR */}
         {activeFiltersCount > 0 && (
-          <div className="bg-blue-50/70 border-b border-blue-100 px-4 py-2 flex flex-wrap items-center gap-2 text-xs">
-            <span className="font-semibold text-blue-900 flex items-center gap-1 text-[11px]">
-              <Filter className="h-3.5 w-3.5 text-blue-600" /> Active Filters:
+          <div className="bg-emerald-50/70 border-b border-emerald-100 px-4 py-2 flex flex-wrap items-center gap-2 text-xs">
+            <span className="font-semibold text-emerald-900 flex items-center gap-1 text-[11px]">
+              <Filter className="h-3.5 w-3.5 text-emerald-600" /> Active Filters:
             </span>
 
             {priorityFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
                 Priority: <strong className="capitalize">{priorityFilter}</strong>
-                <button onClick={() => setPriorityFilter("all")} className="hover:text-red-600">
+                <button
+                  onClick={() => setPriorityFilter("all")}
+                  className="hover:text-red-600 cursor-pointer"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </span>
             )}
 
             {statusFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
                 Status: <strong className="capitalize">{statusFilter}</strong>
-                <button onClick={() => setStatusFilter("all")} className="hover:text-red-600">
+                <button
+                  onClick={() => setStatusFilter("all")}
+                  className="hover:text-red-600 cursor-pointer"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </span>
             )}
 
             {sourceFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
                 Source: <strong className="capitalize">{sourceFilter}</strong>
-                <button onClick={() => setSourceFilter("all")} className="hover:text-red-600">
+                <button
+                  onClick={() => setSourceFilter("all")}
+                  className="hover:text-red-600 cursor-pointer"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </span>
             )}
 
             {distributorFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
                 Distributor: <strong>{distributorFilter}</strong>
-                <button onClick={() => setDistributorFilter("all")} className="hover:text-red-600">
+                <button
+                  onClick={() => setDistributorFilter("all")}
+                  className="hover:text-red-600 cursor-pointer"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </span>
             )}
 
             {manufFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
                 Manuf: <strong>{manufFilter}</strong>
-                <button onClick={() => setManufFilter("all")} className="hover:text-red-600">
+                <button
+                  onClick={() => setManufFilter("all")}
+                  className="hover:text-red-600 cursor-pointer"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </span>
             )}
 
             {stockFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
                 Stock: <strong>{stockFilter === "outOfStock" ? "Stock = 0" : "Stock > 0"}</strong>
-                <button onClick={() => setStockFilter("all")} className="hover:text-red-600">
+                <button
+                  onClick={() => setStockFilter("all")}
+                  className="hover:text-red-600 cursor-pointer"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </span>
             )}
 
             {tableSearchQuery.trim() && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
                 Search: <strong>"{tableSearchQuery}"</strong>
-                <button onClick={() => setTableSearchQuery("")} className="hover:text-red-600">
+                <button
+                  onClick={() => setTableSearchQuery("")}
+                  className="hover:text-red-600 cursor-pointer"
+                >
                   <X className="h-3 w-3" />
                 </button>
               </span>
@@ -1337,7 +1360,7 @@ export default function ShortbookPage() {
 
             <button
               onClick={handleResetAllFilters}
-              className="text-red-600 hover:underline font-semibold text-[11px] ml-auto"
+              className="text-red-600 hover:underline font-semibold text-[11px] ml-auto cursor-pointer"
             >
               Clear All
             </button>
@@ -1363,14 +1386,6 @@ export default function ShortbookPage() {
                   </p>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setViewMode("classical")}
-                className="text-xs text-slate-700 hover:bg-slate-100"
-              >
-                Back to Classical Table
-              </Button>
             </div>
 
             {/* Metric Summary Cards */}
@@ -1574,14 +1589,14 @@ export default function ShortbookPage() {
             <table className="w-full text-left border-collapse min-w-[1100px]">
               {/* Table Headers */}
               <thead>
-                <tr className="bg-[#EBF3FA] text-[#334155] border-b border-slate-200/90 text-xs font-semibold select-none">
+                <tr className="bg-emerald-900/10 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-bold uppercase text-[11px] tracking-wide border-b border-emerald-200 dark:border-emerald-900 select-none">
                   {/* Select All Checkbox */}
                   <th className="py-2.5 px-3 w-10 text-center">
                     <input
                       type="checkbox"
                       checked={sortedItems.length > 0 && selectedIds.length === sortedItems.length}
                       onChange={toggleSelectAll}
-                      className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                      className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-0 cursor-pointer"
                       title="Select / Deselect All Items"
                     />
                   </th>
@@ -1627,15 +1642,15 @@ export default function ShortbookPage() {
                   )}
 
                   {/* Req. By Header (With Popover Details) */}
-                  <th className="py-2.5 px-3 font-bold tracking-tight text-slate-700 select-none">
+                  <th className="py-2.5 px-3 font-bold tracking-tight text-emerald-900 dark:text-emerald-300 select-none">
                     <Popover>
                       <PopoverTrigger asChild>
                         <button
                           type="button"
-                          className="flex items-center gap-1.5 hover:text-blue-700 focus:outline-none font-bold cursor-pointer"
+                          className="flex items-center gap-1.5 hover:text-emerald-700 focus:outline-none font-bold cursor-pointer"
                           title="Requested By Details"
                         >
-                          <Users className="h-3.5 w-3.5 text-slate-500" />
+                          <Users className="h-3.5 w-3.5 text-emerald-700" />
                           <span>Req. By</span>
                         </button>
                       </PopoverTrigger>
@@ -1643,8 +1658,8 @@ export default function ShortbookPage() {
                         align="center"
                         className="w-64 bg-slate-900 text-white p-3 rounded-lg text-xs shadow-xl space-y-1 z-50"
                       >
-                        <div className="font-bold flex items-center gap-1.5 text-blue-300">
-                          <Users className="h-3.5 w-3.5 text-blue-400" /> Requested By Details
+                        <div className="font-bold flex items-center gap-1.5 text-emerald-300">
+                          <Users className="h-3.5 w-3.5 text-emerald-400" /> Requested By Details
                         </div>
                         <p className="text-slate-200 leading-snug">
                           Indicates staff member or user who initiated the shortbook item entry
@@ -1665,7 +1680,7 @@ export default function ShortbookPage() {
                     <tr
                       key={item.id}
                       className={`hover:bg-slate-50/80 transition-colors ${
-                        isSelected ? "bg-blue-50/40" : ""
+                        isSelected ? "bg-emerald-50/40" : ""
                       }`}
                     >
                       {/* Checkbox */}
@@ -1674,7 +1689,7 @@ export default function ShortbookPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleSelect(item.id)}
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
+                          className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-0 cursor-pointer"
                         />
                       </td>
 
@@ -1692,7 +1707,7 @@ export default function ShortbookPage() {
                               <span onClick={() => setQuickViewItem(item)}>{item.itemName}</span>
                               <span
                                 onClick={() => setQuickViewItem(item)}
-                                className="text-blue-500 font-bold text-[10px] cursor-pointer"
+                                className="text-emerald-600 font-bold text-[10px] cursor-pointer"
                                 title="Product details"
                               >
                                 ℹ
@@ -1765,7 +1780,7 @@ export default function ShortbookPage() {
                       <td className="py-3 px-3 align-middle">
                         <div className="flex items-center gap-2.5">
                           <div className="relative cursor-pointer" title="Requested by user">
-                            <div className="h-6 w-6 rounded-full bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center">
+                            <div className="h-6 w-6 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center">
                               <User className="h-3.5 w-3.5" />
                             </div>
                             {item.reqByBadge && (
@@ -1777,7 +1792,7 @@ export default function ShortbookPage() {
 
                           <button
                             onClick={() => handleReorderItem(item)}
-                            className="text-slate-400 hover:text-blue-600 transition-colors p-0.5"
+                            className="text-slate-400 hover:text-emerald-600 transition-colors p-0.5 cursor-pointer"
                             title="Re-order Item"
                           >
                             <RotateCw className="h-3.5 w-3.5" />
@@ -1785,7 +1800,7 @@ export default function ShortbookPage() {
 
                           <button
                             onClick={() => handleDeleteItem(item.id)}
-                            className="text-red-400 hover:text-red-600 transition-colors p-0.5"
+                            className="text-red-400 hover:text-red-600 transition-colors p-0.5 cursor-pointer"
                             title="Delete Item"
                           >
                             <Trash2 className="h-3.5 w-3.5" />
@@ -1813,7 +1828,7 @@ export default function ShortbookPage() {
       <div className="fixed bottom-4 right-4 z-40">
         <button
           onClick={() => toast.info("Shortbook Help & Support Desk")}
-          className="h-8 w-8 rounded-full bg-[#007A87] text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+          className="h-8 w-8 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-lg hover:bg-emerald-800 hover:scale-105 transition-all cursor-pointer"
           title="Help Desk"
         >
           <HelpCircle className="h-4 w-4" />
@@ -1825,7 +1840,7 @@ export default function ShortbookPage() {
         <DialogContent className="max-w-lg bg-white">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
+              <Sparkles className="h-5 w-5 text-emerald-600" />
               Generate Automatic Purchase Orders
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
@@ -1847,7 +1862,7 @@ export default function ShortbookPage() {
                 >
                   <div className="flex justify-between font-bold text-slate-800 mb-1">
                     <span>{distributor}</span>
-                    <span className="text-blue-600">{itemsList.length} Item(s)</span>
+                    <span className="text-emerald-700 font-bold">{itemsList.length} Item(s)</span>
                   </div>
                   <div className="text-[11px] text-slate-500">
                     Items: {itemsList.map((i) => i.itemName).join(", ")}
@@ -1862,7 +1877,7 @@ export default function ShortbookPage() {
               variant="outline"
               size="sm"
               onClick={() => setAutoPoDialogOpen(false)}
-              className="text-xs"
+              className="text-xs cursor-pointer"
             >
               Cancel
             </Button>
@@ -1870,7 +1885,7 @@ export default function ShortbookPage() {
               size="sm"
               onClick={handleGenerateAutoPO}
               disabled={Object.keys(autoPoGrouped).length === 0}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer"
             >
               Generate {Object.keys(autoPoGrouped).length} Purchase Order(s)
             </Button>
@@ -1884,7 +1899,7 @@ export default function ShortbookPage() {
           <DialogContent className="max-w-md bg-white">
             <DialogHeader>
               <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Pill className="h-5 w-5 text-blue-600" />
+                <Pill className="h-5 w-5 text-emerald-600" />
                 {quickViewItem.itemName}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
@@ -1921,18 +1936,56 @@ export default function ShortbookPage() {
               </div>
               <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Order Quantity:</span>
-                <span className="font-bold text-blue-600">{quickViewItem.qty}</span>
+                <span className="font-bold text-emerald-700">{quickViewItem.qty}</span>
               </div>
             </div>
 
             <DialogFooter>
-              <Button size="sm" onClick={() => setQuickViewItem(null)} className="text-xs">
+              <Button
+                size="sm"
+                onClick={() => setQuickViewItem(null)}
+                className="text-xs cursor-pointer"
+              >
                 Close
               </Button>
             </DialogFooter>
           </DialogContent>
         )}
       </Dialog>
+
+      {/* ── Floating Back to Top button (all screens) ── */}
+      <button
+        type="button"
+        onClick={(e) => {
+          // The page scrolls inside the AppLayout div, not window —
+          // walk up the DOM to find the first scrollable ancestor and scroll it.
+          let el = e.currentTarget?.parentElement;
+          while (el && el !== document.body) {
+            const overflow = window.getComputedStyle(el).overflowY;
+            if (overflow === "auto" || overflow === "scroll") {
+              el.scrollTo({ top: 0, behavior: "smooth" });
+              return;
+            }
+            el = el.parentElement;
+          }
+          // Fallback in case nothing was found
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        aria-label="Back to top"
+        className="fixed bottom-6 right-4 z-50 flex items-center gap-1.5 bg-emerald-800 hover:bg-emerald-900 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-full shadow-lg transition-all cursor-pointer"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-3.5 w-3.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+          strokeWidth={2.5}
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+        </svg>
+        Back to Top
+      </button>
     </div>
   );
 }
