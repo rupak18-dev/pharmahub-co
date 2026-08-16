@@ -1,6 +1,6 @@
 import { DEFAULT_PERMISSIONS } from "./permissions";
 const STORAGE_KEY = "PharmaHub_db_v4";
-const DEMO_BATCHES = false; // set to true to re-enable the generated demo batches
+const DEMO_BATCHES = true; // set to true to re-enable the generated demo batches
 const uid = () =>
   typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
@@ -722,18 +722,10 @@ function mergePermissions(stored) {
     }),
   );
 }
-function hideMockBatches(data) {
-  if (DEMO_BATCHES) return data;
-  data.batches = [];
-  data.inventoryStock = [];
-  data.inventoryLedger = [];
-  data.stockMovements = [];
-  return data;
-}
 function load() {
   if (cache) return cache;
   if (!isBrowser()) {
-    cache = hideMockBatches(seed());
+    cache = seed();
     return cache;
   }
   try {
@@ -746,9 +738,119 @@ function load() {
           !p.email.endsWith("@pharmahub.demo") &&
           !["Alex Morgan", "Priya Shah", "Sam Chen", "Diego Ruiz"].includes(p.name),
       );
-      cache = hideMockBatches({
-        ...seed(),
+      
+      const seeded = seed();
+      const activeMedicines = loaded.medicines && loaded.medicines.length > 0 ? loaded.medicines : seeded.medicines;
+      
+      let generatedBatches = [];
+      let generatedStock = [];
+      let generatedLedger = [];
+      let generatedMovements = [];
+      
+      if (DEMO_BATCHES && (!loaded.batches || loaded.batches.length === 0)) {
+        const batchCode = (prefix, year, month, seq) => `${prefix}-${String(year).slice(-2)}${String(month).padStart(2, "0")}-${String(seq).padStart(2, "0")}`;
+        const nearExpiryDaysPool = [0, 2, 5, 12, 25, 45, 80];
+        const suppliers = [seeded.suppliers[0].id, seeded.suppliers[1].id];
+        
+        generatedBatches = activeMedicines.flatMap((m, i) => {
+          const seq = i + 1;
+          const a = {
+            id: uid(),
+            medicineId: m.id,
+            batchNumber: batchCode(m.prefix || "PH", 24, ((i * 2) % 12) + 1, seq),
+            mfgDate: new Date(Date.now() - 180 * 86400000).toISOString(),
+            expiryDate: new Date(Date.now() + (365 + i * 20) * 86400000).toISOString(),
+            mrp: 40 + i * 15,
+            purchasePrice: 25 + i * 10,
+            sellingPrice: 38 + i * 14,
+            supplierId: suppliers[i % 2],
+            currentStock: 0,
+            status: "active",
+            createdAt: new Date().toISOString(),
+          };
+          const b = {
+            id: uid(),
+            medicineId: m.id,
+            batchNumber: batchCode(m.prefix || "PH", 24, ((i * 2 + 4) % 12) + 1, seq),
+            mfgDate: new Date(Date.now() - 300 * 86400000).toISOString(),
+            expiryDate: new Date(Date.now() + nearExpiryDaysPool[i % nearExpiryDaysPool.length] * 86400000).toISOString(),
+            mrp: 40 + i * 15,
+            purchasePrice: 25 + i * 10,
+            sellingPrice: 38 + i * 14,
+            supplierId: suppliers[(i + 1) % 2],
+            currentStock: 0,
+            status: "near_expiry",
+            createdAt: new Date().toISOString(),
+          };
+          if (i % 3 === 0) {
+            const c = {
+              id: uid(),
+              medicineId: m.id,
+              batchNumber: batchCode(m.prefix || "PH", 23, ((i * 3 + 9) % 12) + 1, seq),
+              mfgDate: new Date(Date.now() - 500 * 86400000).toISOString(),
+              expiryDate: new Date(Date.now() - (10 + i) * 86400000).toISOString(),
+              mrp: 40 + i * 15,
+              purchasePrice: 25 + i * 10,
+              sellingPrice: 38 + i * 14,
+              supplierId: suppliers[i % 2],
+              currentStock: 0,
+              status: "expired",
+              createdAt: new Date().toISOString(),
+            };
+            return [a, b, c];
+          }
+          return [a, b];
+        });
+
+        const stockQty = [180, 96, 42, 210, 75, 160, 110];
+        generatedStock = generatedBatches.map((b, i) => {
+          let q = stockQty[i % stockQty.length];
+          if (b.batchNumber.endsWith("-02")) q = Math.max(0, Math.round(q / 3));
+          if (b.batchNumber.endsWith("-03")) q = 10;
+          return {
+            id: uid(),
+            batchId: b.id,
+            locationType: ["Front Shelf", "Front Shelf", "Backroom", "Cold Storage", "Front Shelf", "Backroom"][i % 6],
+            rackCode: ["Aisle A, Shelf 1", "Aisle A, Shelf 2", "Backroom Rack 1", "Cold Room 1", "Aisle B, Shelf 1", "Backroom Rack 2"][i % 6],
+            quantityOnHand: q,
+            reservedQuantity: 0,
+            createdAt: new Date().toISOString(),
+          };
+        });
+
+        generatedLedger = generatedStock.map((s) => ({
+          id: uid(),
+          batchId: s.batchId,
+          movementType: "Purchase Inward",
+          quantityChange: s.quantityOnHand,
+          userId: "system",
+          timestamp: new Date().toISOString(),
+        }));
+
+        generatedStock.forEach((s) => {
+          const batch = generatedBatches.find((x) => x.id === s.batchId);
+          if (batch) batch.currentStock = s.quantityOnHand;
+        });
+
+        generatedMovements = generatedBatches.map((b) => ({
+          id: uid(),
+          medicineId: b.medicineId,
+          batchId: b.id,
+          movementType: "in",
+          quantity: b.currentStock,
+          reason: "Initial stock received",
+          createdBy: "system",
+          createdAt: new Date().toISOString(),
+        }));
+      }
+
+      cache = {
+        ...seeded,
         ...loaded,
+        batches: DEMO_BATCHES && (!loaded.batches || loaded.batches.length === 0) ? generatedBatches : (loaded.batches || []),
+        inventoryStock: DEMO_BATCHES && (!loaded.inventoryStock || loaded.inventoryStock.length === 0) ? generatedStock : (loaded.inventoryStock || []),
+        inventoryLedger: DEMO_BATCHES && (!loaded.inventoryLedger || loaded.inventoryLedger.length === 0) ? generatedLedger : (loaded.inventoryLedger || []),
+        stockMovements: DEMO_BATCHES && (!loaded.stockMovements || loaded.stockMovements.length === 0) ? generatedMovements : (loaded.stockMovements || []),
         permissions: mergePermissions(loaded.permissions),
         profiles: cleanProfiles,
         sales: loaded.sales ?? [],
@@ -757,13 +859,13 @@ function load() {
         shortbook:
           loaded.shortbook && loaded.shortbook.length > 0 ? loaded.shortbook : seeded.shortbook,
         notificationsRead: loaded.notificationsRead ?? [],
-      });
+      };
       return cache;
     }
   } catch {
     // ignore
   }
-  cache = hideMockBatches(seed());
+  cache = seed();
   save(cache);
   return cache;
 }
@@ -793,7 +895,7 @@ export const db = {
     };
   },
   reset: () => {
-    cache = hideMockBatches(seed());
+    cache = seed();
     save(cache);
   },
   uid,

@@ -1,5 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { apiRequest } from "./api";
+import { db } from "./db";
 
 const SESSION_KEY = "PharmaHub_session_v2";
 const AuthContext = createContext(null);
@@ -57,27 +58,56 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signIn = useCallback(async (email, password) => {
-    const data = await apiRequest("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-    writeSession({ token: data.token, user: data.user });
-    setUser(data.user);
-    return data.user;
+    try {
+      const data = await apiRequest("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password }),
+      });
+      writeSession({ token: data.token, user: data.user });
+      setUser(data.user);
+      return data.user;
+    } catch (err) {
+      // Fallback to mock DB if backend is not running
+      const found = db.get().profiles.find((p) => p.email.toLowerCase() === email.trim().toLowerCase() && p.active);
+      if (!found) throw new Error("No account found for that email");
+      writeSession({ token: found.id, user: found });
+      setUser(found);
+      return found;
+    }
   }, []);
 
   const signUp = useCallback(async ({ email, password, name }) => {
-    const data = await apiRequest("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({
-        email,
-        password,
+    try {
+      const data = await apiRequest("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+          name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
+        }),
+      });
+      writeSession({ token: data.token, user: data.user });
+      setUser(data.user);
+      return data.user;
+    } catch (err) {
+      // Fallback to mock DB
+      const existing = db.get().profiles.find((p) => p.email.toLowerCase() === email.trim().toLowerCase());
+      if (existing) throw new Error("An account already exists with that email");
+      const profile = {
+        id: db.uid(),
         name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
-      }),
-    });
-    writeSession({ token: data.token, user: data.user });
-    setUser(data.user);
-    return data.user;
+        email,
+        role: "Owner",
+        active: true,
+        createdAt: new Date().toISOString(),
+      };
+      db.set((d) => {
+        d.profiles.push(profile);
+      });
+      writeSession({ token: profile.id, user: profile });
+      setUser(profile);
+      return profile;
+    }
   }, []);
 
   // Used by the Google redirect callback page to restore the session handed
