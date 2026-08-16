@@ -721,20 +721,18 @@ export default function ShortbookPage() {
           <button
             type="button"
             onClick={() => handleSort(colKey)}
-            className="flex items-center gap-1 hover:text-blue-700 focus:outline-none font-bold"
+            className="flex items-center gap-1 hover:text-emerald-700 focus:outline-none font-bold"
             title={`Sort by ${label}`}
           >
-            <span className={isActive ? "text-blue-700 font-extrabold" : "text-slate-800"}>
-              {label}
-            </span>
+            <span className={isActive ? "text-emerald-700 font-extrabold" : "text-slate-800"}>{label}</span>
             {isActive ? (
               sortDirection === "asc" ? (
-                <ArrowUp className="h-3.5 w-3.5 text-blue-600 font-bold" />
+                <ArrowUp className="h-3.5 w-3.5 text-emerald-600 font-bold" />
               ) : (
-                <ArrowDown className="h-3.5 w-3.5 text-blue-600 font-bold" />
+                <ArrowDown className="h-3.5 w-3.5 text-emerald-600 font-bold" />
               )
             ) : (
-              <ArrowUpDown className="h-3 w-3 text-slate-400 group-hover:text-blue-600 transition-colors" />
+              <ArrowUpDown className="h-3 w-3 text-slate-400 group-hover:text-emerald-600 transition-colors" />
             )}
           </button>
 
@@ -743,18 +741,15 @@ export default function ShortbookPage() {
               <PopoverTrigger asChild>
                 <button
                   type="button"
-                  className="text-slate-400 hover:text-blue-600 p-0.5 rounded focus:outline-none transition-colors cursor-pointer"
+                  className="text-slate-400 hover:text-emerald-600 p-0.5 rounded focus:outline-none transition-colors cursor-pointer"
                   title={`Click for ${label} details`}
                 >
                   <Info className="h-3.5 w-3.5" />
                 </button>
               </PopoverTrigger>
-              <PopoverContent
-                align="center"
-                className="w-64 bg-slate-900 text-white p-3 rounded-lg text-xs shadow-xl space-y-1 z-50"
-              >
-                <div className="font-bold flex items-center gap-1.5 text-blue-300">
-                  <Info className="h-3.5 w-3.5 text-blue-400" /> {label} Details
+              <PopoverContent align="center" className="w-64 bg-slate-900 text-white p-3 rounded-lg text-xs shadow-xl space-y-1 z-50">
+                <div className="font-bold flex items-center gap-1.5 text-emerald-300">
+                  <Info className="h-3.5 w-3.5 text-emerald-400" /> {label} Details
                 </div>
                 <p className="text-slate-200 leading-snug">{infoText}</p>
               </PopoverContent>
@@ -767,18 +762,17 @@ export default function ShortbookPage() {
   return (
     <div className="space-y-4 pb-12 select-none font-google-sans-flex text-slate-800">
       {/* TOP HEADER / BAR */}
-      <div className="bg-white rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="bg-white rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-2xs border border-border/50">
+        
         {/* Left Side: ShortBook Title + Info + Mode Switch */}
         <div className="flex items-center gap-4">
-          <div className="flex items-center gap-1.5 font-bold text-lg text-slate-900 tracking-tight">
+          <div className="flex items-center gap-1.5 font-extrabold text-xl text-slate-900 tracking-tight">
             <span>ShortBook</span>
             <button
-              onClick={() =>
-                toast.info("Shortbook lists medicines with low stock or required for re-ordering.")
-              }
-              className="text-blue-600 hover:text-blue-700 transition-colors focus:outline-none"
+              onClick={() => toast.info("Shortbook lists medicines with low stock or required for re-ordering.")}
+              className="text-emerald-600 hover:text-emerald-700 transition-colors focus:outline-none cursor-pointer"
             >
-              <Info className="h-4 w-4 fill-blue-600/10" />
+              <Info className="h-4 w-4 fill-emerald-600/10" />
             </button>
           </div>
 
@@ -786,9 +780,9 @@ export default function ShortbookPage() {
           <div className="flex items-center bg-slate-100 p-0.5 rounded-full border border-slate-200 text-xs font-medium">
             <button
               onClick={() => setViewMode("graphical")}
-              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1 ${
+              className={`px-3 py-1 rounded-full transition-all flex items-center gap-1 cursor-pointer ${
                 viewMode === "graphical"
-                  ? "bg-[#007A87] text-white font-semibold shadow-xs"
+                  ? "bg-emerald-600 text-white font-semibold shadow-xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -798,10 +792,10 @@ export default function ShortbookPage() {
 
             <button
               onClick={() => setViewMode(viewMode === "classical" ? "graphical" : "classical")}
-              className="px-1 focus:outline-none"
+              className="px-1 focus:outline-none cursor-pointer"
               title="Toggle View Mode"
             >
-              <div className="w-8 h-4 bg-blue-500 rounded-full relative p-0.5 transition-colors">
+              <div className="w-8 h-4 bg-emerald-600 rounded-full relative p-0.5 transition-colors">
                 <div
                   className={`w-3 h-3 bg-white rounded-full transition-transform ${
                     viewMode === "classical" ? "translate-x-4" : "translate-x-0"
@@ -812,9 +806,9 @@ export default function ShortbookPage() {
 
             <button
               onClick={() => setViewMode("classical")}
-              className={`px-3 py-1 rounded-full transition-all ${
+              className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
                 viewMode === "classical"
-                  ? "bg-blue-600 text-white font-semibold shadow-xs"
+                  ? "bg-emerald-600 text-white font-semibold shadow-xs"
                   : "text-slate-500 hover:text-slate-800"
               }`}
             >
@@ -827,7 +821,7 @@ export default function ShortbookPage() {
         <div className="flex items-center gap-2">
           <Button
             onClick={() => setAutoPoDialogOpen(true)}
-            className="bg-[#0F3A70] hover:bg-[#0A2A52] text-white text-xs font-semibold px-4 py-1.5 rounded-md shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+            className="bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold px-4 py-1.5 rounded-md shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
           >
             Auto PO
           </Button>
@@ -836,10 +830,10 @@ export default function ShortbookPage() {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="outline"
-                className="bg-[#EBF3FA] border-[#C5DCF2] text-[#0F3A70] hover:bg-[#D9E9F8] text-xs font-medium px-3 py-1.5 rounded-md flex items-center gap-1 cursor-pointer"
+                className="bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-xs font-semibold px-3 py-1.5 rounded-md flex items-center gap-1 cursor-pointer"
               >
                 <span>Download</span>
-                <ChevronDown className="h-3.5 w-3.5 text-[#0F3A70]" />
+                <ChevronDown className="h-3.5 w-3.5 text-emerald-700" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44 text-xs">
@@ -864,55 +858,52 @@ export default function ShortbookPage() {
       <div className="bg-white rounded-xl overflow-hidden">
         {/* SEARCH AND FILTER BAR ROW */}
         <div className="p-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-3">
-          {/* Left: "Add new item from here" Input */}
-          <div className="relative min-w-[280px] sm:min-w-[340px]">
-            <div className="relative flex items-center">
-              <Input
-                placeholder="Add new item from here"
-                value={addNewQuery}
-                onChange={(e) => {
-                  setAddNewQuery(e.target.value);
-                  setShowAddNewDropdown(true);
-                }}
-                onFocus={() => setShowAddNewDropdown(true)}
-                className="h-9 pr-9 text-xs bg-slate-50 border-slate-200 placeholder:text-slate-400 focus:bg-white transition-colors"
-              />
-              <Search className="absolute right-2.5 h-4 w-4 text-blue-500 pointer-events-none" />
-            </div>
-
-            {/* Add New Item Dropdown */}
-            {showAddNewDropdown && addNewQuery.trim() !== "" && (
-              <div className="absolute left-0 right-0 top-10 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden divide-y divide-slate-100 max-h-60 overflow-y-auto">
-                {addableMedicines.map((med) => (
-                  <button
-                    key={med.id}
-                    onClick={() => handleAddItem(med)}
-                    className="w-full px-3 py-2 text-left hover:bg-blue-50 flex items-center justify-between text-xs transition-colors group"
-                  >
-                    <div>
-                      <div className="font-medium text-slate-900 group-hover:text-blue-700">
-                        {med.name}
-                      </div>
-                      <div className="text-[11px] text-slate-500">
-                        {med.packSize || med.genericName || "1 Strip"}
-                      </div>
-                    </div>
-                    <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-semibold">
-                      + Add
-                    </span>
-                  </button>
-                ))}
-
-                <button
-                  onClick={handleAddCustomItem}
-                  className="w-full px-3 py-2.5 text-left bg-slate-50 hover:bg-blue-100/50 flex items-center gap-2 text-xs text-blue-700 font-semibold transition-colors"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Add custom item "{addNewQuery}"
-                </button>
-              </div>
-            )}
+        
+        {/* Left: "Add new item from here" Input */}
+        <div className="relative min-w-[280px] sm:min-w-[340px]">
+          <div className="relative flex items-center">
+            <Input
+              placeholder="Add new item from here"
+              value={addNewQuery}
+              onChange={(e) => {
+                setAddNewQuery(e.target.value);
+                setShowAddNewDropdown(true);
+              }}
+              onFocus={() => setShowAddNewDropdown(true)}
+              className="h-9 pr-9 text-xs bg-slate-50 border-slate-200 placeholder:text-slate-400 focus:bg-white transition-colors"
+            />
+            <Search className="absolute right-2.5 h-4 w-4 text-emerald-600 pointer-events-none" />
           </div>
+
+          {/* Add New Item Dropdown */}
+          {showAddNewDropdown && addNewQuery.trim() !== "" && (
+            <div className="absolute left-0 right-0 top-10 bg-white border border-slate-200 rounded-lg shadow-xl z-50 overflow-hidden divide-y divide-slate-100 max-h-60 overflow-y-auto">
+              {addableMedicines.map((med) => (
+                <button
+                  key={med.id}
+                  onClick={() => handleAddItem(med)}
+                  className="w-full px-3 py-2 text-left hover:bg-emerald-50 flex items-center justify-between text-xs transition-colors group cursor-pointer"
+                >
+                  <div>
+                    <div className="font-medium text-slate-900 group-hover:text-emerald-700">{med.name}</div>
+                    <div className="text-[11px] text-slate-500">{med.packSize || med.genericName || "1 Strip"}</div>
+                  </div>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">
+                    + Add
+                  </span>
+                </button>
+              ))}
+
+              <button
+                onClick={handleAddCustomItem}
+                className="w-full px-3 py-2.5 text-left bg-slate-50 hover:bg-emerald-100/50 flex items-center gap-2 text-xs text-emerald-700 font-semibold transition-colors cursor-pointer"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add custom item "{addNewQuery}"
+              </button>
+            </div>
+          )}
+        </div>
 
           {/* Right Controls */}
           <div className="flex flex-wrap items-center gap-2">
@@ -927,43 +918,40 @@ export default function ShortbookPage() {
               <Search className="absolute right-2.5 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
             </div>
 
-            <Button
-              onClick={() => toast.info(`Filtered results for "${tableSearchQuery}"`)}
-              className="h-9 bg-blue-500 hover:bg-blue-600 text-white text-xs font-semibold px-3.5 rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer"
-            >
-              <span>Search</span>
-              <span className="text-sm font-light">↵</span>
-            </Button>
+          <Button
+            onClick={() => toast.info(`Filtered results for "${tableSearchQuery}"`)}
+            className="h-9 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3.5 rounded-md shadow-2xs flex items-center gap-1.5 cursor-pointer"
+          >
+            <span>Search</span>
+            <span className="text-sm font-light">↵</span>
+          </Button>
 
-            {/* CALENDAR DATE RANGE SELECTOR */}
-            <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
-              <PopoverTrigger asChild>
-                <button
-                  type="button"
-                  className="h-9 px-3 bg-white border border-slate-200 hover:border-blue-400 hover:bg-blue-50/50 rounded-md text-xs font-medium text-slate-700 flex items-center gap-2 shadow-2xs cursor-pointer transition-all focus:outline-none"
-                  title="Click to select Date Range"
-                >
-                  <span className="text-slate-800 font-semibold">{formattedDateRangeLabel}</span>
-                  <CalendarIcon className="h-3.5 w-3.5 text-blue-600 ml-1" />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="end"
-                className="w-auto bg-white p-3 rounded-xl border border-slate-200 shadow-xl z-50"
+          {/* CALENDAR DATE RANGE SELECTOR */}
+          <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="h-9 px-3 bg-white border border-slate-200 hover:border-emerald-400 hover:bg-emerald-50/50 rounded-md text-xs font-medium text-slate-700 flex items-center gap-2 shadow-2xs cursor-pointer transition-all focus:outline-none"
+                title="Click to select Date Range"
               >
-                {/* Header */}
-                <div className="flex items-center justify-between mb-2 px-1">
-                  <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                    <CalendarIcon className="h-4 w-4 text-blue-600" />
-                    Select Date Range
-                  </div>
-                  <button
-                    onClick={() => setDatePopoverOpen(false)}
-                    className="text-slate-400 hover:text-slate-600 p-0.5 rounded"
-                  >
-                    <X className="h-3.5 w-3.5" />
-                  </button>
+                <span className="text-slate-800 font-semibold">{formattedDateRangeLabel}</span>
+                <CalendarIcon className="h-3.5 w-3.5 text-emerald-600 ml-1" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-auto bg-white p-3 rounded-xl border border-slate-200 shadow-xl z-50">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-2 px-1">
+                <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                  <CalendarIcon className="h-4 w-4 text-emerald-600" />
+                  Select Date Range
                 </div>
+                <button
+                  onClick={() => setDatePopoverOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              </div>
 
                 {/* Clean Calendar — no outside days */}
                 <CalendarComponent
@@ -983,397 +971,384 @@ export default function ShortbookPage() {
                   className="rounded-lg"
                 />
 
-                {/* Footer actions */}
-                <div className="flex items-center justify-between border-t border-slate-100 pt-2 mt-1 px-1">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setStartDate("");
-                      setEndDate("");
-                      setDateRangePreset("all");
-                      toast.success("Date filter cleared — showing all dates");
-                      setDatePopoverOpen(false);
-                    }}
-                    className="text-xs text-slate-500 hover:text-red-600 font-medium"
-                  >
-                    Clear Filter
-                  </button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setDatePopoverOpen(false);
-                      toast.success(`Date filter applied: ${formattedDateRangeLabel}`);
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-3 py-1"
-                  >
-                    Apply Filter
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-
-            {/* MORE FILTERS POPOVER LIST */}
-            <Popover open={moreFiltersOpen} onOpenChange={setMoreFiltersOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={`h-9 text-xs font-medium px-3 rounded-md border-slate-200 flex items-center gap-1.5 cursor-pointer transition-all ${
-                    activeFiltersCount > 0
-                      ? "bg-blue-50 border-blue-400 text-blue-700 font-semibold shadow-xs"
-                      : "bg-white text-slate-700 hover:bg-slate-50"
-                  }`}
+              {/* Footer actions */}
+              <div className="flex items-center justify-between border-t border-slate-100 pt-2 mt-1 px-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setStartDate("");
+                    setEndDate("");
+                    setDateRangePreset("all");
+                    toast.success("Date filter cleared — showing all dates");
+                    setDatePopoverOpen(false);
+                  }}
+                  className="text-xs text-slate-500 hover:text-red-600 font-medium cursor-pointer"
                 >
-                  <SlidersHorizontal className="h-3.5 w-3.5 text-blue-600" />
-                  <span>More Filters ({activeFiltersCount})</span>
+                  Clear Filter
+                </button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setDatePopoverOpen(false);
+                    toast.success(`Date filter applied: ${formattedDateRangeLabel}`);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-3 py-1 cursor-pointer"
+                >
+                  Apply Filter
                 </Button>
-              </PopoverTrigger>
-              <PopoverContent
-                align="end"
-                className="w-88 bg-white p-4 rounded-xl border border-slate-200 shadow-xl space-y-4 text-xs z-50 max-h-[85vh] overflow-y-auto"
-              >
-                <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
-                  <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                    <Filter className="h-4 w-4 text-blue-600" />
-                    Filter Options List
-                    {activeFiltersCount > 0 && (
-                      <span className="bg-blue-100 text-blue-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
-                        {activeFiltersCount} Active
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => setMoreFiltersOpen(false)}
-                    className="text-slate-400 hover:text-slate-600 p-0.5 rounded"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
-                </div>
-
-                {/* Priority Filter */}
-                <div className="space-y-1.5">
-                  <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                    Order Priority
-                  </Label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <button
-                      onClick={() => setPriorityFilter("all")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        priorityFilter === "all"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => setPriorityFilter("high")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        priorityFilter === "high"
-                          ? "bg-red-50 border-red-400 text-red-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      ↑ High
-                    </button>
-                    <button
-                      onClick={() => setPriorityFilter("low")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        priorityFilter === "low"
-                          ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      ↓ Low
-                    </button>
-                  </div>
-                </div>
-
-                {/* Status Filter */}
-                <div className="space-y-1.5 border-t border-slate-100 pt-3">
-                  <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                    Item Status
-                  </Label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <button
-                      onClick={() => setStatusFilter("all")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        statusFilter === "all"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => setStatusFilter("pending")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        statusFilter === "pending"
-                          ? "bg-amber-50 border-amber-400 text-amber-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      Pending
-                    </button>
-                    <button
-                      onClick={() => setStatusFilter("po created")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        statusFilter === "po created"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      PO Created
-                    </button>
-                  </div>
-                </div>
-
-                {/* Source Filter */}
-                <div className="space-y-1.5 border-t border-slate-100 pt-3">
-                  <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                    Requirement Source
-                  </Label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <button
-                      onClick={() => setSourceFilter("all")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        sourceFilter === "all"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => setSourceFilter("shortbook")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        sourceFilter === "shortbook"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      Shortbook
-                    </button>
-                    <button
-                      onClick={() => setSourceFilter("inventory")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        sourceFilter === "inventory"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      Inventory
-                    </button>
-                  </div>
-                </div>
-
-                {/* Distributor Filter */}
-                <div className="space-y-1.5 border-t border-slate-100 pt-3">
-                  <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                    Distributor Supplier
-                  </Label>
-                  <select
-                    value={distributorFilter}
-                    onChange={(e) => setDistributorFilter(e.target.value)}
-                    className="w-full h-8 bg-slate-50 border border-slate-200 rounded px-2 text-xs font-medium focus:bg-white"
-                  >
-                    <option value="all">All Distributors ({uniqueDistributors.length})</option>
-                    {uniqueDistributors.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Manufacturer Code Filter */}
-                <div className="space-y-1.5 border-t border-slate-100 pt-3">
-                  <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                    Manufacturer Code
-                  </Label>
-                  <select
-                    value={manufFilter}
-                    onChange={(e) => setManufFilter(e.target.value)}
-                    className="w-full h-8 bg-slate-50 border border-slate-200 rounded px-2 text-xs font-medium focus:bg-white"
-                  >
-                    <option value="all">All Manufacturers ({uniqueManufacturers.length})</option>
-                    {uniqueManufacturers.map((m) => (
-                      <option key={m} value={m}>
-                        {m}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                {/* Stock Level Filter */}
-                <div className="space-y-1.5 border-t border-slate-100 pt-3">
-                  <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-                    Current Stock Availability
-                  </Label>
-                  <div className="grid grid-cols-3 gap-1.5">
-                    <button
-                      onClick={() => setStockFilter("all")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        stockFilter === "all"
-                          ? "bg-blue-50 border-blue-400 text-blue-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      All
-                    </button>
-                    <button
-                      onClick={() => setStockFilter("outOfStock")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        stockFilter === "outOfStock"
-                          ? "bg-red-50 border-red-400 text-red-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      Stock = 0
-                    </button>
-                    <button
-                      onClick={() => setStockFilter("inStock")}
-                      className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all ${
-                        stockFilter === "inStock"
-                          ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
-                          : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
-                      }`}
-                    >
-                      Stock &gt; 0
-                    </button>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-between border-t border-slate-100 pt-3">
-                  <button
-                    type="button"
-                    onClick={handleResetAllFilters}
-                    className="text-xs text-slate-500 hover:text-red-600 font-medium"
-                  >
-                    Reset All Filters
-                  </button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setMoreFiltersOpen(false);
-                      toast.success(`Filters applied (${activeFiltersCount} active)`);
-                    }}
-                    className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold px-4 py-1"
-                  >
-                    Done
-                  </Button>
-                </div>
-              </PopoverContent>
-            </Popover>
-          </div>
-        </div>
-
-        {/* ACTIVE FILTERS CHIPS BAR */}
-        {activeFiltersCount > 0 && (
-          <div className="bg-blue-50/70 border-b border-blue-100 px-4 py-2 flex flex-wrap items-center gap-2 text-xs">
-            <span className="font-semibold text-blue-900 flex items-center gap-1 text-[11px]">
-              <Filter className="h-3.5 w-3.5 text-blue-600" /> Active Filters:
-            </span>
-
-            {priorityFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
-                Priority: <strong className="capitalize">{priorityFilter}</strong>
-                <button onClick={() => setPriorityFilter("all")} className="hover:text-red-600">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-
-            {statusFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
-                Status: <strong className="capitalize">{statusFilter}</strong>
-                <button onClick={() => setStatusFilter("all")} className="hover:text-red-600">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-
-            {sourceFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
-                Source: <strong className="capitalize">{sourceFilter}</strong>
-                <button onClick={() => setSourceFilter("all")} className="hover:text-red-600">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-
-            {distributorFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
-                Distributor: <strong>{distributorFilter}</strong>
-                <button onClick={() => setDistributorFilter("all")} className="hover:text-red-600">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-
-            {manufFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
-                Manuf: <strong>{manufFilter}</strong>
-                <button onClick={() => setManufFilter("all")} className="hover:text-red-600">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-
-            {stockFilter !== "all" && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
-                Stock: <strong>{stockFilter === "outOfStock" ? "Stock = 0" : "Stock > 0"}</strong>
-                <button onClick={() => setStockFilter("all")} className="hover:text-red-600">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-
-            {tableSearchQuery.trim() && (
-              <span className="bg-white border border-blue-200 text-blue-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
-                Search: <strong>"{tableSearchQuery}"</strong>
-                <button onClick={() => setTableSearchQuery("")} className="hover:text-red-600">
-                  <X className="h-3 w-3" />
-                </button>
-              </span>
-            )}
-
-            <button
-              onClick={handleResetAllFilters}
-              className="text-red-600 hover:underline font-semibold text-[11px] ml-auto"
-            >
-              Clear All
-            </button>
-          </div>
-        )}
-
-        {/* GRAPHICAL REPRESENTATION PAGE VIEW */}
-        {viewMode === "graphical" && (
-          <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto w-full animate-in fade-in-50 duration-200">
-            {/* Header banner for Graphical View */}
-            <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-lg bg-[#007A87]/10 text-[#007A87] flex items-center justify-center">
-                  <BarChart3 className="h-6 w-6" />
-                </div>
-                <div>
-                  <h2 className="font-bold text-slate-900 text-base">
-                    Graphical Representation & Order Analytics
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Visual order breakdown, distributor demands, priority splits, and manufacturer
-                    stats
-                  </p>
-                </div>
               </div>
+            </PopoverContent>
+          </Popover>
+
+
+          {/* MORE FILTERS POPOVER LIST */}
+          <Popover open={moreFiltersOpen} onOpenChange={setMoreFiltersOpen}>
+            <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                size="sm"
-                onClick={() => setViewMode("classical")}
-                className="text-xs text-slate-700 hover:bg-slate-100"
+                className={`h-9 text-xs font-medium px-3 rounded-md border-slate-200 flex items-center gap-1.5 cursor-pointer transition-all ${
+                  activeFiltersCount > 0
+                    ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-semibold shadow-xs"
+                    : "bg-white text-slate-700 hover:bg-slate-50"
+                }`}
               >
-                Back to Classical Table
+                <SlidersHorizontal className="h-3.5 w-3.5 text-emerald-600" />
+                <span>More Filters ({activeFiltersCount})</span>
               </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-88 bg-white p-4 rounded-xl border border-slate-200 shadow-xl space-y-4 text-xs z-50 max-h-[85vh] overflow-y-auto">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-2.5">
+                <div className="font-bold text-slate-900 text-sm flex items-center gap-2">
+                  <Filter className="h-4 w-4 text-emerald-600" />
+                  Filter Options List
+                  {activeFiltersCount > 0 && (
+                    <span className="bg-emerald-100 text-emerald-700 text-[10px] font-extrabold px-2 py-0.5 rounded-full">
+                      {activeFiltersCount} Active
+                    </span>
+                  )}
+                </div>
+                <button
+                  onClick={() => setMoreFiltersOpen(false)}
+                  className="text-slate-400 hover:text-slate-600 p-0.5 rounded cursor-pointer"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* Priority Filter */}
+              <div className="space-y-1.5">
+                <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  Order Priority
+                </Label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    onClick={() => setPriorityFilter("all")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      priorityFilter === "all"
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setPriorityFilter("high")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      priorityFilter === "high"
+                        ? "bg-red-50 border-red-400 text-red-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    ↑ High
+                  </button>
+                  <button
+                    onClick={() => setPriorityFilter("low")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      priorityFilter === "low"
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    ↓ Low
+                  </button>
+                </div>
+              </div>
+
+              {/* Status Filter */}
+              <div className="space-y-1.5 border-t border-slate-100 pt-3">
+                <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  Item Status
+                </Label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    onClick={() => setStatusFilter("all")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      statusFilter === "all"
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter("pending")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      statusFilter === "pending"
+                        ? "bg-amber-50 border-amber-400 text-amber-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    Pending
+                  </button>
+                  <button
+                    onClick={() => setStatusFilter("po created")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      statusFilter === "po created"
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    PO Created
+                  </button>
+                </div>
+              </div>
+
+              {/* Source Filter */}
+              <div className="space-y-1.5 border-t border-slate-100 pt-3">
+                <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  Requirement Source
+                </Label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    onClick={() => setSourceFilter("all")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      sourceFilter === "all"
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setSourceFilter("shortbook")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      sourceFilter === "shortbook"
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    Shortbook
+                  </button>
+                  <button
+                    onClick={() => setSourceFilter("inventory")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      sourceFilter === "inventory"
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    Inventory
+                  </button>
+                </div>
+              </div>
+
+              {/* Distributor Filter */}
+              <div className="space-y-1.5 border-t border-slate-100 pt-3">
+                <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  Distributor Supplier
+                </Label>
+                <select
+                  value={distributorFilter}
+                  onChange={(e) => setDistributorFilter(e.target.value)}
+                  className="w-full h-8 bg-slate-50 border border-slate-200 rounded px-2 text-xs font-medium focus:bg-white cursor-pointer"
+                >
+                  <option value="all">All Distributors ({uniqueDistributors.length})</option>
+                  {uniqueDistributors.map((d) => (
+                    <option key={d} value={d}>
+                      {d}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Manufacturer Code Filter */}
+              <div className="space-y-1.5 border-t border-slate-100 pt-3">
+                <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  Manufacturer Code
+                </Label>
+                <select
+                  value={manufFilter}
+                  onChange={(e) => setManufFilter(e.target.value)}
+                  className="w-full h-8 bg-slate-50 border border-slate-200 rounded px-2 text-xs font-medium focus:bg-white cursor-pointer"
+                >
+                  <option value="all">All Manufacturers ({uniqueManufacturers.length})</option>
+                  {uniqueManufacturers.map((m) => (
+                    <option key={m} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Stock Level Filter */}
+              <div className="space-y-1.5 border-t border-slate-100 pt-3">
+                <Label className="text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                  Current Stock Availability
+                </Label>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    onClick={() => setStockFilter("all")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      stockFilter === "all"
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    All
+                  </button>
+                  <button
+                    onClick={() => setStockFilter("outOfStock")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      stockFilter === "outOfStock"
+                        ? "bg-red-50 border-red-400 text-red-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    Stock = 0
+                  </button>
+                  <button
+                    onClick={() => setStockFilter("inStock")}
+                    className={`py-1.5 px-2.5 rounded text-center font-medium border text-xs transition-all cursor-pointer ${
+                      stockFilter === "inStock"
+                        ? "bg-emerald-50 border-emerald-400 text-emerald-700 font-bold"
+                        : "bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100"
+                    }`}
+                  >
+                    Stock &gt; 0
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between border-t border-slate-100 pt-3">
+                <button
+                  type="button"
+                  onClick={handleResetAllFilters}
+                  className="text-xs text-slate-500 hover:text-red-600 font-medium cursor-pointer"
+                >
+                  Reset All Filters
+                </button>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setMoreFiltersOpen(false);
+                    toast.success(`Filters applied (${activeFiltersCount} active)`);
+                  }}
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold px-4 py-1 cursor-pointer"
+                >
+                  Done
+                </Button>
+              </div>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      {/* ACTIVE FILTERS CHIPS BAR */}
+      {activeFiltersCount > 0 && (
+        <div className="bg-emerald-50/70 border-b border-emerald-100 px-4 py-2 flex flex-wrap items-center gap-2 text-xs">
+          <span className="font-semibold text-emerald-900 flex items-center gap-1 text-[11px]">
+            <Filter className="h-3.5 w-3.5 text-emerald-600" /> Active Filters:
+          </span>
+
+          {priorityFilter !== "all" && (
+            <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              Priority: <strong className="capitalize">{priorityFilter}</strong>
+              <button onClick={() => setPriorityFilter("all")} className="hover:text-red-600 cursor-pointer">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          {statusFilter !== "all" && (
+            <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              Status: <strong className="capitalize">{statusFilter}</strong>
+              <button onClick={() => setStatusFilter("all")} className="hover:text-red-600 cursor-pointer">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          {sourceFilter !== "all" && (
+            <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              Source: <strong className="capitalize">{sourceFilter}</strong>
+              <button onClick={() => setSourceFilter("all")} className="hover:text-red-600 cursor-pointer">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          {distributorFilter !== "all" && (
+            <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              Distributor: <strong>{distributorFilter}</strong>
+              <button onClick={() => setDistributorFilter("all")} className="hover:text-red-600 cursor-pointer">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          {manufFilter !== "all" && (
+            <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              Manuf: <strong>{manufFilter}</strong>
+              <button onClick={() => setManufFilter("all")} className="hover:text-red-600 cursor-pointer">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          {stockFilter !== "all" && (
+            <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              Stock: <strong>{stockFilter === "outOfStock" ? "Stock = 0" : "Stock > 0"}</strong>
+              <button onClick={() => setStockFilter("all")} className="hover:text-red-600 cursor-pointer">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          {tableSearchQuery.trim() && (
+            <span className="bg-white border border-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full flex items-center gap-1 text-[11px]">
+              Search: <strong>"{tableSearchQuery}"</strong>
+              <button onClick={() => setTableSearchQuery("")} className="hover:text-red-600 cursor-pointer">
+                <X className="h-3 w-3" />
+              </button>
+            </span>
+          )}
+
+          <button
+            onClick={handleResetAllFilters}
+            className="text-red-600 hover:underline font-semibold text-[11px] ml-auto cursor-pointer"
+          >
+            Clear All
+          </button>
+        </div>
+      )}
+
+      {/* GRAPHICAL REPRESENTATION PAGE VIEW */}
+      {viewMode === "graphical" && (
+        <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto w-full animate-in fade-in-50 duration-200">
+          
+          {/* Header banner for Graphical View */}
+          <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-slate-200 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-lg bg-[#007A87]/10 text-[#007A87] flex items-center justify-center">
+                <BarChart3 className="h-6 w-6" />
+              </div>
+              <div>
+                <h2 className="font-bold text-slate-900 text-base">Graphical Representation & Order Analytics</h2>
+                <p className="text-xs text-slate-500">Visual order breakdown, distributor demands, priority splits, and manufacturer stats</p>
+              </div>
             </div>
+
+          </div>
 
             {/* Metric Summary Cards */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -1570,23 +1545,24 @@ export default function ShortbookPage() {
           </div>
         )}
 
-        {/* CLASSICAL VIEW TABLE */}
-        {viewMode === "classical" && (
-          <div className="w-full overflow-x-auto border-b border-slate-200">
-            <table className="w-full text-left border-collapse min-w-[1100px]">
-              {/* Table Headers */}
-              <thead>
-                <tr className="bg-[#EBF3FA] text-[#334155] border-b border-slate-200/90 text-xs font-semibold select-none">
-                  {/* Select All Checkbox */}
-                  <th className="py-2.5 px-3 w-10 text-center">
-                    <input
-                      type="checkbox"
-                      checked={sortedItems.length > 0 && selectedIds.length === sortedItems.length}
-                      onChange={toggleSelectAll}
-                      className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
-                      title="Select / Deselect All Items"
-                    />
-                  </th>
+      {/* CLASSICAL VIEW TABLE */}
+      {viewMode === "classical" && (
+        <div className="w-full overflow-x-auto border-b border-slate-200">
+          <table className="w-full text-left border-collapse min-w-[1100px]">
+            {/* Table Headers */}
+            <thead>
+              <tr className="bg-emerald-900/10 dark:bg-emerald-950/40 text-emerald-900 dark:text-emerald-300 font-bold uppercase text-[11px] tracking-wide border-b border-emerald-200 dark:border-emerald-900 select-none">
+                
+                {/* Select All Checkbox */}
+                <th className="py-2.5 px-3 w-10 text-center">
+                  <input
+                    type="checkbox"
+                    checked={sortedItems.length > 0 && selectedIds.length === sortedItems.length}
+                    onChange={toggleSelectAll}
+                    className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-0 cursor-pointer"
+                    title="Select / Deselect All Items"
+                  />
+                </th>
 
                   {/* Date Header */}
                   {renderSortHeader("Date", "dateIso")}
@@ -1628,84 +1604,78 @@ export default function ShortbookPage() {
                     "Requirement source — 'Shortbook' means manually logged by pharmacy staff; 'Inventory' means auto-generated by low-stock threshold triggers.",
                   )}
 
-                  {/* Req. By Header (With Popover Details) */}
-                  <th className="py-2.5 px-3 font-bold tracking-tight text-slate-700 select-none">
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <button
-                          type="button"
-                          className="flex items-center gap-1.5 hover:text-blue-700 focus:outline-none font-bold cursor-pointer"
-                          title="Requested By Details"
-                        >
-                          <Users className="h-3.5 w-3.5 text-slate-500" />
-                          <span>Req. By</span>
-                        </button>
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="center"
-                        className="w-64 bg-slate-900 text-white p-3 rounded-lg text-xs shadow-xl space-y-1 z-50"
+                {/* Req. By Header (With Popover Details) */}
+                <th className="py-2.5 px-3 font-bold tracking-tight text-emerald-900 dark:text-emerald-300 select-none">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        className="flex items-center gap-1.5 hover:text-emerald-700 focus:outline-none font-bold cursor-pointer"
+                        title="Requested By Details"
                       >
-                        <div className="font-bold flex items-center gap-1.5 text-blue-300">
-                          <Users className="h-3.5 w-3.5 text-blue-400" /> Requested By Details
-                        </div>
-                        <p className="text-slate-200 leading-snug">
-                          Indicates staff member or user who initiated the shortbook item entry
-                          along with active request badge counts.
-                        </p>
-                      </PopoverContent>
-                    </Popover>
-                  </th>
-                </tr>
-              </thead>
+                        <Users className="h-3.5 w-3.5 text-emerald-700" />
+                        <span>Req. By</span>
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="center" className="w-64 bg-slate-900 text-white p-3 rounded-lg text-xs shadow-xl space-y-1 z-50">
+                      <div className="font-bold flex items-center gap-1.5 text-emerald-300">
+                        <Users className="h-3.5 w-3.5 text-emerald-400" /> Requested By Details
+                      </div>
+                      <p className="text-slate-200 leading-snug">
+                        Indicates staff member or user who initiated the shortbook item entry along with active request badge counts.
+                      </p>
+                    </PopoverContent>
+                  </Popover>
+                </th>
+              </tr>
+            </thead>
 
               {/* Table Body */}
               <tbody className="divide-y divide-slate-200/70 bg-white text-xs">
                 {sortedItems.map((item) => {
                   const isSelected = selectedIds.includes(item.id);
 
-                  return (
-                    <tr
-                      key={item.id}
-                      className={`hover:bg-slate-50/80 transition-colors ${
-                        isSelected ? "bg-blue-50/40" : ""
-                      }`}
-                    >
-                      {/* Checkbox */}
-                      <td className="py-3 px-3 text-center align-middle">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleSelect(item.id)}
-                          className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-0 cursor-pointer"
-                        />
-                      </td>
+                return (
+                  <tr
+                    key={item.id}
+                    className={`hover:bg-slate-50/80 transition-colors ${
+                      isSelected ? "bg-emerald-50/40" : ""
+                    }`}
+                  >
+                    {/* Checkbox */}
+                    <td className="py-3 px-3 text-center align-middle">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleSelect(item.id)}
+                        className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-0 cursor-pointer"
+                      />
+                    </td>
 
                       {/* Date */}
                       <td className="py-3 px-2.5 align-middle text-slate-600 text-xs font-semibold whitespace-nowrap">
                         {item.date?.split(" ")[0]}
                       </td>
 
-                      {/* Items */}
-                      <td className="py-3 px-3 align-middle">
-                        <div className="flex items-center gap-2.5">
-                          <ProductThumbnail name={item.itemName} />
-                          <div>
-                            <div className="flex items-center gap-1 font-semibold text-slate-800 hover:underline cursor-pointer">
-                              <span onClick={() => setQuickViewItem(item)}>{item.itemName}</span>
-                              <span
-                                onClick={() => setQuickViewItem(item)}
-                                className="text-blue-500 font-bold text-[10px] cursor-pointer"
-                                title="Product details"
-                              >
-                                ℹ
-                              </span>
-                            </div>
-                            <div className="text-[11px] text-slate-400 font-normal mt-0.5">
-                              {item.itemSubtitle}
-                            </div>
+                    {/* Items */}
+                    <td className="py-3 px-3 align-middle">
+                      <div className="flex items-center gap-2.5">
+                        <ProductThumbnail name={item.itemName} />
+                        <div>
+                          <div className="flex items-center gap-1 font-semibold text-slate-800 hover:underline cursor-pointer">
+                            <span onClick={() => setQuickViewItem(item)}>{item.itemName}</span>
+                            <span
+                              onClick={() => setQuickViewItem(item)}
+                              className="text-emerald-600 font-bold text-[10px] cursor-pointer"
+                              title="Product details"
+                            >
+                              ℹ
+                            </span>
                           </div>
+                          <div className="text-[11px] text-slate-400 font-normal mt-0.5">{item.itemSubtitle}</div>
                         </div>
-                      </td>
+                      </div>
+                    </td>
 
                       {/* Distributor */}
                       <td className="py-3 px-3 align-middle leading-tight">
@@ -1763,40 +1733,40 @@ export default function ShortbookPage() {
                         {item.source}
                       </td>
 
-                      {/* Req. By & Actions */}
-                      <td className="py-3 px-3 align-middle">
-                        <div className="flex items-center gap-2.5">
-                          <div className="relative cursor-pointer" title="Requested by user">
-                            <div className="h-6 w-6 rounded-full bg-blue-50 border border-blue-200 text-blue-600 flex items-center justify-center">
-                              <User className="h-3.5 w-3.5" />
-                            </div>
-                            {item.reqByBadge && (
-                              <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-amber-400 text-slate-900 font-extrabold text-[9px] flex items-center justify-center shadow-xs">
-                                {item.reqByBadge}
-                              </span>
-                            )}
+                    {/* Req. By & Actions */}
+                    <td className="py-3 px-3 align-middle">
+                      <div className="flex items-center gap-2.5">
+                        <div className="relative cursor-pointer" title="Requested by user">
+                          <div className="h-6 w-6 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-600 flex items-center justify-center">
+                            <User className="h-3.5 w-3.5" />
                           </div>
-
-                          <button
-                            onClick={() => handleReorderItem(item)}
-                            className="text-slate-400 hover:text-blue-600 transition-colors p-0.5"
-                            title="Re-order Item"
-                          >
-                            <RotateCw className="h-3.5 w-3.5" />
-                          </button>
-
-                          <button
-                            onClick={() => handleDeleteItem(item.id)}
-                            className="text-red-400 hover:text-red-600 transition-colors p-0.5"
-                            title="Delete Item"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          {item.reqByBadge && (
+                            <span className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-amber-400 text-slate-900 font-extrabold text-[9px] flex items-center justify-center shadow-xs">
+                              {item.reqByBadge}
+                            </span>
+                          )}
                         </div>
-                      </td>
-                    </tr>
-                  );
-                })}
+
+                        <button
+                          onClick={() => handleReorderItem(item)}
+                          className="text-slate-400 hover:text-emerald-600 transition-colors p-0.5 cursor-pointer"
+                          title="Re-order Item"
+                        >
+                          <RotateCw className="h-3.5 w-3.5" />
+                        </button>
+
+                        <button
+                          onClick={() => handleDeleteItem(item.id)}
+                          className="text-red-400 hover:text-red-600 transition-colors p-0.5 cursor-pointer"
+                          title="Delete Item"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
 
                 {sortedItems.length === 0 && (
                   <tr>
@@ -1815,7 +1785,7 @@ export default function ShortbookPage() {
       <div className="fixed bottom-4 right-4 z-40">
         <button
           onClick={() => toast.info("Shortbook Help & Support Desk")}
-          className="h-8 w-8 rounded-full bg-[#007A87] text-white flex items-center justify-center shadow-lg hover:scale-105 transition-transform"
+          className="h-8 w-8 rounded-full bg-emerald-700 text-white flex items-center justify-center shadow-lg hover:bg-emerald-800 hover:scale-105 transition-all cursor-pointer"
           title="Help Desk"
         >
           <HelpCircle className="h-4 w-4" />
@@ -1827,7 +1797,7 @@ export default function ShortbookPage() {
         <DialogContent className="max-w-lg bg-white">
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-blue-600" />
+              <Sparkles className="h-5 w-5 text-emerald-600" />
               Generate Automatic Purchase Orders
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-500">
@@ -1849,7 +1819,7 @@ export default function ShortbookPage() {
                 >
                   <div className="flex justify-between font-bold text-slate-800 mb-1">
                     <span>{distributor}</span>
-                    <span className="text-blue-600">{itemsList.length} Item(s)</span>
+                    <span className="text-emerald-700 font-bold">{itemsList.length} Item(s)</span>
                   </div>
                   <div className="text-[11px] text-slate-500">
                     Items: {itemsList.map((i) => i.itemName).join(", ")}
@@ -1864,7 +1834,7 @@ export default function ShortbookPage() {
               variant="outline"
               size="sm"
               onClick={() => setAutoPoDialogOpen(false)}
-              className="text-xs"
+              className="text-xs cursor-pointer"
             >
               Cancel
             </Button>
@@ -1872,7 +1842,7 @@ export default function ShortbookPage() {
               size="sm"
               onClick={handleGenerateAutoPO}
               disabled={Object.keys(autoPoGrouped).length === 0}
-              className="bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer"
             >
               Generate {Object.keys(autoPoGrouped).length} Purchase Order(s)
             </Button>
@@ -1886,7 +1856,7 @@ export default function ShortbookPage() {
           <DialogContent className="max-w-md bg-white">
             <DialogHeader>
               <DialogTitle className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <Pill className="h-5 w-5 text-blue-600" />
+                <Pill className="h-5 w-5 text-emerald-600" />
                 {quickViewItem.itemName}
               </DialogTitle>
               <DialogDescription className="text-xs text-slate-500">
@@ -1923,18 +1893,45 @@ export default function ShortbookPage() {
               </div>
               <div className="flex justify-between py-1 border-b border-slate-100">
                 <span className="text-slate-500">Order Quantity:</span>
-                <span className="font-bold text-blue-600">{quickViewItem.qty}</span>
+                <span className="font-bold text-emerald-700">{quickViewItem.qty}</span>
               </div>
             </div>
 
             <DialogFooter>
-              <Button size="sm" onClick={() => setQuickViewItem(null)} className="text-xs">
+              <Button size="sm" onClick={() => setQuickViewItem(null)} className="text-xs cursor-pointer">
                 Close
               </Button>
             </DialogFooter>
           </DialogContent>
         )}
       </Dialog>
+
+      {/* ── Floating Back to Top button (all screens) ── */}
+      <button
+        type="button"
+        onClick={(e) => {
+          // The page scrolls inside the AppLayout div, not window —
+          // walk up the DOM to find the first scrollable ancestor and scroll it.
+          let el = e.currentTarget?.parentElement;
+          while (el && el !== document.body) {
+            const overflow = window.getComputedStyle(el).overflowY;
+            if (overflow === "auto" || overflow === "scroll") {
+              el.scrollTo({ top: 0, behavior: "smooth" });
+              return;
+            }
+            el = el.parentElement;
+          }
+          // Fallback in case nothing was found
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        }}
+        aria-label="Back to top"
+        className="fixed bottom-6 right-4 z-50 flex items-center gap-1.5 bg-emerald-800 hover:bg-emerald-900 active:scale-95 text-white text-xs font-bold px-3.5 py-2 rounded-full shadow-lg transition-all cursor-pointer"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M5 15l7-7 7 7" />
+        </svg>
+        Back to Top
+      </button>
     </div>
   );
 }
