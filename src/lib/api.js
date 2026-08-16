@@ -1,38 +1,43 @@
 // Fetch wrapper for the pharmahub-server Express API (`/api/v1`).
+// Auth is session-cookie based: the server sets an httpOnly cookie and the
+// browser sends it automatically via `credentials: "include"`. No token is
+// ever stored in localStorage or touched by JS.
+//
 // Backend envelope: `{ success, message, data, meta }` on success and
-// `{ success: false, error: { message, details } }` on failure. The legacy
-// Vercel-style `{ data }` / `{ error }` envelope is still tolerated.
-const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:5000/api/v1";
-const SESSION_KEY = "PharmaHub_session_v2";
-
-export function getAuthToken() {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    return parsed?.token ?? null;
-  } catch {
-    return null;
-  }
-}
+// `{ success: false, error: { message, details } }` on failure.
+export const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:5000/api/v1";
 
 function withLimit(url) {
   if (url.includes("?") || /\/([0-9a-fA-F]{24})$/.test(url)) return url;
   return `${url}${url.includes("?") ? "&" : "?"}limit=100`;
 }
 
+const SESSION_KEY = "PharmaHub_session_v2";
+
+function getSessionToken() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed?.token || null;
+  } catch {
+    return null;
+  }
+}
+
 export async function apiRequest(path, options = {}) {
   const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
   const finalUrl = !options.method || options.method === "GET" ? withLimit(url) : url;
   const headers = { ...(options.headers ?? {}) };
-  const token = getAuthToken();
-  if (token) headers.Authorization = `Bearer ${token}`;
+  const token = getSessionToken();
+  if (token && !headers["Authorization"]) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
   if (options.body && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(finalUrl, { ...options, headers });
+  const res = await fetch(finalUrl, { ...options, headers, credentials: "include" });
   const text = await res.text();
   let json = null;
   try {

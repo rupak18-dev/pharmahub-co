@@ -77,8 +77,13 @@ export function AppRootErrorBoundary({ error }) {
           <button
             onClick={() => {
               try {
+                // Auth is cookie-based now; clear legacy localStorage sessions
+                // and any older version of the local mock database so a refresh
+                // starts clean.
                 localStorage.removeItem("PharmaHub_db_v2");
+                localStorage.removeItem("PharmaHub_db_v4");
                 localStorage.removeItem("PharmaHub_session_v1");
+                localStorage.removeItem("PharmaHub_session_v2");
               } catch {
                 // ignore
               }

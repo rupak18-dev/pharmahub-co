@@ -12,7 +12,9 @@ function apiMiddleware() {
     name: "api-handlers",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
+        // `/api/v1/*` is proxied to the pharmahub-server backend — skip here.
         if (!req.url || !req.url.startsWith("/api/")) return next();
+        if (req.url.startsWith("/api/v1")) return next();
         try {
           const url = new URL(req.url, "http://localhost");
           const parts = url.pathname.split("/").filter(Boolean); // ["api","batches","<id>"]
@@ -90,5 +92,24 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "src"),
     },
   },
-  server: { port: 5100, strictPort: true, host: true },
+  server: {
+    port: 5100,
+    strictPort: true,
+    host: true,
+    proxy: {
+      "/api/v1": {
+        target: "https://pharmahub-server.onrender.com",
+        changeOrigin: true,
+        secure: true,
+        configure(proxy) {
+          // The browser thinks the request is same-origin (it goes through the
+          // Vite proxy), so strip the Origin header — otherwise the backend's
+          // production CSRF/CORS guard sees a localhost origin and rejects it.
+          proxy.on("proxyReq", (proxyReq) => {
+            proxyReq.removeHeader("origin");
+          });
+        },
+      },
+    },
+  },
 });

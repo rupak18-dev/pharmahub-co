@@ -32,9 +32,9 @@ export default function AppLayout() {
     }
   }, [pathname]);
   useEffect(() => {
-    if (!loading && !user) {
-      navigate("/login");
-    }
+    if (loading) return;
+    if (!user) navigate("/login");
+    else if (!user.onboarded) navigate("/onboarding");
   }, [user, loading, navigate]);
   if (loading) {
     return <AppShellSkeleton pathname={pathname} />;
