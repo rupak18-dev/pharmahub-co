@@ -334,9 +334,11 @@ export default function MedicinesCatalogPage() {
         }
       }
       if (statusFilter !== "all") {
-        if (statusFilter === "active" && (!m.isActive || stockLevel <= minLevel)) return false;
-        if (statusFilter === "low" && (stockLevel > minLevel || stockLevel === 0)) return false;
-        if (statusFilter === "out" && stockLevel > 0) return false;
+        const isDraft = m.status === "draft" || (!m.genericName && !m.brandName && !m.categoryId && !m.manufacturerId);
+        if (statusFilter === "active" && (!m.isActive || stockLevel <= minLevel || isDraft)) return false;
+        if (statusFilter === "low" && (stockLevel > minLevel || stockLevel === 0 || isDraft)) return false;
+        if (statusFilter === "out" && (stockLevel > 0 || isDraft)) return false;
+        if (statusFilter === "draft" && !isDraft) return false;
       }
       if (!s) return true;
       return (
@@ -679,6 +681,15 @@ export default function MedicinesCatalogPage() {
                     <SelectItem value="price-desc">Price High-Low</SelectItem>
                   </SelectContent>
                 </Select>
+
+                <Button
+                  variant={statusFilter === "draft" ? "default" : "outline"}
+                  className={`h-9 px-3 text-xs rounded-md gap-2 ${statusFilter === "draft" ? "bg-[#007A87] text-white hover:bg-[#007A87]/90" : "bg-white text-slate-700 border-border/80"}`}
+                  onClick={() => setStatusFilter(statusFilter === "draft" ? "all" : "draft")}
+                >
+                  <Filter className={`w-3.5 h-3.5 ${statusFilter === "draft" ? "text-white" : "text-muted-foreground"}`} />
+                  {statusFilter === "draft" ? "Drafts Only" : "Draft Medicine"}
+                </Button>
               </div>
 
               {/* Right side actions */}
@@ -1802,7 +1813,7 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
             </Button>
             <Button
               type="submit"
-              className="flex-1 bg-[#2563EB] hover:bg-blue-700 text-white rounded-lg"
+              className="flex-1 bg-[#007A87] hover:bg-[#007A87]/90 text-white rounded-lg"
             >
               {editing ? "Save Changes" : "Register Medicine"}
             </Button>
