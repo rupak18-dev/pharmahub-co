@@ -61,7 +61,7 @@ const ACTION_GROUPS = [
     ],
   },
   {
-    groupName: "Management & Authoring",
+    groupName: "Management",
     description: "Create new records and modify existing data",
     actions: [
       {
@@ -77,7 +77,7 @@ const ACTION_GROUPS = [
     ],
   },
   {
-    groupName: "Advanced & Operations",
+    groupName: "Advanced Actions",
     description: "Critical actions, data export, and elevated approvals",
     actions: [
       {
@@ -247,15 +247,15 @@ export function AccessPolicyBuilder({
                     key={mod.key}
                     type="button"
                     onClick={() => setActiveModuleKey(mod.key)}
-                    className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-xs font-medium transition-all text-left ${
+                    className={`w-full flex items-center justify-between rounded-lg border-l-2 px-3 py-2 text-xs font-medium transition-all text-left ${
                       isSelected
-                        ? "bg-primary text-primary-foreground shadow-sm"
-                        : "text-foreground hover:bg-muted/60"
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-transparent text-foreground hover:bg-muted/60"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <Icon
-                        className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary-foreground" : "text-primary"}`}
+                        className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
                       />
                       <span className="truncate">{mod.label}</span>
                     </div>
@@ -265,8 +265,8 @@ export function AccessPolicyBuilder({
                         <span
                           className={`rounded-full px-2 py-0.5 text-[10px] font-mono font-semibold ${
                             isSelected
-                              ? "bg-primary-foreground/20 text-primary-foreground"
-                              : "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                              ? "bg-primary/10 text-primary"
+                              : "bg-muted text-muted-foreground"
                           }`}
                         >
                           {activeCount}/6
@@ -275,7 +275,7 @@ export function AccessPolicyBuilder({
                         <span
                           className={`rounded-full px-1.5 py-0.5 text-[10px] font-mono ${
                             isSelected
-                              ? "bg-primary-foreground/10 text-primary-foreground/70"
+                              ? "bg-primary/10 text-primary/70"
                               : "bg-muted text-muted-foreground"
                           }`}
                         >
@@ -322,7 +322,7 @@ export function AccessPolicyBuilder({
                   className="h-7 text-[11px] gap-1 px-2"
                   onClick={enableAllForModule}
                 >
-                  <Zap className="h-3 w-3 text-amber-500" /> Full Access
+                  <Zap className="h-3 w-3 text-emerald-600 dark:text-emerald-400" /> Full Access
                 </Button>
                 <Button
                   variant="ghost"
@@ -357,33 +357,20 @@ export function AccessPolicyBuilder({
                         type="button"
                         disabled={isOwner}
                         onClick={() => togglePermission(act.key)}
-                        className={`group relative inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-all ${
+                        title={act.description}
+                        aria-pressed={isEnabled}
+                        className={`inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs font-medium transition-all ${
                           isEnabled
-                            ? "border-primary bg-primary text-primary-foreground shadow-xs"
-                            : "border-border bg-background text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-                        } ${isOwner ? "cursor-not-allowed opacity-90" : "cursor-pointer"}`}
+                            ? "border-primary/40 bg-primary/5 text-foreground"
+                            : "border-border bg-background text-muted-foreground hover:bg-muted/50 hover:text-foreground"
+                        } ${isOwner ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}
                       >
-                        <div
-                          className={`flex h-4 w-4 items-center justify-center rounded-full ${
-                            isEnabled
-                              ? "bg-primary-foreground/20 text-primary-foreground"
-                              : "border border-muted-foreground/40 bg-muted/50"
-                          }`}
-                        >
-                          {isEnabled ? (
-                            <Check className="h-3 w-3" />
-                          ) : (
-                            <span className="h-1.5 w-1.5 rounded-full bg-transparent" />
-                          )}
-                        </div>
-                        <div className="flex flex-col text-left">
-                          <span className="font-semibold">{act.label}</span>
-                          <span
-                            className={`text-[10px] ${isEnabled ? "text-primary-foreground/80" : "text-muted-foreground"}`}
-                          >
-                            {act.key}
-                          </span>
-                        </div>
+                        {isEnabled ? (
+                          <Check className="h-3.5 w-3.5 text-primary" />
+                        ) : (
+                          <span className="h-1.5 w-1.5 rounded-full border border-muted-foreground/40" />
+                        )}
+                        {act.label}
                       </button>
                     );
                   })}
