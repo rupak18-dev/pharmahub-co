@@ -1,11 +1,19 @@
 import { useState, useMemo } from "react";
 import {
   ArrowUpDown,
+<<<<<<< Updated upstream
+=======
+  Ban,
+>>>>>>> Stashed changes
   Building2,
   CalendarDays,
   Eye,
   Filter,
   LayoutGrid,
+<<<<<<< Updated upstream
+=======
+  Link,
+>>>>>>> Stashed changes
   List,
   Mail,
   MoreVertical,
@@ -17,18 +25,33 @@ import {
   Search,
   Shield,
   ShieldCheck,
+<<<<<<< Updated upstream
+=======
+  Trash2,
+>>>>>>> Stashed changes
   UserCog,
   UserCheck,
   UserPlus,
   UserX,
   Users,
+<<<<<<< Updated upstream
+=======
+  AlertTriangle,
+>>>>>>> Stashed changes
 } from "lucide-react";
 import { toast } from "sonner";
-import { useDb } from "@/hooks/useDb";
-import { db } from "@/lib/db";
+import dayjs from "dayjs";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useAuth } from "@/lib/auth";
+import { db } from "@/lib/db";
+import { invitationService } from "@/lib/invitationService";
+import { usersService } from "@/lib/usersService";
 import { usePermission } from "@/hooks/usePermission";
+<<<<<<< Updated upstream
 import { ALL_ROLES } from "@/lib/permissions";
+=======
+import { ALL_ROLES, buildPermissionOverrides } from "@/lib/permissions";
+>>>>>>> Stashed changes
 import { PageHeader } from "@/Components/shared/PageHeader";
 import { EmptyState } from "@/Components/shared/EmptyState";
 import { Button } from "@/Components/ui/button";
@@ -48,16 +71,34 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
+<<<<<<< Updated upstream
+=======
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+  AlertDialogTitle,
+  AlertDialogDescription,
+  AlertDialogAction,
+  AlertDialogCancel,
+} from "@/Components/ui/alert-dialog";
+>>>>>>> Stashed changes
 import { StaffAccessPanel } from "./components/StaffAccessPanel";
 import { RolesPanel } from "./components/RolesPanel";
 import { StaffStatusBadge, resolveStatus } from "./components/StaffStatusBadge";
 import { ChangeRoleDialog } from "./components/ChangeRoleDialog";
 import { StaffProfileDialog } from "./components/StaffProfileDialog";
+<<<<<<< Updated upstream
 import { EditStaffDialog } from "./components/EditStaffDialog";
 import { openInviteStaff, InviteStaffDrawer } from "@/Components/shared/InviteStaffDrawer";
 export const handle = { title: "Users & Roles · PharmaHub" };
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 // Role label is displayed as plain text — no pill
+=======
+import { openInviteStaff, InviteStaffDrawer } from "@/Components/shared/InviteStaffDrawer";
+export const handle = { title: "Users & Roles · PharmaHub" };
+>>>>>>> Stashed changes
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function getInitials(name) {
   return name
@@ -68,11 +109,9 @@ function getInitials(name) {
     .slice(0, 2);
 }
 function formatDate(iso) {
-  return new Date(iso).toLocaleDateString("en-IN", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  if (!iso) return "—";
+  const d = dayjs(iso);
+  return d.isValid() ? d.format("DD MMM YYYY") : "—";
 }
 // ─── Main Page ─────────────────────────────────────────────────────────────────
 export default function UsersPage() {
@@ -148,15 +187,19 @@ export default function UsersPage() {
 }
 // ─── TAB 1: USERS ─────────────────────────────────────────────────────────────
 function UsersTab() {
-  const profiles = useDb((d) => d.profiles);
   const { user } = useAuth();
   const has = usePermission();
   const canUpdate = has("users", "update");
+<<<<<<< Updated upstream
+=======
+  const canDelete = has("users", "delete");
+>>>>>>> Stashed changes
   const [search, setSearch] = useState("");
   const [filterRole, setFilterRole] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [sortBy, setSortBy] = useState("name");
   const [profileView, setProfileView] = useState(null);
+<<<<<<< Updated upstream
   const [profileEdit, setProfileEdit] = useState(null);
   const [roleChange, setRoleChange] = useState(null);
   const [viewMode, setViewMode] = useState("list");
@@ -191,28 +234,189 @@ function UsersTab() {
       }
     });
     toast.success("Role and access updated.");
+=======
+  const [roleChange, setRoleChange] = useState(null);
+  const [removeTarget, setRemoveTarget] = useState(null);
+  const [removing, setRemoving] = useState(false);
+  const [viewMode, setViewMode] = useState("list");
+
+  // Backend is the single source of truth for team members and invitations;
+  // the local profile collection is ONLY a fallback when the API is unreachable.
+  const { members, loadingRemote, offline, loadError, loadRemote } = useTeamMembers();
+
+  const errMsg = (e) =>
+    e instanceof Error ? e.message : "Something went wrong. Please try again.";
+
+  const syncStatus = async (p, status, active, message) => {
+    if (user?.id === p.id) {
+      toast.error("You can't change your own status.");
+      return;
+    }
+    if (offline) {
+      toast.info("You're offline — status changes can't be saved until you reconnect.");
+      return;
+    }
+    try {
+      await usersService.setStatus(p.id, status);
+      toast.success(message);
+      loadRemote();
+    } catch (e) {
+      toast.error(errMsg(e));
+    }
+  };
+
+  const suspendStaff = (p) => syncStatus(p, "suspended", false, `${p.name} has been suspended.`);
+  const activateStaff = (p) => syncStatus(p, "active", true, `${p.name} has been activated.`);
+  const markInactive = (p) =>
+    syncStatus(p, "inactive", false, `${p.name} has been marked inactive.`);
+
+  const resendInvite = async (p) => {
+    if (!p.invitationId) {
+      toast.error("This invitation wasn't created on the server.");
+      return;
+    }
+    if (offline) {
+      toast.info("Offline — can't resend invitations right now.");
+      return;
+    }
+    try {
+      await invitationService.resend(p.invitationId);
+      toast.success(`Invitation resent to ${p.email}.`);
+      loadRemote();
+    } catch (e) {
+      toast.error(errMsg(e));
+    }
+  };
+
+  const cancelInvite = async (p) => {
+    if (!p.invitationId) {
+      toast.error("This invitation wasn't created on the server.");
+      return;
+    }
+    if (offline) {
+      toast.info("Offline — can't cancel invitations right now.");
+      return;
+    }
+    try {
+      await invitationService.cancel(p.invitationId);
+      toast.success(`Invitation cancelled for ${p.email}.`);
+      loadRemote();
+    } catch (e) {
+      toast.error(errMsg(e));
+    }
+  };
+
+  const copyInviteLink = async (p) => {
+    if (!p.invitationId) {
+      toast.error("This invitation wasn't created on the server.");
+      return;
+    }
+    if (offline) {
+      toast.info("Offline — can't retrieve invitation link right now.");
+      return;
+    }
+    try {
+      const data = await invitationService.getLink(p.invitationId);
+      if (data?.link) {
+        await navigator.clipboard.writeText(data.link);
+        toast.success("Invitation link copied to clipboard!");
+      }
+    } catch (e) {
+      toast.error(errMsg(e));
+    }
+  };
+
+  const changeRole = async (id, payload) => {
+    const p = members.find((m) => m.id === id);
+    if (!p) return false;
+    if (p.invitationId) {
+      toast.error("Pending invitations can't be role-changed. Cancel and re-invite instead.");
+      return false;
+    }
+    if (offline) {
+      toast.info("You're offline — role changes can't be saved until you reconnect.");
+      return false;
+    }
+    try {
+      // Access (module whitelist + capability toggles) is mapped to per-user
+      // permission overrides and persisted with the role in one PATCH. The
+      // explicit access-module whitelist and department/designation are stored
+      // verbatim so the configuration survives refresh and actually gates the
+      // user.
+      await usersService.update(id, {
+        role: payload.role,
+        name: payload.name,
+        email: payload.email,
+        accessIds: payload.accessIds ?? [],
+        permissions: buildPermissionOverrides(payload),
+        featureAccess: payload.features ?? {},
+      });
+      toast.success("Role and access updated.");
+      loadRemote();
+      return true;
+    } catch (e) {
+      toast.error(e?.message || "Failed to update staff access. Please try again.");
+      return false;
+    }
+  };
+
+  const confirmRemove = async () => {
+    const target = removeTarget;
+    if (!target) return;
+    if (user?.id === target.id) {
+      toast.error("You can't remove your own account.");
+      return;
+    }
+    if (offline) {
+      toast.info("Offline — can't remove users right now.");
+      return;
+    }
+    if (removing) return;
+    setRemoving(true);
+    try {
+      await usersService.remove(target.id);
+      db.set((d) => {
+        d.profiles = d.profiles.filter((p) => p.id !== target.id && p.email !== target.email);
+      });
+      toast.success("Staff member removed successfully.");
+      setRemoveTarget(null);
+      loadRemote();
+    } catch (e) {
+      // Surface the backend's structured error (e.g. 403 owner protection,
+      // 404 staff not found) when available; never expose stack traces.
+      const message =
+        e && e.status
+          ? e.message || "Failed to remove staff member. Please try again."
+          : "Failed to remove staff member. Please try again.";
+      toast.error(message);
+    } finally {
+      setRemoving(false);
+    }
+>>>>>>> Stashed changes
   };
 
   const filtered = useMemo(() => {
-    let list = [...profiles];
+    let list = [...members];
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(
         (p) =>
-          p.name.toLowerCase().includes(q) ||
-          p.email.toLowerCase().includes(q) ||
-          p.role.toLowerCase().includes(q),
+          (p.name || "").toLowerCase().includes(q) ||
+          (p.email || "").toLowerCase().includes(q) ||
+          (p.role || "").toLowerCase().includes(q),
       );
     }
     if (filterRole !== "all") list = list.filter((p) => p.role === filterRole);
     if (filterStatus !== "all") list = list.filter((p) => resolveStatus(p) === filterStatus);
     list.sort((a, b) => {
-      if (sortBy === "name") return a.name.localeCompare(b.name);
-      if (sortBy === "role") return a.role.localeCompare(b.role);
-      if (sortBy === "date") return b.createdAt.localeCompare(a.createdAt);
+      if (sortBy === "name") return (a.name || "").localeCompare(b.name || "");
+      if (sortBy === "role") return (a.role || "").localeCompare(b.role || "");
+      if (sortBy === "date")
+        return String(b.createdAt || "").localeCompare(String(a.createdAt || ""));
       return 0;
     });
     return list;
+<<<<<<< Updated upstream
   }, [profiles, search, filterRole, filterStatus, sortBy]);
 
   const totalActive = profiles.filter((p) => resolveStatus(p) === "active").length;
@@ -221,11 +425,26 @@ function UsersTab() {
     (p) => resolveStatus(p) === "inactive" || resolveStatus(p) === "suspended",
   ).length;
   const rolesInUse = new Set(profiles.map((p) => p.role)).size;
+=======
+  }, [members, search, filterRole, filterStatus, sortBy]);
+
+  const teamRows = members.filter((p) => !p.invitationId);
+  const totalActive = teamRows.filter((p) => resolveStatus(p) === "active").length;
+  const totalPending = members.filter((p) => resolveStatus(p) === "pending").length;
+  const totalDisabled = teamRows.filter(
+    (p) => resolveStatus(p) === "inactive" || resolveStatus(p) === "suspended",
+  ).length;
+  const rolesInUse = new Set(teamRows.map((p) => p.role)).size;
+>>>>>>> Stashed changes
 
   const metrics = [
     {
       label: "Total Staff",
+<<<<<<< Updated upstream
       value: profiles.length,
+=======
+      value: teamRows.length,
+>>>>>>> Stashed changes
       sub: totalPending > 0 ? `${totalPending} pending` : "All staff",
       icon: Users,
       iconBg: "bg-blue-50",
@@ -262,6 +481,11 @@ function UsersTab() {
     { value: "pending", label: "Pending Invitation" },
     { value: "suspended", label: "Suspended" },
     { value: "inactive", label: "Inactive" },
+<<<<<<< Updated upstream
+=======
+    { value: "expired", label: "Expired" },
+    { value: "cancelled", label: "Cancelled" },
+>>>>>>> Stashed changes
   ];
 
   return (
@@ -288,6 +512,37 @@ function UsersTab() {
           </div>
         ))}
       </div>
+
+      {/* Offline notice */}
+      {offline && (
+        <div className="flex items-start gap-2.5 rounded-xl border border-amber-300/70 bg-amber-50 px-4 py-3 text-xs text-amber-800">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold">Offline mode</p>
+            <p className="mt-0.5 text-amber-700">
+              The server isn't reachable — showing locally mirrored data. Invitations, cancellations
+              and status changes can't be saved until you reconnect.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Server error state */}
+      {loadError && (
+        <div className="flex items-start justify-between gap-3 rounded-xl border border-destructive/30 bg-destructive/5 px-4 py-3 text-xs text-destructive">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Couldn't load team data</p>
+              <p className="mt-0.5 text-destructive/80">{loadError}</p>
+            </div>
+          </div>
+          <Button size="sm" variant="outline" className="h-7 shrink-0 text-xs" onClick={loadRemote}>
+            <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+            Retry
+          </Button>
+        </div>
+      )}
 
       {/* Toolbar */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -374,6 +629,16 @@ function UsersTab() {
         </div>
       </div>
 
+<<<<<<< Updated upstream
+=======
+      {/* Loading state */}
+      {loadingRemote && members.length === 0 && !offline && (
+        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground shadow-sm">
+          Loading team…
+        </div>
+      )}
+
+>>>>>>> Stashed changes
       {/* Staff View: Table or Grid */}
       {viewMode === "grid" ? (
         filtered.length === 0 ? (
@@ -381,35 +646,63 @@ function UsersTab() {
             No staff match your filters.
           </div>
         ) : (
+<<<<<<< Updated upstream
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+=======
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+>>>>>>> Stashed changes
             {filtered.map((p) => {
               const status = resolveStatus(p);
               const isSelf = user?.id === p.id;
               const isOwner = p.role === "Owner";
+<<<<<<< Updated upstream
               const canChangeRole = canUpdate && (isSelf ? user?.role === "Owner" : !isOwner);
               const canManageStatus = canUpdate && !isSelf;
               return (
                 <div
                   key={p.id}
                   className="group relative flex flex-col justify-between rounded-xl border border-border/80 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-primary/40"
+=======
+              const isProtectedOwner = isOwner || p.email === "demo@pharmahub.local";
+              const canEditRow = canUpdate && !p.invitationId && !isSelf;
+              const canChangeRole = canUpdate && !p.invitationId && !isSelf && !isOwner;
+              const canManageStatus = canUpdate && !isSelf && !p.invitationId;
+              const canRemove = canDelete && !isSelf && !isProtectedOwner && p.status !== "removed";
+              return (
+                <div
+                  key={p.id}
+                  className="group relative flex min-w-0 flex-col justify-between rounded-xl border border-border/80 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-primary/40"
+>>>>>>> Stashed changes
                 >
                   <div className="space-y-4">
                     {/* Header: Avatar + Info + Actions */}
                     <div className="flex items-start justify-between gap-3">
+<<<<<<< Updated upstream
                       <div className="flex items-center gap-3">
+=======
+                      <div className="flex min-w-0 items-center gap-3">
+>>>>>>> Stashed changes
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-sm font-bold text-primary shadow-2xs">
                           {getInitials(p.name)}
                         </div>
                         <div className="min-w-0">
+<<<<<<< Updated upstream
                           <h3 className="font-bold text-sm text-foreground truncate flex items-center gap-1.5">
                             {p.name}
                             {isSelf && (
                               <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+=======
+                          <h3 className="flex items-center gap-1.5 font-bold text-sm text-foreground">
+                            <span className="truncate min-w-0">{p.name}</span>
+                            {isSelf && (
+                              <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+>>>>>>> Stashed changes
                                 You
                               </span>
                             )}
                           </h3>
                           <p className="text-xs text-muted-foreground truncate mt-0.5">
+<<<<<<< Updated upstream
                             {p.designation || p.role}
                           </p>
                         </div>
@@ -528,6 +821,150 @@ function UsersTab() {
                       Role
                     </span>
                     <span className="text-xs font-medium text-foreground/80">
+=======
+                            {p.role}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex shrink-0 items-center gap-1">
+                        <StaffStatusBadge status={status} className="text-[10px]" />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 w-8 p-0 text-muted-foreground hover:bg-muted rounded-lg"
+                            >
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-52 rounded-xl">
+                            <DropdownMenuItem
+                              onClick={() => setProfileView(p)}
+                              className="cursor-pointer"
+                            >
+                              <Eye className="mr-2 h-4 w-4" />
+                              View Profile
+                            </DropdownMenuItem>
+                            {canChangeRole && (
+                              <DropdownMenuItem
+                                onClick={() => setRoleChange(p)}
+                                className="cursor-pointer"
+                              >
+                                <Shield className="mr-2 h-4 w-4" />
+                                Change Role
+                              </DropdownMenuItem>
+                            )}
+                            {status === "pending" && (
+                              <>
+                                <DropdownMenuSeparator />
+                                {canManageStatus && (
+                                  <DropdownMenuItem
+                                    onClick={() => copyInviteLink(p)}
+                                    className="cursor-pointer"
+                                  >
+                                    <Link className="mr-2 h-4 w-4" />
+                                    Copy Invitation Link
+                                  </DropdownMenuItem>
+                                )}
+                                {canManageStatus && (
+                                  <DropdownMenuItem
+                                    onClick={() => resendInvite(p)}
+                                    className="cursor-pointer"
+                                  >
+                                    <RefreshCw className="mr-2 h-4 w-4" />
+                                    Resend Invitation
+                                  </DropdownMenuItem>
+                                )}
+                                {canManageStatus && (
+                                  <DropdownMenuItem
+                                    className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                                    onClick={() => cancelInvite(p)}
+                                  >
+                                    <Ban className="mr-2 h-4 w-4" />
+                                    Cancel Invitation
+                                  </DropdownMenuItem>
+                                )}
+                              </>
+                            )}
+                            {status === "active" && canManageStatus && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => markInactive(p)}
+                                  className="cursor-pointer"
+                                >
+                                  <UserX className="mr-2 h-4 w-4" />
+                                  Mark Inactive
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                                  onClick={() => suspendStaff(p)}
+                                >
+                                  <Pause className="mr-2 h-4 w-4" />
+                                  Suspend Staff
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                            {(status === "suspended" || status === "inactive") &&
+                              canManageStatus && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50 cursor-pointer"
+                                    onClick={() => activateStaff(p)}
+                                  >
+                                    <Play className="mr-2 h-4 w-4" />
+                                    Activate Staff
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            {canRemove && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                                  onClick={() => setRemoveTarget(p)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Remove Staff
+                                </DropdownMenuItem>
+                              </>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </div>
+
+                    {/* Meta Details */}
+                    <div className="space-y-2 text-xs border-t border-border/60 pt-3">
+                      <div className="flex items-center gap-2 text-muted-foreground truncate">
+                        <Mail className="h-3.5 w-3.5 shrink-0 text-primary" />
+                        <span className="truncate">{p.email}</span>
+                      </div>
+                      {p.phone && (
+                        <div className="flex items-center gap-2 text-muted-foreground">
+                          <Phone className="h-3.5 w-3.5 shrink-0 text-primary" />
+                          <span>{p.phone}</span>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <CalendarDays className="h-3.5 w-3.5 shrink-0 text-primary" />
+                        <span>
+                          {p.invitationId ? "Invited" : "Joined"} {formatDate(p.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card Footer: Role Label */}
+                  <div className="mt-4 border-t border-border/50 pt-3 flex items-center justify-between gap-3">
+                    <span className="shrink-0 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Role
+                    </span>
+                    <span className="min-w-0 truncate text-right text-xs font-medium text-foreground/80">
+>>>>>>> Stashed changes
                       {p.role}
                     </span>
                   </div>
@@ -574,8 +1011,17 @@ function UsersTab() {
                   const status = resolveStatus(p);
                   const isSelf = user?.id === p.id;
                   const isOwner = p.role === "Owner";
+<<<<<<< Updated upstream
                   const canChangeRole = canUpdate && (isSelf ? user?.role === "Owner" : !isOwner);
                   const canManageStatus = canUpdate && !isSelf;
+=======
+                  const isProtectedOwner = isOwner || p.email === "demo@pharmahub.local";
+                  const canEditRow = canUpdate && !p.invitationId && !isSelf;
+                  const canChangeRole = canUpdate && !p.invitationId && !isSelf && !isOwner;
+                  const canManageStatus = canUpdate && !isSelf && !p.invitationId;
+                  const canRemove =
+                    canDelete && !isSelf && !isProtectedOwner && p.status !== "removed";
+>>>>>>> Stashed changes
                   return (
                     <tr key={p.id} className="group hover:bg-muted/20 transition-colors">
                       <td className="px-4 py-3">
@@ -592,17 +1038,24 @@ function UsersTab() {
                                 </span>
                               )}
                             </p>
+<<<<<<< Updated upstream
                             {p.designation && (
                               <p className="text-[11px] text-muted-foreground">{p.designation}</p>
                             )}
+=======
+>>>>>>> Stashed changes
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{p.email}</td>
                       <td className="px-4 py-3">
+<<<<<<< Updated upstream
                         <span className="text-xs font-medium text-foreground/80">
                           {p.role}
                         </span>
+=======
+                        <span className="text-xs font-medium text-foreground/80">{p.role}</span>
+>>>>>>> Stashed changes
                       </td>
                       <td className="px-4 py-3">
                         <StaffStatusBadge status={status} className="text-[11px]" />
@@ -626,12 +1079,15 @@ function UsersTab() {
                               <Eye className="mr-2 h-4 w-4" />
                               View Profile
                             </DropdownMenuItem>
+<<<<<<< Updated upstream
                             {canUpdate && (
                               <DropdownMenuItem onClick={() => setProfileEdit(p)}>
                                 <Pencil className="mr-2 h-4 w-4" />
                                 Edit Staff
                               </DropdownMenuItem>
                             )}
+=======
+>>>>>>> Stashed changes
                             {canChangeRole && (
                               <DropdownMenuItem onClick={() => setRoleChange(p)}>
                                 <Shield className="mr-2 h-4 w-4" />
@@ -642,6 +1098,15 @@ function UsersTab() {
                               <>
                                 <DropdownMenuSeparator />
                                 {canManageStatus && (
+<<<<<<< Updated upstream
+=======
+                                  <DropdownMenuItem onClick={() => copyInviteLink(p)}>
+                                    <Link className="mr-2 h-4 w-4" />
+                                    Copy Invitation Link
+                                  </DropdownMenuItem>
+                                )}
+                                {canManageStatus && (
+>>>>>>> Stashed changes
                                   <DropdownMenuItem onClick={() => resendInvite(p)}>
                                     <RefreshCw className="mr-2 h-4 w-4" />
                                     Resend Invitation
@@ -649,11 +1114,19 @@ function UsersTab() {
                                 )}
                                 {canManageStatus && (
                                   <DropdownMenuItem
+<<<<<<< Updated upstream
                                     className="text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50 dark:focus:bg-emerald-500/10"
                                     onClick={() => activateStaff(p)}
                                   >
                                     <Play className="mr-2 h-4 w-4" />
                                     Activate Staff
+=======
+                                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                    onClick={() => cancelInvite(p)}
+                                  >
+                                    <Ban className="mr-2 h-4 w-4" />
+                                    Cancel Invitation
+>>>>>>> Stashed changes
                                   </DropdownMenuItem>
                                 )}
                               </>
@@ -674,6 +1147,7 @@ function UsersTab() {
                                 </DropdownMenuItem>
                               </>
                             )}
+<<<<<<< Updated upstream
                             {(status === "suspended" || status === "inactive") && canManageStatus && (
                               <>
                                 <DropdownMenuSeparator />
@@ -683,6 +1157,30 @@ function UsersTab() {
                                 >
                                   <Play className="mr-2 h-4 w-4" />
                                   Activate Staff
+=======
+                            {(status === "suspended" || status === "inactive") &&
+                              canManageStatus && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem
+                                    className="text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50 dark:focus:bg-emerald-500/10"
+                                    onClick={() => activateStaff(p)}
+                                  >
+                                    <Play className="mr-2 h-4 w-4" />
+                                    Activate Staff
+                                  </DropdownMenuItem>
+                                </>
+                              )}
+                            {canRemove && (
+                              <>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                                  onClick={() => setRemoveTarget(p)}
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Remove Staff
+>>>>>>> Stashed changes
                                 </DropdownMenuItem>
                               </>
                             )}
@@ -697,7 +1195,11 @@ function UsersTab() {
           </table>
           {filtered.length > 0 && (
             <div className="border-t border-border bg-muted/20 px-4 py-2 text-xs text-muted-foreground">
+<<<<<<< Updated upstream
               Showing {filtered.length} of {profiles.length} staff
+=======
+              Showing {filtered.length} of {members.length} members
+>>>>>>> Stashed changes
             </div>
           )}
         </div>
@@ -709,17 +1211,44 @@ function UsersTab() {
         open={!!profileView}
         onOpenChange={() => setProfileView(null)}
       />
+<<<<<<< Updated upstream
       <EditStaffDialog
         profile={profileEdit}
         open={!!profileEdit}
         onOpenChange={() => setProfileEdit(null)}
       />
+=======
+>>>>>>> Stashed changes
       <ChangeRoleDialog
         open={!!roleChange}
         onOpenChange={() => setRoleChange(null)}
         profile={roleChange}
         onSave={(payload) => changeRole(roleChange.id, payload)}
       />
+<<<<<<< Updated upstream
+=======
+      <AlertDialog open={!!removeTarget} onOpenChange={(open) => !open && setRemoveTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove Staff Member?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to remove {removeTarget?.name || "this staff member"} from
+              PharmaHub? They will no longer have access to this organization's PharmaHub account.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setRemoveTarget(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmRemove}
+              disabled={removing}
+              className="bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/30"
+            >
+              {removing ? "Removing..." : "Remove Staff"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+>>>>>>> Stashed changes
     </div>
   );
 }

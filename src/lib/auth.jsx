@@ -152,6 +152,24 @@ export function AuthProvider({ children }) {
     await new Promise((r) => setTimeout(r, 400));
   }, []);
 
+  const demoLoginRequest = useCallback(async (email) => {
+    const data = await apiRequest("/auth/demo-login", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+    return data;
+  }, []);
+
+  const demoLoginVerify = useCallback(async (token) => {
+    const data = await apiRequest("/auth/demo-login/verify", {
+      method: "POST",
+      body: JSON.stringify({ token }),
+    });
+    writeSession({ token: data.token, user: data.user });
+    setUser(data.user);
+    return data.user;
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -165,6 +183,8 @@ export function AuthProvider({ children }) {
         restoreSession,
         completeGoogleOtp,
         requestPasswordReset,
+        demoLoginRequest,
+        demoLoginVerify,
       }}
     >
       {children}

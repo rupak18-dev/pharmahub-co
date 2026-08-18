@@ -5,11 +5,19 @@ import { Avatar, AvatarFallback } from "@/Components/ui/avatar";
 import { Button } from "@/Components/ui/button";
 import { Users, LayoutGrid, Sliders } from "lucide-react";
 import { useDb } from "@/hooks/useDb";
+<<<<<<< Updated upstream
+=======
+import { useTeamMembers } from "@/hooks/useTeamMembers";
+>>>>>>> Stashed changes
 import { categoryLabel } from "@/lib/roleCatalog";
 import { AccessPolicyBuilder } from "./AccessPolicyBuilder";
 import { AccessPreview } from "./AccessPreview";
 import { StaffStatusBadge, resolveStatus } from "./StaffStatusBadge";
+<<<<<<< Updated upstream
 import { format } from "date-fns";
+=======
+import dayjs from "dayjs";
+>>>>>>> Stashed changes
 
 function getInitials(name) {
   const parts = (name ?? "U").trim().split(" ");
@@ -18,6 +26,7 @@ function getInitials(name) {
 }
 
 function MetaItem({ label, value }) {
+<<<<<<< Updated upstream
   return (
     <div className="rounded-lg border border-border bg-muted/20 px-3 py-2">
       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -41,6 +50,33 @@ export function RoleDetailModal({ role, open, onClose }) {
   const rolePerms = permissions[role.name];
 
   return (
+=======
+  return (
+    <div className="rounded-lg border border-border bg-muted/20 px-3 py-2">
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-0.5 text-sm font-medium text-foreground">{value}</p>
+    </div>
+  );
+}
+
+export function RoleDetailModal({ role, open, onClose }) {
+  const permissions = useDb((d) => d.permissions);
+  // Assigned users come from the same persisted backend members list rendered
+  // by the Users and Staff Access tabs — never from the local database.
+  const { members } = useTeamMembers();
+  const [activeTab, setActiveTab] = useState("builder");
+  const assignedUsers = useMemo(
+    () => members.filter((p) => !p.invitationId && !p.isDemo && p.role === role?.name),
+    [members, role],
+  );
+  if (!role) return null;
+  const Icon = role.icon;
+  const rolePerms = permissions[role.name];
+
+  return (
+>>>>>>> Stashed changes
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
         <DialogHeader className="border-b border-border px-6 py-4">
@@ -139,8 +175,13 @@ export function RoleDetailModal({ role, open, onClose }) {
                           </div>
                           <div className="flex items-center gap-4 text-muted-foreground">
                             <span className="font-mono text-[11px]">
+<<<<<<< Updated upstream
                               {u.createdAt
                                 ? `Joined ${format(new Date(u.createdAt), "MMM d, yyyy")}`
+=======
+                              {u.createdAt && dayjs(u.createdAt).isValid()
+                                ? `Joined ${dayjs(u.createdAt).format("DD MMM YYYY")}`
+>>>>>>> Stashed changes
                                 : ""}
                             </span>
                             <StaffStatusBadge status={resolveStatus(u)} className="text-[11px]" />

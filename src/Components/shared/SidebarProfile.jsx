@@ -142,10 +142,10 @@ export function SidebarProfile() {
           </DropdownMenuSubContent>
         </DropdownMenuSub>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate("/users")}>
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
           <UserIcon className="mr-2 h-4 w-4" /> Profile
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => navigate("/admin")}>
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
           <Settings className="mr-2 h-4 w-4" /> Settings
         </DropdownMenuItem>
         <DropdownMenuSeparator />

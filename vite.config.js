@@ -113,9 +113,9 @@ export default defineConfig({
     host: true,
     proxy: {
       "/api/v1": {
-        target: "https://pharmahub-server.onrender.com",
+        target: "http://localhost:5050",
         changeOrigin: true,
-        secure: true,
+        secure: false,
         configure(proxy) {
           // The browser thinks the request is same-origin (it goes through the
           // Vite proxy), so strip the Origin header — otherwise the backend's
