@@ -9,9 +9,20 @@ import { Role } from "../models/Role.js";
 import { recordAudit } from "../services/audit.service.js";
 import { toPublicUser, issueToken, toAuthUser } from "../services/auth.service.js";
 import { sendEmail } from "../services/mailer.js";
-import { buildInvitationEmail, buildRoleChangeEmail, buildStaffRemovalEmail } from "../services/emailTemplates.js";
-import { saveProfileCompletion, computeProfileCompletion } from "../services/profileCompletion.service.js";
-import { sanitizePermissionOverrides, normalizePermissions, getEffectivePermissions } from "../services/permissions.service.js";
+import {
+  buildInvitationEmail,
+  buildRoleChangeEmail,
+  buildStaffRemovalEmail,
+} from "../services/emailTemplates.js";
+import {
+  saveProfileCompletion,
+  computeProfileCompletion,
+} from "../services/profileCompletion.service.js";
+import {
+  sanitizePermissionOverrides,
+  normalizePermissions,
+  getEffectivePermissions,
+} from "../services/permissions.service.js";
 import { deleteStoredFile } from "../middlewares/upload.js";
 import { env } from "../config/env.js";
 import { constants } from "../config/constants.js";
@@ -99,7 +110,12 @@ function hashToken(token) {
 function assertSameOrganization(invitation, caller) {
   if (caller.role === "Owner") return;
   if (String(invitation.invitedBy) === String(caller._id)) return;
-  if (invitation.orgName && caller.orgName && invitation.orgName.toLowerCase() === caller.orgName.toLowerCase()) return;
+  if (
+    invitation.orgName &&
+    caller.orgName &&
+    invitation.orgName.toLowerCase() === caller.orgName.toLowerCase()
+  )
+    return;
   if (!invitation.orgName || !caller.orgName) return;
   throw ApiError.forbidden("You can only manage invitations from your own organization");
 }
@@ -117,14 +133,19 @@ function assertSameOrgOrAllow(target, caller) {
 
 export const listUsers = asyncHandler(async (req, res) => {
   const { page, limit, skip } = buildPagination(req.query);
-  logger.info(`[users.list] GET /users — user=${req.user.email} org=${req.user.orgName ?? "(none)"}`);
+  logger.info(
+    `[users.list] GET /users — user=${req.user.email} org=${req.user.orgName ?? "(none)"}`,
+  );
 
   const filter = {};
   if (req.query.active !== undefined) filter.active = req.query.active === "true";
   if (req.query.role) filter.role = req.query.role;
   if (req.query.status) filter.status = req.query.status;
   if (req.user.orgName && req.user.role !== "Owner") {
-    filter.orgName = new RegExp(`^${req.user.orgName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i");
+    filter.orgName = new RegExp(
+      `^${req.user.orgName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`,
+      "i",
+    );
   }
   // Removed users are hidden from the default list; use ?includeRemoved=true
   // to audit removals explicitly.
@@ -197,7 +218,11 @@ export const updateMyProfile = asyncHandler(async (req, res) => {
     ip: req.ip,
   });
 
-  return ok(res, { user: toPublicUser(user.toObject()), profileCompletion: completion }, "Profile updated");
+  return ok(
+    res,
+    { user: toPublicUser(user.toObject()), profileCompletion: completion },
+    "Profile updated",
+  );
 });
 
 // PUT /users/me/avatar — multipart profile-image upload. The authenticated
@@ -226,7 +251,11 @@ export const updateAvatar = asyncHandler(async (req, res) => {
     ip: req.ip,
   });
 
-  return ok(res, { user: toPublicUser(user.toObject()), profileCompletion: completion }, "Profile image updated");
+  return ok(
+    res,
+    { user: toPublicUser(user.toObject()), profileCompletion: completion },
+    "Profile image updated",
+  );
 });
 
 // DELETE /users/me/avatar — removes the stored file and clears the reference
@@ -248,7 +277,11 @@ export const removeAvatar = asyncHandler(async (req, res) => {
     ip: req.ip,
   });
 
-  return ok(res, { user: toPublicUser(user.toObject()), profileCompletion: completion }, "Profile image removed");
+  return ok(
+    res,
+    { user: toPublicUser(user.toObject()), profileCompletion: completion },
+    "Profile image removed",
+  );
 });
 
 export const createUser = asyncHandler(async (req, res) => {
@@ -260,8 +293,20 @@ export const createUser = asyncHandler(async (req, res) => {
   if (existing) throw ApiError.conflict("A user with this email already exists");
   const passwordHash = await bcrypt.hash(req.body.password, 10);
   const roleId = await resolveRoleId(req.body.role);
-  const user = await User.create({ ...req.body, roleId, email: req.body.email.toLowerCase(), passwordHash });
-  recordAudit({ userId: req.user?._id, userName: req.user?.name, action: "User created", entityType: "user", entityId: user._id, ip: req.ip });
+  const user = await User.create({
+    ...req.body,
+    roleId,
+    email: req.body.email.toLowerCase(),
+    passwordHash,
+  });
+  recordAudit({
+    userId: req.user?._id,
+    userName: req.user?.name,
+    action: "User created",
+    entityType: "user",
+    entityId: user._id,
+    ip: req.ip,
+  });
   return created(res, toPublicUser(user.toObject()), "User created");
 });
 
@@ -271,13 +316,27 @@ export const updateUser = asyncHandler(async (req, res) => {
   assertSameOrgOrAllow(target, req.user);
 
   // Only allow safe fields to be updated via PATCH
-  const { name, role, active, phone, email, status, permissions, featureAccess, accessIds, department, designation } = req.body;
+  const {
+    name,
+    role,
+    active,
+    phone,
+    email,
+    status,
+    permissions,
+    featureAccess,
+    accessIds,
+    department,
+    designation,
+  } = req.body;
   const roleChanged = role !== undefined && role !== target.role;
 
   // Nobody may demote, suspend or otherwise change their own account through
   // this endpoint (profile edits go through /users/me/profile).
   if (String(target._id) === String(req.user?._id)) {
-    throw ApiError.badRequest("You cannot change your own account here — use your profile settings");
+    throw ApiError.badRequest(
+      "You cannot change your own account here — use your profile settings",
+    );
   }
 
   // Privilege-escalation guard: only an Owner may assign or remove the Owner role.
@@ -332,15 +391,22 @@ export const updateUser = asyncHandler(async (req, res) => {
     updatePayload.email = normalized;
   }
 
-  const user = await User.findByIdAndUpdate(req.params.id, updatePayload, { new: true, runValidators: true });
+  const user = await User.findByIdAndUpdate(req.params.id, updatePayload, {
+    new: true,
+    runValidators: true,
+  });
 
   // Change detection — an email is only sent when an actual relevant change
   // occurred. "Saved with no changes" must never fire a notification.
   const accessIdsChanged =
-    accessIds !== undefined && !sameStringArray(target.accessIds ?? [], updatePayload.accessIds ?? []);
+    accessIds !== undefined &&
+    !sameStringArray(target.accessIds ?? [], updatePayload.accessIds ?? []);
   const permissionChanged =
     permissions !== undefined &&
-    submittedDiffers(sanitizePermissionOverrides(permissions), normalizePermissions(target.permissions));
+    submittedDiffers(
+      sanitizePermissionOverrides(permissions),
+      normalizePermissions(target.permissions),
+    );
   const featureChanged =
     featureAccess !== undefined && submittedDiffers(featureAccess, target.featureAccess ?? {});
   const departmentChanged =
@@ -352,12 +418,25 @@ export const updateUser = asyncHandler(async (req, res) => {
   if (roleChanged) auditDetails.role = { from: target.role, to: role };
   if (permissionChanged) auditDetails.permissions = sanitizePermissionOverrides(permissions);
   if (featureChanged) auditDetails.featureAccess = featureAccess;
-  if (accessIdsChanged) auditDetails.accessIds = { from: target.accessIds ?? [], to: updatePayload.accessIds ?? [] };
-  if (departmentChanged) auditDetails.department = { from: target.department ?? null, to: updatePayload.department ?? null };
-  if (designationChanged) auditDetails.designation = { from: target.designation ?? null, to: updatePayload.designation ?? null };
+  if (accessIdsChanged)
+    auditDetails.accessIds = { from: target.accessIds ?? [], to: updatePayload.accessIds ?? [] };
+  if (departmentChanged)
+    auditDetails.department = {
+      from: target.department ?? null,
+      to: updatePayload.department ?? null,
+    };
+  if (designationChanged)
+    auditDetails.designation = {
+      from: target.designation ?? null,
+      to: updatePayload.designation ?? null,
+    };
 
   const accessChanged =
-    accessIdsChanged || permissionChanged || featureChanged || departmentChanged || designationChanged;
+    accessIdsChanged ||
+    permissionChanged ||
+    featureChanged ||
+    departmentChanged ||
+    designationChanged;
   const shouldNotify = roleChanged || accessChanged;
 
   if (status !== undefined && status !== (target.status ?? "active")) {
@@ -367,9 +446,25 @@ export const updateUser = asyncHandler(async (req, res) => {
         : status === "suspended"
           ? "User suspended"
           : "User marked inactive";
-    recordAudit({ userId: req.user?._id, userName: req.user?.name, action, entityType: "user", entityId: user._id, details: { ...auditDetails, from: target.status ?? "active", to: status }, ip: req.ip });
+    recordAudit({
+      userId: req.user?._id,
+      userName: req.user?.name,
+      action,
+      entityType: "user",
+      entityId: user._id,
+      details: { ...auditDetails, from: target.status ?? "active", to: status },
+      ip: req.ip,
+    });
   } else {
-    recordAudit({ userId: req.user?._id, userName: req.user?.name, action: "User updated", entityType: "user", entityId: user._id, details: auditDetails, ip: req.ip });
+    recordAudit({
+      userId: req.user?._id,
+      userName: req.user?.name,
+      action: "User updated",
+      entityType: "user",
+      entityId: user._id,
+      details: auditDetails,
+      ip: req.ip,
+    });
   }
 
   // The affected user must be notified whenever their role or access actually
@@ -399,19 +494,28 @@ export const updateUser = asyncHandler(async (req, res) => {
     try {
       logger.info(`[MAIL DEBUG] flow=ACCESS_UPDATE recipient=${user.email} mailServiceCalled=true`);
       const sendResult = await sendEmail({ to: user.email, subject, html, text });
-      logger.info(`[MAIL DEBUG] flow=ACCESS_UPDATE sendResult=${sendResult?.skipped ? "skipped" : "success"} recipient=${user.email} kind=${kind}`);
-      logger.info(`[users.update] role/access-change email — recipient=${user.email} skipped=${Boolean(sendResult?.skipped)} kind=${kind}`);
+      logger.info(
+        `[MAIL DEBUG] flow=ACCESS_UPDATE sendResult=${sendResult?.skipped ? "skipped" : "success"} recipient=${user.email} kind=${kind}`,
+      );
+      logger.info(
+        `[users.update] role/access-change email — recipient=${user.email} skipped=${Boolean(sendResult?.skipped)} kind=${kind}`,
+      );
       recordAudit({
         userId: req.user?._id,
         userName: req.user?.name,
-        action: sendResult?.skipped ? "Role change email skipped (SMTP not configured)" : "Role change email sent",
+        action: sendResult?.skipped
+          ? "Role change email skipped (SMTP not configured)"
+          : "Role change email sent",
         entityType: "user",
         entityId: user._id,
         details: { kind, subject },
         ip: req.ip,
       });
     } catch (err) {
-      logger.error(`[users.update] role-change email failed for ${user.email} — role change kept`, err);
+      logger.error(
+        `[users.update] role-change email failed for ${user.email} — role change kept`,
+        err,
+      );
       recordAudit({
         userId: req.user?._id,
         userName: req.user?.name,
@@ -437,12 +541,18 @@ async function notifyStaffRemoval({ to, name, orgName, entityType, entityId, act
     const { subject, html, text } = buildStaffRemovalEmail({ name, orgName });
     logger.info(`[MAIL DEBUG] flow=REMOVAL recipient=${to} mailServiceCalled=true`);
     const sendResult = await sendEmail({ to, subject, html, text });
-    logger.info(`[MAIL DEBUG] flow=REMOVAL sendResult=${sendResult?.skipped ? "skipped" : "success"} recipient=${to}`);
-    logger.info(`[users.remove] staff-removal email — to=${to} skipped=${Boolean(sendResult?.skipped)}`);
+    logger.info(
+      `[MAIL DEBUG] flow=REMOVAL sendResult=${sendResult?.skipped ? "skipped" : "success"} recipient=${to}`,
+    );
+    logger.info(
+      `[users.remove] staff-removal email — to=${to} skipped=${Boolean(sendResult?.skipped)}`,
+    );
     recordAudit({
       userId: actor?._id,
       userName: actor?.name,
-      action: sendResult?.skipped ? "Staff removal email skipped (SMTP not configured)" : "Staff removal email sent",
+      action: sendResult?.skipped
+        ? "Staff removal email skipped (SMTP not configured)"
+        : "Staff removal email sent",
       entityType,
       entityId: String(entityId),
       details: { subject },
@@ -531,7 +641,14 @@ export const deleteUser = asyncHandler(async (req, res) => {
     { status: "revoked", cancelledAt: new Date(), cancelledBy: req.user._id },
   );
 
-  recordAudit({ userId: req.user?._id, userName: req.user?.name, action: "User removed", entityType: "user", entityId: user._id, ip: req.ip });
+  recordAudit({
+    userId: req.user?._id,
+    userName: req.user?.name,
+    action: "User removed",
+    entityType: "user",
+    entityId: user._id,
+    ip: req.ip,
+  });
 
   await notifyStaffRemoval({
     to: user.email,
@@ -570,10 +687,7 @@ export const inviteUser = asyncHandler(async (req, res) => {
   }
 
   // Invalidate any prior pending invitations for this email
-  await Invitation.updateMany(
-    { email: normalizedEmail, status: "pending" },
-    { status: "expired" },
-  );
+  await Invitation.updateMany({ email: normalizedEmail, status: "pending" }, { status: "expired" });
 
   // Generate a cryptographically secure token — only its hash is stored.
   const rawToken = crypto.randomBytes(32).toString("hex");
@@ -615,8 +729,12 @@ export const inviteUser = asyncHandler(async (req, res) => {
   logger.info(`[MAIL DEBUG] flow=INVITATION recipient=${normalizedEmail} mailServiceCalled=true`);
   try {
     sendResult = await sendEmail({ to: normalizedEmail, subject, html, text });
-    logger.info(`[MAIL DEBUG] flow=INVITATION sendResult=${sendResult?.skipped ? "skipped" : "success"} recipient=${normalizedEmail}`);
-    logger.info(`[users.invite] Invitation email — recipient=${normalizedEmail} skipped=${Boolean(sendResult?.skipped)}`);
+    logger.info(
+      `[MAIL DEBUG] flow=INVITATION sendResult=${sendResult?.skipped ? "skipped" : "success"} recipient=${normalizedEmail}`,
+    );
+    logger.info(
+      `[users.invite] Invitation email — recipient=${normalizedEmail} skipped=${Boolean(sendResult?.skipped)}`,
+    );
   } catch (err) {
     logger.info(`[MAIL DEBUG] flow=INVITATION sendResult=failure recipient=${normalizedEmail}`);
     logger.error("[users.invite] email send failed — rolling back invitation", err);
@@ -631,7 +749,9 @@ export const inviteUser = asyncHandler(async (req, res) => {
       entityId: String(invitation._id),
       ip: req.ip,
     });
-    throw ApiError.badRequest("Invitation could not be emailed. Please check the email address and try again.");
+    throw ApiError.badRequest(
+      "Invitation could not be emailed. Please check the email address and try again.",
+    );
   }
 
   if (sendResult.skipped) {
@@ -645,17 +765,21 @@ export const inviteUser = asyncHandler(async (req, res) => {
       entityId: String(invitation._id),
       ip: req.ip,
     });
-    return created(res, {
-      id: String(invitation._id),
-      email: normalizedEmail,
-      role,
-      name,
-      phone,
-      expiresAt,
-      status: "pending",
-      link,
-      emailSkipped: true,
-    }, "Invitation created. Email delivery skipped — SMTP is not configured.");
+    return created(
+      res,
+      {
+        id: String(invitation._id),
+        email: normalizedEmail,
+        role,
+        name,
+        phone,
+        expiresAt,
+        status: "pending",
+        link,
+        emailSkipped: true,
+      },
+      "Invitation created. Email delivery skipped — SMTP is not configured.",
+    );
   }
 
   recordAudit({
@@ -668,16 +792,20 @@ export const inviteUser = asyncHandler(async (req, res) => {
   });
 
   // Return success without exposing the raw token
-  return created(res, {
-    id: String(invitation._id),
-    email: normalizedEmail,
-    role,
-    name,
-    phone,
-    expiresAt,
-    status: "pending",
-    link,
-  }, "Invitation sent");
+  return created(
+    res,
+    {
+      id: String(invitation._id),
+      email: normalizedEmail,
+      role,
+      name,
+      phone,
+      expiresAt,
+      status: "pending",
+      link,
+    },
+    "Invitation sent",
+  );
 });
 
 // GET /users/invite/:token — public, pre-auth validation for the accept page.
@@ -721,8 +849,10 @@ export const acceptInvitation = asyncHandler(async (req, res) => {
   if (invitation.status === "accepted" || invitation.status === "used") {
     throw ApiError.badRequest("This invitation has already been accepted");
   }
-  if (invitation.status === "cancelled") throw ApiError.badRequest("This invitation has been cancelled");
-  if (invitation.status === "revoked") throw ApiError.badRequest("This invitation has been revoked");
+  if (invitation.status === "cancelled")
+    throw ApiError.badRequest("This invitation has been cancelled");
+  if (invitation.status === "revoked")
+    throw ApiError.badRequest("This invitation has been revoked");
   if (invitation.status === "expired") throw ApiError.badRequest("This invitation has expired");
   if (invitation.expiresAt < new Date()) {
     await Invitation.updateOne({ _id: invitation._id }, { status: "expired" });
@@ -807,7 +937,9 @@ export const acceptInvitation = asyncHandler(async (req, res) => {
 // POST /users/invite/:id/resend — issues a fresh one-time token, replaces the
 // stored hash and expires the previous link (which can no longer be used).
 export const resendInvitation = asyncHandler(async (req, res) => {
-  logger.info(`[users.resend] POST /users/invite/${req.params.id}/resend — by=${req.user.email} org=${req.user.orgName ?? "(none)"}`);
+  logger.info(
+    `[users.resend] POST /users/invite/${req.params.id}/resend — by=${req.user.email} org=${req.user.orgName ?? "(none)"}`,
+  );
   const invitation = await Invitation.findById(req.params.id).select("+tokenHash");
   if (!invitation) throw ApiError.notFound("Invitation not found");
   if (invitation.status !== "pending") {
@@ -823,7 +955,11 @@ export const resendInvitation = asyncHandler(async (req, res) => {
     throw ApiError.conflict("A user with this email already exists");
   }
 
-  const previous = { tokenHash: invitation.tokenHash, expiresAt: invitation.expiresAt, status: invitation.status };
+  const previous = {
+    tokenHash: invitation.tokenHash,
+    expiresAt: invitation.expiresAt,
+    status: invitation.status,
+  };
 
   const rawToken = crypto.randomBytes(32).toString("hex");
   const tokenHash = hashToken(rawToken);
@@ -848,7 +984,9 @@ export const resendInvitation = asyncHandler(async (req, res) => {
   let sendResult;
   try {
     sendResult = await sendEmail({ to: invitation.email, subject, html, text });
-    logger.info(`[users.resend] Invitation email — recipient=${invitation.email} skipped=${Boolean(sendResult?.skipped)}`);
+    logger.info(
+      `[users.resend] Invitation email — recipient=${invitation.email} skipped=${Boolean(sendResult?.skipped)}`,
+    );
   } catch (err) {
     logger.error("[users.resend] email send failed — restoring previous token", err);
     // Restore the previous token so the old link still works if resend failed.
@@ -865,15 +1003,19 @@ export const resendInvitation = asyncHandler(async (req, res) => {
       entityId: String(invitation._id),
       ip: req.ip,
     });
-    return ok(res, {
-      id: String(invitation._id),
-      email: invitation.email,
-      role: invitation.role,
-      expiresAt,
-      status: "pending",
-      link,
-      emailSkipped: true,
-    }, "Invitation resent. Email delivery skipped — SMTP is not configured.");
+    return ok(
+      res,
+      {
+        id: String(invitation._id),
+        email: invitation.email,
+        role: invitation.role,
+        expiresAt,
+        status: "pending",
+        link,
+        emailSkipped: true,
+      },
+      "Invitation resent. Email delivery skipped — SMTP is not configured.",
+    );
   }
 
   recordAudit({
@@ -885,19 +1027,25 @@ export const resendInvitation = asyncHandler(async (req, res) => {
     ip: req.ip,
   });
 
-  return ok(res, {
-    id: String(invitation._id),
-    email: invitation.email,
-    role: invitation.role,
-    expiresAt,
-    status: "pending",
-    link,
-  }, "Invitation resent");
+  return ok(
+    res,
+    {
+      id: String(invitation._id),
+      email: invitation.email,
+      role: invitation.role,
+      expiresAt,
+      status: "pending",
+      link,
+    },
+    "Invitation resent",
+  );
 });
 
 // DELETE /users/invite/:id — cancels a pending invitation; its token stops working.
 export const cancelInvitation = asyncHandler(async (req, res) => {
-  logger.info(`[users.cancel] DELETE /users/invite/${req.params.id} — by=${req.user.email} org=${req.user.orgName ?? "(none)"}`);
+  logger.info(
+    `[users.cancel] DELETE /users/invite/${req.params.id} — by=${req.user.email} org=${req.user.orgName ?? "(none)"}`,
+  );
   const invitation = await Invitation.findById(req.params.id);
   if (!invitation) throw ApiError.notFound("Invitation not found");
   if (invitation.status !== "pending") {
@@ -927,7 +1075,9 @@ export const cancelInvitation = asyncHandler(async (req, res) => {
 // pending invitation. Generates a new token (replacing the old one) so the link
 // can be shared manually when email delivery fails or is skipped.
 export const getInvitationLink = asyncHandler(async (req, res) => {
-  logger.info(`[users.link] GET /users/invite/${req.params.id}/link — by=${req.user.email} org=${req.user.orgName ?? "(none)"}`);
+  logger.info(
+    `[users.link] GET /users/invite/${req.params.id}/link — by=${req.user.email} org=${req.user.orgName ?? "(none)"}`,
+  );
   const invitation = await Invitation.findById(req.params.id).select("+tokenHash");
   if (!invitation) throw ApiError.notFound("Invitation not found");
   if (invitation.status !== "pending") {
@@ -954,19 +1104,19 @@ export const listInvitations = asyncHandler(async (req, res) => {
   const filter = {
     status: { $nin: ["accepted", "used"] },
     ...(req.user.role === "Owner"
-      ? (orgNameRegex
-          ? {
-              $or: [
-                { orgName: orgNameRegex },
-                { orgName: { $in: ["", null] } },
-                { orgName: { $exists: false } },
-                { invitedBy: req.user._id },
-              ],
-            }
-          : {})
-      : (orgNameRegex
-          ? { $or: [{ orgName: orgNameRegex }, { invitedBy: req.user._id }] }
-          : { invitedBy: req.user._id })),
+      ? orgNameRegex
+        ? {
+            $or: [
+              { orgName: orgNameRegex },
+              { orgName: { $in: ["", null] } },
+              { orgName: { $exists: false } },
+              { invitedBy: req.user._id },
+            ],
+          }
+        : {}
+      : orgNameRegex
+        ? { $or: [{ orgName: orgNameRegex }, { invitedBy: req.user._id }] }
+        : { invitedBy: req.user._id }),
   };
 
   const invitations = await Invitation.find(filter).sort({ createdAt: -1 }).lean();
@@ -978,32 +1128,32 @@ export const listInvitations = asyncHandler(async (req, res) => {
     .filter((inv) => inv.status === "pending" && inv.expiresAt < now)
     .map((inv) => inv._id);
   if (lapsed.length > 0) {
-    await Invitation.updateMany(
-      { _id: { $in: lapsed }, status: "pending" },
-      { status: "expired" },
-    );
+    await Invitation.updateMany({ _id: { $in: lapsed }, status: "pending" }, { status: "expired" });
   }
 
-  return ok(res, invitations.map((inv) => {
-    const status = inv.status === "pending" && inv.expiresAt < now ? "expired" : inv.status;
-    return {
-      id: String(inv._id),
-      email: inv.email,
-      name: inv.name ?? "",
-      role: inv.role,
-      orgName: inv.orgName ?? "",
-      phone: inv.phone ?? null,
-      accessIds: inv.accessIds ?? [],
-      status,
-      expiresAt: inv.expiresAt,
-      acceptedAt: inv.acceptedAt ?? null,
-      acceptedBy: inv.acceptedBy ? String(inv.acceptedBy) : null,
-      cancelledAt: inv.cancelledAt ?? null,
-      createdAt: inv.createdAt,
-      resendable: status === "pending",
-      cancelable: status === "pending",
-      permissions: normalizePermissions(inv.permissions),
-      featureAccess: inv.featureAccess ?? {},
-    };
-  }));
+  return ok(
+    res,
+    invitations.map((inv) => {
+      const status = inv.status === "pending" && inv.expiresAt < now ? "expired" : inv.status;
+      return {
+        id: String(inv._id),
+        email: inv.email,
+        name: inv.name ?? "",
+        role: inv.role,
+        orgName: inv.orgName ?? "",
+        phone: inv.phone ?? null,
+        accessIds: inv.accessIds ?? [],
+        status,
+        expiresAt: inv.expiresAt,
+        acceptedAt: inv.acceptedAt ?? null,
+        acceptedBy: inv.acceptedBy ? String(inv.acceptedBy) : null,
+        cancelledAt: inv.cancelledAt ?? null,
+        createdAt: inv.createdAt,
+        resendable: status === "pending",
+        cancelable: status === "pending",
+        permissions: normalizePermissions(inv.permissions),
+        featureAccess: inv.featureAccess ?? {},
+      };
+    }),
+  );
 });

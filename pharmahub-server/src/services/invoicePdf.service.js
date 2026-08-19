@@ -32,7 +32,10 @@ function ascii(text) {
 function money(value) {
   const n = Number(value ?? 0);
   if (!Number.isFinite(n)) return `${CURRENCY_RS} 0.00`;
-  const formatted = n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const formatted = n.toLocaleString("en-IN", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
   return `${CURRENCY_RS} ${formatted}`;
 }
 
@@ -44,7 +47,15 @@ function formatDate(value) {
   return `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}`;
 }
 
-function buildContent({ orgName, invoiceNumber, invoiceDate, customerName, customerPhone, items = [], totals = {} }) {
+function buildContent({
+  orgName,
+  invoiceNumber,
+  invoiceDate,
+  customerName,
+  customerPhone,
+  items = [],
+  totals = {},
+}) {
   const S = [];
   let y = 800;
 
@@ -78,7 +89,9 @@ function buildContent({ orgName, invoiceNumber, invoiceDate, customerName, custo
     const amount = item.lineTotal ?? 0;
     const qtyFmt = Number.isInteger(qty) ? qty : qty.toFixed(2);
     const rateFmt = Number(rate).toFixed(2);
-    text(`${i + 1}. ${name}  ${qtyFmt} x ${rateFmt}  ${disc}%  ${gst}%  = ${money(amount)}`, { size: 9 });
+    text(`${i + 1}. ${name}  ${qtyFmt} x ${rateFmt}  ${disc}%  ${gst}%  = ${money(amount)}`, {
+      size: 9,
+    });
   }
 
   line(10);
@@ -89,7 +102,9 @@ function buildContent({ orgName, invoiceNumber, invoiceDate, customerName, custo
   text(`Grand Total: ${money(totals.grandTotal)}`, { font: "F2" });
 
   y = 60;
-  text(`Thank you for your purchase from ${String(orgName ?? "PharmaHub").toUpperCase()}.`, { size: 9 });
+  text(`Thank you for your purchase from ${String(orgName ?? "PharmaHub").toUpperCase()}.`, {
+    size: 9,
+  });
 
   return S.join("\n") + "\n";
 }

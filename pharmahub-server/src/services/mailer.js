@@ -88,10 +88,14 @@ export async function sendEmail({ to, subject, text, html, attachments } = {}) {
       html,
       attachments,
     });
-    logger.info(`[MAIL DEBUG] sendResult=success messageId=${info.messageId} recipient=${recipient}`);
+    logger.info(
+      `[MAIL DEBUG] sendResult=success messageId=${info.messageId} recipient=${recipient}`,
+    );
     return { skipped: false, messageId: info.messageId };
   } catch (err) {
-    logger.error(`[MAIL DEBUG] sendResult=failure recipient=${recipient} error=${err?.message ?? err}`);
+    logger.error(
+      `[MAIL DEBUG] sendResult=failure recipient=${recipient} error=${err?.message ?? err}`,
+    );
     throw err;
   }
 }

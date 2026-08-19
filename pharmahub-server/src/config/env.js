@@ -71,8 +71,7 @@ export function whatsAppConfig() {
     templateLang: process.env.WHATSAPP_BILL_TEMPLATE_LANG ?? "en",
     graphVersion: process.env.WHATSAPP_GRAPH_VERSION ?? "v21.0",
     publicUrl:
-      process.env.API_PUBLIC_URL ??
-      `http://localhost:${parseInt(process.env.PORT ?? "5050", 10)}`,
+      process.env.API_PUBLIC_URL ?? `http://localhost:${parseInt(process.env.PORT ?? "5050", 10)}`,
     currencySymbol: process.env.CURRENCY_SYMBOL ?? "₹",
   };
 }

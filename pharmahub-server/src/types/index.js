@@ -150,21 +150,21 @@ export const userSchemas = {
     orgName: z.string().trim().optional(),
     phone: phoneSchema,
   }),
-    update: z
-      .object({
-        name: z.string().trim().min(1).max(120).optional(),
-        role: z.string().trim().min(1).optional(),
-        active: z.boolean().optional(),
-        status: z.enum(["active", "suspended", "inactive"]).optional(),
-        phone: updatePhoneSchema,
-        email: emailSchema.optional(),
-        permissions: z.record(z.string(), z.record(z.string(), z.boolean())).optional(),
-        featureAccess: z.record(z.string(), z.boolean()).optional(),
-        accessIds: z.array(z.string().trim().min(1).max(80)).optional(),
-        department: z.string().trim().max(120).optional(),
-        designation: z.string().trim().max(120).optional(),
-      })
-      .refine((v) => Object.keys(v).length > 0, "At least one field is required"),
+  update: z
+    .object({
+      name: z.string().trim().min(1).max(120).optional(),
+      role: z.string().trim().min(1).optional(),
+      active: z.boolean().optional(),
+      status: z.enum(["active", "suspended", "inactive"]).optional(),
+      phone: updatePhoneSchema,
+      email: emailSchema.optional(),
+      permissions: z.record(z.string(), z.record(z.string(), z.boolean())).optional(),
+      featureAccess: z.record(z.string(), z.boolean()).optional(),
+      accessIds: z.array(z.string().trim().min(1).max(80)).optional(),
+      department: z.string().trim().max(120).optional(),
+      designation: z.string().trim().max(120).optional(),
+    })
+    .refine((v) => Object.keys(v).length > 0, "At least one field is required"),
   invite: z.object({
     name: z.string().trim().max(120).optional(),
     email: emailSchema,
@@ -321,7 +321,10 @@ export const inventorySchemas = {
   }),
   movement: z.object({
     movementType: z.string().trim().min(1),
-    quantityChange: z.coerce.number().int().refine((v) => v !== 0, "Cannot be zero"),
+    quantityChange: z.coerce
+      .number()
+      .int()
+      .refine((v) => v !== 0, "Cannot be zero"),
     batchId: objectId(),
     locationType: z.string().trim().optional(),
     rackCode: z.string().trim().optional(),

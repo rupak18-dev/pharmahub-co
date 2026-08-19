@@ -19,7 +19,10 @@ function hashToken(token) {
 
 export async function registerUser({ name, email, password, orgName }) {
   const normalizedEmail = email.toLowerCase();
-  const existing = await User.findOne({ email: normalizedEmail }).collation({ locale: "en", strength: 2 });
+  const existing = await User.findOne({ email: normalizedEmail }).collation({
+    locale: "en",
+    strength: 2,
+  });
   if (existing) throw ApiError.conflict("A user with this email already exists");
 
   const passwordHash = await bcrypt.hash(password, 10);
@@ -40,7 +43,10 @@ export async function loginUser({ email, password }) {
     .collation({ locale: "en", strength: 2 })
     .select("+passwordHash");
 
-  if (!user && (normalizedEmail.endsWith("@pharmahub.demo") || normalizedEmail === "demo@pharmahub.com")) {
+  if (
+    !user &&
+    (normalizedEmail.endsWith("@pharmahub.demo") || normalizedEmail === "demo@pharmahub.com")
+  ) {
     const passwordHash = await bcrypt.hash("password123", 10);
     const role = normalizedEmail.includes("owner")
       ? "Owner"
@@ -182,7 +188,14 @@ export async function requestPasswordReset(email, ip) {
   try {
     const result = await sendEmail({ to: normalizedEmail, subject, html, text });
     if (result.skipped) {
-      recordAudit({ userId: user._id, userName: user.name, action: "Password reset requested (email skipped — SMTP not configured)", entityType: "user", entityId: String(user._id), ip });
+      recordAudit({
+        userId: user._id,
+        userName: user.name,
+        action: "Password reset requested (email skipped — SMTP not configured)",
+        entityType: "user",
+        entityId: String(user._id),
+        ip,
+      });
       return { sent: true };
     }
   } catch {
@@ -190,7 +203,14 @@ export async function requestPasswordReset(email, ip) {
     return { sent: false };
   }
 
-  recordAudit({ userId: user._id, userName: user.name, action: "Password reset requested", entityType: "user", entityId: String(user._id), ip });
+  recordAudit({
+    userId: user._id,
+    userName: user.name,
+    action: "Password reset requested",
+    entityType: "user",
+    entityId: String(user._id),
+    ip,
+  });
   return { sent: true };
 }
 
@@ -214,7 +234,14 @@ export async function resetPassword({ token, newPassword }, ip) {
   resetToken.usedAt = new Date();
   await resetToken.save();
 
-  recordAudit({ userId: user._id, userName: user.name, action: "Password reset completed", entityType: "user", entityId: String(user._id), ip });
+  recordAudit({
+    userId: user._id,
+    userName: user.name,
+    action: "Password reset completed",
+    entityType: "user",
+    entityId: String(user._id),
+    ip,
+  });
 
   return { user: toPublicUser(user.toObject()) };
 }

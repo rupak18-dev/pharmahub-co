@@ -8,17 +8,22 @@ export const getReportCatalog = asyncHandler(async (_req, res) => {
 });
 
 export const getSalesReport = asyncHandler(async (req, res) => {
-
-  const data = await reportService.salesReport({
-    from: req.query.from,
-    to: req.query.to,
-    groupBy: req.query.groupBy ?? "day",
-  }, req.user?._id);
+  const data = await reportService.salesReport(
+    {
+      from: req.query.from,
+      to: req.query.to,
+      groupBy: req.query.groupBy ?? "day",
+    },
+    req.user?._id,
+  );
   return ok(res, data, "Sales report");
 });
 
 export const getPurchaseReport = asyncHandler(async (req, res) => {
-  const data = await reportService.purchaseReport({ from: req.query.from, to: req.query.to }, req.user?._id);
+  const data = await reportService.purchaseReport(
+    { from: req.query.from, to: req.query.to },
+    req.user?._id,
+  );
   return ok(res, data, "Purchase report");
 });
 

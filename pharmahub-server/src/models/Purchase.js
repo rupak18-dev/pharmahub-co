@@ -5,7 +5,12 @@ import { extractionSchema } from "./billExtraction.schema.js";
 
 // Document type of the source document. With no OCR provider the type is
 // chosen by the user during review; it drives nothing structurally here.
-export const PURCHASE_DOCUMENT_TYPES = ["purchase_invoice", "sales_invoice", "payment_receipt", "other"];
+export const PURCHASE_DOCUMENT_TYPES = [
+  "purchase_invoice",
+  "sales_invoice",
+  "payment_receipt",
+  "other",
+];
 export const PURCHASE_SOURCES = ["manual", "uploaded", "imported", "existing"];
 
 const purchaseItemSchema = new Schema(

@@ -2,7 +2,11 @@ import { Batch } from "../models/Batch.js";
 import { Sale } from "../models/Sale.js";
 import { Purchase } from "../models/Purchase.js";
 import { Medicine } from "../models/Medicine.js";
-import { ReportBill, REPORT_BILL_SALES_TYPES, REPORT_BILL_PURCHASE_TYPES } from "../models/ReportBill.js";
+import {
+  ReportBill,
+  REPORT_BILL_SALES_TYPES,
+  REPORT_BILL_PURCHASE_TYPES,
+} from "../models/ReportBill.js";
 
 import { AuditLog } from "../models/AuditLog.js";
 import { SavedReport } from "../models/SavedReport.js";
@@ -49,18 +53,28 @@ export async function salesReport({ from, to, groupBy = "day" }, userId = null) 
     if (fromDate) match.createdAt.$gte = startOfDay(fromDate);
     if (toDate) match.createdAt.$lte = endOfDay(toDate);
   }
-  const sales = await Sale.find({ ...match, status: "completed" }).sort({ createdAt: 1 }).lean();
+  const sales = await Sale.find({ ...match, status: "completed" })
+    .sort({ createdAt: 1 })
+    .lean();
 
   const buckets = new Map();
-  const keyOf = {
-    day: (d) => d.toISOString().slice(0, 10),
-    month: (d) => d.toISOString().slice(0, 7),
-    year: (d) => String(d.getUTCFullYear()),
-  }[groupBy] ?? ((d) => d.toISOString().slice(0, 10));
+  const keyOf =
+    {
+      day: (d) => d.toISOString().slice(0, 10),
+      month: (d) => d.toISOString().slice(0, 7),
+      year: (d) => String(d.getUTCFullYear()),
+    }[groupBy] ?? ((d) => d.toISOString().slice(0, 10));
 
   for (const s of sales) {
     const key = keyOf(new Date(s.createdAt));
-    const bucket = buckets.get(key) ?? { period: key, invoices: 0, units: 0, sales: 0, gst: 0, items: 0 };
+    const bucket = buckets.get(key) ?? {
+      period: key,
+      invoices: 0,
+      units: 0,
+      sales: 0,
+      gst: 0,
+      items: 0,
+    };
     bucket.invoices += 1;
     bucket.units += s.items.reduce((acc, i) => acc + (i.quantity || 0), 0);
     bucket.sales += s.grandTotal || 0;
@@ -93,7 +107,10 @@ export async function purchaseReport({ from, to }, userId = null) {
     if (fromDate) match.createdAt.$gte = startOfDay(fromDate);
     if (toDate) match.createdAt.$lte = endOfDay(toDate);
   }
-  const purchases = await Purchase.find(match).populate("supplierId", "name").sort({ createdAt: 1 }).lean();
+  const purchases = await Purchase.find(match)
+    .populate("supplierId", "name")
+    .sort({ createdAt: 1 })
+    .lean();
   return {
     summary: {
       totalSpend: purchases.reduce((s, x) => s + (x.grandTotal || 0), 0),
@@ -107,8 +124,13 @@ export async function purchaseReport({ from, to }, userId = null) {
 export async function expiryReport(days = 90) {
   const horizon = Number.isFinite(days) && days > 0 ? days : 90;
   const cutoff = new Date(Date.now() + horizon * 24 * 60 * 60 * 1000);
-  const expired = await Batch.find({ expiryDate: { $lt: new Date() } }).populate("medicineId", "name genericName brandName").lean();
-  const expiring = await Batch.find({ expiryDate: { $gte: new Date(), $lte: cutoff } }).populate("medicineId", "name genericName brandName").sort({ expiryDate: 1 }).lean();
+  const expired = await Batch.find({ expiryDate: { $lt: new Date() } })
+    .populate("medicineId", "name genericName brandName")
+    .lean();
+  const expiring = await Batch.find({ expiryDate: { $gte: new Date(), $lte: cutoff } })
+    .populate("medicineId", "name genericName brandName")
+    .sort({ expiryDate: 1 })
+    .lean();
   return {
     days: horizon,
     summary: {
@@ -166,7 +188,9 @@ async function loadSalesCosts(rawRecords) {
   }
   const map = new Map();
   if (ids.size === 0) return map;
-  const batches = await Batch.find({ _id: { $in: [...ids] } }).select("purchasePrice").lean();
+  const batches = await Batch.find({ _id: { $in: [...ids] } })
+    .select("purchasePrice")
+    .lean();
   for (const b of batches) map.set(String(b._id), Number(b.purchasePrice) || 0);
   return map;
 }
@@ -393,7 +417,10 @@ const MODULE_CONFIGS = {
     // purchase-type records join the purchases side (each bill once).
     load: async (match) => {
       const [sales, rbSales, purchases, rbPurchases] = await Promise.all([
-        Sale.find({ ...match, status: "completed" }).populate(SALES_POPULATE).sort({ createdAt: -1 }).lean(),
+        Sale.find({ ...match, status: "completed" })
+          .populate(SALES_POPULATE)
+          .sort({ createdAt: -1 })
+          .lean(),
         loadReportBills(match, "createdAt", REPORT_BILL_SALES_TYPES),
         Purchase.find({ ...match, status: "received" })
           .populate([{ path: "supplierId", select: "name gstNumber" }])
@@ -413,7 +440,12 @@ const MODULE_CONFIGS = {
       gstSlab: (r) => {
         const it = r.items?.[0];
         if (!it) return 0;
-        return it.gstRate || (Number(it.sgstRate) || 0) + (Number(it.cgstRate) || 0) || it.medicineId?.gstRate || 0;
+        return (
+          it.gstRate ||
+          (Number(it.sgstRate) || 0) + (Number(it.cgstRate) || 0) ||
+          it.medicineId?.gstRate ||
+          0
+        );
       },
       hsnCode: (r) => r.items?.[0]?.medicineId?.hsnCode || r.items?.[0]?.hsnCode || "N/A",
       customer: (r) => r.customerName || "N/A",
@@ -427,7 +459,8 @@ const MODULE_CONFIGS = {
       paymentMode: (r) => r.paymentMode || "Credit",
     },
     measures: {
-      taxableAmount: (r) => r.taxableAmount ?? (r.subtotal ?? 0) - (r.discountTotal ?? r.discount ?? 0),
+      taxableAmount: (r) =>
+        r.taxableAmount ?? (r.subtotal ?? 0) - (r.discountTotal ?? r.discount ?? 0),
       gstAmount: (r) => r.gstTotal ?? 0,
       totalSGST: (r) => r.totalSGST ?? round2((r.gstTotal ?? 0) / 2),
       totalCGST: (r) => r.totalCGST ?? round2((r.gstTotal ?? 0) / 2),
@@ -573,7 +606,7 @@ const MODULE_CONFIGS = {
       supplier: (r) => r.supplierId?.name || "Unknown",
     },
     measures: {
-      expiringQty: (r) => (r.status === "near_expiry" ? r.currentStock ?? 0 : 0),
+      expiringQty: (r) => (r.status === "near_expiry" ? (r.currentStock ?? 0) : 0),
       stockQty: (r) => r.currentStock ?? 0,
       stockValue: (r) => round2((r.currentStock ?? 0) * (r.purchasePrice ?? 0)),
     },
@@ -619,7 +652,15 @@ const MODULE_CONFIGS = {
   },
 };
 
-const ALLOWED_OPERATORS = new Set(["equals", "not_equals", "contains", "greater_than", "less_than", "between", "in"]);
+const ALLOWED_OPERATORS = new Set([
+  "equals",
+  "not_equals",
+  "contains",
+  "greater_than",
+  "less_than",
+  "between",
+  "in",
+]);
 const ALLOWED_AGGS = new Set(["SUM", "COUNT", "AVG", "MIN", "MAX"]);
 
 function applyFilters(record, filters) {
@@ -657,7 +698,9 @@ function applyFilters(record, filters) {
           break;
         }
         case "between": {
-          const [lo, hi] = String(f.value).split(",").map((v) => new Date(v.trim()));
+          const [lo, hi] = String(f.value)
+            .split(",")
+            .map((v) => new Date(v.trim()));
           if (!Number.isNaN(lo.getTime()) && ts < lo.getTime()) return false;
           // The upper bound is inclusive — a "10th–11th" range must include
           // the whole of the 11th, not just its start of day.
@@ -685,7 +728,10 @@ function applyFilters(record, filters) {
         if (!a.includes(b)) return false;
         break;
       case "in": {
-        const parts = String(f.value).split(",").map((v) => v.trim().toLowerCase()).filter(Boolean);
+        const parts = String(f.value)
+          .split(",")
+          .map((v) => v.trim().toLowerCase())
+          .filter(Boolean);
         if (parts.length > 0 && !parts.includes(a)) return false;
         break;
       }
@@ -696,7 +742,9 @@ function applyFilters(record, filters) {
         if (!isNumeric || !(num < Number(f.value))) return false;
         break;
       case "between": {
-        const [lo, hi] = String(f.value).split(",").map((v) => Number(v.trim()));
+        const [lo, hi] = String(f.value)
+          .split(",")
+          .map((v) => Number(v.trim()));
         if (!Number.isNaN(lo) && !(num >= lo)) return false;
         if (!Number.isNaN(hi) && !(num <= hi)) return false;
         break;
@@ -729,7 +777,15 @@ async function loadModuleData(config, match) {
 }
 
 export async function customReport(payload = {}, userId = null) {
-  const { module, selectedFields = [], groupBy = [], summarizeBy = [], filters = [], dateFrom, dateTo } = payload;
+  const {
+    module,
+    selectedFields = [],
+    groupBy = [],
+    summarizeBy = [],
+    filters = [],
+    dateFrom,
+    dateTo,
+  } = payload;
 
   const config = MODULE_CONFIGS[module];
   if (!config) throw ApiError.badRequest(`Unsupported report module: "${module}"`);
@@ -740,11 +796,12 @@ export async function customReport(payload = {}, userId = null) {
   // Every requested grouping field must exist in the module whitelist. Unlike
   // the single-primary-group behaviour, ALL selected fields are grouped on so
   // the returned rows match every column the UI renders.
-  const groupKeys = Array.isArray(groupBy) && groupBy.length
-    ? groupBy
-    : Array.isArray(selectedFields) && selectedFields.length
-      ? selectedFields
-      : [];
+  const groupKeys =
+    Array.isArray(groupBy) && groupBy.length
+      ? groupBy
+      : Array.isArray(selectedFields) && selectedFields.length
+        ? selectedFields
+        : [];
   for (const key of groupKeys) {
     if (typeof key !== "string" || !config.fields[key]) {
       throw ApiError.badRequest(`Unknown field "${String(key)}" for module "${module}"`);
@@ -753,7 +810,7 @@ export async function customReport(payload = {}, userId = null) {
 
   const measures = (Array.isArray(summarizeBy) ? summarizeBy : []).map((m) => {
     const fieldKey = typeof m === "string" ? m : m?.field;
-    const agg = (typeof m === "string" ? "SUM" : (m?.aggregation || "SUM")).toUpperCase();
+    const agg = (typeof m === "string" ? "SUM" : m?.aggregation || "SUM").toUpperCase();
     if (!fieldKey || !config.measures[fieldKey]) {
       throw ApiError.badRequest(`Unknown measure "${fieldKey}" for module "${module}"`);
     }
@@ -826,7 +883,8 @@ export async function customReport(payload = {}, userId = null) {
     const key = groupKeys.length
       ? groupKeys.map((k) => String(rec[k] ?? "N/A")).join("\u0001")
       : "Total";
-    if (!groups.has(key)) groups.set(key, { values: groupKeys.map((k) => rec[k] ?? "N/A"), recs: [] });
+    if (!groups.has(key))
+      groups.set(key, { values: groupKeys.map((k) => rec[k] ?? "N/A"), recs: [] });
     groups.get(key).recs.push(rec);
   }
 
@@ -933,16 +991,77 @@ const MEASURE_LABELS = {
 const DATE_FIELD_KEYS = new Set(["billDate", "purchaseDate", "expiryDate"]);
 
 const MODULE_META = {
-  sales: { name: "Sales & Returns", description: "Daily sales, revenue, discounts and GST with staff/customer breakdowns.", category: "Sales", dateField: "Bill Date", defaultDatePreset: "month" },
-  gst: { name: "GST Report", description: "Taxable value and GST across sales and purchase invoices, per slab, HSN code, supplier or customer.", category: "GST", dateField: "Bill Date", defaultDatePreset: "month" },
-  payments: { name: "Payments Report", description: "Amount collected per payment mode with invoice-level detail.", category: "Payments", dateField: "Bill Date", defaultDatePreset: "month" },
-  customers: { name: "Customer Report", description: "Customer purchase behaviour — spend, invoices and frequency.", category: "Customers", dateField: "Purchase Date", defaultDatePreset: "month" },
-  purchases: { name: "Purchase Report", description: "Procurement spend, quantities and GST per supplier or medicine.", category: "Purchases", dateField: "Purchase Date", defaultDatePreset: "month" },
-  suppliers: { name: "Supplier Report", description: "Supplier-wise purchase totals across the selected period.", category: "Purchases", dateField: "Purchase Date", defaultDatePreset: "month" },
-  inventory: { name: "Inventory Report", description: "Current stock quantity and valuation by medicine, batch or status.", category: "Inventory", dateField: "Batch Date", defaultDatePreset: "month" },
-  expiry: { name: "Expiry Report", description: "Batches expiring within the window with quantity and value at risk.", category: "Inventory", dateField: "Expiry Date", defaultDatePreset: "next90" },
-  medicines: { name: "Medicine Report", description: "Catalogue with live stock and sales performance per medicine.", category: "Medicines", dateField: "Bill Date", defaultDatePreset: "month" },
-  audit: { name: "Audit Log Report", description: "User activity trail with action-type and staff breakdowns.", category: "Audit", dateField: "Bill Date", defaultDatePreset: "month" },
+  sales: {
+    name: "Sales & Returns",
+    description: "Daily sales, revenue, discounts and GST with staff/customer breakdowns.",
+    category: "Sales",
+    dateField: "Bill Date",
+    defaultDatePreset: "month",
+  },
+  gst: {
+    name: "GST Report",
+    description:
+      "Taxable value and GST across sales and purchase invoices, per slab, HSN code, supplier or customer.",
+    category: "GST",
+    dateField: "Bill Date",
+    defaultDatePreset: "month",
+  },
+  payments: {
+    name: "Payments Report",
+    description: "Amount collected per payment mode with invoice-level detail.",
+    category: "Payments",
+    dateField: "Bill Date",
+    defaultDatePreset: "month",
+  },
+  customers: {
+    name: "Customer Report",
+    description: "Customer purchase behaviour — spend, invoices and frequency.",
+    category: "Customers",
+    dateField: "Purchase Date",
+    defaultDatePreset: "month",
+  },
+  purchases: {
+    name: "Purchase Report",
+    description: "Procurement spend, quantities and GST per supplier or medicine.",
+    category: "Purchases",
+    dateField: "Purchase Date",
+    defaultDatePreset: "month",
+  },
+  suppliers: {
+    name: "Supplier Report",
+    description: "Supplier-wise purchase totals across the selected period.",
+    category: "Purchases",
+    dateField: "Purchase Date",
+    defaultDatePreset: "month",
+  },
+  inventory: {
+    name: "Inventory Report",
+    description: "Current stock quantity and valuation by medicine, batch or status.",
+    category: "Inventory",
+    dateField: "Batch Date",
+    defaultDatePreset: "month",
+  },
+  expiry: {
+    name: "Expiry Report",
+    description: "Batches expiring within the window with quantity and value at risk.",
+    category: "Inventory",
+    dateField: "Expiry Date",
+    defaultDatePreset: "next90",
+  },
+  medicines: {
+    name: "Medicine Report",
+    description: "Catalogue with live stock and sales performance per medicine.",
+    category: "Medicines",
+    dateField: "Bill Date",
+    defaultDatePreset: "month",
+  },
+  audit: {
+    name: "Audit Log Report",
+    description: "User activity trail with action-type and staff breakdowns.",
+    category: "Audit",
+    dateField: "Bill Date",
+    defaultDatePreset: "month",
+  },
 };
 
 const STANDARD_ENDPOINTS = {
@@ -1009,7 +1128,10 @@ export function formatSavedReport(r) {
     reportType: r.reportType ?? "custom",
     fields: r.fields ?? r.groupBy ?? [],
     groupBy: r.groupBy ?? [],
-    summarizeBy: (r.summarizeBy ?? []).map((m) => ({ field: m.field, aggregation: m.aggregation ?? "SUM" })),
+    summarizeBy: (r.summarizeBy ?? []).map((m) => ({
+      field: m.field,
+      aggregation: m.aggregation ?? "SUM",
+    })),
     // Stable per-filter ids so the builder can edit/re-apply saved filters
     // without React key collisions (FilterBuilder keys rows by filter.id).
     filters: (r.filters ?? []).map((f, i) => ({
@@ -1031,12 +1153,16 @@ function buildSavedReportUpdate(data = {}) {
   if (data.name !== undefined) patch.name = String(data.name).trim();
   if (data.module !== undefined) patch.module = String(data.module).trim();
   if (data.reportType !== undefined) patch.reportType = String(data.reportType);
-  const groupKeys = Array.isArray(data.groupBy) ? data.groupBy : Array.isArray(data.fields) ? data.fields : null;
+  const groupKeys = Array.isArray(data.groupBy)
+    ? data.groupBy
+    : Array.isArray(data.fields)
+      ? data.fields
+      : null;
   if (groupKeys !== null) patch.groupBy = groupKeys.filter((f) => typeof f === "string");
   if (data.summarizeBy !== undefined) {
     patch.summarizeBy = (Array.isArray(data.summarizeBy) ? data.summarizeBy : []).map((m) => ({
       field: typeof m === "string" ? m : m?.field,
-      aggregation: (typeof m === "string" ? "SUM" : (m?.aggregation || "SUM")).toUpperCase(),
+      aggregation: (typeof m === "string" ? "SUM" : m?.aggregation || "SUM").toUpperCase(),
     }));
   }
   if (data.filters !== undefined) {
@@ -1072,7 +1198,11 @@ export async function createSavedReport(data, userId) {
   if (data?.id && mongoose.isValidObjectId(data.id)) {
     const existing = await SavedReport.findOne({ _id: data.id, createdBy: userId }).lean();
     if (existing) {
-      const updated = await SavedReport.findByIdAndUpdate(data.id, { $set: patch }, { new: true }).lean();
+      const updated = await SavedReport.findByIdAndUpdate(
+        data.id,
+        { $set: patch },
+        { new: true },
+      ).lean();
       return formatSavedReport(updated);
     }
   }
@@ -1082,7 +1212,11 @@ export async function createSavedReport(data, userId) {
 
 export async function updateSavedReport(id, userId, data) {
   const patch = buildSavedReportUpdate(data);
-  const doc = await SavedReport.findOneAndUpdate({ _id: id, createdBy: userId }, { $set: patch }, { new: true }).lean();
+  const doc = await SavedReport.findOneAndUpdate(
+    { _id: id, createdBy: userId },
+    { $set: patch },
+    { new: true },
+  ).lean();
   if (!doc) throw ApiError.notFound("Saved report not found");
   return formatSavedReport(doc);
 }
@@ -1175,18 +1309,26 @@ function validateScheduledInput(data = {}, { partial = false } = {}) {
     if (!Array.isArray(data.recipients)) {
       errors.push("recipients must be an array of email addresses");
     } else {
-      const invalid = (Array.isArray(data.recipients) ? data.recipients : []).filter((r) => !isValidEmail(r));
+      const invalid = (Array.isArray(data.recipients) ? data.recipients : []).filter(
+        (r) => !isValidEmail(r),
+      );
       if (invalid.length) errors.push(`invalid recipient email address(es): ${invalid.join(", ")}`);
     }
   }
   if (errors.length) throw ApiError.badRequest(`Invalid scheduled report: ${errors.join("; ")}`);
 }
 
-const cleanRecipients = (recipients) =>
-  [...new Set((Array.isArray(recipients) ? recipients : []).map((e) => String(e).trim()).filter(Boolean))];
+const cleanRecipients = (recipients) => [
+  ...new Set(
+    (Array.isArray(recipients) ? recipients : []).map((e) => String(e).trim()).filter(Boolean),
+  ),
+];
 
 export async function getScheduledReports(userId) {
-  const docs = await ScheduledReport.find({ createdBy: userId }).populate("savedReportId").sort({ createdAt: -1 }).lean();
+  const docs = await ScheduledReport.find({ createdBy: userId })
+    .populate("savedReportId")
+    .sort({ createdAt: -1 })
+    .lean();
   return docs.map(formatScheduledReport);
 }
 
@@ -1202,7 +1344,10 @@ export async function createScheduledReport(data, userId) {
     status: data.status === "paused" ? "paused" : "active",
     format: data.format ?? "csv",
     createdBy: userId,
-    nextRunAt: computeNextRunAt({ frequency: data.frequency ?? "daily", time: data.time ?? "09:00" }),
+    nextRunAt: computeNextRunAt({
+      frequency: data.frequency ?? "daily",
+      time: data.time ?? "09:00",
+    }),
   });
   return formatScheduledReport(doc.toObject());
 }

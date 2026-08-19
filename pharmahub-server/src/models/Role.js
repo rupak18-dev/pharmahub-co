@@ -3,7 +3,9 @@ import { Schema, model } from "mongoose";
 import { constants } from "../config/constants.js";
 
 const actionDefaults = Object.fromEntries(constants.actions.map((a) => [a, false]));
-const emptyModulePermissions = Object.fromEntries(constants.modules.map((m) => [m, actionDefaults]));
+const emptyModulePermissions = Object.fromEntries(
+  constants.modules.map((m) => [m, actionDefaults]),
+);
 
 const all = () => ({
   view: true,
@@ -22,7 +24,6 @@ function rolePermissions(fn) {
 }
 
 export const DEFAULT_ROLE_PERMISSIONS = {
-
   Owner: rolePermissions(() => all()),
   Admin: rolePermissions(() => all()),
   Pharmacist: rolePermissions((m) => {
@@ -145,7 +146,10 @@ roleSchema.statics.ensureSystemRoles = async function () {
         }
       }
       if (needsUpdate) {
-        await RoleModel.updateOne({ name, isSystem: true }, { $set: { permissions: updatedPerms } });
+        await RoleModel.updateOne(
+          { name, isSystem: true },
+          { $set: { permissions: updatedPerms } },
+        );
       }
     }
   }

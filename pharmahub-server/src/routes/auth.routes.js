@@ -10,8 +10,17 @@ const router = Router();
 router.post("/register", validate(authSchemas.register), authController.register);
 router.post("/login", validate(authSchemas.login), authController.login);
 router.post("/demo-login", validate(authSchemas.demoLogin), authController.demoLogin);
-router.post("/demo-login/verify", validate(authSchemas.demoLoginVerify), authController.demoLoginVerify);
+router.post(
+  "/demo-login/verify",
+  validate(authSchemas.demoLoginVerify),
+  authController.demoLoginVerify,
+);
 router.get("/me", auth, authController.me);
-router.post("/change-password", auth, validate(authSchemas.changePassword), authController.updatePassword);
+router.post(
+  "/change-password",
+  auth,
+  validate(authSchemas.changePassword),
+  authController.updatePassword,
+);
 
 export default router;

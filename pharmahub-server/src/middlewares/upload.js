@@ -11,7 +11,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Runtime storage root for uploaded files. Kept inside the server package so
 // deployments with a writable working directory work out of the box; the
 // directory can be relocated via UPLOAD_DIR.
-export const uploadsDir = path.resolve(process.env.UPLOAD_DIR || path.join(__dirname, "..", "..", "uploads"));
+export const uploadsDir = path.resolve(
+  process.env.UPLOAD_DIR || path.join(__dirname, "..", "..", "uploads"),
+);
 export const profileUploadDir = path.join(uploadsDir, "profile");
 export const billUploadDir = path.join(uploadsDir, "bills");
 
@@ -24,8 +26,7 @@ const ALLOWED_MIME = {
 export const AVATAR_MAX_BYTES = 5 * 1024 * 1024; // 5 MB — must match the UI
 
 // Max size for uploaded bill images (MB, env-configurable). Must match the UI.
-export const BILL_MAX_BYTES =
-  (parseFloat(process.env.BILL_UPLOAD_MAX_MB) || 10) * 1024 * 1024;
+export const BILL_MAX_BYTES = (parseFloat(process.env.BILL_UPLOAD_MAX_MB) || 10) * 1024 * 1024;
 
 function ensureUploadDirs() {
   fs.mkdirSync(profileUploadDir, { recursive: true });

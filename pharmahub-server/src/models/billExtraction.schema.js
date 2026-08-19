@@ -23,8 +23,15 @@ export const extractionSchema = new Schema(
         {
           invoiceNumber: { type: String },
           invoiceDate: { type: String },
-          supplier: { type: new Schema({ name: String, gstin: String, address: String, phone: String, phones: [String] }, { _id: false }) },
-          party: { type: new Schema({ name: String, gstin: String, phone: String }, { _id: false }) },
+          supplier: {
+            type: new Schema(
+              { name: String, gstin: String, address: String, phone: String, phones: [String] },
+              { _id: false },
+            ),
+          },
+          party: {
+            type: new Schema({ name: String, gstin: String, phone: String }, { _id: false }),
+          },
           customerPhone: { type: String },
           phoneCandidates: {
             type: [

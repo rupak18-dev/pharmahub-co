@@ -25,7 +25,10 @@ function resolveDatePreset(presetId, now = new Date()) {
       return [y, y];
     },
     week: () => [addDays(n, -n.getDay()), n],
-    month: () => [new Date(n.getFullYear(), n.getMonth(), 1), new Date(n.getFullYear(), n.getMonth() + 1, 0)],
+    month: () => [
+      new Date(n.getFullYear(), n.getMonth(), 1),
+      new Date(n.getFullYear(), n.getMonth() + 1, 0),
+    ],
     lastMonth: () => {
       const end = new Date(n.getFullYear(), n.getMonth(), 0);
       return [new Date(end.getFullYear(), end.getMonth(), 1), end];
@@ -55,7 +58,14 @@ function buildReportPayload(config = {}) {
     resolvedFrom = range.from.toISOString();
     resolvedTo = range.to.toISOString();
   }
-  return { module, groupBy: fields, summarizeBy: measures, filters, dateFrom: resolvedFrom, dateTo: resolvedTo };
+  return {
+    module,
+    groupBy: fields,
+    summarizeBy: measures,
+    filters,
+    dateFrom: resolvedFrom,
+    dateTo: resolvedTo,
+  };
 }
 
 function csvEscape(value) {
@@ -69,7 +79,9 @@ function buildCsv(report) {
   const headers = Object.keys(rows[0]);
   const lines = [headers.map(csvEscape).join(",")];
   for (const row of rows) lines.push(headers.map((h) => csvEscape(row[h])).join(","));
-  const totalRow = headers.map((h) => (Object.prototype.hasOwnProperty.call(totals, h) ? csvEscape(totals[h]) : ""));
+  const totalRow = headers.map((h) =>
+    Object.prototype.hasOwnProperty.call(totals, h) ? csvEscape(totals[h]) : "",
+  );
   if (totalRow.some((v) => v !== "")) lines.push(totalRow.join(","));
   return lines.join("\n");
 }
@@ -173,7 +185,9 @@ export function startScheduledReportWorker() {
   if (workerStarted) return;
   workerStarted = true;
   cron.schedule("0 * * * *", () => {
-    processScheduledReports().catch((err) => logger.error("Scheduled report worker run failed:", err));
+    processScheduledReports().catch((err) =>
+      logger.error("Scheduled report worker run failed:", err),
+    );
   });
   logger.info("Scheduled report background worker initialized");
 }

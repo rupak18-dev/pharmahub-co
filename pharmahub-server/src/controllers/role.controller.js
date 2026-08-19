@@ -122,7 +122,11 @@ export const updateRole = asyncHandler(async (req, res) => {
     return ok(res, { ...role.toObject(), id: role._id }, "Role updated");
   }
 
-  const updated = await Role.findByIdAndUpdate(req.params.id, { $set: update }, { new: true, runValidators: true });
+  const updated = await Role.findByIdAndUpdate(
+    req.params.id,
+    { $set: update },
+    { new: true, runValidators: true },
+  );
   return ok(res, { ...updated.toObject(), id: updated._id }, "Role updated");
 });
 
@@ -136,7 +140,9 @@ export const deleteRole = asyncHandler(async (req, res) => {
 
   const assigned = await User.countDocuments({ role: role.name, status: { $ne: "removed" } });
   if (assigned > 0) {
-    throw ApiError.conflict(`Cannot delete role "${role.name}" because it is assigned to ${assigned} user(s)`);
+    throw ApiError.conflict(
+      `Cannot delete role "${role.name}" because it is assigned to ${assigned} user(s)`,
+    );
   }
 
   await role.deleteOne();

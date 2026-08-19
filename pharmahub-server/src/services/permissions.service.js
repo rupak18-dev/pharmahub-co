@@ -102,4 +102,3 @@ export async function getEffectivePermissions(user) {
 
   return baseMerged;
 }
-

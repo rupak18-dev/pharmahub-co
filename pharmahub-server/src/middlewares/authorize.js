@@ -22,9 +22,7 @@ export function authorize(module, action = "view") {
 
       const allowed = permissions[module]?.[action];
       if (!allowed) {
-        throw ApiError.forbidden(
-          `You are not authorized to ${action} ${module}`,
-        );
+        throw ApiError.forbidden(`You are not authorized to ${action} ${module}`);
       }
       next();
     } catch (err) {
@@ -32,4 +30,3 @@ export function authorize(module, action = "view") {
     }
   };
 }
-

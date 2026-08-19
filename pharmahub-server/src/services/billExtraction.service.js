@@ -18,7 +18,10 @@ import {
    Small helpers
    --------------------------------------------------------------------- */
 
-const splitLines = (text) => String(text ?? "").split(/\r?\n/).map((l) => l.trim());
+const splitLines = (text) =>
+  String(text ?? "")
+    .split(/\r?\n/)
+    .map((l) => l.trim());
 
 const escapeRegExp = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 
@@ -39,7 +42,9 @@ const percentNumber = (raw) => {
 // yyyy-mm-dd. Ambiguous d/m/y (Indian invoices) is assumed over m/d/y.
 function normalizeDate(raw) {
   if (!raw) return "";
-  const m = String(raw).trim().match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+  const m = String(raw)
+    .trim()
+    .match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
   if (!m) return "";
   let [, d, mo, y] = m;
   if (Number(d) < 1 || Number(d) > 31 || Number(mo) < 1 || Number(mo) > 12) return "";
@@ -49,13 +54,41 @@ function normalizeDate(raw) {
 
 // Reasonably complete Indian amount-in-words converter (hundreds/lakhs/crores).
 const WORD_NUMBERS = {
-  zero: 0, one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
-  ten: 10, eleven: 11, twelve: 12, thirteen: 13, fourteen: 14, fifteen: 15, sixteen: 16,
-  seventeen: 17, eighteen: 18, nineteen: 19, twenty: 20, thirty: 30, forty: 40, fifty: 50,
-  sixty: 60, seventy: 70, eighty: 80, ninety: 90,
+  zero: 0,
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+  eleven: 11,
+  twelve: 12,
+  thirteen: 13,
+  fourteen: 14,
+  fifteen: 15,
+  sixteen: 16,
+  seventeen: 17,
+  eighteen: 18,
+  nineteen: 19,
+  twenty: 20,
+  thirty: 30,
+  forty: 40,
+  fifty: 50,
+  sixty: 60,
+  seventy: 70,
+  eighty: 80,
+  ninety: 90,
 };
 function wordsToNumber(words) {
-  const tokens = String(words ?? "").toLowerCase().replace(/and\b/g, "").split(/[^a-z]+/).filter(Boolean);
+  const tokens = String(words ?? "")
+    .toLowerCase()
+    .replace(/and\b/g, "")
+    .split(/[^a-z]+/)
+    .filter(Boolean);
   let total = 0;
   let current = 0;
   for (const t of tokens) {
@@ -84,10 +117,15 @@ function wordsToNumber(words) {
 
 export function detectDocumentType(text) {
   const t = String(text ?? "");
-  if (/tax invoice|gst invoice/i.test(t) && /party\s*name|buyer\b|consignee|purchased\s*by|m\.?\/?s/i.test(t)) {
+  if (
+    /tax invoice|gst invoice/i.test(t) &&
+    /party\s*name|buyer\b|consignee|purchased\s*by|m\.?\/?s/i.test(t)
+  ) {
     return "purchase_invoice";
   }
-  if (/payment\s*receipt|amount\s+received|received\s+with\s+thanks|acknowledge\s+receipt/i.test(t)) {
+  if (
+    /payment\s*receipt|amount\s+received|received\s+with\s+thanks|acknowledge\s+receipt/i.test(t)
+  ) {
     return "payment_receipt";
   }
   if (/cash\s*memo|cash\s+bill|cash\s*sale|retail\s*sale/i.test(t)) {
@@ -107,9 +145,16 @@ function extractSupplier(text) {
   const lines = splitLines(text);
   for (const line of lines) {
     if (!line) continue;
-    let name = line.replace(/\s+(?:GST|TAX|CREDIT|DEBIT)?\s*(?:INVOICE|CASH MEMO|RECEIPT|CHALLAN)\b.*$/i, "");
+    let name = line.replace(
+      /\s+(?:GST|TAX|CREDIT|DEBIT)?\s*(?:INVOICE|CASH MEMO|RECEIPT|CHALLAN)\b.*$/i,
+      "",
+    );
     name = name.replace(/[|:;].*$/, "").trim();
-    if (/[A-Za-z]{3,}/.test(name) && /[A-Z]/.test(name) && !/^(phone|gstin|dl\b|dl\s*no|pan|party|transport|cash|invoice)/i.test(name)) {
+    if (
+      /[A-Za-z]{3,}/.test(name) &&
+      /[A-Z]/.test(name) &&
+      !/^(phone|gstin|dl\b|dl\s*no|pan|party|transport|cash|invoice)/i.test(name)
+    ) {
       return name.slice(0, 80);
     }
   }
@@ -125,10 +170,13 @@ function extractHeader(text) {
   // "GST INVOICE Party..." never wins.
   const INV_VALUE = /([A-Z0-9][A-Z0-9/-]*[0-9][A-Z0-9/-]*)/;
   const invoiceNoM =
-    t.match(new RegExp(`\\binvoice\\s*(?:no\\.?|number|#)\\s*[:#]?\\s*${INV_VALUE.source}\\b`, "i")) ||
-    t.match(new RegExp(`\\binvoice\\s*[:#]\\s*${INV_VALUE.source}\\b`, "i"));
+    t.match(
+      new RegExp(`\\binvoice\\s*(?:no\\.?|number|#)\\s*[:#]?\\s*${INV_VALUE.source}\\b`, "i"),
+    ) || t.match(new RegExp(`\\binvoice\\s*[:#]\\s*${INV_VALUE.source}\\b`, "i"));
   const invoiceDateM = t.match(/\binvoice\s*date\s*:?\s*(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})\b/i);
-  const dateM = t.match(/\b(?:date|cash\s*date|bill\s*date)\s*:?\s*(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})\b/i);
+  const dateM = t.match(
+    /\b(?:date|cash\s*date|bill\s*date)\s*:?\s*(\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4})\b/i,
+  );
   const phoneM = t.match(/\bphone\s*:?\s*([0-9][0-9,\s]{8,24})/i);
 
   // Party name: text after the "Party Name :" label (possibly across a
@@ -148,7 +196,10 @@ function extractHeader(text) {
   const supplierName = extractSupplier(t);
   const supplierIdx = lines.findIndex((l) => l.startsWith(supplierName));
   for (let i = supplierIdx + 1; i < lines.length && supplierAddress.length < 140; i += 1) {
-    let line = lines[i].replace(/party\s*name\s*:.*$/i, "").replace(/\s*\|.*$/, "").trim();
+    let line = lines[i]
+      .replace(/party\s*name\s*:.*$/i, "")
+      .replace(/\s*\|.*$/, "")
+      .trim();
     line = line.replace(/\s*(?:HPR|HFR|DL|PAN|AADHAR)\s*ID\s*:.*$/i, "").trim();
     if (!line) continue;
     if (/\d/.test(line)) supplierAddress = supplierAddress ? `${supplierAddress}, ${line}` : line;
@@ -159,7 +210,12 @@ function extractHeader(text) {
   const partyGstin = gstins[1] || "";
 
   return {
-    supplier: { name: supplierName, gstin: supplierGstin, address: supplierAddress, phone: phoneM?.[1]?.replace(/\s+/g, " ").trim() ?? "" },
+    supplier: {
+      name: supplierName,
+      gstin: supplierGstin,
+      address: supplierAddress,
+      phone: phoneM?.[1]?.replace(/\s+/g, " ").trim() ?? "",
+    },
     party: { name: party, gstin: partyGstin },
     invoiceNumber: invoiceNoM ? invoiceNoM[1].replace(/\s+$/, "") : "",
     invoiceDate: normalizeDate(invoiceDateM?.[1] || dateM?.[1] || ""),
@@ -192,33 +248,69 @@ const ITEM_LABELS = {
 function fillFromLabel(line, item) {
   const lower = line.toLowerCase();
   for (const [key, labels] of Object.entries(ITEM_LABELS)) {
-    const label = labels.find((l) => lower.startsWith(`${l}:`) || lower.startsWith(`${l} :`) || lower === l);
+    const label = labels.find(
+      (l) => lower.startsWith(`${l}:`) || lower.startsWith(`${l} :`) || lower === l,
+    );
     if (!label) continue;
-    const value = line.slice(line.toLowerCase().indexOf(label) + label.length).replace(/^[\s:]+/, "").trim();
+    const value = line
+      .slice(line.toLowerCase().indexOf(label) + label.length)
+      .replace(/^[\s:]+/, "")
+      .trim();
     if (!value) continue;
     const num = moneyNumber(value);
     switch (key) {
-      case "hsn": item.hsnCode = value.slice(0, 12); break;
-      case "pack": item.pack = value.slice(0, 12); break;
-      case "batch": item.batchNumber = value.slice(0, 24); break;
+      case "hsn":
+        item.hsnCode = value.slice(0, 12);
+        break;
+      case "pack":
+        item.pack = value.slice(0, 12);
+        break;
+      case "batch":
+        item.batchNumber = value.slice(0, 24);
+        break;
       case "expiry": {
         const norm = value.match(/\d{1,2}\/\d{2,4}/)?.[0];
         if (norm) item.expiryDate = norm;
         break;
       }
-      case "quantity": item.quantity = num ?? 0; break;
-      case "free": item.freeQuantity = num ?? 0; break;
-      case "manufacturer": item.manufacturer = value.replace(/\s+/g, " ").slice(0, 40); break;
-      case "rate": item.unitCost = num ?? 0; break;
-      case "mrp": item.mrp = num ?? 0; break;
-      case "discount": item.discountPct = percentNumber(value) ?? 0; break;
-      case "sgstRate": item.sgstRate = percentNumber(value) ?? 0; break;
-      case "cgstRate": item.cgstRate = percentNumber(value) ?? 0; break;
-      case "gstRate": item.gstRate = percentNumber(value) ?? 0; break;
-      case "sgstAmount": item.sgstAmount = num ?? 0; break;
-      case "cgstAmount": item.cgstAmount = num ?? 0; break;
-      case "taxableAmount": item.lineTotal = num ?? 0; break;
-      default: break;
+      case "quantity":
+        item.quantity = num ?? 0;
+        break;
+      case "free":
+        item.freeQuantity = num ?? 0;
+        break;
+      case "manufacturer":
+        item.manufacturer = value.replace(/\s+/g, " ").slice(0, 40);
+        break;
+      case "rate":
+        item.unitCost = num ?? 0;
+        break;
+      case "mrp":
+        item.mrp = num ?? 0;
+        break;
+      case "discount":
+        item.discountPct = percentNumber(value) ?? 0;
+        break;
+      case "sgstRate":
+        item.sgstRate = percentNumber(value) ?? 0;
+        break;
+      case "cgstRate":
+        item.cgstRate = percentNumber(value) ?? 0;
+        break;
+      case "gstRate":
+        item.gstRate = percentNumber(value) ?? 0;
+        break;
+      case "sgstAmount":
+        item.sgstAmount = num ?? 0;
+        break;
+      case "cgstAmount":
+        item.cgstAmount = num ?? 0;
+        break;
+      case "taxableAmount":
+        item.lineTotal = num ?? 0;
+        break;
+      default:
+        break;
     }
     return true;
   }
@@ -261,10 +353,24 @@ function parseLabeledItems(lines) {
       if (current && current.medicineName) items.push(current);
       current = {
         medicineName: start[2].trim(),
-        hsnCode: "", pack: "", batchNumber: "", expiryDate: "",
-        quantity: 0, freeQuantity: 0, unitCost: 0, mrp: 0, discountPct: 0,
-        sgstRate: 0, cgstRate: 0, gstRate: 0, sgstAmount: 0, cgstAmount: 0,
-        gstAmount: 0, taxableAmount: 0, lineTotal: 0, manufacturer: "",
+        hsnCode: "",
+        pack: "",
+        batchNumber: "",
+        expiryDate: "",
+        quantity: 0,
+        freeQuantity: 0,
+        unitCost: 0,
+        mrp: 0,
+        discountPct: 0,
+        sgstRate: 0,
+        cgstRate: 0,
+        gstRate: 0,
+        sgstAmount: 0,
+        cgstAmount: 0,
+        gstAmount: 0,
+        taxableAmount: 0,
+        lineTotal: 0,
+        manufacturer: "",
       };
       continue;
     }
@@ -281,7 +387,11 @@ function parseTabularRow(line) {
   if (!row || row.length < 8) return null;
   if (!/[A-Za-z]/.test(row)) return null;
   // Totals / meta lines are never item rows.
-  if (/^(total|grand\s*total|sub\s*total|gross|gst|sgst|cgst|class|our|print|rs\.|charges|irn|terms|goods|bill|all|download|marg|phone|dl\b|dl\s*no|gstin|invoice|party|transport|cash|pan|round|disc|taxable|subtotal|tcs|tds)/i.test(row)) {
+  if (
+    /^(total|grand\s*total|sub\s*total|gross|gst|sgst|cgst|class|our|print|rs\.|charges|irn|terms|goods|bill|all|download|marg|phone|dl\b|dl\s*no|gstin|invoice|party|transport|cash|pan|round|disc|taxable|subtotal|tcs|tds)/i.test(
+      row,
+    )
+  ) {
     return null;
   }
 
@@ -399,8 +509,18 @@ function parseTabularItems(text) {
   const lines = splitLines(text);
   // Restrict the scan to the line-item region: from the table header down to
   // the first totals line, but keep the whole doc as a fallback.
-  let startIdx = lines.findIndex((l) => /\b(?:product\s*name|particulars|item\s*(?:description)?|description|medicine)\b.*\b(?:batch|qty|rate|mrp)\b/i.test(l));
-  let endIdx = lines.findIndex((l, i) => i > Math.max(0, startIdx) && /grand\s*total|total\s*gst|sgst\s*pay|gst\s*5|gst\s*12|round\s*off|amount\s*in\s*words/i.test(l));
+  let startIdx = lines.findIndex((l) =>
+    /\b(?:product\s*name|particulars|item\s*(?:description)?|description|medicine)\b.*\b(?:batch|qty|rate|mrp)\b/i.test(
+      l,
+    ),
+  );
+  let endIdx = lines.findIndex(
+    (l, i) =>
+      i > Math.max(0, startIdx) &&
+      /grand\s*total|total\s*gst|sgst\s*pay|gst\s*5|gst\s*12|round\s*off|amount\s*in\s*words/i.test(
+        l,
+      ),
+  );
   if (startIdx === -1) startIdx = 0;
   if (endIdx === -1) endIdx = lines.length;
   const region = lines.slice(startIdx, endIdx);
@@ -439,7 +559,9 @@ function extractTotals(text) {
     totals.totalCGST = moneyNumber(grossM[4]);
     totals.gstTotal = moneyNumber(grossM[5]);
   } else {
-    const taxableM = t.match(/(?:taxable|taxable\s*amount|taxable\s*value)[^\d\n]{0,20}(\d[\d,]*\.\d{2})/i);
+    const taxableM = t.match(
+      /(?:taxable|taxable\s*amount|taxable\s*value)[^\d\n]{0,20}(\d[\d,]*\.\d{2})/i,
+    );
     if (taxableM) totals.taxableAmount = moneyNumber(taxableM[1]);
   }
   if (sgstM) totals.totalSGST = moneyNumber(sgstM[1]);
@@ -545,8 +667,12 @@ function isPlausibleImage(file) {
     const buf = Buffer.alloc(12);
     fs.readSync(fd, buf, 0, 12, 0);
     fs.closeSync(fd);
-    const isJpegOrPng = IMAGE_MAGIC.some(({ bytes }) => buf.subarray(0, bytes.length).equals(Buffer.from(bytes)));
-    const isWebp = buf.subarray(0, 4).toString("latin1") === "RIFF" && buf.subarray(8, 12).toString("latin1") === "WEBP";
+    const isJpegOrPng = IMAGE_MAGIC.some(({ bytes }) =>
+      buf.subarray(0, bytes.length).equals(Buffer.from(bytes)),
+    );
+    const isWebp =
+      buf.subarray(0, 4).toString("latin1") === "RIFF" &&
+      buf.subarray(8, 12).toString("latin1") === "WEBP";
     return isJpegOrPng || isWebp;
   } catch {
     return false;
@@ -570,7 +696,8 @@ export async function extractBillFromImage(file) {
   if (!isPlausibleImage(file)) {
     return {
       status: "manual",
-      message: "The uploaded file does not look like a readable image. Review the document and enter the details manually.",
+      message:
+        "The uploaded file does not look like a readable image. Review the document and enter the details manually.",
     };
   }
 
@@ -579,11 +706,15 @@ export async function extractBillFromImage(file) {
     if (!text || text.trim().length < 10) {
       return {
         status: "manual",
-        message: "OCR could not read this document. Review the image and enter the details manually.",
+        message:
+          "OCR could not read this document. Review the image and enter the details manually.",
       };
     }
 
-    const { documentType, fields, warnings } = parseBillDocument(text, { lines, docConfidence: confidence });
+    const { documentType, fields, warnings } = parseBillDocument(text, {
+      lines,
+      docConfidence: confidence,
+    });
     const roundedConfidence = Math.round(confidence);
     const lowConfidence = roundedConfidence < LOW_CONFIDENCE_THRESHOLD || fields.items.length === 0;
 

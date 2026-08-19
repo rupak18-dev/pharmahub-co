@@ -52,8 +52,7 @@ function formatIntegration(item) {
   // (WHATSAPP_ACCESS_TOKEN + WHATSAPP_PHONE_NUMBER_ID) are set. This allows
   // the frontend to show a proactive warning when the integration is connected
   // but delivery is impossible because the server env vars are missing.
-  const serverConfigured =
-    item.key === "whatsapp" ? isWhatsAppConfigured() : undefined;
+  const serverConfigured = item.key === "whatsapp" ? isWhatsAppConfigured() : undefined;
   return {
     id: String(item._id),
     key: item.key,
@@ -131,7 +130,9 @@ export async function getIntegration(user, identifier) {
 export async function connectIntegration(user, identifier, payload = {}) {
   const tenantId = resolveTenant(user);
   if (String(identifier) === GMAIL_KEY) {
-    throw ApiError.badRequest("Gmail connects through Google OAuth — use GET /integrations/gmail/connect instead.");
+    throw ApiError.badRequest(
+      "Gmail connects through Google OAuth — use GET /integrations/gmail/connect instead.",
+    );
   }
   let record = await Integration.findOne({ tenantId, key: String(identifier) });
   if (!record) record = baseRecord(user, String(identifier));
@@ -166,7 +167,9 @@ export async function connectIntegration(user, identifier, payload = {}) {
 export async function configureIntegration(user, identifier, payload = {}) {
   const tenantId = resolveTenant(user);
   if (String(identifier) === GMAIL_KEY) {
-    throw ApiError.badRequest("Gmail configuration is managed through Google OAuth — see GET /integrations/gmail/connect.");
+    throw ApiError.badRequest(
+      "Gmail configuration is managed through Google OAuth — see GET /integrations/gmail/connect.",
+    );
   }
   let record = await Integration.findOne({ tenantId, key: String(identifier) });
   if (!record) record = baseRecord(user, String(identifier));

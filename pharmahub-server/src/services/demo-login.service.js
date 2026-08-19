@@ -82,7 +82,10 @@ export async function requestDemoLogin(email) {
   const normalizedEmail = email.toLowerCase();
 
   // Check if user exists (optional — create a temporary user if not, or require registration)
-  let user = await User.findOne({ email: normalizedEmail }).collation({ locale: "en", strength: 2 });
+  let user = await User.findOne({ email: normalizedEmail }).collation({
+    locale: "en",
+    strength: 2,
+  });
 
   // For demo purposes, create a temporary user if they don't exist
   if (!user) {
@@ -156,7 +159,10 @@ export async function verifyDemoLogin(rawToken) {
 
   // Find or create user
   const normalizedEmail = record.email.toLowerCase();
-  let user = await User.findOne({ email: normalizedEmail }).collation({ locale: "en", strength: 2 });
+  let user = await User.findOne({ email: normalizedEmail }).collation({
+    locale: "en",
+    strength: 2,
+  });
 
   if (!user) {
     user = await User.create({

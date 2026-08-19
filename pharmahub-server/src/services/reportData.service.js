@@ -42,13 +42,21 @@ export const BILL_SOURCES = ["manual", "uploaded", "imported", "existing"];
 // response keeps the unified bill shape the rest of the API uses).
 export const sendReportBillWhatsApp = async (args) => {
   const result = await whatsAppSendReportBill(args);
-  return { delivery: result.delivery, bill: unifiedFromReportBill(result.bill, { includeExtraction: true }) };
+  return {
+    delivery: result.delivery,
+    bill: unifiedFromReportBill(result.bill, { includeExtraction: true }),
+  };
 };
 
 const round2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
 
 const MAX_OCR_TEXT_LENGTH = 40000;
-const cleanStr = (v, max) => (v === undefined || v === null ? "" : String(v).trim().slice(0, max ?? 200));
+const cleanStr = (v, max) =>
+  v === undefined || v === null
+    ? ""
+    : String(v)
+        .trim()
+        .slice(0, max ?? 200);
 const cleanNum = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? Math.round(n * 100) / 100 : null;
@@ -68,13 +76,26 @@ function sanitizeExtraction(ext) {
   const conf = cleanNum(ext.confidence);
   if (conf !== null) cleaned.confidence = Math.max(0, Math.min(100, conf));
   if (Array.isArray(ext.warnings)) {
-    cleaned.warnings = ext.warnings.map((w) => cleanStr(w, 300)).filter(Boolean).slice(0, 10);
+    cleaned.warnings = ext.warnings
+      .map((w) => cleanStr(w, 300))
+      .filter(Boolean)
+      .slice(0, 10);
   }
   if (raw) cleaned.rawOcrText = raw.slice(0, MAX_OCR_TEXT_LENGTH);
 
   const fields = ext.fields && typeof ext.fields === "object" ? ext.fields : {};
   const out = {};
-  for (const k of ["invoiceNumber", "invoiceDate", "subtotal", "discount", "taxableAmount", "totalSGST", "totalCGST", "gstTotal", "printedGrandTotal"]) {
+  for (const k of [
+    "invoiceNumber",
+    "invoiceDate",
+    "subtotal",
+    "discount",
+    "taxableAmount",
+    "totalSGST",
+    "totalCGST",
+    "gstTotal",
+    "printedGrandTotal",
+  ]) {
     const v = fields[k];
     if (v === undefined || v === null || v === "") continue;
     const n = cleanNum(v);
@@ -87,7 +108,10 @@ function sanitizeExtraction(ext) {
       address: cleanStr(fields.supplier.address, 400),
       phone: cleanStr(fields.supplier.phone, 60),
       phones: Array.isArray(fields.supplier.phones)
-        ? fields.supplier.phones.map((p) => cleanStr(p, 60)).filter(Boolean).slice(0, 10)
+        ? fields.supplier.phones
+            .map((p) => cleanStr(p, 60))
+            .filter(Boolean)
+            .slice(0, 10)
         : undefined,
     };
     if (!out.supplier.phones || out.supplier.phones.length === 0) delete out.supplier.phones;
@@ -166,7 +190,8 @@ function normalizeBillItems(items) {
     gstTotal += gst;
 
     return {
-      medicineId: line?.medicineId && mongoose.isValidObjectId(line.medicineId) ? line.medicineId : null,
+      medicineId:
+        line?.medicineId && mongoose.isValidObjectId(line.medicineId) ? line.medicineId : null,
       batchId: line?.batchId && mongoose.isValidObjectId(line.batchId) ? line.batchId : null,
       medicineName: String(line?.medicineName ?? "").trim(),
       batchNumber: String(line?.batchNumber ?? "").trim(),
@@ -212,7 +237,8 @@ function validateBillInput(data = {}) {
     data.items.forEach((it, idx) => {
       const label = `Item ${idx + 1}`;
       const qty = Number(it?.quantity);
-      if (!Number.isFinite(qty) || qty <= 0) errors.push(`${label}: quantity must be greater than 0`);
+      if (!Number.isFinite(qty) || qty <= 0)
+        errors.push(`${label}: quantity must be greater than 0`);
       const price = Number(it?.unitPrice);
       if (!Number.isFinite(price) || price < 0) errors.push(`${label}: invalid unit price`);
       const gst = Number(it?.gstRate) || 0;
@@ -224,10 +250,18 @@ function validateBillInput(data = {}) {
       }
     });
   }
-  if (data.paymentMode !== undefined && data.paymentMode !== "" && !PAYMENT_MODES.includes(String(data.paymentMode).trim())) {
+  if (
+    data.paymentMode !== undefined &&
+    data.paymentMode !== "" &&
+    !PAYMENT_MODES.includes(String(data.paymentMode).trim())
+  ) {
     errors.push(`Invalid payment mode. Use one of: ${PAYMENT_MODES.join(", ")}`);
   }
-  if (data.paymentStatus !== undefined && data.paymentStatus !== "" && !PAYMENT_STATUSES.includes(String(data.paymentStatus).trim().toLowerCase())) {
+  if (
+    data.paymentStatus !== undefined &&
+    data.paymentStatus !== "" &&
+    !PAYMENT_STATUSES.includes(String(data.paymentStatus).trim().toLowerCase())
+  ) {
     errors.push("Invalid payment status. Use paid, pending or partial");
   }
   if (errors.length) throw ApiError.badRequest(errors.join("; "));
@@ -236,7 +270,12 @@ function validateBillInput(data = {}) {
 // Duplicate protection is ownership-aware and date-scoped: the same bill
 // number is fine for a different pharmacy (or a different date). Matches on
 // createdBy + invoiceNo (case-insensitive) + the bill's calendar day.
-async function assertNoDuplicateInvoice(userId, invoiceNo, billDate = new Date(), excludeId = null) {
+async function assertNoDuplicateInvoice(
+  userId,
+  invoiceNo,
+  billDate = new Date(),
+  excludeId = null,
+) {
   const day = new Date(billDate);
   const start = new Date(day);
   start.setHours(0, 0, 0, 0);
@@ -244,9 +283,13 @@ async function assertNoDuplicateInvoice(userId, invoiceNo, billDate = new Date()
   end.setHours(23, 59, 59, 999);
   const existing = await Sale.findOne({
     createdBy: userId,
-    invoiceNo: { $regex: new RegExp(`^${String(invoiceNo).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    invoiceNo: {
+      $regex: new RegExp(`^${String(invoiceNo).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+    },
     createdAt: { $gte: start, $lte: end },
-  }).select("_id invoiceNo").lean();
+  })
+    .select("_id invoiceNo")
+    .lean();
   if (existing && (!excludeId || String(existing._id) !== String(excludeId))) {
     throw ApiError.conflict(`Duplicate bill — ${existing.invoiceNo} already exists for this date.`);
   }
@@ -298,12 +341,24 @@ export function formatSalesBill(s, { includeExtraction = false } = {}) {
    --------------------------------------------------------------------- */
 
 const DATA_SOURCES = [
-  { key: "sales", name: "Sales & Bills", description: "Bill records that feed Sales, GST and Payments reports." },
+  {
+    key: "sales",
+    name: "Sales & Bills",
+    description: "Bill records that feed Sales, GST and Payments reports.",
+  },
   { key: "purchases", name: "Purchases", description: "Supplier orders and procurement records." },
   { key: "inventory", name: "Inventory", description: "Stock on hand by batch with valuation." },
-  { key: "medicines", name: "Medicines", description: "Medicine catalog, HSN codes and GST slabs." },
+  {
+    key: "medicines",
+    name: "Medicines",
+    description: "Medicine catalog, HSN codes and GST slabs.",
+  },
   { key: "customers", name: "Customers", description: "Customers and their purchase history." },
-  { key: "suppliers", name: "Suppliers", description: "Suppliers / distributors with purchase totals." },
+  {
+    key: "suppliers",
+    name: "Suppliers",
+    description: "Suppliers / distributors with purchase totals.",
+  },
   { key: "payments", name: "Payments", description: "Payments collected per bill and mode." },
   { key: "expiry", name: "Expiry", description: "Batches expiring soon or already expired." },
   { key: "gst", name: "GST / Tax", description: "Taxable value and GST collected per bill." },
@@ -317,8 +372,20 @@ export async function listReportDataSources(userId) {
   };
   const salesLatest = await latestOf(Sale);
 
-  const [salesCount, purchasesCount, purchasesLatest, medicinesCount, batchesCount, batchesLatest,
-    suppliersCount, auditCount, auditLatest, customerNames, paymentsLatest, gstLatest] = await Promise.all([
+  const [
+    salesCount,
+    purchasesCount,
+    purchasesLatest,
+    medicinesCount,
+    batchesCount,
+    batchesLatest,
+    suppliersCount,
+    auditCount,
+    auditLatest,
+    customerNames,
+    paymentsLatest,
+    gstLatest,
+  ] = await Promise.all([
     Sale.countDocuments({ createdBy: userId, status: "completed" }),
     Purchase.countDocuments({ createdBy: userId }),
     latestOf(Purchase),
@@ -334,7 +401,11 @@ export async function listReportDataSources(userId) {
   ]);
 
   const expiryCount = await Batch.countDocuments({ status: { $in: ["expired", "near_expiry"] } });
-  const gstCount = await Sale.countDocuments({ createdBy: userId, gstTotal: { $gt: 0 }, status: "completed" });
+  const gstCount = await Sale.countDocuments({
+    createdBy: userId,
+    gstTotal: { $gt: 0 },
+    status: "completed",
+  });
   const paymentsCount = await Sale.countDocuments({ createdBy: userId, status: "completed" });
 
   const counts = {
@@ -399,13 +470,23 @@ export async function listSalesBills({ userId, query = {} }) {
   };
 
   const [docs, total] = await Promise.all([
-    Sale.find(filter).sort(sortMap[sort] ?? sortMap.newest).skip(skip).limit(limit).lean(),
+    Sale.find(filter)
+      .sort(sortMap[sort] ?? sortMap.newest)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Sale.countDocuments(filter),
   ]);
 
   return {
     items: docs.map(formatSalesBill),
-    meta: { page, limit, total, pages: Math.ceil(total / limit) || 0, hasMore: page * limit < total },
+    meta: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit) || 0,
+      hasMore: page * limit < total,
+    },
   };
 }
 
@@ -435,7 +516,9 @@ export async function createSalesBill({ data = {}, userId, userName }) {
     roundOff: totals.roundOff,
     grandTotal: totals.grandTotal,
     paymentMode: String(data.paymentMode ?? "Cash").trim(),
-    paymentStatus: String(data.paymentStatus ?? "paid").trim().toLowerCase(),
+    paymentStatus: String(data.paymentStatus ?? "paid")
+      .trim()
+      .toLowerCase(),
     source: BILL_SOURCES.includes(data.source) ? data.source : "manual",
     uploadedFile: data.uploadedFile ?? null,
     notes: String(data.notes ?? "").trim(),
@@ -571,7 +654,8 @@ function normalizePurchaseItems(items) {
     cgstTotal += cgst;
 
     return {
-      medicineId: line?.medicineId && mongoose.isValidObjectId(line.medicineId) ? line.medicineId : null,
+      medicineId:
+        line?.medicineId && mongoose.isValidObjectId(line.medicineId) ? line.medicineId : null,
       batchId: line?.batchId && mongoose.isValidObjectId(line.batchId) ? line.batchId : null,
       medicineName: String(line?.medicineName ?? "").trim(),
       quantity,
@@ -628,7 +712,8 @@ function validatePurchaseInput(data = {}) {
     data.items.forEach((it, idx) => {
       const label = `Item ${idx + 1}`;
       const qty = Number(it?.quantity);
-      if (!Number.isFinite(qty) || qty <= 0) errors.push(`${label}: quantity must be greater than 0`);
+      if (!Number.isFinite(qty) || qty <= 0)
+        errors.push(`${label}: quantity must be greater than 0`);
       const rate = Number(it?.unitCost ?? it?.rate);
       if (!Number.isFinite(rate) || rate < 0) errors.push(`${label}: invalid rate`);
       const mrp = Number(it?.mrp) || 0;
@@ -648,16 +733,30 @@ function validatePurchaseInput(data = {}) {
     });
   }
   const printed = Number(data.printedGrandTotal);
-  if (data.printedGrandTotal !== undefined && data.printedGrandTotal !== null && data.printedGrandTotal !== "" && (!Number.isFinite(printed) || printed < 0)) {
+  if (
+    data.printedGrandTotal !== undefined &&
+    data.printedGrandTotal !== null &&
+    data.printedGrandTotal !== "" &&
+    (!Number.isFinite(printed) || printed < 0)
+  ) {
     errors.push("Invalid printed grand total");
   }
-  if (data.documentType !== undefined && data.documentType !== "" && !PURCHASE_DOCUMENT_TYPES.includes(String(data.documentType).trim())) {
+  if (
+    data.documentType !== undefined &&
+    data.documentType !== "" &&
+    !PURCHASE_DOCUMENT_TYPES.includes(String(data.documentType).trim())
+  ) {
     errors.push("Invalid document type");
   }
   if (errors.length) throw ApiError.badRequest(errors.join("; "));
 }
 
-async function assertNoDuplicatePurchase(userId, orderNo, purchaseDate = new Date(), excludeId = null) {
+async function assertNoDuplicatePurchase(
+  userId,
+  orderNo,
+  purchaseDate = new Date(),
+  excludeId = null,
+) {
   const day = new Date(purchaseDate);
   const start = new Date(day);
   start.setHours(0, 0, 0, 0);
@@ -665,23 +764,33 @@ async function assertNoDuplicatePurchase(userId, orderNo, purchaseDate = new Dat
   end.setHours(23, 59, 59, 999);
   const existing = await Purchase.findOne({
     createdBy: userId,
-    orderNo: { $regex: new RegExp(`^${String(orderNo).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    orderNo: {
+      $regex: new RegExp(`^${String(orderNo).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+    },
     createdAt: { $gte: start, $lte: end },
-  }).select("_id orderNo").lean();
+  })
+    .select("_id orderNo")
+    .lean();
   if (existing && (!excludeId || String(existing._id) !== String(excludeId))) {
-    throw ApiError.conflict(`Duplicate purchase — ${existing.orderNo} already exists for this date.`);
+    throw ApiError.conflict(
+      `Duplicate purchase — ${existing.orderNo} already exists for this date.`,
+    );
   }
 }
 
 function buildPurchaseDoc(data) {
   const orderNo = String(data.invoiceNo ?? data.orderNo).trim();
   const totals = normalizePurchaseItems(data.items);
-  const printed = data.printedGrandTotal !== undefined && data.printedGrandTotal !== null && data.printedGrandTotal !== ""
-    ? Number(data.printedGrandTotal)
-    : null;
+  const printed =
+    data.printedGrandTotal !== undefined &&
+    data.printedGrandTotal !== null &&
+    data.printedGrandTotal !== ""
+      ? Number(data.printedGrandTotal)
+      : null;
   return {
     orderNo,
-    supplierId: data.supplierId && mongoose.isValidObjectId(data.supplierId) ? data.supplierId : null,
+    supplierId:
+      data.supplierId && mongoose.isValidObjectId(data.supplierId) ? data.supplierId : null,
     supplierName: String(data.supplierName ?? "").trim(),
     party: {
       name: String(data.party?.name ?? "").trim(),
@@ -698,7 +807,9 @@ function buildPurchaseDoc(data) {
     calculatedGrandTotal: totals.calculatedGrandTotal,
     roundOff: totals.roundOff,
     grandTotal: printed !== null ? round2(printed) : totals.calculatedGrandTotal,
-    documentType: PURCHASE_DOCUMENT_TYPES.includes(String(data.documentType ?? "").trim()) ? String(data.documentType).trim() : "purchase_invoice",
+    documentType: PURCHASE_DOCUMENT_TYPES.includes(String(data.documentType ?? "").trim())
+      ? String(data.documentType).trim()
+      : "purchase_invoice",
     source: PURCHASE_SOURCES.includes(data.source) ? data.source : "manual",
     originalDocument: data.originalDocument ?? data.uploadedFile ?? null,
     notes: String(data.notes ?? "").trim(),
@@ -798,18 +909,31 @@ export async function listPurchases({ userId, query = {} }) {
   };
 
   const [docs, total] = await Promise.all([
-    Purchase.find(filter).populate("supplierId", "name gstNumber").sort(sortMap[sort] ?? sortMap.newest).skip(skip).limit(limit).lean(),
+    Purchase.find(filter)
+      .populate("supplierId", "name gstNumber")
+      .sort(sortMap[sort] ?? sortMap.newest)
+      .skip(skip)
+      .limit(limit)
+      .lean(),
     Purchase.countDocuments(filter),
   ]);
 
   return {
     items: docs.map(formatPurchase),
-    meta: { page, limit, total, pages: Math.ceil(total / limit) || 0, hasMore: page * limit < total },
+    meta: {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit) || 0,
+      hasMore: page * limit < total,
+    },
   };
 }
 
 export async function getPurchase(id, userId) {
-  const doc = await Purchase.findOne({ _id: id, createdBy: userId }).populate("supplierId", "name gstNumber").lean();
+  const doc = await Purchase.findOne({ _id: id, createdBy: userId })
+    .populate("supplierId", "name gstNumber")
+    .lean();
   if (!doc) throw ApiError.notFound("Purchase not found");
   return formatPurchase(doc, { includeExtraction: true });
 }
@@ -837,7 +961,12 @@ export async function updatePurchase({ id, userId, data = {}, userName }) {
   if (!existing) throw ApiError.notFound("Purchase not found");
 
   const patch = {};
-  if (data.invoiceNo !== undefined || data.orderNo !== undefined || data.items !== undefined || data.purchaseDate !== undefined) {
+  if (
+    data.invoiceNo !== undefined ||
+    data.orderNo !== undefined ||
+    data.items !== undefined ||
+    data.purchaseDate !== undefined
+  ) {
     const merged = {
       ...existing,
       ...data,
@@ -847,34 +976,48 @@ export async function updatePurchase({ id, userId, data = {}, userName }) {
     validatePurchaseInput(merged);
     const newNo = String(merged.invoiceNo ?? merged.orderNo).trim();
     if (String(existing.orderNo).toLowerCase() !== newNo.toLowerCase()) {
-      const checkDate = data.purchaseDate ? parsePurchaseDate(data.purchaseDate) : existing.createdAt;
+      const checkDate = data.purchaseDate
+        ? parsePurchaseDate(data.purchaseDate)
+        : existing.createdAt;
       await assertNoDuplicatePurchase(userId, newNo, checkDate, id);
     }
     patch.orderNo = newNo;
     patch.createdAt = parsePurchaseDate(data.purchaseDate) ?? existing.createdAt;
 
     if (data.items !== undefined || data.printedGrandTotal !== undefined) {
-      const docPatch = buildPurchaseDoc({ ...data, invoiceNo: newNo, items: data.items ?? existing.items });
+      const docPatch = buildPurchaseDoc({
+        ...data,
+        invoiceNo: newNo,
+        items: data.items ?? existing.items,
+      });
       Object.assign(patch, docPatch);
     }
   }
 
   if (data.supplierName !== undefined) patch.supplierName = String(data.supplierName).trim();
   if (data.supplierId !== undefined) {
-    patch.supplierId = data.supplierId && mongoose.isValidObjectId(data.supplierId) ? data.supplierId : null;
+    patch.supplierId =
+      data.supplierId && mongoose.isValidObjectId(data.supplierId) ? data.supplierId : null;
   }
   if (data.party !== undefined) {
-    patch.party = { name: String(data.party?.name ?? "").trim(), gstin: String(data.party?.gstin ?? "").trim() };
+    patch.party = {
+      name: String(data.party?.name ?? "").trim(),
+      gstin: String(data.party?.gstin ?? "").trim(),
+    };
   }
   if (data.documentType !== undefined) {
-    patch.documentType = PURCHASE_DOCUMENT_TYPES.includes(String(data.documentType).trim()) ? String(data.documentType).trim() : "purchase_invoice";
+    patch.documentType = PURCHASE_DOCUMENT_TYPES.includes(String(data.documentType).trim())
+      ? String(data.documentType).trim()
+      : "purchase_invoice";
   }
   if (data.notes !== undefined) patch.notes = String(data.notes).trim();
   if (data.originalDocument !== undefined) patch.originalDocument = data.originalDocument ?? null;
   if (data.extraction !== undefined) patch.extraction = sanitizeExtraction(data.extraction);
   if (userName) patch.createdByName = userName;
 
-  const doc = await Purchase.findByIdAndUpdate(id, { $set: patch }, { new: true }).populate("supplierId", "name gstNumber").lean();
+  const doc = await Purchase.findByIdAndUpdate(id, { $set: patch }, { new: true })
+    .populate("supplierId", "name gstNumber")
+    .lean();
   return formatPurchase(doc);
 }
 
@@ -934,7 +1077,15 @@ export async function uploadSalesBillImage({ userId, userName, file }) {
    --------------------------------------------------------------------- */
 
 const COLUMN_ALIASES = {
-  invoiceNo: ["invoiceNo", "bill number", "invoice no", "invoice number", "invoice", "billno", "bill no"],
+  invoiceNo: [
+    "invoiceNo",
+    "bill number",
+    "invoice no",
+    "invoice number",
+    "invoice",
+    "billno",
+    "bill no",
+  ],
   billDate: ["billDate", "date", "bill date", "invoice date"],
   customerName: ["customerName", "customer", "customer name", "name"],
   customerPhone: ["customerPhone", "phone", "customer phone", "mobile"],
@@ -965,7 +1116,8 @@ function normalizePaymentMode(value) {
   if (hit) return hit;
   if (["upi", "gpay", "google pay", "phonepe"].includes(v)) return "UPI";
   if (v.includes("card")) return "Card";
-  if (v.includes("bank") || v.includes("transfer") || v.includes("neft") || v.includes("imps")) return "Bank Transfer";
+  if (v.includes("bank") || v.includes("transfer") || v.includes("neft") || v.includes("imps"))
+    return "Bank Transfer";
   if (v.includes("credit")) return "Credit";
   if (v.includes("cash")) return "Cash";
   return null;
@@ -990,15 +1142,27 @@ function validateCsvRow(row, index) {
     errors.push("Quantity must be greater than 0");
   }
   const price = Number(data.unitPrice);
-  if (data.unitPrice !== undefined && data.unitPrice !== "" && (!Number.isFinite(price) || price < 0)) {
+  if (
+    data.unitPrice !== undefined &&
+    data.unitPrice !== "" &&
+    (!Number.isFinite(price) || price < 0)
+  ) {
     errors.push("Invalid amount");
   }
   const gst = Number(data.gstRate);
-  if (data.gstRate !== undefined && data.gstRate !== "" && (!Number.isFinite(gst) || gst < 0 || gst > 100)) {
+  if (
+    data.gstRate !== undefined &&
+    data.gstRate !== "" &&
+    (!Number.isFinite(gst) || gst < 0 || gst > 100)
+  ) {
     errors.push("Invalid GST");
   }
   const disc = Number(data.discountPct);
-  if (data.discountPct !== undefined && data.discountPct !== "" && (!Number.isFinite(disc) || disc < 0 || disc > 100)) {
+  if (
+    data.discountPct !== undefined &&
+    data.discountPct !== "" &&
+    (!Number.isFinite(disc) || disc < 0 || disc > 100)
+  ) {
     errors.push("Invalid discount");
   }
   if (data.paymentMode) {
@@ -1048,8 +1212,12 @@ export async function validateSalesImport(csv, _userId) {
   const existing = await Sale.find({
     createdBy: _userId,
     invoiceNo: { $in: validRows.map((r) => r.data.invoiceNo).filter(Boolean) },
-  }).select("invoiceNo").lean();
-  const existingByNo = new Map(existing.map((e) => [String(e.invoiceNo).toLowerCase(), e.invoiceNo]));
+  })
+    .select("invoiceNo")
+    .lean();
+  const existingByNo = new Map(
+    existing.map((e) => [String(e.invoiceNo).toLowerCase(), e.invoiceNo]),
+  );
 
   for (const r of results) {
     if (!r.valid) continue;
@@ -1097,9 +1265,13 @@ export async function importSalesBills({ rows, duplicateMode = "skip", userId, u
     const existing = await Sale.find({
       createdBy: userId,
       invoiceNo: { $in: validated.filter((r) => r.valid).map((r) => r.data.invoiceNo) },
-    }).select("invoiceNo").lean();
+    })
+      .select("invoiceNo")
+      .lean();
     if (existing.length > 0) {
-      throw ApiError.conflict("Duplicate bills detected — import cancelled. Choose Skip or Replace and try again.");
+      throw ApiError.conflict(
+        "Duplicate bills detected — import cancelled. Choose Skip or Replace and try again.",
+      );
     }
   }
 
@@ -1117,7 +1289,9 @@ export async function importSalesBills({ rows, duplicateMode = "skip", userId, u
     ]);
     const billDate = new Date(r.data.billDate);
 
-    const existingDoc = await Sale.findOne({ createdBy: userId, invoiceNo: r.data.invoiceNo }).select("_id createdBy").lean();
+    const existingDoc = await Sale.findOne({ createdBy: userId, invoiceNo: r.data.invoiceNo })
+      .select("_id createdBy")
+      .lean();
     if (existingDoc) {
       if (mode === "replace") {
         await Sale.updateOne(
@@ -1180,8 +1354,26 @@ export async function importSalesBills({ rows, duplicateMode = "skip", userId, u
    --------------------------------------------------------------------- */
 
 const PURCHASE_COLUMN_ALIASES = {
-  invoiceNo: ["invoiceNo", "orderNo", "invoice", "invoice no", "invoice number", "order no", "order number", "bill number", "bill no", "po number"],
-  purchaseDate: ["purchaseDate", "date", "purchase date", "invoice date", "order date", "bill date"],
+  invoiceNo: [
+    "invoiceNo",
+    "orderNo",
+    "invoice",
+    "invoice no",
+    "invoice number",
+    "order no",
+    "order number",
+    "bill number",
+    "bill no",
+    "po number",
+  ],
+  purchaseDate: [
+    "purchaseDate",
+    "date",
+    "purchase date",
+    "invoice date",
+    "order date",
+    "bill date",
+  ],
   supplierName: ["supplierName", "supplier", "supplier name", "vendor", "distributor", "party"],
   medicineName: ["medicineName", "medicine", "medicine name", "item", "product", "drug"],
   hsnCode: ["hsnCode", "hsn", "hsn code", "hsn no"],
@@ -1231,16 +1423,27 @@ function validatePurchaseCsvRow(row, index) {
     errors.push("Invalid amount");
   }
   const gst = Number(data.gstRate);
-  if (data.gstRate !== undefined && data.gstRate !== "" && (!Number.isFinite(gst) || gst < 0 || gst > 100)) {
+  if (
+    data.gstRate !== undefined &&
+    data.gstRate !== "" &&
+    (!Number.isFinite(gst) || gst < 0 || gst > 100)
+  ) {
     errors.push("Invalid GST");
   }
   const sgst = Number(data.sgstRate);
   const cgst = Number(data.cgstRate);
-  if ((data.sgstRate && (!Number.isFinite(sgst) || sgst < 0 || sgst > 100)) || (data.cgstRate && (!Number.isFinite(cgst) || cgst < 0 || cgst > 100))) {
+  if (
+    (data.sgstRate && (!Number.isFinite(sgst) || sgst < 0 || sgst > 100)) ||
+    (data.cgstRate && (!Number.isFinite(cgst) || cgst < 0 || cgst > 100))
+  ) {
     errors.push("Invalid SGST/CGST");
   }
   const disc = Number(data.discountPct);
-  if (data.discountPct !== undefined && data.discountPct !== "" && (!Number.isFinite(disc) || disc < 0 || disc > 100)) {
+  if (
+    data.discountPct !== undefined &&
+    data.discountPct !== "" &&
+    (!Number.isFinite(disc) || disc < 0 || disc > 100)
+  ) {
     errors.push("Invalid discount");
   }
 
@@ -1284,7 +1487,9 @@ export async function validatePurchaseImport(csv, userId) {
   const existing = await Purchase.find({
     createdBy: userId,
     orderNo: { $in: validRows.map((r) => r.data.invoiceNo).filter(Boolean) },
-  }).select("orderNo").lean();
+  })
+    .select("orderNo")
+    .lean();
   const existingByNo = new Map(existing.map((e) => [String(e.orderNo).toLowerCase(), e.orderNo]));
 
   for (const r of results) {
@@ -1331,9 +1536,13 @@ export async function importPurchases({ rows, duplicateMode = "skip", userId, us
     const existing = await Purchase.find({
       createdBy: userId,
       orderNo: { $in: validated.filter((r) => r.valid).map((r) => r.data.invoiceNo) },
-    }).select("orderNo").lean();
+    })
+      .select("orderNo")
+      .lean();
     if (existing.length > 0) {
-      throw ApiError.conflict("Duplicate purchases detected — import cancelled. Choose Skip or Replace and try again.");
+      throw ApiError.conflict(
+        "Duplicate purchases detected — import cancelled. Choose Skip or Replace and try again.",
+      );
     }
   }
 
@@ -1358,7 +1567,9 @@ export async function importPurchases({ rows, duplicateMode = "skip", userId, us
     ]);
     const purchaseDate = new Date(r.data.purchaseDate);
 
-    const existingDoc = await Purchase.findOne({ createdBy: userId, orderNo: r.data.invoiceNo }).select("_id").lean();
+    const existingDoc = await Purchase.findOne({ createdBy: userId, orderNo: r.data.invoiceNo })
+      .select("_id")
+      .lean();
     if (existingDoc) {
       if (mode === "replace") {
         await Purchase.updateOne(
@@ -1400,7 +1611,17 @@ export async function importPurchases({ rows, duplicateMode = "skip", userId, us
    invented. Returns column labels plus row arrays so the UI stays generic.
    --------------------------------------------------------------------- */
 
-const READONLY_SOURCES = new Set(["purchases", "medicines", "suppliers", "inventory", "customers", "payments", "gst", "expiry", "audit"]);
+const READONLY_SOURCES = new Set([
+  "purchases",
+  "medicines",
+  "suppliers",
+  "inventory",
+  "customers",
+  "payments",
+  "gst",
+  "expiry",
+  "audit",
+]);
 
 export async function listSourceData(source, userId) {
   if (!READONLY_SOURCES.has(source)) {
@@ -1409,7 +1630,11 @@ export async function listSourceData(source, userId) {
 
   const limit = 100;
   if (source === "purchases") {
-    const docs = await Purchase.find({ createdBy: userId }).populate("supplierId", "name").sort({ createdAt: -1 }).limit(limit).lean();
+    const docs = await Purchase.find({ createdBy: userId })
+      .populate("supplierId", "name")
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
     return {
       source,
       name: "Purchases",
@@ -1425,12 +1650,22 @@ export async function listSourceData(source, userId) {
     };
   }
   if (source === "medicines") {
-    const docs = await Medicine.find().populate("categoryId", "name").sort({ name: 1 }).limit(limit).lean();
+    const docs = await Medicine.find()
+      .populate("categoryId", "name")
+      .sort({ name: 1 })
+      .limit(limit)
+      .lean();
     return {
       source,
       name: "Medicines",
       columns: ["Medicine", "Category", "HSN Code", "GST %", "Active"],
-      items: docs.map((d) => [d.name, d.categoryId?.name ?? "General", d.hsnCode || "", d.gstRate ?? 0, d.isActive ? "Yes" : "No"]),
+      items: docs.map((d) => [
+        d.name,
+        d.categoryId?.name ?? "General",
+        d.hsnCode || "",
+        d.gstRate ?? 0,
+        d.isActive ? "Yes" : "No",
+      ]),
     };
   }
   if (source === "suppliers") {
@@ -1443,17 +1678,33 @@ export async function listSourceData(source, userId) {
     };
   }
   if (source === "inventory") {
-    const docs = await Batch.find().populate("medicineId", "name").sort({ updatedAt: -1 }).limit(limit).lean();
+    const docs = await Batch.find()
+      .populate("medicineId", "name")
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .lean();
     return {
       source,
       name: "Inventory",
       columns: ["Medicine", "Batch", "Stock", "Expiry", "Status"],
-      items: docs.map((d) => [d.medicineId?.name ?? "", d.batchNumber, d.currentStock ?? 0, d.expiryDate, d.status]),
+      items: docs.map((d) => [
+        d.medicineId?.name ?? "",
+        d.batchNumber,
+        d.currentStock ?? 0,
+        d.expiryDate,
+        d.status,
+      ]),
     };
   }
   if (source === "customers") {
     const rows = await Sale.aggregate([
-      { $match: { createdBy: new mongoose.Types.ObjectId(userId), status: "completed", customerName: { $exists: true, $ne: "" } } },
+      {
+        $match: {
+          createdBy: new mongoose.Types.ObjectId(userId),
+          status: "completed",
+          customerName: { $exists: true, $ne: "" },
+        },
+      },
       {
         $group: {
           _id: "$customerName",
@@ -1473,30 +1724,60 @@ export async function listSourceData(source, userId) {
     };
   }
   if (source === "payments") {
-    const docs = await Sale.find({ createdBy: userId, status: "completed" }).sort({ createdAt: -1 }).limit(limit).lean();
+    const docs = await Sale.find({ createdBy: userId, status: "completed" })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
     return {
       source,
       name: "Payments",
       columns: ["Bill", "Customer", "Mode", "Status", "Amount", "Date"],
-      items: docs.map((d) => [d.invoiceNo, d.customerName || "", d.paymentMode, d.paymentStatus, d.grandTotal, d.createdAt]),
+      items: docs.map((d) => [
+        d.invoiceNo,
+        d.customerName || "",
+        d.paymentMode,
+        d.paymentStatus,
+        d.grandTotal,
+        d.createdAt,
+      ]),
     };
   }
   if (source === "gst") {
-    const docs = await Sale.find({ createdBy: userId, status: "completed", gstTotal: { $gt: 0 } }).sort({ createdAt: -1 }).limit(limit).lean();
+    const docs = await Sale.find({ createdBy: userId, status: "completed", gstTotal: { $gt: 0 } })
+      .sort({ createdAt: -1 })
+      .limit(limit)
+      .lean();
     return {
       source,
       name: "GST / Tax",
       columns: ["Bill", "Customer", "Subtotal", "GST", "Total", "Date"],
-      items: docs.map((d) => [d.invoiceNo, d.customerName || "", d.subtotal ?? 0, d.gstTotal ?? 0, d.grandTotal, d.createdAt]),
+      items: docs.map((d) => [
+        d.invoiceNo,
+        d.customerName || "",
+        d.subtotal ?? 0,
+        d.gstTotal ?? 0,
+        d.grandTotal,
+        d.createdAt,
+      ]),
     };
   }
   if (source === "expiry") {
-    const docs = await Batch.find({ status: { $in: ["expired", "near_expiry"] } }).populate("medicineId", "name").sort({ expiryDate: 1 }).limit(limit).lean();
+    const docs = await Batch.find({ status: { $in: ["expired", "near_expiry"] } })
+      .populate("medicineId", "name")
+      .sort({ expiryDate: 1 })
+      .limit(limit)
+      .lean();
     return {
       source,
       name: "Expiry",
       columns: ["Medicine", "Batch", "Stock", "Expiry", "Status"],
-      items: docs.map((d) => [d.medicineId?.name ?? "", d.batchNumber, d.currentStock ?? 0, d.expiryDate, d.status]),
+      items: docs.map((d) => [
+        d.medicineId?.name ?? "",
+        d.batchNumber,
+        d.currentStock ?? 0,
+        d.expiryDate,
+        d.status,
+      ]),
     };
   }
   const docs = await AuditLog.find().sort({ createdAt: -1 }).limit(limit).lean();
@@ -1600,7 +1881,8 @@ function normalizeReportBillItems(items, mode = "auto") {
     const cgstRateIn = Math.min(100, Math.max(0, Number(line?.cgstRate) || 0));
     const unitPrice = Number(line?.unitPrice) || 0;
     const unitCost = Number(line?.unitCost ?? line?.rate) || 0;
-    const rate = mode === "sales" ? unitPrice : mode === "purchase" ? unitCost : unitPrice || unitCost;
+    const rate =
+      mode === "sales" ? unitPrice : mode === "purchase" ? unitCost : unitPrice || unitCost;
 
     const gross = quantity * rate;
     const discount = (gross * discountPct) / 100;
@@ -1617,7 +1899,8 @@ function normalizeReportBillItems(items, mode = "auto") {
     cgstTotal += cgst;
 
     return {
-      medicineId: line?.medicineId && mongoose.isValidObjectId(line.medicineId) ? line.medicineId : null,
+      medicineId:
+        line?.medicineId && mongoose.isValidObjectId(line.medicineId) ? line.medicineId : null,
       batchId: line?.batchId && mongoose.isValidObjectId(line.batchId) ? line.batchId : null,
       medicineName: String(line?.medicineName ?? "").trim(),
       quantity,
@@ -1667,7 +1950,9 @@ function validateReportBillInput(data = {}) {
   if (!REPORT_BILL_DOCUMENT_TYPES.includes(documentType)) {
     errors.push("Invalid document type");
   }
-  const invoiceNo = String(data.invoice?.invoiceNumber ?? data.invoiceNo ?? data.orderNo ?? "").trim();
+  const invoiceNo = String(
+    data.invoice?.invoiceNumber ?? data.invoiceNo ?? data.orderNo ?? "",
+  ).trim();
   if (!invoiceNo) errors.push("Invoice number is required");
   const invoiceDate = data.invoice?.invoiceDate ?? data.billDate ?? data.purchaseDate;
   if (invoiceDate !== undefined && invoiceDate !== null && invoiceDate !== "") {
@@ -1680,7 +1965,8 @@ function validateReportBillInput(data = {}) {
     data.items.forEach((it, idx) => {
       const label = `Item ${idx + 1}`;
       const qty = Number(it?.quantity);
-      if (!Number.isFinite(qty) || qty <= 0) errors.push(`${label}: quantity must be greater than 0`);
+      if (!Number.isFinite(qty) || qty <= 0)
+        errors.push(`${label}: quantity must be greater than 0`);
       const rate = Number(it?.unitPrice) || Number(it?.unitCost ?? it?.rate);
       if (!Number.isFinite(rate) || rate < 0) errors.push(`${label}: invalid rate`);
       const mrp = Number(it?.mrp) || 0;
@@ -1700,13 +1986,26 @@ function validateReportBillInput(data = {}) {
     });
   }
   const printed = Number(data.printedGrandTotal);
-  if (data.printedGrandTotal !== undefined && data.printedGrandTotal !== null && data.printedGrandTotal !== "" && (!Number.isFinite(printed) || printed < 0)) {
+  if (
+    data.printedGrandTotal !== undefined &&
+    data.printedGrandTotal !== null &&
+    data.printedGrandTotal !== "" &&
+    (!Number.isFinite(printed) || printed < 0)
+  ) {
     errors.push("Invalid printed grand total");
   }
-  if (data.paymentMode !== undefined && data.paymentMode !== "" && !PAYMENT_MODES.includes(String(data.paymentMode).trim())) {
+  if (
+    data.paymentMode !== undefined &&
+    data.paymentMode !== "" &&
+    !PAYMENT_MODES.includes(String(data.paymentMode).trim())
+  ) {
     errors.push(`Invalid payment mode. Use one of: ${PAYMENT_MODES.join(", ")}`);
   }
-  if (data.paymentStatus !== undefined && data.paymentStatus !== "" && !PAYMENT_STATUSES.includes(String(data.paymentStatus).trim().toLowerCase())) {
+  if (
+    data.paymentStatus !== undefined &&
+    data.paymentStatus !== "" &&
+    !PAYMENT_STATUSES.includes(String(data.paymentStatus).trim().toLowerCase())
+  ) {
     errors.push("Invalid payment status. Use paid, pending or partial");
   }
   if (errors.length) throw ApiError.badRequest(errors.join("; "));
@@ -1715,7 +2014,12 @@ function validateReportBillInput(data = {}) {
 // Duplicate protection is ownership-aware and date-scoped (same number on a
 // different day is a legitimate repeat). Matches createdBy + invoice number
 // (case-insensitive) + the invoice's calendar day.
-async function assertNoDuplicateReportBill(userId, invoiceNumber, invoiceDate = new Date(), excludeId = null) {
+async function assertNoDuplicateReportBill(
+  userId,
+  invoiceNumber,
+  invoiceDate = new Date(),
+  excludeId = null,
+) {
   if (!invoiceNumber) return;
   const day = new Date(invoiceDate);
   const start = new Date(day);
@@ -1724,9 +2028,13 @@ async function assertNoDuplicateReportBill(userId, invoiceNumber, invoiceDate = 
   end.setHours(23, 59, 59, 999);
   const existing = await ReportBill.findOne({
     createdBy: userId,
-    "invoice.invoiceNumber": { $regex: new RegExp(`^${String(invoiceNumber).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i") },
+    "invoice.invoiceNumber": {
+      $regex: new RegExp(`^${String(invoiceNumber).replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i"),
+    },
     "invoice.invoiceDate": { $gte: start, $lte: end },
-  }).select("_id").lean();
+  })
+    .select("_id")
+    .lean();
   if (existing && (!excludeId || String(existing._id) !== String(excludeId))) {
     throw ApiError.conflict(`Duplicate bill — ${invoiceNumber} already exists for this date.`);
   }
@@ -1741,21 +2049,35 @@ function buildReportBillDoc(data) {
   const mode = pickReportBillMode(documentType);
   const isSales = mode === "sales";
 
-  const invoiceNumber = String(data.invoice?.invoiceNumber ?? data.invoiceNo ?? data.orderNo ?? "").trim();
-  const invoiceDate = parseReportBillDate(data.invoice?.invoiceDate ?? data.billDate ?? data.purchaseDate) ?? new Date();
+  const invoiceNumber = String(
+    data.invoice?.invoiceNumber ?? data.invoiceNo ?? data.orderNo ?? "",
+  ).trim();
+  const invoiceDate =
+    parseReportBillDate(data.invoice?.invoiceDate ?? data.billDate ?? data.purchaseDate) ??
+    new Date();
 
   const supplierRaw = data.supplier ?? {};
   const customerRaw = data.customer ?? {};
-  const supplierName = String(data.supplierName ?? supplierRaw.name ?? data.party?.name ?? "").trim();
-  const supplierGstin = String(supplierRaw.gstin ?? data.supplierGstin ?? data.party?.gstin ?? "").trim();
-  const customerName = String(data.customerName ?? customerRaw.name ?? (isSales ? data.party?.name ?? "" : "")).trim();
+  const supplierName = String(
+    data.supplierName ?? supplierRaw.name ?? data.party?.name ?? "",
+  ).trim();
+  const supplierGstin = String(
+    supplierRaw.gstin ?? data.supplierGstin ?? data.party?.gstin ?? "",
+  ).trim();
+  const customerName = String(
+    data.customerName ?? customerRaw.name ?? (isSales ? (data.party?.name ?? "") : ""),
+  ).trim();
   const customerGstin = String(data.customerGstin ?? customerRaw.gstin ?? "").trim();
 
   const totals = normalizeReportBillItems(data.items ?? [], mode);
-  const printed = data.printedGrandTotal !== undefined && data.printedGrandTotal !== null && data.printedGrandTotal !== ""
-    ? Number(data.printedGrandTotal)
-    : null;
-  const printedFinal = printed !== null && Number.isFinite(printed) && printed >= 0 ? round2(printed) : null;
+  const printed =
+    data.printedGrandTotal !== undefined &&
+    data.printedGrandTotal !== null &&
+    data.printedGrandTotal !== ""
+      ? Number(data.printedGrandTotal)
+      : null;
+  const printedFinal =
+    printed !== null && Number.isFinite(printed) && printed >= 0 ? round2(printed) : null;
   const totalsOut = {
     ...totals.totals,
     printedGrandTotal: printedFinal,
@@ -1783,8 +2105,14 @@ function buildReportBillDoc(data) {
     totals: totalsOut,
     payment: {
       mode: String(data.payment?.mode ?? data.paymentMode ?? "Cash").trim(),
-      status: PAYMENT_STATUSES.includes(String(data.payment?.status ?? data.paymentStatus ?? "").trim().toLowerCase())
-        ? String(data.payment?.status ?? data.paymentStatus).trim().toLowerCase()
+      status: PAYMENT_STATUSES.includes(
+        String(data.payment?.status ?? data.paymentStatus ?? "")
+          .trim()
+          .toLowerCase(),
+      )
+        ? String(data.payment?.status ?? data.paymentStatus)
+            .trim()
+            .toLowerCase()
         : "paid",
     },
     status: resolveReportBillStatus(documentType),
@@ -1806,7 +2134,11 @@ export function unifiedFromReportBill(rb, { includeExtraction = false } = {}) {
     billDate: rb.createdAt ?? rb.invoice?.invoiceDate ?? null,
     purchaseDate: rb.createdAt ?? rb.invoice?.invoiceDate ?? null,
     invoiceDate: rb.invoice?.invoiceDate ?? rb.createdAt ?? null,
-    party: { name: partyName, gstin: isSales ? rb.customer?.gstin || "" : rb.supplier?.gstin || "", phone: rb.supplier?.phone || rb.customer?.phone || "" },
+    party: {
+      name: partyName,
+      gstin: isSales ? rb.customer?.gstin || "" : rb.supplier?.gstin || "",
+      phone: rb.supplier?.phone || rb.customer?.phone || "",
+    },
     customerName: rb.customer?.name || "",
     customerGstin: rb.customer?.gstin || "",
     customerPhone: rb.customer?.phone || "",
@@ -1900,7 +2232,11 @@ export function unifiedFromPurchase(p, { includeExtraction = false } = {}) {
     billDate: null,
     purchaseDate: p.createdAt,
     invoiceDate: null,
-    party: { name: p.supplierId?.name ?? p.supplierName ?? "", gstin: p.party?.gstin || "", phone: "" },
+    party: {
+      name: p.supplierId?.name ?? p.supplierName ?? "",
+      gstin: p.party?.gstin || "",
+      phone: "",
+    },
     customerName: "",
     customerGstin: "",
     customerPhone: "",
@@ -1968,7 +2304,16 @@ function unifiedToPurchaseInput(data) {
 }
 
 export async function listReportBills({ userId, query = {} }) {
-  const { search, dateFrom, dateTo, source, paymentMode, paymentStatus, documentType, sort = "newest" } = query;
+  const {
+    search,
+    dateFrom,
+    dateTo,
+    source,
+    paymentMode,
+    paymentStatus,
+    documentType,
+    sort = "newest",
+  } = query;
   const { page, limit, skip } = buildPagination(query);
 
   // Each collection contributes at most this many newest records; the union of
@@ -2060,15 +2405,25 @@ export async function listReportBills({ userId, query = {} }) {
 
   const [saleRes, purchaseRes, rbRes] = await Promise.all([
     wantSales
-      ? Promise.all([Sale.find(saleFilter).sort(dbSort).limit(fetchLimit).lean(), Sale.countDocuments(saleFilter)])
+      ? Promise.all([
+          Sale.find(saleFilter).sort(dbSort).limit(fetchLimit).lean(),
+          Sale.countDocuments(saleFilter),
+        ])
       : Promise.resolve([[], 0]),
     wantPurchases
       ? Promise.all([
-          Purchase.find(purchaseFilter).populate("supplierId", "name gstNumber").sort(dbSort).limit(fetchLimit).lean(),
+          Purchase.find(purchaseFilter)
+            .populate("supplierId", "name gstNumber")
+            .sort(dbSort)
+            .limit(fetchLimit)
+            .lean(),
           Purchase.countDocuments(purchaseFilter),
         ])
       : Promise.resolve([[], 0]),
-    Promise.all([ReportBill.find(rbFilter).sort(dbSort).limit(fetchLimit).lean(), ReportBill.countDocuments(rbFilter)]),
+    Promise.all([
+      ReportBill.find(rbFilter).sort(dbSort).limit(fetchLimit).lean(),
+      ReportBill.countDocuments(rbFilter),
+    ]),
   ]);
 
   const [saleDocs, saleTotal] = saleRes;
@@ -2090,7 +2445,10 @@ export async function listReportBills({ userId, query = {} }) {
     return cmp;
   });
 
-  return { items: combined.slice(skip, skip + limit), meta: paginationMeta(total, { page, limit }) };
+  return {
+    items: combined.slice(skip, skip + limit),
+    meta: paginationMeta(total, { page, limit }),
+  };
 }
 
 export async function getReportBill(id, userId) {
@@ -2098,7 +2456,9 @@ export async function getReportBill(id, userId) {
   if (rb) return unifiedFromReportBill(rb, { includeExtraction: true });
   const sale = await Sale.findOne({ _id: id, createdBy: userId }).lean();
   if (sale) return unifiedFromSale(sale, { includeExtraction: true });
-  const purchase = await Purchase.findOne({ _id: id, createdBy: userId }).populate("supplierId", "name gstNumber").lean();
+  const purchase = await Purchase.findOne({ _id: id, createdBy: userId })
+    .populate("supplierId", "name gstNumber")
+    .lean();
   if (purchase) return unifiedFromPurchase(purchase, { includeExtraction: true });
   throw ApiError.notFound("Bill not found");
 }
@@ -2137,14 +2497,32 @@ async function updateReportBillDoc(id, existing, { data, userId, userName }) {
   const mode = pickReportBillMode(existing.documentType);
 
   const wantsIdentity =
-    data.invoiceNo !== undefined || data.orderNo !== undefined ||
-    data.invoice?.invoiceNumber !== undefined || data.invoiceDate !== undefined ||
-    data.invoice?.invoiceDate !== undefined || data.billDate !== undefined || data.purchaseDate !== undefined;
+    data.invoiceNo !== undefined ||
+    data.orderNo !== undefined ||
+    data.invoice?.invoiceNumber !== undefined ||
+    data.invoiceDate !== undefined ||
+    data.invoice?.invoiceDate !== undefined ||
+    data.billDate !== undefined ||
+    data.purchaseDate !== undefined;
   if (wantsIdentity) {
-    const newNo = String(data.invoice?.invoiceNumber ?? data.invoiceNo ?? data.orderNo ?? existing.invoice?.invoiceNumber ?? "").trim();
-    const newDate = parseReportBillDate(data.invoice?.invoiceDate ?? data.invoiceDate ?? data.billDate ?? data.purchaseDate) ?? existing.invoice?.invoiceDate ?? existing.createdAt;
-    const changedNo = String(existing.invoice?.invoiceNumber ?? "").toLowerCase() !== newNo.toLowerCase();
-    const changedDate = !existing.invoice?.invoiceDate || new Date(existing.invoice?.invoiceDate).getTime() !== new Date(newDate).getTime();
+    const newNo = String(
+      data.invoice?.invoiceNumber ??
+        data.invoiceNo ??
+        data.orderNo ??
+        existing.invoice?.invoiceNumber ??
+        "",
+    ).trim();
+    const newDate =
+      parseReportBillDate(
+        data.invoice?.invoiceDate ?? data.invoiceDate ?? data.billDate ?? data.purchaseDate,
+      ) ??
+      existing.invoice?.invoiceDate ??
+      existing.createdAt;
+    const changedNo =
+      String(existing.invoice?.invoiceNumber ?? "").toLowerCase() !== newNo.toLowerCase();
+    const changedDate =
+      !existing.invoice?.invoiceDate ||
+      new Date(existing.invoice?.invoiceDate).getTime() !== new Date(newDate).getTime();
     if (changedNo || changedDate) await assertNoDuplicateReportBill(userId, newNo, newDate, id);
     patch["invoice.invoiceNumber"] = newNo;
     patch["invoice.invoiceDate"] = newDate;
@@ -2152,7 +2530,12 @@ async function updateReportBillDoc(id, existing, { data, userId, userName }) {
   }
 
   if (data.items !== undefined) {
-    validateReportBillInput({ ...data, documentType: existing.documentType, invoiceNo: patch["invoice.invoiceNumber"] ?? existing.invoice?.invoiceNumber, invoiceDate: patch["invoice.invoiceDate"] ?? existing.invoice?.invoiceDate });
+    validateReportBillInput({
+      ...data,
+      documentType: existing.documentType,
+      invoiceNo: patch["invoice.invoiceNumber"] ?? existing.invoice?.invoiceNumber,
+      invoiceDate: patch["invoice.invoiceDate"] ?? existing.invoice?.invoiceDate,
+    });
     const totals = normalizeReportBillItems(data.items, mode);
     patch.items = totals.items;
     patch["totals.subtotal"] = totals.totals.subtotal;
@@ -2166,46 +2549,80 @@ async function updateReportBillDoc(id, existing, { data, userId, userName }) {
   }
 
   if (data.printedGrandTotal !== undefined) {
-    const printed = data.printedGrandTotal !== null && data.printedGrandTotal !== ""
-      ? Number(data.printedGrandTotal)
-      : null;
-    const printedFinal = printed !== null && Number.isFinite(printed) && printed >= 0 ? round2(printed) : null;
+    const printed =
+      data.printedGrandTotal !== null && data.printedGrandTotal !== ""
+        ? Number(data.printedGrandTotal)
+        : null;
+    const printedFinal =
+      printed !== null && Number.isFinite(printed) && printed >= 0 ? round2(printed) : null;
     patch["totals.printedGrandTotal"] = printedFinal;
   }
 
   // Grand total follows the printed total when present, else the calculation.
-  const currentPrinted = patch["totals.printedGrandTotal"] !== undefined
-    ? patch["totals.printedGrandTotal"]
-    : existing.totals?.printedGrandTotal ?? null;
-  const currentCalculated = patch["totals.calculatedGrandTotal"] !== undefined
-    ? patch["totals.calculatedGrandTotal"]
-    : existing.totals?.calculatedGrandTotal ?? 0;
+  const currentPrinted =
+    patch["totals.printedGrandTotal"] !== undefined
+      ? patch["totals.printedGrandTotal"]
+      : (existing.totals?.printedGrandTotal ?? null);
+  const currentCalculated =
+    patch["totals.calculatedGrandTotal"] !== undefined
+      ? patch["totals.calculatedGrandTotal"]
+      : (existing.totals?.calculatedGrandTotal ?? 0);
   patch["totals.grandTotal"] = currentPrinted ?? currentCalculated;
 
-  if (data.supplierName !== undefined || data.supplier !== undefined || data.supplierPhone !== undefined) {
+  if (
+    data.supplierName !== undefined ||
+    data.supplier !== undefined ||
+    data.supplierPhone !== undefined
+  ) {
     const supplierRaw = data.supplier ?? {};
-    const supplierPhoneRaw = String(supplierRaw.phone ?? data.supplierPhone ?? existing.supplier?.phone ?? "").trim();
-    patch["supplier.name"] = String(data.supplierName ?? supplierRaw.name ?? existing.supplier?.name ?? "").trim();
-    patch["supplier.address"] = String(supplierRaw.address ?? existing.supplier?.address ?? "").trim();
-    patch["supplier.gstin"] = String(supplierRaw.gstin ?? data.supplierGstin ?? existing.supplier?.gstin ?? "").trim();
+    const supplierPhoneRaw = String(
+      supplierRaw.phone ?? data.supplierPhone ?? existing.supplier?.phone ?? "",
+    ).trim();
+    patch["supplier.name"] = String(
+      data.supplierName ?? supplierRaw.name ?? existing.supplier?.name ?? "",
+    ).trim();
+    patch["supplier.address"] = String(
+      supplierRaw.address ?? existing.supplier?.address ?? "",
+    ).trim();
+    patch["supplier.gstin"] = String(
+      supplierRaw.gstin ?? data.supplierGstin ?? existing.supplier?.gstin ?? "",
+    ).trim();
     patch["supplier.phone"] = supplierPhoneRaw ? normalizeIndianPhone(supplierPhoneRaw) : "";
   }
-  if (data.customerName !== undefined || data.customer !== undefined || data.customerPhone !== undefined) {
+  if (
+    data.customerName !== undefined ||
+    data.customer !== undefined ||
+    data.customerPhone !== undefined
+  ) {
     const customerRaw = data.customer ?? {};
-    const customerPhoneRaw = String(data.customerPhone ?? customerRaw.phone ?? existing.customer?.phone ?? "").trim();
-    patch["customer.name"] = String(data.customerName ?? customerRaw.name ?? existing.customer?.name ?? "").trim();
-    patch["customer.gstin"] = String(data.customerGstin ?? customerRaw.gstin ?? existing.customer?.gstin ?? "").trim();
+    const customerPhoneRaw = String(
+      data.customerPhone ?? customerRaw.phone ?? existing.customer?.phone ?? "",
+    ).trim();
+    patch["customer.name"] = String(
+      data.customerName ?? customerRaw.name ?? existing.customer?.name ?? "",
+    ).trim();
+    patch["customer.gstin"] = String(
+      data.customerGstin ?? customerRaw.gstin ?? existing.customer?.gstin ?? "",
+    ).trim();
     patch["customer.phone"] = customerPhoneRaw ? normalizeIndianPhone(customerPhoneRaw) : "";
   }
   if (data.payment !== undefined || data.paymentMode !== undefined) {
-    patch["payment.mode"] = String(data.payment?.mode ?? data.paymentMode ?? existing.payment?.mode ?? "Cash").trim();
+    patch["payment.mode"] = String(
+      data.payment?.mode ?? data.paymentMode ?? existing.payment?.mode ?? "Cash",
+    ).trim();
   }
   if (data.payment !== undefined || data.paymentStatus !== undefined) {
-    const status = String(data.payment?.status ?? data.paymentStatus ?? existing.payment?.status ?? "paid").trim().toLowerCase();
+    const status = String(
+      data.payment?.status ?? data.paymentStatus ?? existing.payment?.status ?? "paid",
+    )
+      .trim()
+      .toLowerCase();
     patch["payment.status"] = PAYMENT_STATUSES.includes(status) ? status : "paid";
   }
   if (data.documentType !== undefined && data.documentType !== existing.documentType) {
-    const dt = REPORT_BILL_DOCUMENT_TYPES.includes(String(data.documentType).trim()) ? String(data.documentType).trim() : existing.documentType;
+    const dt = REPORT_BILL_DOCUMENT_TYPES.includes(String(data.documentType).trim())
+      ? String(data.documentType).trim()
+      : existing.documentType;
     if (dt !== existing.documentType) {
       patch.documentType = dt;
       patch.status = resolveReportBillStatus(dt);
@@ -2237,7 +2654,12 @@ export async function updateReportBill({ id, userId, data = {}, userName }) {
 
   const purchase = await Purchase.findOne({ _id: id, createdBy: userId }).lean();
   if (purchase) {
-    const updated = await updatePurchase({ id, userId, data: unifiedToPurchaseInput(data), userName });
+    const updated = await updatePurchase({
+      id,
+      userId,
+      data: unifiedToPurchaseInput(data),
+      userName,
+    });
     return unifiedFromPurchase(updated);
   }
 
@@ -2279,5 +2701,10 @@ export async function getReportBillsSummary(userId) {
     total.manual += r.manual;
     total.value += r.value;
   }
-  return { total: total.total, uploaded: total.uploaded, manual: total.manual, totalValue: round2(total.value) };
+  return {
+    total: total.total,
+    uploaded: total.uploaded,
+    manual: total.manual,
+    totalValue: round2(total.value),
+  };
 }

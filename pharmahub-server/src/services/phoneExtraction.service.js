@@ -24,12 +24,14 @@ import { isValidIndianPhone, normalizeIndianPhone } from "../utils/phone.js";
 const PHONE_RUN_RE = /\+?\d[\d\s\-().]{8,20}/g;
 
 // Table header that marks the end of the purchase-invoice header region.
-const TABLE_START_RE = /\b(product\s*name|particulars|item\s*(?:description)?|description|medicine)\b.*\b(batch|qty|rate|mrp)\b/i;
+const TABLE_START_RE =
+  /\b(product\s*name|particulars|item\s*(?:description)?|description|medicine)\b.*\b(batch|qty|rate|mrp)\b/i;
 
 // "party" is split out from the other customer labels: the label appears at the
 // very top of supplier invoices (where it describes the pharmacy buying), so an
 // unlabelled supplier phone below it must not be captured by it.
-const CUSTOMER_LABEL_RE = /\b(customer|buyer|bill\s*to|ship\s*to|consignee|recipient|deliver(?:y)?\s*to)\b/i;
+const CUSTOMER_LABEL_RE =
+  /\b(customer|buyer|bill\s*to|ship\s*to|consignee|recipient|deliver(?:y)?\s*to)\b/i;
 const PARTY_LABEL_RE = /\bparty\b/i;
 const SUPPLIER_LABEL_RE = /\b(supplier|vendor|distributor|manufacturer|wholesaler|seller)\b/i;
 const PHONE_LABEL_RE = /\b(phone|mobile|mob(?:ile)?|contact|tel(?:ephone)?|ph|whatsapp)\b/i;
@@ -61,7 +63,13 @@ const LABEL_TITLE = {
 };
 
 function labelTitle(label) {
-  return LABEL_TITLE[String(label ?? "").toLowerCase().trim()] ?? String(label ?? "").trim();
+  return (
+    LABEL_TITLE[
+      String(label ?? "")
+        .toLowerCase()
+        .trim()
+    ] ?? String(label ?? "").trim()
+  );
 }
 
 // Returns the label that triggered a regex match, so the context field is the
@@ -77,7 +85,11 @@ function firstLabel(text, re) {
 // Only labels on the same line or above are considered: a label below the
 // number describes a different field and must not reclassify it (e.g. a
 // pharmacy's own header phone sitting above a "Customer: ..." block).
-function classifyPhoneRole(lines, index, { supplierName = "", partyName = "", documentType = "purchase_invoice", tableStart = -1 }) {
+function classifyPhoneRole(
+  lines,
+  index,
+  { supplierName = "", partyName = "", documentType = "purchase_invoice", tableStart = -1 },
+) {
   const same = lines[index] ?? "";
   const above = lines.slice(Math.max(0, index - 2), index).join(" | ");
   const near = above ? `${above} | ${same}` : same;
@@ -126,11 +138,14 @@ function classifyPhoneRole(lines, index, { supplierName = "", partyName = "", do
 function asLines(lines, docConfidence) {
   if (Array.isArray(lines) && lines.length > 0) {
     const first = lines[0];
-    if (typeof first === "string") return lines.map((l) => ({ text: l, confidence: docConfidence ?? null }));
+    if (typeof first === "string")
+      return lines.map((l) => ({ text: l, confidence: docConfidence ?? null }));
     if (first && typeof first.text === "string") {
       return lines.map((l) => ({
         text: String(l.text ?? ""),
-        confidence: Number.isFinite(Number(l.confidence)) ? Number(l.confidence) : (docConfidence ?? null),
+        confidence: Number.isFinite(Number(l.confidence))
+          ? Number(l.confidence)
+          : (docConfidence ?? null),
       }));
     }
   }
@@ -157,7 +172,12 @@ function dedupe(candidates) {
  * Returns [{ number, normalizedNumber, confidence, source: "ocr", context, role }]
  */
 export function extractPhoneCandidates(lines, opts = {}) {
-  const { supplierName = "", partyName = "", documentType = "purchase_invoice", docConfidence = null } = opts;
+  const {
+    supplierName = "",
+    partyName = "",
+    documentType = "purchase_invoice",
+    docConfidence = null,
+  } = opts;
   const cleanLines = asLines(lines, docConfidence);
   const textLines = cleanLines.map((l) => l.text);
   if (textLines.length === 0) return [];
@@ -169,14 +189,20 @@ export function extractPhoneCandidates(lines, opts = {}) {
     const runs = String(line.text ?? "").match(PHONE_RUN_RE) ?? [];
     if (runs.length === 0) return;
 
-    const classified = classifyPhoneRole(textLines, i, { supplierName, partyName, documentType, tableStart });
+    const classified = classifyPhoneRole(textLines, i, {
+      supplierName,
+      partyName,
+      documentType,
+      tableStart,
+    });
     for (const run of runs) {
       const cleaned = String(run).replace(/[\s\-().]/g, "");
       if (!isValidIndianPhone(cleaned)) continue;
       candidates.push({
         number: cleaned,
         normalizedNumber: normalizeIndianPhone(cleaned),
-        confidence: line.confidence == null ? null : Math.max(0, Math.min(99, Math.round(line.confidence))),
+        confidence:
+          line.confidence == null ? null : Math.max(0, Math.min(99, Math.round(line.confidence))),
         source: "ocr",
         context: classified.context,
         role: classified.role,
@@ -192,10 +218,15 @@ export function extractPhoneCandidates(lines, opts = {}) {
 export function deriveCustomerPhone(candidates) {
   const customers = (candidates || []).filter((c) => c.role === "customer" && c.normalizedNumber);
   if (customers.length === 0) return "";
-  return [...customers].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0].normalizedNumber;
+  return [...customers].sort((a, b) => (b.confidence ?? 0) - (a.confidence ?? 0))[0]
+    .normalizedNumber;
 }
 
 // Distinct supplier numbers (kept separately — never used for delivery).
 export function deriveSupplierPhones(candidates) {
-  return [...new Set((candidates || []).filter((c) => c.role === "supplier").map((c) => c.normalizedNumber))];
+  return [
+    ...new Set(
+      (candidates || []).filter((c) => c.role === "supplier").map((c) => c.normalizedNumber),
+    ),
+  ];
 }

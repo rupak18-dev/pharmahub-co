@@ -21,7 +21,12 @@ export const WHATSAPP_DELIVERY_STATUSES = ["not_attempted", "pending", "sent", "
 // "not_connected" means the organization has NO connected WhatsApp Business
 // integration; "server_not_configured" means the integration IS connected but
 // the server lacks the Meta Cloud API credentials to actually send.
-export const WHATSAPP_DELIVERY_SKIP_REASONS = ["not_connected", "server_not_configured", "no_number", "invalid_number"];
+export const WHATSAPP_DELIVERY_SKIP_REASONS = [
+  "not_connected",
+  "server_not_configured",
+  "no_number",
+  "invalid_number",
+];
 
 export const isSalesBill = (bill) => bill?.documentType === "sales_invoice";
 
@@ -94,7 +99,10 @@ function buildMessagePayload(bill, to, document, caption, orgName) {
             parameters: [
               { type: "text", text: String(orgName ?? "PharmaHub") },
               { type: "text", text: String(bill.invoice?.invoiceNumber ?? "") },
-              { type: "text", text: `${cfg.currencySymbol}${formatMoney(bill.totals?.grandTotal)}` },
+              {
+                type: "text",
+                text: `${cfg.currencySymbol}${formatMoney(bill.totals?.grandTotal)}`,
+              },
             ],
           },
         ],
@@ -149,8 +157,9 @@ function deliveryTrace(user, integration, phoneCheck, bill) {
     provider: integration?.key ?? null,
     status: integration ? (integration.connected ? "connected" : "disconnected") : null,
     businessNumber: integration?.config?.phone ?? null,
-    customerNumber:
-      phoneCheck.ok ? phoneCheck.phone : String(bill?.customer?.phone ?? "").trim() || null,
+    customerNumber: phoneCheck.ok
+      ? phoneCheck.phone
+      : String(bill?.customer?.phone ?? "").trim() || null,
   };
 }
 
@@ -345,7 +354,10 @@ export async function sendReportBillWhatsApp({ id, userId, orgName = "" }) {
   if (!isSalesBill(rb.toObject())) {
     throw ApiError.badRequest("WhatsApp delivery is only available for sales bills");
   }
-  const delivery = await deliverBillToWhatsApp({ bill: rb.toObject(), user: { _id: userId, orgName } });
+  const delivery = await deliverBillToWhatsApp({
+    bill: rb.toObject(),
+    user: { _id: userId, orgName },
+  });
   const fresh = await ReportBill.findById(rb._id).lean();
   const result = fresh ?? rb.toObject();
   return { delivery, bill: result };

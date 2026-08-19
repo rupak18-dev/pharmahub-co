@@ -15,7 +15,10 @@ export async function ensureDevelopmentUser() {
   }
 
   const demo = constants.development.demoOwner;
-  const existing = await User.findOne({ email: demo.email }).collation({ locale: "en", strength: 2 });
+  const existing = await User.findOne({ email: demo.email }).collation({
+    locale: "en",
+    strength: 2,
+  });
   if (existing) {
     logger.info(`[dev-user] demo account already exists (${demo.email})`);
     return { created: false, existing: true };

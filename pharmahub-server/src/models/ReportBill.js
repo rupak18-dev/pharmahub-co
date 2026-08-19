@@ -8,7 +8,12 @@ export const REPORT_BILL_SOURCES = ["manual", "uploaded", "imported", "existing"
 // Document type of the source document. Drives which report modules consume
 // the record (sales-side types feed Sales/GST/Payments, the rest feed
 // Purchases/GST/Suppliers).
-export const REPORT_BILL_DOCUMENT_TYPES = ["purchase_invoice", "sales_invoice", "payment_receipt", "other"];
+export const REPORT_BILL_DOCUMENT_TYPES = [
+  "purchase_invoice",
+  "sales_invoice",
+  "payment_receipt",
+  "other",
+];
 export const REPORT_BILL_SALES_TYPES = ["sales_invoice"];
 export const REPORT_BILL_PURCHASE_TYPES = ["purchase_invoice", "payment_receipt", "other"];
 
