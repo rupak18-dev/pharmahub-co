@@ -59,7 +59,15 @@ function actionButton(label, link) {
     </table>`;
 }
 
-export function buildInvitationEmail({ name, orgName, role, link, expiresInHours, message, email }) {
+export function buildInvitationEmail({
+  name,
+  orgName,
+  role,
+  link,
+  expiresInHours,
+  message,
+  email,
+}) {
   const greeting = name?.trim() ? `Hello ${name.trim()},` : "Hello,";
   const org = orgName?.trim() || "your organization";
   const invitee = email?.trim() || "";
@@ -180,7 +188,9 @@ function accessSectionHtml(caption, rows) {
 
 function accessSectionText(caption, rows) {
   return `${caption}:\n${
-    rows.length > 0 ? rows.map((r) => `- ${r.module}: ${r.actions.join(", ")}`).join("\n") : "- No modules granted."
+    rows.length > 0
+      ? rows.map((r) => `- ${r.module}: ${r.actions.join(", ")}`).join("\n")
+      : "- No modules granted."
   }`;
 }
 
@@ -263,11 +273,11 @@ export function buildRoleChangeEmail({
   previousPermissions,
   features,
   previousFeatures,
-  changedBy,
+  changedBy: _changedBy,
   link,
 }) {
   const greeting = name?.trim() ? `Hello ${name.trim()},` : "Hello,";
-  const org = orgName?.trim() || "PharmaHub";
+  const _org = orgName?.trim() || "PharmaHub";
   const roleChanged = Boolean(previousRole && newRole && previousRole !== newRole);
   const loginLink = link || `${env.frontendUrl}/login`;
 
@@ -398,7 +408,7 @@ export function buildRoleChangeEmail({
 }
 
 // Sent to the staff member AFTER a successful removal from the organization.
-export function buildStaffRemovalEmail({ name, orgName }) {
+export function buildStaffRemovalEmail({ name, orgName: _orgName }) {
   const greeting = name?.trim() ? `Hello ${name.trim()},` : "Hello,";
 
   return wrap({
@@ -428,11 +438,21 @@ PharmaHub Team`,
   });
 }
 
-export function buildScheduledReportEmail({ reportName, orgName, periodLabel, generatedAt, rowCount }) {
+export function buildScheduledReportEmail({
+  reportName,
+  orgName,
+  periodLabel,
+  generatedAt,
+  rowCount,
+}) {
   const org = orgName?.trim() || "your organization";
-  const generated = generatedAt ? new Date(generatedAt).toLocaleString() : new Date().toLocaleString();
+  const generated = generatedAt
+    ? new Date(generatedAt).toLocaleString()
+    : new Date().toLocaleString();
   const summaryLine =
-    rowCount != null ? `${rowCount.toLocaleString()} row${rowCount === 1 ? "" : "s"} of data included.` : "";
+    rowCount != null
+      ? `${rowCount.toLocaleString()} row${rowCount === 1 ? "" : "s"} of data included.`
+      : "";
 
   return wrap({
     subject: `PharmaHub — ${reportName || "Scheduled Report"}`,
