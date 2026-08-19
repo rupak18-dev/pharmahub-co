@@ -11,6 +11,7 @@ import {
   ChevronsUpDown,
   FileSpreadsheet,
   Download,
+  Upload,
   LayoutGrid,
   List,
   Heart,
@@ -21,6 +22,14 @@ import {
   ArrowDownUp,
   ArrowLeft,
   Trash2,
+  FileText,
+  Info,
+  Settings,
+  Database,
+  Layers,
+  CheckCircle2,
+  AlertCircle,
+  X,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -201,6 +210,7 @@ export default function MedicinesCatalogPage() {
   const [visibleFields, setVisibleFields] = useState([]);
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
   const CUSTOMIZABLE_FILTERS = [
+    { id: "name", label: "Medicine Name" },
     { id: "brand", label: "Brand" },
     { id: "genericName", label: "Generic Name" },
     { id: "saltComposition", label: "Salt / Composition" },
@@ -297,52 +307,72 @@ export default function MedicinesCatalogPage() {
     const s = q.trim().toLowerCase();
     const result = medicines.filter((m) => {
       if (showWishlist && !wishlist.includes(m.id)) return false;
-      if (catFilter !== "all" && m.categoryId !== catFilter) {
-        return false;
-      }
-      if (brandFilter === "only" && !m.brandName) return false;
-      if (brandFilter !== "all" && brandFilter !== "only" && m.brandName !== brandFilter)
-        return false;
-      if (genericFilter === "only" && !m.genericName) return false;
-      if (genericFilter !== "all" && genericFilter !== "only" && m.genericName !== genericFilter)
-        return false;
-      if (therapeuticFilter !== "all") {
-        const catName = categories.find((c) => c.id === m.categoryId)?.name.toLowerCase() || "";
-        if (
-          therapeuticFilter === "pain" &&
-          !catName.includes("pain") &&
-          !catName.includes("relief")
-        )
+      const isDraft =
+        m.name &&
+        !m.genericName &&
+        !m.brandName &&
+        !m.categoryId &&
+        !m.manufacturerId &&
+        !m.hsnCode &&
+        !m.storageRequirements &&
+        !m.saltComposition &&
+        !m.strength &&
+        !m.dosageForm &&
+        !m.packSize &&
+        !m.gtin &&
+        !m.drugSchedule &&
+        !m.dosageInfo &&
+        !m.usageInstructions &&
+        !m.contraindications &&
+        !m.sideEffects &&
+        !m.rackLocation;
+
+      if (statusFilter === "draft") {
+        if (!isDraft) return false;
+      } else {
+        if (catFilter !== "all" && m.categoryId !== catFilter) {
           return false;
-        if (therapeuticFilter === "antibiotic" && !catName.includes("antibiotic")) return false;
-        if (therapeuticFilter === "allergy" && !catName.includes("allergy")) return false;
-        if (therapeuticFilter === "gastric" && !catName.includes("gastric")) return false;
-        if (therapeuticFilter === "cough" && !catName.includes("cough")) return false;
-      }
-      const meta = stockByMed.get(m.id);
-      const stockLevel = meta?.current || 0;
-      const minLevel = meta?.min || 0;
-      if (dateRangeFilter !== "all") {
-        const date = new Date(m.createdAt);
-        const now = new Date();
-        if (dateRangeFilter === "today") {
-          if (date.toDateString() !== now.toDateString()) return false;
-        } else if (dateRangeFilter === "7days") {
-          if (now.getTime() - date.getTime() > 7 * 24 * 60 * 60 * 1000) return false;
-        } else if (dateRangeFilter === "30days") {
-          if (now.getTime() - date.getTime() > 30 * 24 * 60 * 60 * 1000) return false;
         }
-      }
-      if (statusFilter !== "all") {
-        const isDraft =
-          m.status === "draft" ||
-          (!m.genericName && !m.brandName && !m.categoryId && !m.manufacturerId);
-        if (statusFilter === "active" && (!m.isActive || stockLevel <= minLevel || isDraft))
+        if (brandFilter === "only" && !m.brandName) return false;
+        if (brandFilter !== "all" && brandFilter !== "only" && m.brandName !== brandFilter)
           return false;
-        if (statusFilter === "low" && (stockLevel > minLevel || stockLevel === 0 || isDraft))
+        if (genericFilter === "only" && !m.genericName) return false;
+        if (genericFilter !== "all" && genericFilter !== "only" && m.genericName !== genericFilter)
           return false;
-        if (statusFilter === "out" && (stockLevel > 0 || isDraft)) return false;
-        if (statusFilter === "draft" && !isDraft) return false;
+        if (therapeuticFilter !== "all") {
+          const catName = categories.find((c) => c.id === m.categoryId)?.name.toLowerCase() || "";
+          if (
+            therapeuticFilter === "pain" &&
+            !catName.includes("pain") &&
+            !catName.includes("relief")
+          )
+            return false;
+          if (therapeuticFilter === "antibiotic" && !catName.includes("antibiotic")) return false;
+          if (therapeuticFilter === "allergy" && !catName.includes("allergy")) return false;
+          if (therapeuticFilter === "gastric" && !catName.includes("gastric")) return false;
+          if (therapeuticFilter === "cough" && !catName.includes("cough")) return false;
+        }
+        const meta = stockByMed.get(m.id);
+        const stockLevel = meta?.current || 0;
+        const minLevel = meta?.min || 0;
+        if (dateRangeFilter !== "all") {
+          const date = new Date(m.createdAt);
+          const now = new Date();
+          if (dateRangeFilter === "today") {
+            if (date.toDateString() !== now.toDateString()) return false;
+          } else if (dateRangeFilter === "7days") {
+            if (now.getTime() - date.getTime() > 7 * 24 * 60 * 60 * 1000) return false;
+          } else if (dateRangeFilter === "30days") {
+            if (now.getTime() - date.getTime() > 30 * 24 * 60 * 60 * 1000) return false;
+          }
+        }
+        if (statusFilter !== "all") {
+          if (statusFilter === "active" && (!m.isActive || stockLevel <= minLevel || isDraft))
+            return false;
+          if (statusFilter === "low" && (stockLevel > minLevel || stockLevel === 0 || isDraft))
+            return false;
+          if (statusFilter === "out" && (stockLevel > 0 || isDraft)) return false;
+        }
       }
       if (!s) return true;
       return (
@@ -410,6 +440,212 @@ export default function MedicinesCatalogPage() {
   }, [filtered, currentPage]);
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [importFile, setImportFile] = useState(null);
+  const [importPreview, setImportPreview] = useState(null);
+  const [isImporting, setIsImporting] = useState(false);
+  // CSV field mapping: exact exported label (lowercased) -> medicine field key
+  const CSV_FIELD_MAP = {
+    // Name variants
+    name: "name",
+    "medicine name": "name",
+    "drug name": "name",
+    // Brand
+    brand: "brandName",
+    "brand name": "brandName",
+    brandname: "brandName",
+    // Generic
+    generic: "genericName",
+    "generic name": "genericName",
+    genericname: "genericName",
+    // Salt / Composition — matches exact export label
+    "salt / composition": "saltComposition",
+    "salt composition": "saltComposition",
+    saltcomposition: "saltComposition",
+    salt: "saltComposition",
+    composition: "saltComposition",
+    // Strength
+    strength: "strength",
+    // Form
+    form: "dosageForm",
+    "dosage form": "dosageForm",
+    dosageform: "dosageForm",
+    // Pack Size
+    "pack size": "packSize",
+    packsize: "packSize",
+    pack: "packSize",
+    // Barcode / GTIN — matches exact export label
+    "gtin / barcode": "barcode",
+    "gtin/barcode": "barcode",
+    barcode: "barcode",
+    gtin: "gtin",
+    // HSN
+    "hsn code": "hsnCode",
+    hsncode: "hsnCode",
+    hsn: "hsnCode",
+    // GST
+    "gst rate": "gstRate",
+    gstrate: "gstRate",
+    gst: "gstRate",
+    // Drug schedule
+    "drug schedule": "drugSchedule",
+    drugschedule: "drugSchedule",
+    schedule: "drugSchedule",
+    // Rack
+    rack: "rackLocation",
+    "rack location": "rackLocation",
+    racklocation: "rackLocation",
+    // Reorder
+    "reorder threshold": "reorderThreshold",
+    reorderthreshold: "reorderThreshold",
+    reorder: "reorderThreshold",
+    "min stock": "reorderThreshold",
+    minstock: "reorderThreshold",
+    // PTR
+    ptr: "ptr",
+    // Dosage / usage info
+    "dosage info": "dosageInfo",
+    dosageinfo: "dosageInfo",
+    "usage instructions": "usageInstructions",
+    usageinstructions: "usageInstructions",
+    contraindications: "contraindications",
+    "side effects": "sideEffects",
+    sideeffects: "sideEffects",
+  };
+
+  const TEMPLATE_HEADERS = [
+    "Medicine Name", "Brand", "Generic Name", "Salt / Composition",
+    "Strength", "Form", "Pack Size", "Barcode", "GTIN",
+    "HSN Code", "GST Rate", "Drug Schedule", "Rack Location",
+    "Reorder Threshold", "PTR",
+  ];
+
+  const downloadTemplate = () => {
+    const exampleRow = [
+      "Paracetamol 500mg", "Crocin", "Paracetamol", "Paracetamol IP 500mg",
+      "500 mg", "Tablet", "10 Tablets", "PH-ABCD1234", "08901234567890",
+      "3004", "12", "Schedule H", "A-12",
+      "100", "15.50",
+    ];
+    const csv = [
+      TEMPLATE_HEADERS.join(","),
+      exampleRow.map((v) => `"${v}"`).join(","),
+    ].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "PharmaHub_Import_Template.csv";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const parseCSV = (text) => {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) return null;
+    const parseRow = (line) => {
+      const result = [];
+      let current = "";
+      let inQuotes = false;
+      for (let i = 0; i < line.length; i++) {
+        if (line[i] === '"') {
+          if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+        } else if (line[i] === "," && !inQuotes) {
+          result.push(current.trim());
+          current = "";
+        } else {
+          current += line[i];
+        }
+      }
+      result.push(current.trim());
+      return result;
+    };
+    const headers = parseRow(lines[0]);
+    const rows = lines.slice(1).map(parseRow);
+    return { headers, rows };
+  };
+
+  const handleImportFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    // Reset input so same file can be re-selected
+    e.target.value = "";
+    setImportFile(file);
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const text = ev.target?.result;
+      const parsed = parseCSV(text);
+      if (!parsed) {
+        toast.error("Invalid CSV — needs a header row and at least one data row.");
+        setImportFile(null);
+        return;
+      }
+      const mapped = parsed.headers.map((h) => ({
+        original: h,
+        field: CSV_FIELD_MAP[h.toLowerCase().replace(/\s+/g, " ").trim()] || null,
+      }));
+      const hasName = mapped.some((m) => m.field === "name");
+      if (!hasName) {
+        toast.error('CSV must have a "Medicine Name" column to import.');
+        setImportFile(null);
+        return;
+      }
+      setImportPreview({ ...parsed, mapped });
+    };
+    reader.readAsText(file);
+  };
+
+  const handleImportConfirm = () => {
+    if (!importPreview) return;
+    setIsImporting(true);
+    const { headers, rows, mapped } = importPreview;
+    let imported = 0;
+    let skipped = 0;
+    const now = new Date().toISOString();
+    // Strip currency symbols and units from numeric values
+    const cleanNum = (v) => parseFloat(String(v).replace(/[^0-9.-]/g, "")) || 0;
+    const numFields = ["gstRate", "reorderThreshold", "ptr", "maxStockLevel"];
+    db.set((d) => {
+      rows.forEach((row) => {
+        const medicine = { isActive: true, createdAt: now, gstRate: 0, reorderThreshold: 0 };
+        headers.forEach((_h, i) => {
+          const fieldInfo = mapped[i];
+          if (fieldInfo?.field) {
+            const val = row[i]?.trim();
+            if (val && val !== "—" && val !== "") {
+              medicine[fieldInfo.field] = numFields.includes(fieldInfo.field) ? cleanNum(val) : val;
+            }
+          }
+        });
+        if (!medicine.name || medicine.name.length < 2) { skipped++; return; }
+        const id = db.uid();
+        medicine.id = id;
+        medicine.barcode = medicine.barcode || `PH-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
+        d.medicines.push(medicine);
+        if (user) {
+          logActivity({
+            userId: user.id,
+            userName: user.name,
+            action: `Imported medicine ${medicine.name} via CSV`,
+            entityType: "medicine",
+            entityId: id,
+          });
+        }
+        imported++;
+      });
+    });
+    setIsImporting(false);
+    setIsImportModalOpen(false);
+    setImportFile(null);
+    setImportPreview(null);
+    if (imported > 0)
+      toast.success(`Successfully imported ${imported} medicine${imported > 1 ? "s" : ""}${skipped > 0 ? ` · ${skipped} skipped (missing name)` : ""}.`);
+    else
+      toast.error(`No medicines imported. ${skipped} row(s) skipped — "Medicine Name" column was empty or missing.`);
+  };
   const handleExport = async (format) => {
     const columnsToExport = CUSTOMIZABLE_FILTERS.filter((f) => isFieldVisible(f.id));
     const headerRow = columnsToExport.map((c) => c.label);
@@ -623,16 +859,31 @@ export default function MedicinesCatalogPage() {
         <h1 className="text-2xl font-bold text-[#007A87]">
           {showWishlist ? "Your Wishlist" : "Medicines"}
         </h1>
-        {showWishlist && (
-          <Button
-            size="sm"
-            variant="outline"
-            className="rounded-lg gap-1 flex items-center shrink-0"
-            onClick={() => setShowWishlist(false)}
-          >
-            <ArrowLeft className="h-4 w-4" /> Back
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {!showWishlist && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-lg gap-1.5 flex items-center shrink-0"
+              onClick={() => setShowWishlist(true)}
+            >
+              <Heart
+                className={`h-4 w-4 ${wishlist.length > 0 ? "text-red-500 fill-red-500" : "text-muted-foreground"}`}
+              />
+              Wishlist
+            </Button>
+          )}
+          {showWishlist && (
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-lg gap-1 flex items-center shrink-0"
+              onClick={() => setShowWishlist(false)}
+            >
+              <ArrowLeft className="h-4 w-4" /> Back
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Main white container */}
@@ -642,9 +893,9 @@ export default function MedicinesCatalogPage() {
           <div className="p-4 border-b border-border/40 space-y-4">
             <div className="flex flex-wrap items-center justify-between gap-4">
               {/* Left side filters */}
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                 <Select value={catFilter} onValueChange={setCatFilter}>
-                  <SelectTrigger className="w-[140px] h-9 text-xs bg-white rounded-md border-border/80">
+                  <SelectTrigger className="w-full sm:w-[140px] flex-1 sm:flex-initial h-9 text-xs bg-white text-slate-700 hover:text-slate-900 rounded-md border-border/80">
                     <SelectValue placeholder="Category" />
                   </SelectTrigger>
                   <SelectContent>
@@ -658,7 +909,7 @@ export default function MedicinesCatalogPage() {
                 </Select>
 
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-[140px] h-9 text-xs bg-white rounded-md border-border/80">
+                  <SelectTrigger className="w-full sm:w-[140px] flex-1 sm:flex-initial h-9 text-xs bg-white text-slate-700 hover:text-slate-900 rounded-md border-border/80">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -669,40 +920,25 @@ export default function MedicinesCatalogPage() {
                   </SelectContent>
                 </Select>
 
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-[140px] h-9 text-xs bg-white rounded-md border-border/80">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="newest">Newest First</SelectItem>
-                    <SelectItem value="name-asc">Name A-Z</SelectItem>
-                    <SelectItem value="name-desc">Name Z-A</SelectItem>
-                    <SelectItem value="stock-asc">Stock Low-High</SelectItem>
-                    <SelectItem value="stock-desc">Stock High-Low</SelectItem>
-                    <SelectItem value="price-asc">Price Low-High</SelectItem>
-                    <SelectItem value="price-desc">Price High-Low</SelectItem>
-                  </SelectContent>
-                </Select>
-
                 <Button
                   variant={statusFilter === "draft" ? "default" : "outline"}
-                  className={`h-9 px-3 text-xs rounded-md gap-2 ${statusFilter === "draft" ? "bg-[#007A87] text-white hover:bg-[#007A87]/90" : "bg-white text-slate-700 border-border/80"}`}
+                  className={`h-9 px-3 text-xs rounded-md gap-2 w-full sm:w-auto flex-1 sm:flex-initial justify-center ${statusFilter === "draft" ? "bg-[#007A87] text-white hover:bg-[#007A87]/90" : "bg-white text-slate-700 border-border/80"}`}
                   onClick={() => setStatusFilter(statusFilter === "draft" ? "all" : "draft")}
                 >
-                  <Filter
+                  <FileText
                     className={`w-3.5 h-3.5 ${statusFilter === "draft" ? "text-white" : "text-muted-foreground"}`}
                   />
-                  {statusFilter === "draft" ? "Drafts Only" : "Draft Medicine"}
+                  Draft Medicine
                 </Button>
               </div>
 
               {/* Right side actions */}
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto sm:justify-end">
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2"
+                      className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2 w-full sm:w-auto flex-1 sm:flex-initial justify-center"
                     >
                       <Filter className="w-3.5 h-3.5 text-muted-foreground" />
                       Manage Column
@@ -724,9 +960,20 @@ export default function MedicinesCatalogPage() {
                   </DropdownMenuContent>
                 </DropdownMenu>
 
+                {has("medicines", "create") && (
+                  <Button
+                    variant="outline"
+                    className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2 w-full sm:w-auto flex-1 sm:flex-initial justify-center"
+                    onClick={() => { setImportFile(null); setImportPreview(null); setIsImportModalOpen(true); }}
+                  >
+                    <Upload className="w-3.5 h-3.5 text-muted-foreground" />
+                    Import
+                  </Button>
+                )}
+
                 <Button
                   variant="outline"
-                  className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2"
+                  className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2 w-full sm:w-auto flex-1 sm:flex-initial justify-center"
                   onClick={() => setIsExportModalOpen(true)}
                 >
                   <Download className="w-3.5 h-3.5 text-muted-foreground" />
@@ -736,13 +983,13 @@ export default function MedicinesCatalogPage() {
                 {has("medicines", "create") && (
                   <Button
                     onClick={openCreate}
-                    className="h-9 px-4 text-xs bg-[#007A87] hover:bg-[#007A87]/90 text-white rounded-md gap-1 font-semibold"
+                    className="h-9 px-4 text-xs bg-[#007A87] hover:bg-[#007A87]/90 text-white rounded-md gap-1 font-semibold w-full sm:w-auto flex-1 sm:flex-initial justify-center"
                   >
-                    <Plus className="h-4 w-4" /> Create medicine
+                    <Plus className="h-4 w-4" /> Create Catalog Model
                   </Button>
                 )}
 
-                <div className="flex items-center gap-3 border-l border-border/60 pl-3">
+                <div className="flex items-center gap-3 border-t sm:border-t-0 sm:border-l border-border/60 pt-2 sm:pt-0 pl-0 sm:pl-3 w-full sm:w-auto justify-between sm:justify-start">
                   <span className="text-xs font-medium text-muted-foreground">
                     {filtered.length}/{medicines.length}
                   </span>
@@ -789,30 +1036,27 @@ export default function MedicinesCatalogPage() {
         <div className="flex-1 overflow-y-auto p-0">
           {filtered.length === 0 ? (
             <EmptyState
-              title={showWishlist ? "Your wishlist is empty" : "No medicines matched filters"}
+              title={
+                showWishlist
+                  ? "Your wishlist is empty"
+                  : statusFilter === "draft"
+                    ? "No medicine found"
+                    : "No medicines matched filters"
+              }
               description={
                 showWishlist
                   ? "You haven't added any medicines to your wishlist yet."
-                  : "Refine your criteria or add a new medicine configuration to the master catalog."
-              }
-              action={
-                has("medicines", "create") &&
-                !showWishlist && (
-                  <Button
-                    onClick={openCreate}
-                    className="bg-[#007A87] hover:bg-[#007A87]/90 text-white"
-                  >
-                    <Plus className="mr-1 h-4 w-4" /> Add medicine
-                  </Button>
-                )
+                  : statusFilter === "draft"
+                    ? "No medicines were found that match the draft criteria (only name is stored)."
+                    : "Refine your criteria or add a new medicine configuration to the master catalog."
               }
             />
           ) : (
             <>
               {viewMode === "list" ? (
                 <>
-                  {/* Desktop table view */}
-                  <div className="hidden md:block overflow-x-auto border border-border/80 rounded-2xl shadow-sm bg-white">
+                  {/* Responsive table view */}
+                  <div className="overflow-x-auto border border-border/80 rounded-2xl shadow-sm bg-white">
                     <table className="w-full text-[13px] border-collapse whitespace-nowrap">
                       <thead className="border-b border-border/40 bg-white text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                         <tr>
@@ -926,7 +1170,7 @@ export default function MedicinesCatalogPage() {
                                   <div className="min-w-0">
                                     <Link
                                       to={`/medicines/${m.id}`}
-                                      className="truncate block text-sm font-bold"
+                                      className="truncate block text-sm font-medium text-slate-950 hover:text-[#007A87] transition-colors"
                                     >
                                       {m.name}
                                     </Link>
@@ -1170,122 +1414,7 @@ export default function MedicinesCatalogPage() {
                     </table>
                   </div>
 
-                  {/* Mobile responsive card list view */}
-                  <div className="md:hidden space-y-4">
-                    {filtered.map((m) => {
-                      const meta = stockByMed.get(m.id);
-                      const stockTone =
-                        (meta?.current || 0) === 0
-                          ? "out"
-                          : (meta?.current || 0) <= (meta?.min || 0)
-                            ? "low"
-                            : "healthy";
-                      return (
-                        <div
-                          key={m.id}
-                          className="bg-white border border-border/80 rounded-2xl p-4 shadow-sm space-y-3"
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="min-w-0">
-                              <Link
-                                to={`/medicines/${m.id}`}
-                                className="font-bold text-foreground hover:underline text-sm truncate block"
-                              >
-                                {m.name}
-                              </Link>
-                              <span className="text-[10px] text-muted-foreground font-mono">
-                                {m.genericName || "Generic"}
-                              </span>
-                            </div>
-                            {m.isActive ? (
-                              <StatusBadge status={stockTone} />
-                            ) : (
-                              <span className="rounded-full bg-gray-100 text-gray-800 px-2 py-0.5 text-[10px] font-semibold">
-                                Inactive
-                              </span>
-                            )}
-                          </div>
 
-                          <div className="grid grid-cols-2 gap-2 text-xs border-t border-b py-2 my-2">
-                            <div>
-                              <span className="text-muted-foreground block text-[10px]">
-                                Stock Level
-                              </span>
-                              <span className="font-semibold text-foreground font-mono">
-                                {meta?.current} units
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground block text-[10px]">
-                                Rack Location
-                              </span>
-                              <span className="font-semibold text-foreground font-mono">
-                                {m.rackLocation || "—"}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground block text-[10px]">
-                                Selling Price
-                              </span>
-                              <span className="font-semibold text-emerald-600 font-mono">
-                                {currency}
-                                {meta?.sell?.toFixed(2)}
-                              </span>
-                            </div>
-                            <div>
-                              <span className="text-muted-foreground block text-[10px]">
-                                Expiry
-                              </span>
-                              <span
-                                className={`font-semibold font-mono ${meta?.expired ? "text-destructive" : meta?.nearExp ? "text-amber-500" : "text-muted-foreground"}`}
-                              >
-                                {meta?.expiry !== "—"
-                                  ? new Date(meta?.expiry || "").toLocaleDateString(undefined, {
-                                      month: "short",
-                                      year: "2-digit",
-                                    })
-                                  : "—"}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="flex gap-2">
-                            <Button
-                              asChild
-                              size="sm"
-                              variant="outline"
-                              className="flex-1 text-xs gap-1 rounded-lg h-9"
-                            >
-                              <Link to={`/medicines/${m.id}`}>
-                                <Eye className="h-3.5 w-3.5" /> View Specs
-                              </Link>
-                            </Button>
-                            {has("medicines", "update") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-muted-foreground hover:text-foreground"
-                                onClick={() => openEdit(m)}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                            {has("medicines", "delete") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-9 w-9 p-0 flex items-center justify-center rounded-lg text-destructive hover:bg-destructive/10"
-                                onClick={() => setConfirmDelete(m)}
-                                title="Delete"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </>
               ) : (
                 /* Grid View */
@@ -1341,7 +1470,7 @@ export default function MedicinesCatalogPage() {
                           <div className="space-y-1">
                             <Link
                               to={`/medicines/${m.id}`}
-                              className="font-bold text-foreground hover:underline text-base truncate block"
+                              className="font-medium text-slate-950 hover:underline text-sm truncate block"
                             >
                               {m.name}
                             </Link>
@@ -1428,26 +1557,27 @@ export default function MedicinesCatalogPage() {
       </div>
 
       {totalPages > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto py-2">
-          <div className="flex items-center gap-3">
-            <span className="text-[13px] text-slate-500 font-medium">
+        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto py-4 border-t border-border/20">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+            <span className="text-[13px] text-slate-500 font-bold">
               Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
               {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} medicines
             </span>
             <div className="flex items-center gap-2 border border-border/60 rounded-md bg-white px-2.5 py-1.5 cursor-not-allowed opacity-70">
-              <span className="text-[13px] text-slate-600 font-medium">10 per page</span>
+              <span className="text-[13px] text-slate-600 font-bold">10 per page</span>
               <ChevronsUpDown className="w-3.5 h-3.5 text-slate-400" />
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center justify-center gap-2">
             <button
+              type="button"
               onClick={(e) => {
                 e.preventDefault();
                 setCurrentPage((p) => Math.max(1, p - 1));
               }}
               disabled={currentPage === 1}
-              className="px-3 py-1.5 text-[13px] font-medium text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed hover:text-slate-900"
+              className="px-3 py-1.5 text-[13px] font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:text-slate-950 hover:bg-slate-100 rounded-md transition-colors"
             >
               Previous
             </button>
@@ -1457,17 +1587,18 @@ export default function MedicinesCatalogPage() {
               .map((p, i, arr) => (
                 <Fragment key={p}>
                   {i > 0 && arr[i - 1] !== p - 1 && (
-                    <span className="px-2 text-slate-400">...</span>
+                    <span className="px-2 text-slate-400 font-bold">...</span>
                   )}
                   <button
+                    type="button"
                     onClick={(e) => {
                       e.preventDefault();
                       setCurrentPage(p);
                     }}
-                    className={`w-7 h-7 flex items-center justify-center rounded-full text-[13px] font-bold transition-colors ${
+                    className={`w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-extrabold transition-colors ${
                       currentPage === p
                         ? "bg-[#007A87] text-white shadow-sm"
-                        : "text-slate-600 hover:bg-slate-100"
+                        : "text-slate-700 hover:bg-slate-100"
                     }`}
                   >
                     {p}
@@ -1476,12 +1607,13 @@ export default function MedicinesCatalogPage() {
               ))}
 
             <button
+              type="button"
               onClick={(e) => {
                 e.preventDefault();
                 setCurrentPage((p) => Math.min(totalPages, p + 1));
               }}
               disabled={currentPage === totalPages}
-              className="px-3 py-1.5 text-[13px] font-medium text-slate-500 disabled:opacity-50 disabled:cursor-not-allowed hover:text-slate-900"
+              className="px-3 py-1.5 text-[13px] font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:text-slate-950 hover:bg-slate-100 rounded-md transition-colors"
             >
               Next
             </button>
@@ -1527,6 +1659,155 @@ export default function MedicinesCatalogPage() {
           <DialogFooter className="sm:justify-start">
             <Button type="button" variant="ghost" onClick={() => setIsExportModalOpen(false)}>
               Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* IMPORT MODAL */}
+      <Dialog open={isImportModalOpen} onOpenChange={(o) => { setIsImportModalOpen(o); if (!o) { setImportFile(null); setImportPreview(null); } }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Upload className="h-5 w-5 text-[#007A87]" /> Import Medicines via CSV
+            </DialogTitle>
+            <DialogDescription>
+              Upload a CSV file with a <strong>Medicine Name</strong> column to bulk-import medicines.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            {/* File upload zone */}
+            <label
+              htmlFor="import-csv-input"
+              className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
+                importFile ? "border-[#007A87] bg-[#007A87]/5" : "border-border/60 bg-muted/20 hover:border-[#007A87]/60 hover:bg-muted/40"
+              }`}
+            >
+              {importFile ? (
+                <div className="flex items-center gap-3 text-[#007A87] px-4 w-full">
+                  <FileSpreadsheet className="h-6 w-6 shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold truncate">{importFile.name}</p>
+                    <p className="text-xs text-muted-foreground">{(importFile.size / 1024).toFixed(1)} KB</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setImportFile(null); setImportPreview(null); }}
+                    className="text-muted-foreground hover:text-destructive shrink-0"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                  <Upload className="h-6 w-6" />
+                  <p className="text-sm font-medium">Click to upload CSV</p>
+                </div>
+              )}
+              <input
+                id="import-csv-input"
+                type="file"
+                accept=".csv,text/csv"
+                className="hidden"
+                onChange={handleImportFileChange}
+              />
+            </label>
+
+            {/* Column mapping result */}
+            {importPreview && (() => {
+              const matched = importPreview.mapped.filter((c) => c.field);
+              const unmatched = importPreview.mapped.filter((c) => !c.field);
+              return (
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                    {importPreview.rows.length} rows detected · {matched.length} columns matched
+                  </div>
+
+                  {/* Matched columns as chips */}
+                  <div className="space-y-1.5">
+                    <p className="text-xs text-muted-foreground font-medium">Will import:</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {matched.map((col, i) => (
+                        <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-medium">
+                          <CheckCircle2 className="h-3 w-3" /> {col.original}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {unmatched.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-xs text-muted-foreground font-medium">Unrecognized (will be skipped):</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {unmatched.map((col, i) => (
+                          <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px]">
+                            <AlertCircle className="h-3 w-3" /> {col.original}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Sample data preview — only 5 matched cols, 2 rows */}
+                  {(() => {
+                    const previewCols = importPreview.mapped
+                      .map((m, i) => ({ ...m, idx: i }))
+                      .filter((m) => m.field)
+                      .slice(0, 5);
+                    return importPreview.rows.length > 0 && previewCols.length > 0 ? (
+                      <div className="border border-border/60 rounded-lg overflow-hidden">
+                        <table className="w-full text-xs table-fixed">
+                          <thead className="bg-muted/40 border-b border-border/60">
+                            <tr>
+                              {previewCols.map((col) => (
+                                <th key={col.idx} className="px-2 py-1.5 text-left font-medium text-muted-foreground truncate overflow-hidden">
+                                  {col.original}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border/40">
+                            {importPreview.rows.slice(0, 2).map((row, ri) => (
+                              <tr key={ri}>
+                                {previewCols.map((col) => (
+                                  <td key={col.idx} className="px-2 py-1.5 truncate overflow-hidden text-foreground">
+                                    {row[col.idx] || "—"}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                        {importPreview.rows.length > 2 && (
+                          <div className="px-3 py-1 text-[11px] text-muted-foreground bg-muted/20 border-t border-border/40">
+                            +{importPreview.rows.length - 2} more rows
+                          </div>
+                        )}
+                      </div>
+                    ) : null;
+                  })()}
+                </div>
+              );
+            })()}
+          </div>
+
+          <DialogFooter className="gap-2">
+            <Button type="button" variant="ghost" onClick={() => setIsImportModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              disabled={!importPreview || isImporting}
+              className="bg-[#007A87] hover:bg-[#007A87]/90 text-white gap-2"
+              onClick={handleImportConfirm}
+            >
+              {isImporting ? (
+                <><span className="animate-spin inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full" /> Importing...</>
+              ) : (
+                <><Upload className="h-4 w-4" /> Import {importPreview ? `${importPreview.rows.length} Medicine${importPreview.rows.length !== 1 ? "s" : ""}` : ""}</>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1632,7 +1913,7 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
       <SheetContent className="w-full sm:max-w-2xl flex flex-col h-full bg-white">
         <SheetHeader className="border-b border-border/60 pb-3">
           <SheetTitle className="text-lg font-bold text-foreground">
-            {editing ? "Modify Medicine Master Config" : "Add Medicine Config to Catalog"}
+            {editing ? "Modify Catalog Model" : "Create Catalog Model"}
           </SheetTitle>
           <SheetDescription>
             Input detailed composition data, drug schedules, and layout placement values.
@@ -1657,22 +1938,25 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6"
         >
           {/* GENERAL INFO */}
-          <div className="space-y-3">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">
-              General Details
-            </h4>
+          <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100/80 space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+              <Info className="w-4 h-4 text-[#007A87]" />
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                General Details
+              </h4>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="name">Medicine Trade Name *</Label>
+              <Label htmlFor="name" className="text-xs font-bold text-slate-700">Medicine Trade Name *</Label>
               <Input id="name" {...register("name")} placeholder="e.g. Crocin 500mg" />
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="brandName">Brand name</Label>
+                <Label htmlFor="brandName" className="text-xs font-bold text-slate-700">Brand name</Label>
                 <Input id="brandName" {...register("brandName")} placeholder="e.g. Crocin" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="genericName">Generic / Salt Name</Label>
+                <Label htmlFor="genericName" className="text-xs font-bold text-slate-700">Generic / Salt Name</Label>
                 <Input
                   id="genericName"
                   {...register("genericName")}
@@ -1681,7 +1965,7 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="saltComposition">Full Salt Composition Details</Label>
+              <Label htmlFor="saltComposition" className="text-xs font-bold text-slate-700">Full Salt Composition Details</Label>
               <Input
                 id="saltComposition"
                 {...register("saltComposition")}
@@ -1691,17 +1975,20 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           </div>
 
           {/* CLINICAL DATA */}
-          <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">
-              Clinical Settings
-            </h4>
+          <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100/80 space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+              <Layers className="w-4 h-4 text-[#007A87]" />
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Clinical Settings
+              </h4>
+            </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="strength">Strength</Label>
+                <Label htmlFor="strength" className="text-xs font-bold text-slate-700">Strength</Label>
                 <Input id="strength" {...register("strength")} placeholder="e.g. 500 mg" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dosageForm">Dosage Form</Label>
+                <Label htmlFor="dosageForm" className="text-xs font-bold text-slate-700">Dosage Form</Label>
                 <Input
                   id="dosageForm"
                   {...register("dosageForm")}
@@ -1709,13 +1996,13 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="packSize">Pack Size</Label>
+                <Label htmlFor="packSize" className="text-xs font-bold text-slate-700">Pack Size</Label>
                 <Input id="packSize" {...register("packSize")} placeholder="e.g. 10 Tablets" />
               </div>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label>Category</Label>
+                <Label className="text-xs font-bold text-slate-700">Category</Label>
                 <Select
                   value={watch("categoryId") || ""}
                   onValueChange={(v) => setValue("categoryId", v)}
@@ -1733,7 +2020,7 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label>Drug Schedule</Label>
+                <Label className="text-xs font-bold text-slate-700">Drug Schedule</Label>
                 <Select
                   value={watch("drugSchedule") || ""}
                   onValueChange={(v) => setValue("drugSchedule", v)}
@@ -1754,13 +2041,16 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
           </div>
 
           {/* INVENTORY & WAREHOUSE */}
-          <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">
-              Stock Rules & Storage
-            </h4>
+          <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100/80 space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+              <Database className="w-4 h-4 text-[#007A87]" />
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Stock Rules & Storage
+              </h4>
+            </div>
             <div className="grid gap-4 sm:grid-cols-4">
               <div className="space-y-2 col-span-2">
-                <Label>Manufacturer</Label>
+                <Label className="text-xs font-bold text-slate-700">Manufacturer</Label>
                 <Select
                   value={watch("manufacturerId") || ""}
                   onValueChange={(v) => setValue("manufacturerId", v)}
@@ -1778,41 +2068,41 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ptr">PTR ({settings.currency})</Label>
+                <Label htmlFor="ptr" className="text-xs font-bold text-slate-700">PTR ({settings.currency})</Label>
                 <Input id="ptr" type="number" step="0.01" {...register("ptr")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="rackLocation">Rack Location</Label>
+                <Label htmlFor="rackLocation" className="text-xs font-bold text-slate-700">Rack Location</Label>
                 <Input id="rackLocation" {...register("rackLocation")} placeholder="e.g. A-12" />
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-4">
               <div className="space-y-2">
-                <Label htmlFor="hsnCode">HSN Code</Label>
+                <Label htmlFor="hsnCode" className="text-xs font-bold text-slate-700">HSN Code</Label>
                 <Input id="hsnCode" {...register("hsnCode")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="gstRate">GST %</Label>
+                <Label htmlFor="gstRate" className="text-xs font-bold text-slate-700">GST %</Label>
                 <Input id="gstRate" type="number" step="0.5" {...register("gstRate")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="reorderThreshold">Reorder Min</Label>
+                <Label htmlFor="reorderThreshold" className="text-xs font-bold text-slate-700">Reorder Min</Label>
                 <Input id="reorderThreshold" type="number" {...register("reorderThreshold")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maxStockLevel">Max Stock</Label>
+                <Label htmlFor="maxStockLevel" className="text-xs font-bold text-slate-700">Max Stock</Label>
                 <Input id="maxStockLevel" type="number" {...register("maxStockLevel")} />
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="gtin">GTIN (Global Trade Number)</Label>
+                <Label htmlFor="gtin" className="text-xs font-bold text-slate-700">GTIN (Global Trade Number)</Label>
                 <Input id="gtin" {...register("gtin")} placeholder="e.g. 08901234567890" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="barcode">Barcode / SKU</Label>
+                <Label htmlFor="barcode" className="text-xs font-bold text-slate-700">Barcode / SKU</Label>
                 <Input
                   id="barcode"
                   placeholder="Leave empty for auto-generate"
@@ -1822,7 +2112,7 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="storageRequirements">Storage requirements</Label>
+              <Label htmlFor="storageRequirements" className="text-xs font-bold text-slate-700">Storage requirements</Label>
               <Textarea
                 id="storageRequirements"
                 rows={2}
@@ -1832,13 +2122,16 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
             </div>
           </div>
 
-          {/* PATIENT MONOGRAPHS */}
-          <div className="space-y-3 pt-2">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border/40 pb-1">
-              Safety & Drug Monographs
-            </h4>
+          {/* SAFETY DATA */}
+          <div className="bg-slate-50/50 p-4 rounded-xl border border-slate-100/80 space-y-4">
+            <div className="flex items-center gap-2 border-b border-border/40 pb-2">
+              <Settings className="w-4 h-4 text-[#007A87]" />
+              <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                Safety & Drug Monographs
+              </h4>
+            </div>
             <div className="space-y-2">
-              <Label htmlFor="dosageInfo">Standard Dosage Information</Label>
+              <Label htmlFor="dosageInfo" className="text-xs font-bold text-slate-700">Standard Dosage Information</Label>
               <Textarea
                 id="dosageInfo"
                 rows={2}
@@ -1847,7 +2140,7 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="usageInstructions">Usage Instructions</Label>
+              <Label htmlFor="usageInstructions" className="text-xs font-bold text-slate-700">Usage Instructions</Label>
               <Textarea
                 id="usageInstructions"
                 rows={2}
@@ -1856,7 +2149,7 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contraindications">Contraindications</Label>
+              <Label htmlFor="contraindications" className="text-xs font-bold text-slate-700">Contraindications</Label>
               <Textarea
                 id="contraindications"
                 rows={2}
@@ -1865,7 +2158,7 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sideEffects">Side Effects</Label>
+              <Label htmlFor="sideEffects" className="text-xs font-bold text-slate-700">Side Effects</Label>
               <Textarea
                 id="sideEffects"
                 rows={2}
