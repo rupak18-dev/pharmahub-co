@@ -30,7 +30,15 @@ import {
   CheckCircle2,
   AlertCircle,
   X,
+  CheckSquare,
+  MoreHorizontal,
 } from "lucide-react";
+import { Checkbox } from "@/Components/ui/checkbox";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "@/Components/ui/popover";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -68,6 +76,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -240,7 +249,11 @@ export default function MedicinesCatalogPage() {
   const [confirmDelete, setConfirmDelete] = useState(null);
   const [viewMode, setViewMode] = useState("list");
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  const [itemsPerPage, setItemsPerPage] = useState(10);
+  const [selectedMedIds, setSelectedMedIds] = useState([]);
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
   // Computed lists for dropdown filters
   const uniqueBrands = useMemo(() => {
     const brands = new Set(medicines.map((m) => m.brandName).filter(Boolean));
@@ -437,7 +450,7 @@ export default function MedicinesCatalogPage() {
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
     return filtered.slice(startIndex, startIndex + itemsPerPage);
-  }, [filtered, currentPage]);
+  }, [filtered, currentPage, itemsPerPage]);
   const totalPages = Math.ceil(filtered.length / itemsPerPage);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
@@ -649,7 +662,10 @@ export default function MedicinesCatalogPage() {
   const handleExport = async (format) => {
     const columnsToExport = CUSTOMIZABLE_FILTERS.filter((f) => isFieldVisible(f.id));
     const headerRow = columnsToExport.map((c) => c.label);
-    const rows = filtered.map((m) => {
+    const targetMedicines = selectedMedIds.length > 0
+      ? filtered.filter((m) => selectedMedIds.includes(m.id))
+      : filtered;
+    const rows = targetMedicines.map((m) => {
       const meta = stockByMed.get(m.id);
       return columnsToExport.map((col) => {
         switch (col.id) {
@@ -719,7 +735,7 @@ export default function MedicinesCatalogPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success("Exported to CSV successfully!");
+      toast.success(selectedMedIds.length > 0 ? `Exported ${targetMedicines.length} selected medicine(s) to CSV!` : "Exported to CSV successfully!");
     } else {
       try {
         const { default: jsPDF } = await import("jspdf");
@@ -738,7 +754,7 @@ export default function MedicinesCatalogPage() {
           headStyles: { fillColor: [0, 122, 135] },
         });
         doc.save(`${fileName}.pdf`);
-        toast.success("Exported to PDF successfully!");
+        toast.success(selectedMedIds.length > 0 ? `Exported ${targetMedicines.length} selected medicine(s) to PDF!` : "Exported to PDF successfully!");
       } catch (err) {
         console.error("PDF generation failed:", err);
         toast.error("Failed to generate PDF. Please ensure jspdf is installed.");
@@ -852,6 +868,27 @@ export default function MedicinesCatalogPage() {
     toast.success(`Medicine ${m.name} deleted`);
     setConfirmDelete(null);
   };
+
+  const handleBulkDelete = () => {
+    if (selectedMedIds.length === 0) return;
+    const count = selectedMedIds.length;
+    db.set((d) => {
+      d.medicines = d.medicines.filter((x) => !selectedMedIds.includes(x.id));
+    });
+    if (user)
+      logActivity({
+        userId: user.id,
+        userName: user.name,
+        action: `Deleted ${count} medicine(s) in bulk from catalog`,
+        entityType: "medicine",
+        entityId: "bulk-delete",
+      });
+    toast.success(`Successfully deleted ${count} medicine${count > 1 ? "s" : ""}`);
+    setSelectedMedIds([]);
+    setSelectionMode(false);
+    setBulkDeleteDialogOpen(false);
+  };
+
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Title section outside white container */}
@@ -860,34 +897,168 @@ export default function MedicinesCatalogPage() {
           {showWishlist ? "Your Wishlist" : "Medicines"}
         </h1>
         <div className="flex items-center gap-2">
-          {!showWishlist && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-lg gap-1.5 flex items-center shrink-0"
-              onClick={() => setShowWishlist(true)}
-            >
-              <Heart
-                className={`h-4 w-4 ${wishlist.length > 0 ? "text-red-500 fill-red-500" : "text-muted-foreground"}`}
-              />
-              Wishlist
-            </Button>
-          )}
           {showWishlist && (
             <Button
               size="sm"
               variant="outline"
-              className="rounded-lg gap-1 flex items-center shrink-0"
+              className="rounded-lg gap-1 flex items-center shrink-0 text-xs font-semibold"
               onClick={() => setShowWishlist(false)}
             >
-              <ArrowLeft className="h-4 w-4" /> Back
+              <ArrowLeft className="h-4 w-4" /> Back to All
             </Button>
           )}
+
+          <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 w-9 p-0 rounded-lg flex items-center justify-center border-border/80 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-sm"
+                title="Store Settings & Quick Actions"
+              >
+                <Settings className="h-4 w-4 text-slate-700 hover:rotate-45 transition-transform duration-200" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-2 rounded-xl shadow-xl border-border/60 bg-white space-y-1 z-50">
+              <div className="px-2 py-1.5 border-b border-border/40 mb-1">
+                <h4 className="text-xs font-bold text-slate-900">Store Quick Actions</h4>
+                <p className="text-[10px] text-muted-foreground">Manage views & batch actions</p>
+              </div>
+
+              {/* Wishlist option */}
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWishlist((prev) => !prev);
+                  setSettingsOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                  showWishlist
+                    ? "bg-red-50 text-red-600 font-bold"
+                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <Heart className={`h-4 w-4 ${wishlist.length > 0 ? "text-red-500 fill-red-500" : "text-muted-foreground"}`} />
+                  <span>Wishlist</span>
+                </div>
+                {wishlist.length > 0 && (
+                  <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-red-100 text-red-600 font-bold">
+                    {wishlist.length}
+                  </span>
+                )}
+              </button>
+
+              {/* Select All / Selection Mode option */}
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectionMode(true);
+                  setSelectedMedIds([]);
+                  setSettingsOpen(false);
+                }}
+                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                  selectionMode
+                    ? "bg-[#007A87]/10 text-[#007A87] font-bold"
+                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4 text-[#007A87]" />
+                  <span>Select All</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground font-medium">
+                  {selectionMode ? "Active" : "Enable"}
+                </span>
+              </button>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
       {/* Main white container */}
       <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-border/40 flex flex-col flex-1 overflow-hidden">
+        {/* Multi-Selection Actions Banner */}
+        {selectionMode && (
+          <div className="flex flex-wrap items-center gap-3 px-4 py-2.5 bg-[#007A87]/5 border-b border-[#007A87]/20 transition-all duration-200">
+            <div className="flex items-center gap-2.5">
+              <Checkbox
+                id="select-all-header-checkbox"
+                checked={
+                  filtered.length > 0 && filtered.every((m) => selectedMedIds.includes(m.id))
+                    ? true
+                    : selectedMedIds.length > 0
+                      ? "indeterminate"
+                      : false
+                }
+                onCheckedChange={(checked) => {
+                  if (checked) {
+                    setSelectedMedIds(filtered.map((m) => m.id));
+                  } else {
+                    setSelectedMedIds([]);
+                  }
+                }}
+              />
+              <label
+                htmlFor="select-all-header-checkbox"
+                className="text-xs font-bold text-slate-800 cursor-pointer select-none"
+              >
+                {selectedMedIds.length} of {filtered.length} selected
+              </label>
+              <button
+                type="button"
+                onClick={() => {
+                  if (selectedMedIds.length === filtered.length) {
+                    setSelectedMedIds([]);
+                  } else {
+                    setSelectedMedIds(filtered.map((m) => m.id));
+                  }
+                }}
+                className="text-xs text-[#007A87] hover:underline font-semibold cursor-pointer"
+              >
+                {selectedMedIds.length === filtered.length ? "Deselect all" : "Select all"}
+              </button>
+            </div>
+
+            <div className="h-4 w-px bg-border/60 mx-1 hidden sm:block" />
+
+            <div className="flex items-center gap-2">
+              {selectedMedIds.length > 0 && (
+                <>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs font-semibold gap-1.5 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 cursor-pointer"
+                    onClick={() => setBulkDeleteDialogOpen(true)}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    Delete ({selectedMedIds.length})
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs font-semibold gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 cursor-pointer"
+                    onClick={() => setIsExportModalOpen(true)}
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Export ({selectedMedIds.length})
+                  </Button>
+                </>
+              )}
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-8 text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
+                onClick={() => {
+                  setSelectionMode(false);
+                  setSelectedMedIds([]);
+                }}
+              >
+                Exit Selection
+              </Button>
+            </div>
+          </div>
+        )}
         {/* Top Controls Bar */}
         {!showWishlist && (
           <div className="p-4 border-b border-border/40 space-y-4">
@@ -938,25 +1109,49 @@ export default function MedicinesCatalogPage() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2 w-full sm:w-auto flex-1 sm:flex-initial justify-center"
+                      className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2 w-full sm:w-auto flex-1 sm:flex-initial justify-center cursor-pointer"
                     >
                       <Filter className="w-3.5 h-3.5 text-muted-foreground" />
-                      Manage Column
+                      Manage Filters
+                      {visibleFields.length > 0 && (
+                        <span className="rounded-full bg-[#007A87]/10 px-1.5 py-0.5 font-mono text-[10px] text-[#007A87] font-bold">
+                          {visibleFields.length}
+                        </span>
+                      )}
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="w-56" align="end">
-                    <DropdownMenuLabel>Customize Filters</DropdownMenuLabel>
+                    <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40">
+                      <span className="text-xs font-bold text-slate-900">Manage Filters</span>
+                      {visibleFields.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setVisibleFields([])}
+                          className="text-[11px] text-[#007A87] hover:underline font-semibold cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-64 overflow-y-auto py-1">
+                      {CUSTOMIZABLE_FILTERS.map((f) => (
+                        <DropdownMenuCheckboxItem
+                          key={f.id}
+                          checked={visibleFields.includes(f.id)}
+                          onCheckedChange={() => toggleField(f.id)}
+                          onSelect={(e) => e.preventDefault()}
+                        >
+                          {f.label}
+                        </DropdownMenuCheckboxItem>
+                      ))}
+                    </div>
                     <DropdownMenuSeparator />
-                    {CUSTOMIZABLE_FILTERS.map((f) => (
-                      <DropdownMenuCheckboxItem
-                        key={f.id}
-                        checked={visibleFields.includes(f.id)}
-                        onCheckedChange={() => toggleField(f.id)}
-                        onSelect={(e) => e.preventDefault()}
-                      >
-                        {f.label}
-                      </DropdownMenuCheckboxItem>
-                    ))}
+                    <DropdownMenuItem
+                      onSelect={() => setVisibleFields([])}
+                      className="justify-center text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                    >
+                      Clear & show all columns
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
 
@@ -1060,6 +1255,29 @@ export default function MedicinesCatalogPage() {
                     <table className="w-full text-[13px] border-collapse whitespace-nowrap">
                       <thead className="border-b border-border/40 bg-white text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
                         <tr>
+                          {selectionMode && (
+                            <th className="px-4 py-3 w-10 text-center">
+                              <Checkbox
+                                checked={
+                                  paginatedData.length > 0 &&
+                                  paginatedData.every((m) => selectedMedIds.includes(m.id))
+                                    ? true
+                                    : paginatedData.some((m) => selectedMedIds.includes(m.id))
+                                      ? "indeterminate"
+                                      : false
+                                }
+                                onCheckedChange={(checked) => {
+                                  const pageIds = paginatedData.map((m) => m.id);
+                                  if (checked) {
+                                    setSelectedMedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+                                  } else {
+                                    setSelectedMedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+                                  }
+                                }}
+                                aria-label="Select all on current page"
+                              />
+                            </th>
+                          )}
                           <th className="px-4 py-3">
                             <div className="flex items-center gap-1">
                               Medicine Name <ArrowDownUp className="w-3 h-3 opacity-50" />
@@ -1155,8 +1373,25 @@ export default function MedicinesCatalogPage() {
                           return (
                             <tr
                               key={m.id}
-                              className="group hover:bg-muted/10 transition-colors duration-200 bg-white border-b border-border/40 last:border-b-0"
+                              className={`group hover:bg-muted/10 transition-colors duration-200 bg-white border-b border-border/40 last:border-b-0 ${
+                                selectedMedIds.includes(m.id) ? "bg-[#007A87]/5" : ""
+                              }`}
                             >
+                              {selectionMode && (
+                                <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                  <Checkbox
+                                    checked={selectedMedIds.includes(m.id)}
+                                    onCheckedChange={(checked) => {
+                                      if (checked) {
+                                        setSelectedMedIds((prev) => [...prev, m.id]);
+                                      } else {
+                                        setSelectedMedIds((prev) => prev.filter((id) => id !== m.id));
+                                      }
+                                    }}
+                                    aria-label={`Select ${m.name}`}
+                                  />
+                                </td>
+                              )}
                               {/* Medicine Info */}
                               <td className="px-4 py-3 font-semibold text-foreground group-hover:text-[#007A87] transition-colors">
                                 <div className="flex items-center gap-3 min-w-0">
@@ -1371,41 +1606,43 @@ export default function MedicinesCatalogPage() {
 
                               {/* Actions */}
                               <td className="px-4 py-3 text-center sticky right-0 bg-white border-l border-border/40">
-                                <div className="flex items-center justify-center gap-2">
-                                  <Button
-                                    asChild
-                                    variant="outline"
-                                    size="sm"
-                                    className="h-7 px-2.5 text-xs text-slate-600 hover:text-slate-900 border-border/60 hover:bg-slate-50 rounded-md gap-1 font-medium"
-                                    title="View details"
-                                  >
-                                    <Link to={`/medicines/${m.id}`}>
-                                      <Eye className="h-3.5 w-3.5" /> View
-                                    </Link>
-                                  </Button>
-                                  {has("medicines", "update") && (
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="h-7 w-7 text-slate-600 border-border/60 hover:bg-slate-50 hover:text-slate-900 rounded-md"
-                                      onClick={() => openEdit(m)}
-                                      title="Edit Configuration"
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <button
+                                      type="button"
+                                      title="Medicine actions"
+                                      className="grid h-7 w-7 place-items-center rounded-md text-muted-foreground transition-colors hover:bg-slate-100 hover:text-slate-900 border border-transparent hover:border-border/60 mx-auto cursor-pointer"
                                     >
-                                      <Pencil className="h-3 w-3" />
-                                    </Button>
-                                  )}
-                                  {has("medicines", "delete") && (
-                                    <Button
-                                      variant="outline"
-                                      size="icon"
-                                      className="h-7 w-7 text-destructive border-border/60 hover:bg-destructive/10 rounded-md"
-                                      onClick={() => setConfirmDelete(m)}
-                                      title="Delete"
-                                    >
-                                      <Trash2 className="h-3 w-3" />
-                                    </Button>
-                                  )}
-                                </div>
+                                      <MoreHorizontal className="h-4 w-4" strokeWidth={1.5} />
+                                    </button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-44 z-50">
+                                    <DropdownMenuItem asChild>
+                                      <Link to={`/medicines/${m.id}`} className="cursor-pointer">
+                                        <Info className="mr-2 h-4 w-4 text-slate-500" />
+                                        <span>View details</span>
+                                      </Link>
+                                    </DropdownMenuItem>
+                                    {has("medicines", "update") && (
+                                      <DropdownMenuItem onClick={() => openEdit(m)} className="cursor-pointer">
+                                        <Pencil className="mr-2 h-4 w-4 text-slate-500" />
+                                        <span>Edit</span>
+                                      </DropdownMenuItem>
+                                    )}
+                                    {has("medicines", "delete") && (
+                                      <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem
+                                          onClick={() => setConfirmDelete(m)}
+                                          className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                                        >
+                                          <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                                          <span>Delete</span>
+                                        </DropdownMenuItem>
+                                      </>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </td>
                             </tr>
                           );
@@ -1430,14 +1667,33 @@ export default function MedicinesCatalogPage() {
                     return (
                       <div
                         key={m.id}
-                        className="bg-white border border-border/80 rounded-2xl p-5 shadow-sm space-y-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative flex flex-col justify-between overflow-hidden group"
+                        className={`bg-white border rounded-2xl p-5 shadow-sm space-y-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative flex flex-col justify-between overflow-hidden group ${
+                          selectedMedIds.includes(m.id)
+                            ? "border-[#007A87] ring-2 ring-[#007A87]/20"
+                            : "border-border/80"
+                        }`}
                       >
                         <div>
                           {/* Top Actions */}
                           <div className="flex justify-between items-start">
-                            <span className="text-[10px] text-muted-foreground font-mono">
-                              {m.id.slice(0, 8).toUpperCase()}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {selectionMode && (
+                                <Checkbox
+                                  checked={selectedMedIds.includes(m.id)}
+                                  onCheckedChange={(checked) => {
+                                    if (checked) {
+                                      setSelectedMedIds((prev) => [...prev, m.id]);
+                                    } else {
+                                      setSelectedMedIds((prev) => prev.filter((id) => id !== m.id));
+                                    }
+                                  }}
+                                  aria-label={`Select ${m.name}`}
+                                />
+                              )}
+                              <span className="text-[10px] text-muted-foreground font-mono">
+                                {m.id.slice(0, 8).toUpperCase()}
+                              </span>
+                            </div>
                             <Button
                               variant="ghost"
                               size="icon"
@@ -1531,19 +1787,40 @@ export default function MedicinesCatalogPage() {
                               className="flex-1 text-xs gap-1 rounded-xl h-9 border-[#007A87]/20 text-[#007A87] hover:bg-[#007A87]/5"
                             >
                               <Link to={`/medicines/${m.id}`}>
-                                <Eye className="h-3.5 w-3.5" /> View Details
+                                <Info className="h-3.5 w-3.5" /> View Details
                               </Link>
                             </Button>
-                            {has("medicines", "update") && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="h-9 w-9 p-0 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground"
-                                onClick={() => openEdit(m)}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-9 w-9 p-0 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground cursor-pointer"
+                                >
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40 z-50">
+                                {has("medicines", "update") && (
+                                  <DropdownMenuItem onClick={() => openEdit(m)} className="cursor-pointer">
+                                    <Pencil className="mr-2 h-4 w-4 text-slate-500" />
+                                    <span>Edit</span>
+                                  </DropdownMenuItem>
+                                )}
+                                {has("medicines", "delete") && (
+                                  <>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem
+                                      onClick={() => setConfirmDelete(m)}
+                                      className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4 text-destructive" />
+                                      <span>Delete</span>
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       </div>
@@ -1563,10 +1840,28 @@ export default function MedicinesCatalogPage() {
               Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
               {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} medicines
             </span>
-            <div className="flex items-center gap-2 border border-border/60 rounded-md bg-white px-2.5 py-1.5 cursor-not-allowed opacity-70">
-              <span className="text-[13px] text-slate-600 font-bold">10 per page</span>
-              <ChevronsUpDown className="w-3.5 h-3.5 text-slate-400" />
-            </div>
+            <Select
+              value={String(itemsPerPage)}
+              onValueChange={(val) => {
+                setItemsPerPage(Number(val));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="h-8 w-auto min-w-[120px] gap-2 bg-white border border-border/60 rounded-md px-2.5 py-1.5 text-[13px] font-bold text-slate-700 shadow-none hover:bg-slate-50 focus:ring-0 focus:outline-none cursor-pointer">
+                <SelectValue placeholder={`${itemsPerPage} per page`} />
+              </SelectTrigger>
+              <SelectContent align="start">
+                {[10, 15, 20, 25, 30].map((count) => (
+                  <SelectItem
+                    key={count}
+                    value={String(count)}
+                    className="text-[13px] font-semibold cursor-pointer"
+                  >
+                    {count} per page
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2">
@@ -1629,13 +1924,39 @@ export default function MedicinesCatalogPage() {
         onSubmit={submit}
       />
 
+      {/* BULK DELETE CONFIRMATION MODAL */}
+      <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete {selectedMedIds.length} Medicine{selectedMedIds.length > 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete the {selectedMedIds.length} selected medicine{selectedMedIds.length > 1 ? "s" : ""} from the catalog? This action will permanently remove them and cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setBulkDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleBulkDelete}
+              className="bg-red-600 hover:bg-red-700 text-white"
+            >
+              Delete Selected
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <Dialog open={isExportModalOpen} onOpenChange={setIsExportModalOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Export Medicines Catalog</DialogTitle>
+            <DialogTitle>
+              {selectedMedIds.length > 0
+                ? `Export ${selectedMedIds.length} Selected Medicine${selectedMedIds.length > 1 ? "s" : ""}`
+                : "Export Medicines Catalog"}
+            </DialogTitle>
             <DialogDescription>
-              Choose the format you would like to export to. Only the currently visible columns
-              based on your filters will be exported.
+              {selectedMedIds.length > 0
+                ? `Choose the format to export the ${selectedMedIds.length} selected medicine(s). Only the currently visible columns based on your filters will be exported.`
+                : "Choose the format you would like to export to. Only the currently visible columns based on your filters will be exported."}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col sm:flex-row gap-4 py-4">
