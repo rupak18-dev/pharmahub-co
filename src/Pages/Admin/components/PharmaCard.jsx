@@ -74,9 +74,7 @@ export function PharmaCard() {
           </span>
           <div>
             <CardTitle className="text-base font-semibold text-foreground">Profile</CardTitle>
-            <p className="text-xs text-muted-foreground">
-              {owner?.orgName || "Not configured"}
-            </p>
+            <p className="text-xs text-muted-foreground">{owner?.orgName || "Not configured"}</p>
           </div>
         </div>
       </CardHeader>

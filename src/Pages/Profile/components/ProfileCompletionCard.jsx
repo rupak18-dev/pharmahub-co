@@ -36,9 +36,7 @@ export function ProfileCompletionCard({ profile, onSelectField }) {
           <h3 className="text-base font-semibold text-foreground">Profile Completion</h3>
         </div>
 
-        <span className="text-sm font-bold text-primary">
-          {percentage}% Complete
-        </span>
+        <span className="text-sm font-bold text-primary">{percentage}% Complete</span>
       </div>
 
       {/* Subtle Divider */}

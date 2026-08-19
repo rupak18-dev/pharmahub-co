@@ -1,13 +1,4 @@
-import {
-  Shield,
-  Store,
-  Stethoscope,
-  Pill,
-  Syringe,
-  Boxes,
-  Receipt,
-  Settings,
-} from "lucide-react";
+import { Shield, Store, Stethoscope, Pill, Syringe, Boxes, Receipt, Settings } from "lucide-react";
 
 export const ROLE_CATEGORIES = [
   { key: "operations", label: "Operations" },

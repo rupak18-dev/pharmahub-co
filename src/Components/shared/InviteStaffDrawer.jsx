@@ -431,7 +431,11 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                 >
                   <Avatar className="h-full w-full">
                     {avatarUrl ? (
-                      <AvatarImage src={avatarUrl} alt={name || "Profile photo"} className="object-cover h-full w-full" />
+                      <AvatarImage
+                        src={avatarUrl}
+                        alt={name || "Profile photo"}
+                        className="object-cover h-full w-full"
+                      />
                     ) : null}
                     <AvatarFallback className="bg-primary/10 text-primary font-bold text-base">
                       {initials}
@@ -443,7 +447,9 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                 </button>
 
                 <div className="space-y-1 min-w-0 flex-1">
-                  <Label className="text-xs font-semibold text-foreground block">Profile Photo</Label>
+                  <Label className="text-xs font-semibold text-foreground block">
+                    Profile Photo
+                  </Label>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -506,7 +512,9 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                       className={`pl-9 text-xs rounded-xl ${errors.position ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
                     />
                   </div>
-                  {errors.position && <p className="text-[11px] text-destructive">{errors.position}</p>}
+                  {errors.position && (
+                    <p className="text-[11px] text-destructive">{errors.position}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -597,7 +605,8 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                     Dashboard & Mobile Access
                   </Label>
                   <p className="text-[11px] text-muted-foreground leading-snug">
-                    Enable login credentials allowing this staff member to sign in to the PharmaHub web & mobile app.
+                    Enable login credentials allowing this staff member to sign in to the PharmaHub
+                    web & mobile app.
                   </p>
                 </div>
                 <Switch
@@ -616,9 +625,12 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
               <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
                 <Info className="h-4 w-4 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-foreground">Select pages this role will have access to.</p>
+                  <p className="font-semibold text-foreground">
+                    Select pages this role will have access to.
+                  </p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                    Toggle module access for <strong>{name || "this staff member"}</strong> (Role: {role}).
+                    Toggle module access for <strong>{name || "this staff member"}</strong> (Role:{" "}
+                    {role}).
                   </p>
                 </div>
               </div>
@@ -676,7 +688,8 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                 <div>
                   <p className="font-semibold text-foreground">Configure Feature Capabilities</p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                    Enable or disable specific operational capabilities and special privileges for {name || "staff"}.
+                    Enable or disable specific operational capabilities and special privileges for{" "}
+                    {name || "staff"}.
                   </p>
                 </div>
               </div>
@@ -723,7 +736,9 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                     >
                       <div className="space-y-1 min-w-0 flex-1">
                         <p className="text-xs font-bold text-foreground">{feat.title}</p>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">{feat.desc}</p>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          {feat.desc}
+                        </p>
                       </div>
 
                       <Switch

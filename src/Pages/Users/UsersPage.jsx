@@ -589,9 +589,7 @@ function UsersTab() {
                               </span>
                             )}
                           </h3>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">
-                            {p.role}
-                          </p>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">{p.role}</p>
                         </div>
                       </div>
 

@@ -200,7 +200,10 @@ export default function EditProfilePage() {
         {/* Form Container */}
         <div id="profile-info" className="space-y-6">
           {/* SECTION 1: Basic Information */}
-          <div id="studio-info" className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-5">
+          <div
+            id="studio-info"
+            className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-5"
+          >
             <h2 className="text-sm font-bold text-foreground border-b border-border/50 pb-3 flex items-center gap-2">
               <UserRound className="h-4 w-4 text-primary" /> Basic Information
             </h2>
@@ -226,7 +229,13 @@ export default function EditProfilePage() {
                   />
                   <label htmlFor="avatar-upload" className="cursor-pointer block relative">
                     <Avatar className="h-16 w-16 border-2 border-border group-hover:border-primary transition-colors shadow-xs">
-                      {formData.avatarUrl && <AvatarImage src={formData.avatarUrl} alt="Profile Photo" className="object-cover" />}
+                      {formData.avatarUrl && (
+                        <AvatarImage
+                          src={formData.avatarUrl}
+                          alt="Profile Photo"
+                          className="object-cover"
+                        />
+                      )}
                       <AvatarFallback className="bg-primary text-primary-foreground text-base font-bold">
                         {initials}
                       </AvatarFallback>
@@ -275,7 +284,9 @@ export default function EditProfilePage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="tagline" className="text-xs font-semibold">Pharma Tagline</Label>
+                <Label htmlFor="tagline" className="text-xs font-semibold">
+                  Pharma Tagline
+                </Label>
                 <Input
                   id="tagline"
                   value={formData.tagline}
@@ -286,7 +297,9 @@ export default function EditProfilePage() {
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="description" className="text-xs font-semibold">Description</Label>
+                <Label htmlFor="description" className="text-xs font-semibold">
+                  Description
+                </Label>
                 <Textarea
                   id="description"
                   rows={2}
@@ -307,7 +320,9 @@ export default function EditProfilePage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="phone" className="text-xs font-semibold">Phone Number</Label>
+                <Label htmlFor="phone" className="text-xs font-semibold">
+                  Phone Number
+                </Label>
                 <Input
                   id="phone"
                   value={formData.phone}
@@ -333,7 +348,9 @@ export default function EditProfilePage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="website" className="text-xs font-semibold">Website</Label>
+                <Label htmlFor="website" className="text-xs font-semibold">
+                  Website
+                </Label>
                 <Input
                   id="website"
                   value={formData.website}
@@ -346,14 +363,19 @@ export default function EditProfilePage() {
           </div>
 
           {/* SECTION 3: Business Information */}
-          <div id="business-details" className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-5">
+          <div
+            id="business-details"
+            className="rounded-xl border border-border bg-card p-6 shadow-xs space-y-5"
+          >
             <h2 className="text-sm font-bold text-foreground border-b border-border/50 pb-3 flex items-center gap-2">
               <Landmark className="h-4 w-4 text-primary" /> Business Information
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label htmlFor="gstin" className="text-xs font-semibold">GST Number (GSTIN)</Label>
+                <Label htmlFor="gstin" className="text-xs font-semibold">
+                  GST Number (GSTIN)
+                </Label>
                 <Input
                   id="gstin"
                   value={formData.gstin}
@@ -364,7 +386,9 @@ export default function EditProfilePage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="businessType" className="text-xs font-semibold">Business Category</Label>
+                <Label htmlFor="businessType" className="text-xs font-semibold">
+                  Business Category
+                </Label>
                 <Select
                   value={formData.businessType}
                   onValueChange={(v) => handleInputChange("businessType", v)}
@@ -383,7 +407,9 @@ export default function EditProfilePage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="licenseNo" className="text-xs font-semibold">License Number</Label>
+                <Label htmlFor="licenseNo" className="text-xs font-semibold">
+                  License Number
+                </Label>
                 <Input
                   id="licenseNo"
                   value={formData.licenseNo}
@@ -394,7 +420,9 @@ export default function EditProfilePage() {
               </div>
 
               <div className="space-y-1.5 sm:col-span-2">
-                <Label htmlFor="address" className="text-xs font-semibold">Address</Label>
+                <Label htmlFor="address" className="text-xs font-semibold">
+                  Address
+                </Label>
                 <Textarea
                   id="address"
                   rows={2}
@@ -406,7 +434,9 @@ export default function EditProfilePage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="city" className="text-xs font-semibold">City</Label>
+                <Label htmlFor="city" className="text-xs font-semibold">
+                  City
+                </Label>
                 <Input
                   id="city"
                   value={formData.city}
@@ -417,7 +447,9 @@ export default function EditProfilePage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="state" className="text-xs font-semibold">State</Label>
+                <Label htmlFor="state" className="text-xs font-semibold">
+                  State
+                </Label>
                 <Input
                   id="state"
                   value={formData.state}
@@ -428,8 +460,6 @@ export default function EditProfilePage() {
               </div>
             </div>
           </div>
-
-
         </div>
 
         {/* ── Organization ─────────────────────────────────── */}
