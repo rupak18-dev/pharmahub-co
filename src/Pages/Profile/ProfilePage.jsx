@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "react-router";
 import { usePermission } from "@/hooks/usePermission";
 import { useActiveSection } from "@/hooks/useActiveSection";
 import { PROFILE_SECTION_IDS } from "@/lib/profileSections";

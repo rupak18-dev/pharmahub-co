@@ -9,7 +9,7 @@ import {
   ShieldCheck,
   UserRound,
 } from "lucide-react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "react-router";
 import { useAuth } from "@/lib/auth";
 import { useDb } from "@/hooks/useDb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";

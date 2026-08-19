@@ -5,11 +5,12 @@ import { Avatar, AvatarFallback } from "@/Components/ui/avatar";
 import { Button } from "@/Components/ui/button";
 import { Users, LayoutGrid, Sliders } from "lucide-react";
 import { useDb } from "@/hooks/useDb";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { categoryLabel } from "@/lib/roleCatalog";
 import { AccessPolicyBuilder } from "./AccessPolicyBuilder";
 import { AccessPreview } from "./AccessPreview";
 import { StaffStatusBadge, resolveStatus } from "./StaffStatusBadge";
-import { format } from "date-fns";
+import dayjs from "dayjs";
 
 function getInitials(name) {
   const parts = (name ?? "U").trim().split(" ");
@@ -29,12 +30,14 @@ function MetaItem({ label, value }) {
 }
 
 export function RoleDetailModal({ role, open, onClose }) {
-  const profiles = useDb((d) => d.profiles);
   const permissions = useDb((d) => d.permissions);
+  // Assigned users come from the same persisted backend members list rendered
+  // by the Users and Staff Access tabs — never from the local database.
+  const { members } = useTeamMembers();
   const [activeTab, setActiveTab] = useState("builder");
   const assignedUsers = useMemo(
-    () => (role ? profiles.filter((p) => !p.isDemo && p.role === role.name) : []),
-    [profiles, role],
+    () => members.filter((p) => !p.invitationId && !p.isDemo && p.role === role?.name),
+    [members, role],
   );
   if (!role) return null;
   const Icon = role.icon;
@@ -139,8 +142,8 @@ export function RoleDetailModal({ role, open, onClose }) {
                           </div>
                           <div className="flex items-center gap-4 text-muted-foreground">
                             <span className="font-mono text-[11px]">
-                              {u.createdAt
-                                ? `Joined ${format(new Date(u.createdAt), "MMM d, yyyy")}`
+                              {u.createdAt && dayjs(u.createdAt).isValid()
+                                ? `Joined ${dayjs(u.createdAt).format("DD MMM YYYY")}`
                                 : ""}
                             </span>
                             <StaffStatusBadge status={resolveStatus(u)} className="text-[11px]" />

@@ -2,45 +2,30 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Check,
   ExternalLink,
+  Loader2,
+  Mail,
+  MessageCircle,
   Plug,
   Plus,
+  Send,
   Settings2,
   Unplug,
-  Loader2,
 } from "lucide-react";
+import { SiGmail } from "react-icons/si";
 import { toast } from "sonner";
 import { usePermission } from "@/hooks/usePermission";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
 import {
-  getIntegrations,
-  getWhatsAppDestination,
-  isConnected,
   disconnectIntegration,
+  getIntegrations,
+  gmailConnect,
+  gmailDisconnect,
+  gmailSendTestEmail,
+  isConnected,
 } from "@/lib/integrationsService";
-import { findIntegration } from "@/Pages/Admin/components/integrationsCatalog";
-import { AddIntegrationDialog } from "@/Pages/Admin/components/AddIntegrationDialog";
+import { findIntegration, INTEGRATIONS } from "@/Pages/Admin/components/integrationsCatalog";
 import { ConnectIntegrationDialog } from "@/Pages/Admin/components/ConnectIntegrationDialog";
-
-function EmptyState({ onClick, disabled }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      className="group flex w-full flex-col items-center justify-center gap-4 rounded-xl border border-dashed border-border bg-card px-6 py-16 text-center transition-colors hover:border-[#007a5a]/40 hover:bg-[#007a5a]/[0.03] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60 sm:py-20"
-    >
-      <span className="grid h-16 w-16 place-items-center rounded-full border border-border bg-background text-[#007a5a] shadow-sm transition-colors group-hover:border-[#007a5a]/30 group-hover:bg-[#007a5a]/5">
-        <Plus className="h-7 w-7" aria-hidden="true" />
-      </span>
-      <span className="text-base font-semibold text-foreground">Add Integration</span>
-      <span className="max-w-md text-sm leading-relaxed text-muted-foreground">
-        Connect third-party services like WhatsApp, Google, Stripe, and more to extend
-        PharmaHub.
-      </span>
-    </button>
-  );
-}
 
 function CapabilityList({ items }) {
   if (!items?.length) return null;
@@ -66,27 +51,23 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
   const primary = catalog?.primaryAction?.label ?? "Open";
   const PrimaryIcon = catalog?.primaryAction?.icon ?? ExternalLink;
 
-  // WhatsApp destination comes from real backend configuration only.
-  const whatsappDestination = getWhatsAppDestination(integration);
+  // WhatsApp shows the verified business number instead of a primary action.
+  const isWhatsApp = integration.key === "whatsapp";
+  const whatsappPhone = isWhatsApp ? (integration.config?.phone ?? null) : null;
+
   const dashboardUrl = integration.config?.dashboardUrl ?? integration.config?.url ?? null;
 
   const handlePrimary = () => {
-    if (integration.key === "whatsapp") {
-      if (whatsappDestination) {
-        window.open(whatsappDestination, "_blank", "noopener,noreferrer");
-      } else {
-        toast.info("No WhatsApp destination configured by the backend yet.");
-      }
-      return;
-    }
     if (dashboardUrl) {
       window.open(dashboardUrl, "_blank", "noopener,noreferrer");
     } else {
-      toast.info(`${catalog?.name ?? "This"} integration is ready — its dashboard link is set by the backend.`);
+      toast.info(
+        `${catalog?.name ?? "This"} integration is ready — its dashboard link is set by the backend.`,
+      );
     }
   };
 
-  const primaryDisabled = integration.key === "whatsapp" ? !whatsappDestination : !dashboardUrl;
+  const primaryDisabled = !dashboardUrl;
 
   return (
     <article className="flex flex-col rounded-xl border border-border bg-card p-5 shadow-sm">
@@ -106,7 +87,10 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
               variant="secondary"
               className="h-5 gap-1 border-emerald-500/20 bg-emerald-500/10 px-1.5 text-[10px] font-semibold text-emerald-700"
             >
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden="true" />
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600"
+                aria-hidden="true"
+              />
               Connected
             </Badge>
           </div>
@@ -116,6 +100,26 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
       <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
         {catalog?.description ?? "Connected third-party service."}
       </p>
+
+      {isWhatsApp && (
+        <div className="mt-4">
+          <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+            Business number
+          </h4>
+          <div className="mt-2 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+            <MessageCircle className="h-4 w-4 shrink-0 text-[#25D366]" aria-hidden="true" />
+            <span className="truncate text-xs font-semibold text-foreground">
+              {whatsappPhone ?? "—"}
+            </span>
+          </div>
+          {integration.serverConfigured === false && (
+            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-800">
+              <span className="font-semibold">Setup incomplete: </span> Server WhatsApp credentials
+              are missing. Delivery will be skipped. Contact your administrator.
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="mt-4">
         <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
@@ -127,17 +131,19 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
       </div>
 
       <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-8 gap-1.5 rounded-lg text-xs font-medium"
-          onClick={handlePrimary}
-          disabled={!canEdit || primaryDisabled}
-          title={primaryDisabled ? "The destination URL is set by the backend." : undefined}
-        >
-          <PrimaryIcon className="h-3.5 w-3.5" aria-hidden="true" />
-          {primary}
-        </Button>
+        {!isWhatsApp && (
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-8 gap-1.5 rounded-lg text-xs font-medium"
+            onClick={handlePrimary}
+            disabled={!canEdit || primaryDisabled}
+            title={primaryDisabled ? "The destination URL is set by the backend." : undefined}
+          >
+            <PrimaryIcon className="h-3.5 w-3.5" aria-hidden="true" />
+            {primary}
+          </Button>
+        )}
         <Button
           size="sm"
           variant="outline"
@@ -164,29 +170,231 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
   );
 }
 
+/**
+ * Organization-level Gmail card. Only rendered when the backend reports a real,
+ * valid Gmail integration (OAuth completed) — the "Connected" state is never
+ * faked. Shows the connected account email + [Send Test Email] / [Disconnect].
+ * When Gmail is not connected it lives in the "Available Integrations" section
+ * instead, so this card never shows a "Not connected" state.
+ */
+function GmailIntegrationCard({ integration, canEdit, testing, onTest, onDisconnect }) {
+  const catalog = findIntegration("gmail");
+  const accountEmail = integration?.accountEmail ?? null;
+
+  return (
+    <article className="flex flex-col rounded-xl border border-border bg-card p-5 shadow-sm">
+      <div className="flex items-start gap-3">
+        <span
+          className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-border bg-muted/40"
+          aria-hidden="true"
+        >
+          <SiGmail className="h-5 w-5" style={{ color: "#EA4335" }} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-sm font-semibold text-foreground">Gmail</h3>
+          <div className="mt-1">
+            <Badge
+              variant="secondary"
+              className="h-5 gap-1 border-emerald-500/20 bg-emerald-500/10 px-1.5 text-[10px] font-semibold text-emerald-700"
+            >
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600"
+                aria-hidden="true"
+              />
+              Connected
+            </Badge>
+          </div>
+        </div>
+      </div>
+
+      <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+        {catalog?.description ??
+          "Send invoices, reports and notifications from your organization's Gmail account."}
+      </p>
+
+      <div className="mt-4 flex items-center gap-2 rounded-lg border border-border bg-muted/40 px-3 py-2">
+        <Mail className="h-4 w-4 shrink-0 text-[#EA4335]" aria-hidden="true" />
+        <span className="truncate text-xs font-semibold text-foreground">
+          {accountEmail ?? "Connected Gmail account"}
+        </span>
+      </div>
+
+      <div className="mt-4">
+        <h4 className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+          Capabilities
+        </h4>
+        <div className="mt-2">
+          <CapabilityList items={["Send Invoices", "Send Reports", "Email Notifications"]} />
+        </div>
+      </div>
+
+      {integration?.lastError && (
+        <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-700">
+          {integration.lastError}
+        </p>
+      )}
+
+      <div className="mt-5 flex flex-wrap items-center gap-2 border-t border-border pt-4">
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-8 gap-1.5 rounded-lg text-xs font-medium"
+          onClick={onTest}
+          disabled={!canEdit || testing}
+        >
+          {testing ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <Send className="h-3.5 w-3.5" aria-hidden="true" />
+          )}
+          {testing ? "Sending…" : "Send Test Email"}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 gap-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-destructive"
+          onClick={onDisconnect}
+          disabled={!canEdit}
+        >
+          <Unplug className="h-3.5 w-3.5" aria-hidden="true" />
+          Disconnect
+        </Button>
+      </div>
+    </article>
+  );
+}
+
+/**
+ * Compact row for the "Available Integrations" section. Gmail is presented as
+ * "Not connected" until the backend confirms a real Gmail integration — the
+ * Connect button only ever starts the real flow.
+ */
+function AvailableIntegrationRow({ item, canEdit, onConnect }) {
+  const Icon = item.icon;
+  const isGmail = item.key === "gmail";
+  const isWhatsApp = item.key === "whatsapp";
+  const showBadge = isGmail || isWhatsApp;
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <span
+        className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-muted/40"
+        aria-hidden="true"
+      >
+        <Icon className="h-4 w-4" style={{ color: item.color }} />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-[13px] font-semibold text-foreground">{item.name}</p>
+          {showBadge && (
+            <Badge
+              variant="secondary"
+              className="h-5 shrink-0 gap-1 border-border bg-muted/60 px-1.5 text-[10px] font-semibold text-muted-foreground"
+            >
+              Not connected
+            </Badge>
+          )}
+        </div>
+        <p className="truncate text-xs text-muted-foreground">{item.description}</p>
+      </div>
+      <Button
+        size="sm"
+        variant="default"
+        className="h-8 shrink-0 gap-1.5 rounded-lg text-xs font-medium"
+        onClick={onConnect}
+        disabled={!canEdit}
+      >
+        <Plus className="h-3.5 w-3.5" aria-hidden="true" />
+        {isGmail ? "Connect Gmail" : isWhatsApp ? "Connect WhatsApp" : "Connect"}
+      </Button>
+    </div>
+  );
+}
+
 export default function IntegrationsPage() {
   const has = usePermission();
-  const canEdit = has("admin", "update");
+  const canEdit = has("integrations", "update");
   const [integrations, setIntegrations] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [addOpen, setAddOpen] = useState(false);
   const [connectItem, setConnectItem] = useState(null);
   const [configureItem, setConfigureItem] = useState(null);
+  const [gmailConnecting, setGmailConnecting] = useState(false);
+  const [gmailTesting, setGmailTesting] = useState(false);
 
   const refresh = useCallback(async () => {
-    const data = await getIntegrations();
-    setIntegrations(data);
-    setLoading(false);
+    try {
+      const data = await getIntegrations();
+      setIntegrations(data);
+    } catch {
+      toast.error("Unable to load integrations. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {
     refresh();
   }, [refresh]);
 
-  const connected = useMemo(() => integrations.filter(isConnected), [integrations]);
-  const connectedKeys = useMemo(() => new Set(connected.map((i) => i.key)), [connected]);
+  // OAuth popup handshake: the backend redirects the popup back to
+  // /integrations?gmail=connected (or ?gmail=error&reason=...). The popup
+  // reports the outcome to this window via postMessage and closes itself;
+  // when the popup was blocked the whole tab loads the redirect instead.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
 
-  if (!has("admin", "view")) {
+    if (params.has("gmail")) {
+      const ok = params.get("gmail") === "connected";
+      if (window.opener) {
+        window.opener.postMessage(
+          {
+            type: ok ? "pharmahub:gmail-connected" : "pharmahub:gmail-error",
+            reason: params.get("reason") ?? null,
+          },
+          window.location.origin,
+        );
+        window.close();
+        return;
+      }
+      if (ok) {
+        toast.success("Gmail connected");
+        refresh();
+      } else {
+        toast.error(params.get("reason") ?? "Unable to connect Gmail.");
+      }
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+
+    const onMessage = (event) => {
+      if (event.data?.type === "pharmahub:gmail-connected") {
+        toast.success("Gmail connected");
+        refresh();
+      } else if (event.data?.type === "pharmahub:gmail-error") {
+        toast.error(event.data.reason ?? "Unable to connect Gmail.");
+      }
+    };
+    window.addEventListener("message", onMessage);
+    return () => window.removeEventListener("message", onMessage);
+  }, [refresh]);
+
+  // `connected` = integrations the backend confirms as connected. Gmail is only
+  // included here when a real, valid Gmail integration exists for the current
+  // organization — a "Not connected" Gmail is never counted. The count badge
+  // therefore always reflects the true connected state.
+  const connectedAll = useMemo(() => integrations.filter(isConnected), [integrations]);
+  const connectedKeys = useMemo(() => new Set(connectedAll.map((i) => i.key)), [connectedAll]);
+  const connected = connectedAll;
+  const configured = useMemo(
+    () => integrations.filter((i) => i.key !== "gmail" && !isConnected(i) && i.configured),
+    [integrations],
+  );
+  // Available = catalog integrations with no real backend connection yet.
+  const available = useMemo(
+    () => INTEGRATIONS.filter((item) => !connectedKeys.has(item.key)),
+    [connectedKeys],
+  );
+
+  if (!has("integrations", "view")) {
     return (
       <div className="p-8 text-center text-sm text-muted-foreground">
         You don't have access to Integrations.
@@ -194,8 +402,11 @@ export default function IntegrationsPage() {
     );
   }
 
-  const handleConnectRequest = (item) => {
-    setAddOpen(false);
+  const handleAvailableConnect = (item) => {
+    if (item.key === "gmail") {
+      handleConnectGmail();
+      return;
+    }
     setConnectItem(item);
   };
 
@@ -208,8 +419,56 @@ export default function IntegrationsPage() {
       await disconnectIntegration(integration.id ?? integration.key);
       toast.success(`${findIntegration(integration.key)?.name ?? "Integration"} disconnected`);
       await refresh();
-    } catch {
-      toast.error("Unable to disconnect. The integrations backend is not available yet.");
+    } catch (err) {
+      toast.error(err?.message ?? "Unable to disconnect. Please try again.");
+    }
+  };
+
+  const handleConnectGmail = async () => {
+    if (!canEdit || gmailConnecting) return;
+    setGmailConnecting(true);
+    try {
+      const authorizationUrl = await gmailConnect();
+      if (!authorizationUrl) throw new Error("No authorization URL returned.");
+      const popup = window.open(authorizationUrl, "pharmahub-gmail-oauth", "width=520,height=640");
+      if (!popup) {
+        window.location.href = authorizationUrl;
+        return;
+      }
+      const timer = window.setInterval(() => {
+        if (popup.closed) {
+          window.clearInterval(timer);
+          setGmailConnecting(false);
+          refresh();
+        }
+      }, 500);
+    } catch (err) {
+      setGmailConnecting(false);
+      toast.error(err?.message ?? "Unable to start the Gmail connection.");
+    }
+  };
+
+  const handleGmailTest = async () => {
+    if (!canEdit || gmailTesting) return;
+    setGmailTesting(true);
+    try {
+      await gmailSendTestEmail();
+      toast.success("Test email sent successfully");
+    } catch (err) {
+      toast.error(err?.message ?? "Failed to send the test email.");
+    } finally {
+      setGmailTesting(false);
+      await refresh();
+    }
+  };
+
+  const handleGmailDisconnect = async () => {
+    try {
+      await gmailDisconnect();
+      toast.success("Gmail disconnected");
+      await refresh();
+    } catch (err) {
+      toast.error(err?.message ?? "Unable to disconnect Gmail.");
     }
   };
 
@@ -230,49 +489,123 @@ export default function IntegrationsPage() {
           <div className="flex min-h-[320px] items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
           </div>
-        ) : connected.length === 0 ? (
-          <EmptyState onClick={() => setAddOpen(true)} disabled={!canEdit} />
         ) : (
-          <section className="space-y-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                Connected Integrations
-              </h2>
-              <Badge variant="secondary">{connected.length}</Badge>
-            </div>
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
-              {connected.map((integration) => (
-                <ConnectedIntegrationCard
-                  key={integration.id ?? integration.key}
-                  integration={integration}
-                  canEdit={canEdit}
-                  onConfigure={handleConfigure}
-                  onDisconnect={handleDisconnect}
-                />
-              ))}
-              <button
-                type="button"
-                onClick={() => setAddOpen(true)}
-                disabled={!canEdit}
-                className="flex min-h-[280px] flex-col items-center justify-center gap-2.5 rounded-xl border border-dashed border-border bg-card text-muted-foreground transition-colors hover:border-[#007a5a]/40 hover:bg-[#007a5a]/[0.03] hover:text-[#007a5a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-60"
-              >
-                <span className="grid h-12 w-12 place-items-center rounded-full border border-border bg-background text-[#007a5a] shadow-sm">
-                  <Plus className="h-5 w-5" aria-hidden="true" />
-                </span>
-                <span className="text-sm font-medium">Add Integration</span>
-              </button>
-            </div>
-          </section>
+          <div className="space-y-8">
+            {connected.length > 0 && (
+              <section className="space-y-4">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    Connected Integrations
+                  </h2>
+                  <Badge variant="secondary">{connected.length}</Badge>
+                </div>
+                <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                  {connected.map((integration) =>
+                    integration.key === "gmail" ? (
+                      <GmailIntegrationCard
+                        key={integration.id ?? integration.key}
+                        integration={integration}
+                        canEdit={canEdit}
+                        testing={gmailTesting}
+                        onTest={handleGmailTest}
+                        onDisconnect={handleGmailDisconnect}
+                      />
+                    ) : (
+                      <ConnectedIntegrationCard
+                        key={integration.id ?? integration.key}
+                        integration={integration}
+                        canEdit={canEdit}
+                        onConfigure={handleConfigure}
+                        onDisconnect={handleDisconnect}
+                      />
+                    ),
+                  )}
+                </div>
+              </section>
+            )}
+
+            {configured.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    Configured Integrations
+                  </h2>
+                  <Badge variant="secondary">{configured.length}</Badge>
+                </div>
+                <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+                  {configured.map((integration) => {
+                    const catalog = findIntegration(integration.key);
+                    const Icon = catalog?.icon ?? Plug;
+                    return (
+                      <div
+                        key={integration.id ?? integration.key}
+                        className="flex items-center gap-3 px-4 py-3"
+                      >
+                        <span
+                          className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-muted/40"
+                          aria-hidden="true"
+                        >
+                          <Icon
+                            className="h-4 w-4"
+                            style={{ color: catalog?.color ?? "#007a5a" }}
+                          />
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2">
+                            <p className="truncate text-[13px] font-semibold text-foreground">
+                              {catalog?.name ?? integration.name ?? integration.key}
+                            </p>
+                            <Badge
+                              variant="secondary"
+                              className="h-5 shrink-0 gap-1 border-amber-500/20 bg-amber-500/10 px-1.5 text-[10px] font-semibold text-amber-700"
+                            >
+                              Configured
+                            </Badge>
+                          </div>
+                          <p className="truncate text-xs text-muted-foreground">
+                            {catalog?.description ?? integration.description}
+                          </p>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 gap-1.5 rounded-lg text-xs font-medium"
+                          onClick={() => handleConfigure(integration)}
+                          disabled={!canEdit}
+                        >
+                          <Settings2 className="h-3.5 w-3.5" aria-hidden="true" />
+                          Configure
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            )}
+
+            {available.length > 0 && (
+              <section className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+                    Available Integrations
+                  </h2>
+                  <Badge variant="secondary">{available.length}</Badge>
+                </div>
+                <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+                  {available.map((item) => (
+                    <AvailableIntegrationRow
+                      key={item.key}
+                      item={item}
+                      canEdit={canEdit}
+                      onConnect={() => handleAvailableConnect(item)}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         )}
       </div>
-
-      <AddIntegrationDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        connectedKeys={connectedKeys}
-        onConnect={handleConnectRequest}
-        disabled={!canEdit}
-      />
 
       <ConnectIntegrationDialog
         key={`connect-${connectItem?.key ?? "none"}`}

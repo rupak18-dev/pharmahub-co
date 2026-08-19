@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "react-router";
 import { Pencil } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 
