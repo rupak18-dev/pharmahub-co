@@ -90,5 +90,5 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "src"),
     },
   },
-  server: { port: 5100, strictPort: true, host: true },
+  server: { port: 8080, strictPort: true, host: true },
 });
