@@ -5,14 +5,9 @@
 //
 // Backend envelope: `{ success, message, data, meta }` on success and
 // `{ success: false, error: { message, details } }` on failure.
-
 function resolveApiBase() {
   const fromEnv = import.meta.env.VITE_API_URL;
   if (fromEnv) return fromEnv;
-  // Hostname-based fallback (not build-mode based): Render serves the app via
-  // the dev server, so `import.meta.env.PROD` is false there. Any host that is
-  // not the local dev machine gets the production backend, which keeps both
-  // Render and Vercel working even if VITE_API_URL is left unset.
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {

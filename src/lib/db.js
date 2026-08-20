@@ -755,7 +755,7 @@ function load() {
         purchaseOrders: loaded.purchaseOrders ?? [],
         grns: loaded.grns ?? [],
         shortbook:
-          loaded.shortbook && loaded.shortbook.length > 0 ? loaded.shortbook : seeded.shortbook,
+          loaded.shortbook && loaded.shortbook.length > 0 ? loaded.shortbook : seed().shortbook,
         notificationsRead: loaded.notificationsRead ?? [],
       });
       return cache;
