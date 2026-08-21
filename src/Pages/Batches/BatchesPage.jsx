@@ -5,11 +5,12 @@ import {
   Boxes,
   CalendarDays,
   Check,
-  ChevronsUpDown,
+  ChevronDown,
   Columns3,
   Copy,
   Download,
   FileSpreadsheet,
+  Filter,
   Info,
   LayoutList,
   MoreHorizontal,
@@ -22,7 +23,6 @@ import {
   QrCode,
   Search,
   ShieldAlert,
-  SlidersHorizontal,
   Snowflake,
   Tag,
   Timer,
@@ -34,7 +34,7 @@ import { toast } from "sonner";
 import { useDb } from "@/hooks/useDb";
 import { db } from "@/lib/db";
 import { usePermission } from "@/hooks/usePermission";
-import { apiRequest } from "@/lib/api";
+import { apiRequest, getCachedResponse } from "@/lib/api";
 import { computeBatchStatus } from "@/lib/stock";
 import { cn } from "@/lib/utils";
 import { exportBatchesCsv, exportBatchesPdf } from "@/lib/batch-export";
@@ -65,6 +65,12 @@ import {
 
 export const handle = { title: "Batches · PharmaHub" };
 
+function BatchCheckboxItem(props) {
+  return (
+    <DropdownMenuCheckboxItem {...props} boxClassName="h-3.5 w-3.5" iconClassName="h-2.5 w-2.5" />
+  );
+}
+
 const safeFormat = (dateStr, fmt) => {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
@@ -78,8 +84,8 @@ const DEFAULT_SETTINGS = { currency: "₹", nearExpiryDays: 90 };
 
 function BatchChip({ batchId, batchNumber }) {
   return (
-    <span className={cn(chipCls, "group/chip transition-colors hover:bg-primary/15")}>
-      <Link to={`/batches/${batchId}`} className="hover:underline">
+    <span className={cn(chipCls, "max-w-full group/chip transition-colors hover:bg-primary/15")}>
+      <Link to={`/batches/${batchId}`} className="min-w-0 truncate hover:underline">
         {batchNumber}
       </Link>
       <button
@@ -118,9 +124,9 @@ function LocationPill({ locations }) {
   const Icon = isCold ? Snowflake : Tag;
   return (
     <div className="flex items-center gap-1">
-      <span className="inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
-        <Icon className="h-3 w-3 text-muted-foreground" strokeWidth={1.5} />
-        {first.rackCode || first.locationType}
+      <span className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-border bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+        <Icon className="h-3 w-3 shrink-0 text-muted-foreground" strokeWidth={1.5} />
+        <span className="truncate">{first.rackCode || first.locationType}</span>
       </span>
       {extra > 0 && <span className="text-[10px] text-muted-foreground">+{extra}</span>}
     </div>
@@ -160,13 +166,13 @@ function BatchActions({ row, onQr, onExport }) {
           <Download className="mr-2 h-4 w-4" /> Export PDF
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => toast("Edit coming soon")}>
+        <DropdownMenuItem onClick={() => navigate(`/batches/${batch.id}/edit`)}>
           <Pencil className="mr-2 h-4 w-4" /> Edit batch
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => toast("Move stock coming soon")}>
           <Move className="mr-2 h-4 w-4" /> Move stock
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => toast("Quarantine coming soon")}>
+        <DropdownMenuItem onClick={() => navigate(`/batches/${batch.id}/quarantine`)}>
           <ShieldAlert className="mr-2 h-4 w-4" /> Quarantine batch
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -229,6 +235,21 @@ const TABLE_COLUMNS = [
   { id: "expiry", label: "Expiry Date" },
   { id: "status", label: "Status" },
 ];
+const STATUS_OPTIONS = [
+  { value: "active", label: "Active" },
+  { value: "near_expiry", label: "Near expiry" },
+  { value: "expired", label: "Expired" },
+  { value: "sold_out", label: "Sold out" },
+  { value: "quarantined", label: "Quarantined" },
+];
+const normalizeMeds = (medData) =>
+  (medData ?? []).map((m) => ({
+    id: m._id ?? m.id,
+    ...m,
+    generic: m.genericName ?? m.generic ?? "",
+    brand: m.brandName ?? m.brand ?? "",
+    manufacturerName: m.manufacturerId?.name ?? "",
+  }));
 function ColumnView({ rows, selected, onToggle, onQr, onExport }) {
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -271,14 +292,26 @@ export default function BatchesPage() {
   const settings = { ...DEFAULT_SETTINGS, ...(rawSettings ?? {}) };
   const has = usePermission();
   const [q, setQ] = useState("");
-  const [medFilter, setMedFilter] = useState("all");
-  const [locFilter, setLocFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [visibleFields, setVisibleFields] = useState([]);
-  const isFieldVisible = (id) => visibleFields.length === 0 || visibleFields.includes(id);
+  const [searchInput, setSearchInput] = useState("");
+  const [medFilters, setMedFilters] = useState([]);
+  const [locFilters, setLocFilters] = useState([]);
+  const [statusFilters, setStatusFilters] = useState([]);
+  const [visibleFields, setVisibleFields] = useState(() => TABLE_COLUMNS.map((c) => c.id));
+  const isFieldVisible = (id) => visibleFields.includes(id);
   const toggleField = (id) => {
     setVisibleFields((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
   };
+  const allColumnsSelected = visibleFields.length === TABLE_COLUMNS.length;
+  const someColumnsSelected = visibleFields.length > 0 && !allColumnsSelected;
+  const toggleAllColumns = () =>
+    setVisibleFields((prev) =>
+      prev.length === TABLE_COLUMNS.length ? [] : TABLE_COLUMNS.map((c) => c.id),
+    );
+  const makeToggler = (setter) => (v) =>
+    setter((prev) => (prev.includes(v) ? prev.filter((x) => x !== v) : [...prev, v]));
+  const toggleMed = makeToggler(setMedFilters);
+  const toggleLoc = makeToggler(setLocFilters);
+  const toggleStatusValue = makeToggler(setStatusFilters);
   const [view, setView] = useState(() =>
     typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches
       ? "column"
@@ -287,46 +320,52 @@ export default function BatchesPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(10);
   const [sheetOpen, setSheetOpen] = useState(false);
-  const [batches, setBatches] = useState([]);
-  const [meds, setMeds] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [batches, setBatches] = useState(() => getCachedResponse("/batches")?.data ?? []);
+  const [meds, setMeds] = useState(() => normalizeMeds(getCachedResponse("/medicines")?.data));
+  const [suppliers, setSuppliers] = useState(() => getCachedResponse("/suppliers")?.data ?? []);
+  const [loading, setLoading] = useState(() => !getCachedResponse("/batches"));
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const loadedRef = useRef(false);
 
-  const load = async () => {
+  const applyMeds = (medData) => setMeds(normalizeMeds(medData));
+
+  const loadBatches = async () => {
+    const data = await apiRequest("/batches");
+    setBatches(data ?? []);
+  };
+
+  const load = () => {
     setLoading(true);
     setError(null);
-    try {
-      const [batchData, medData, supplierData] = await Promise.all([
-        apiRequest("/batches"),
-        apiRequest("/medicines"),
-        apiRequest("/suppliers").catch(() => []),
-      ]);
-      setBatches(batchData ?? []);
-      setMeds(
-        (medData ?? []).map((m) => ({
-          id: m._id ?? m.id,
-          ...m,
-          generic: m.genericName ?? m.generic ?? "",
-          brand: m.brandName ?? m.brand ?? "",
-          manufacturerName: m.manufacturerId?.name ?? "",
-        })),
-      );
-      setSuppliers(supplierData ?? []);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-      loadedRef.current = true;
-    }
+    let settled = false;
+    const finish = () => {
+      if (!settled) {
+        settled = true;
+        setLoading(false);
+        loadedRef.current = true;
+      }
+    };
+    loadBatches()
+      .catch((e) => setError(e.message))
+      .finally(finish);
+    apiRequest("/medicines")
+      .then(applyMeds)
+      .catch(() => {});
+    apiRequest("/suppliers")
+      .then((d) => setSuppliers(d ?? []))
+      .catch(() => {});
   };
 
   useEffect(() => {
     if (loadedRef.current) return;
     load();
   }, []);
+
+  useEffect(() => {
+    const t = setTimeout(() => setQ(searchInput), 250);
+    return () => clearTimeout(t);
+  }, [searchInput]);
 
   useEffect(() => {
     const mql = window.matchMedia("(max-width: 767px)");
@@ -339,11 +378,21 @@ export default function BatchesPage() {
     batches.forEach((b) => b.warehouse?.locationType && set.add(b.warehouse.locationType));
     return Array.from(set).sort();
   }, [batches]);
+  const medMap = useMemo(() => new Map(meds.map((m) => [m.id, m])), [meds]);
+  const sortedMeds = useMemo(
+    () =>
+      [...meds].sort((a, b) =>
+        String(a.name ?? "").localeCompare(String(b.name ?? ""), undefined, {
+          sensitivity: "base",
+        }),
+      ),
+    [meds],
+  );
   const rows = useMemo(() => {
     const s = q.trim().toLowerCase();
     return batches
       .map((b) => {
-        const med = meds.find((m) => m.id === b.medicineId);
+        const med = medMap.get(b.medicineId);
         const totalStock = b.stock?.quantityOnHand ?? 0;
         const status = computeBatchStatus(b, totalStock, settings.nearExpiryDays);
         const locations = b.warehouse
@@ -352,15 +401,16 @@ export default function BatchesPage() {
         return { batch: b, med, status, totalStock, locations };
       })
       .filter(({ batch, med, status, locations }) => {
-        if (medFilter !== "all" && batch.medicineId !== medFilter) return false;
-        if (locFilter !== "all" && !locations.some((l) => l.locationType === locFilter))
+        if (medFilters.length > 0 && !medFilters.includes(batch.medicineId)) return false;
+        if (locFilters.length > 0 && !locations.some((l) => locFilters.includes(l.locationType)))
           return false;
-        if (statusFilter !== "all") {
-          const matches =
-            statusFilter === "active"
+        if (statusFilters.length > 0) {
+          const matches = statusFilters.some((f) =>
+            f === "active"
               ? computeBatchStatus(batch, batch.stock?.quantityOnHand ?? 0, ACTIVE_REF_DAYS) ===
                 "active"
-              : status === statusFilter;
+              : status === f,
+          );
           if (!matches) return false;
         }
         if (!s) return true;
@@ -371,7 +421,7 @@ export default function BatchesPage() {
       .sort((a, b) =>
         (a.batch.dates?.expiryDate || "").localeCompare(b.batch.dates?.expiryDate || ""),
       );
-  }, [batches, meds, settings.nearExpiryDays, q, medFilter, locFilter, statusFilter]);
+  }, [batches, medMap, settings.nearExpiryDays, q, medFilters, locFilters, statusFilters]);
   const [selected, setSelected] = useState(() => new Set());
   const [qrOpen, setQrOpen] = useState(false);
   const [qrItems, setQrItems] = useState([]);
@@ -400,6 +450,10 @@ export default function BatchesPage() {
   };
   const handleExport = async (dataRows, format) => {
     try {
+      if (visibleFields.length === 0) {
+        toast.error("Nothing to export");
+        return;
+      }
       const ok =
         format === "csv"
           ? exportBatchesCsv(dataRows, visibleFields)
@@ -420,7 +474,7 @@ export default function BatchesPage() {
   useEffect(() => {
     setCurrentPage(1);
     setSelected(new Set());
-  }, [q, medFilter, locFilter, statusFilter, view]);
+  }, [q, medFilters, locFilters, statusFilters, view]);
   const kpis = useMemo(() => {
     let active = 0;
     let near = 0;
@@ -437,15 +491,17 @@ export default function BatchesPage() {
     });
     return { active, near, value, medicineCount: activeMeds.size };
   }, [batches, settings.nearExpiryDays]);
-  const toggleStatus = (s) => setStatusFilter((cur) => (cur === s ? "all" : s));
+  const toggleStatus = (s) =>
+    setStatusFilters((cur) => (cur.includes(s) ? cur.filter((x) => x !== s) : [...cur, s]));
   const setNearExpiryWindow = (days) => {
     db.set((d) => {
       d.settings.nearExpiryDays = days;
     });
+    setSearchInput("");
     setQ("");
-    setMedFilter("all");
-    setLocFilter("all");
-    setStatusFilter("near_expiry");
+    setMedFilters([]);
+    setLocFilters([]);
+    setStatusFilters(["near_expiry"]);
   };
   const submit = async (v) => {
     const now = new Date().toISOString();
@@ -485,7 +541,11 @@ export default function BatchesPage() {
       });
       toast.success("Batch added");
       setSheetOpen(false);
-      await load();
+      try {
+        await loadBatches();
+      } catch {
+        toast.error("Batch saved, but couldn't refresh the list");
+      }
     } catch (e) {
       toast.error(e.message);
     } finally {
@@ -495,7 +555,7 @@ export default function BatchesPage() {
   return (
     <div className="flex flex-col h-full gap-4">
       <div className="flex justify-between items-center px-1">
-        <h1 className="text-2xl font-bold text-[#007A87]">Batches</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Batches</h1>
         <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -537,7 +597,7 @@ export default function BatchesPage() {
           icon={Boxes}
           tone="default"
           onClick={() => toggleStatus("active")}
-          selected={statusFilter === "active"}
+          selected={statusFilters.includes("active")}
         />
         <KpiCard
           label={`Expiring within ${settings.nearExpiryDays} days`}
@@ -547,7 +607,7 @@ export default function BatchesPage() {
           icon={CalendarDays}
           tone="warning"
           onClick={() => toggleStatus("near_expiry")}
-          selected={statusFilter === "near_expiry"}
+          selected={statusFilters.includes("near_expiry")}
           iconMenu={
             <>
               {[7, 30, 90].map((d) => (
@@ -573,123 +633,188 @@ export default function BatchesPage() {
       {/* Main white container */}
       <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-border/40 flex flex-col flex-1 overflow-hidden">
         {/* Top Controls Bar */}
-        <div className="p-4 border-b border-border/40 space-y-4">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <Select value={medFilter} onValueChange={setMedFilter}>
-                <SelectTrigger className="w-[140px] h-9 text-xs bg-white rounded-md border-border/80">
-                  <Pill
-                    className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                    strokeWidth={1.5}
-                  />
-                  <SelectValue className="flex-1" placeholder="Medicine Filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All medicines</SelectItem>
-                  {meds.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v)}>
-                <SelectTrigger className="w-[140px] h-9 text-xs bg-white rounded-md border-border/80">
-                  <Activity
-                    className="mr-2 h-3.5 w-3.5 shrink-0 text-muted-foreground"
-                    strokeWidth={1.5}
-                  />
-                  <SelectValue className="flex-1" placeholder="Status Filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="near_expiry">Near expiry</SelectItem>
-                  <SelectItem value="expired">Expired</SelectItem>
-                  <SelectItem value="sold_out">Sold out</SelectItem>
-                  <SelectItem value="quarantined">Quarantined</SelectItem>
-                </SelectContent>
-              </Select>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2"
-                  >
-                    <SlidersHorizontal
-                      className="h-3.5 w-3.5 text-muted-foreground"
+        <div className="p-4 border-b border-border/40">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="relative min-w-[220px] flex-1 max-w-sm">
+              <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                className="pl-9 h-9 bg-white border-border/80 rounded-md text-sm focus-visible:ring-1 focus-visible:ring-[#007A87]"
+                placeholder="Search by batch code, medicine name, or manufacturer…"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+              />
+            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-[150px] h-9 justify-between px-3 text-xs bg-white rounded-md border-border/80 font-normal"
+                >
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Pill
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
                       strokeWidth={1.5}
                     />
-                    Manage columns
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-56">
-                  <DropdownMenuLabel>Show / hide columns</DropdownMenuLabel>
-                  <DropdownMenuSeparator />
-                  {TABLE_COLUMNS.map((col) => (
-                    <DropdownMenuCheckboxItem
-                      key={col.id}
-                      checked={isFieldVisible(col.id)}
-                      onCheckedChange={() => toggleField(col.id)}
-                      onSelect={(e) => e.preventDefault()}
-                    >
-                      {col.label}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem
-                    onSelect={() => setVisibleFields([])}
-                    className="justify-center text-xs"
+                    <span className="truncate">
+                      {medFilters.length === 0
+                        ? "All medicines"
+                        : medFilters.length === 1
+                          ? (medMap.get(medFilters[0])?.name ?? "1 medicine")
+                          : `${medFilters.length} medicines`}
+                    </span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-60 max-h-72 overflow-y-auto">
+                {sortedMeds.map((m) => (
+                  <BatchCheckboxItem
+                    key={m.id}
+                    checked={medFilters.includes(m.id)}
+                    onCheckedChange={() => toggleMed(m.id)}
+                    onSelect={(e) => e.preventDefault()}
                   >
-                    Show all columns
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-0.5 rounded-md border border-border/80 bg-white shadow-sm overflow-hidden">
-                <button
-                  type="button"
-                  title="Table view"
-                  onClick={() => setView("table")}
-                  className={cn(
-                    "grid h-8 w-8 place-items-center rounded-none",
-                    view === "table"
-                      ? "bg-muted/50 text-foreground"
-                      : "text-muted-foreground hover:bg-muted/30",
-                  )}
+                    {m.name}
+                  </BatchCheckboxItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => setMedFilters([])}
+                  disabled={medFilters.length === 0}
+                  className="justify-center text-xs"
                 >
-                  <LayoutList className="h-3.5 w-3.5" strokeWidth={1.5} />
-                </button>
-                <div className="w-[1px] h-4 bg-border/80"></div>
-                <button
-                  type="button"
-                  title="Column view"
-                  onClick={() => setView("column")}
-                  className={cn(
-                    "grid h-8 w-8 place-items-center rounded-none",
-                    view === "column"
-                      ? "bg-muted/50 text-foreground"
-                      : "text-muted-foreground hover:bg-muted/30",
-                  )}
+                  All medicines
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="w-[140px] h-9 justify-between px-3 text-xs bg-white rounded-md border-border/80 font-normal"
                 >
-                  <Columns3 className="h-3.5 w-3.5" strokeWidth={1.5} />
-                </button>
-              </div>
-            </div>
-          </div>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <Activity
+                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground"
+                      strokeWidth={1.5}
+                    />
+                    <span className="truncate">
+                      {statusFilters.length === 0
+                        ? "All statuses"
+                        : statusFilters.length === 1
+                          ? (STATUS_OPTIONS.find((o) => o.value === statusFilters[0])?.label ??
+                            "Status")
+                          : `${statusFilters.length} statuses`}
+                    </span>
+                  </span>
+                  <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-52">
+                {STATUS_OPTIONS.map((o) => (
+                  <BatchCheckboxItem
+                    key={o.value}
+                    checked={statusFilters.includes(o.value)}
+                    onCheckedChange={() => toggleStatusValue(o.value)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {o.label}
+                  </BatchCheckboxItem>
+                ))}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onSelect={() => setStatusFilters([])}
+                  disabled={statusFilters.length === 0}
+                  className="justify-center text-xs"
+                >
+                  All statuses
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2"
+                >
+                  <Filter className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={1.5} />
+                  Manage filters
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>Customize Filters</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <BatchCheckboxItem
+                  checked={
+                    allColumnsSelected ? true : someColumnsSelected ? "indeterminate" : false
+                  }
+                  onCheckedChange={toggleAllColumns}
+                  onSelect={(e) => e.preventDefault()}
+                  className="font-semibold"
+                >
+                  Select All
+                </BatchCheckboxItem>
+                <DropdownMenuSeparator />
+                {TABLE_COLUMNS.map((col) => (
+                  <BatchCheckboxItem
+                    key={col.id}
+                    checked={isFieldVisible(col.id)}
+                    onCheckedChange={() => toggleField(col.id)}
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    {col.label}
+                  </BatchCheckboxItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
 
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              className="pl-9 h-9 bg-white border-border/80 rounded-md text-sm focus-visible:ring-1 focus-visible:ring-[#007A87]"
-              placeholder="Search by batch code, medicine name, or manufacturer…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
+            <div className="ml-auto flex items-center gap-0.5 rounded-md border border-border/80 bg-white shadow-sm overflow-hidden">
+              <button
+                type="button"
+                title="Table view"
+                onClick={() => setView("table")}
+                className={cn(
+                  "grid h-8 w-8 place-items-center rounded-none",
+                  view === "table"
+                    ? "bg-muted/50 text-foreground"
+                    : "text-muted-foreground hover:bg-muted/30",
+                )}
+              >
+                <LayoutList className="h-3.5 w-3.5" strokeWidth={1.5} />
+              </button>
+              <div className="w-[1px] h-4 bg-border/80"></div>
+              <button
+                type="button"
+                title="Column view"
+                onClick={() => setView("column")}
+                className={cn(
+                  "grid h-8 w-8 place-items-center rounded-none",
+                  view === "column"
+                    ? "bg-muted/50 text-foreground"
+                    : "text-muted-foreground hover:bg-muted/30",
+                )}
+              >
+                <Columns3 className="h-3.5 w-3.5" strokeWidth={1.5} />
+              </button>
+            </div>
           </div>
         </div>
+
+        {someSelected && (
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/40 bg-primary/5 px-4 py-2">
+            <span className="text-sm font-medium text-foreground">
+              {selected.size} batch{selected.size === 1 ? "" : "es"} selected
+            </span>
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={() => openQr(selectedRows)}>
+                <QrCode className="mr-1.5 h-4 w-4" strokeWidth={1.5} /> Generate QR labels
+              </Button>
+              <Button size="sm" variant="ghost" onClick={clearSelection}>
+                <X className="mr-1.5 h-4 w-4" strokeWidth={1.5} /> Clear
+              </Button>
+            </div>
+          </div>
+        )}
 
         <div className="flex-1 overflow-y-auto p-0">
           {loading && batches.length === 0 ? (
@@ -710,7 +835,7 @@ export default function BatchesPage() {
             </div>
           ) : rows.length === 0 ? (
             <div className="py-16">
-              {statusFilter === "near_expiry" ? (
+              {statusFilters.includes("near_expiry") ? (
                 <EmptyState
                   icon={Timer}
                   title={`No batches expiring within ${settings.nearExpiryDays} days`}
@@ -734,59 +859,88 @@ export default function BatchesPage() {
               />
             </div>
           ) : (
-            <div className="hidden md:block overflow-x-auto border border-border/80 rounded-2xl shadow-sm bg-white m-4">
-              <table className="w-full text-[13px] border-collapse whitespace-nowrap">
+            <div className="overflow-x-auto border border-border/80 rounded-2xl shadow-sm bg-white m-4">
+              <table className="w-full min-w-[900px] text-[13px] border-collapse whitespace-nowrap">
                 <thead className="border-b border-border/40 bg-white text-left text-[11px] font-bold uppercase tracking-wider text-[#007A87]">
                   <tr>
-                    <th className="px-4 py-3">
-                      <label className="flex cursor-pointer flex-col items-center gap-1">
-                        <Checkbox
-                          checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                          onCheckedChange={toggleAll}
-                          aria-label="Select all batches"
-                        />
-                        <span className="font-medium normal-case leading-none text-muted-foreground">
-                          Select all
-                        </span>
-                      </label>
+                    <th className="w-14 px-2 py-3 align-middle text-center">
+                      <Checkbox
+                        checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                        onCheckedChange={toggleAll}
+                        aria-label="Select all batches"
+                        title="Select all"
+                        className="mx-auto cursor-pointer"
+                      />
                     </th>
                     {isFieldVisible("batchNumber") && (
-                      <th className="px-4 py-3">Batch Number</th>
+                      <th className="w-40 px-4 py-3">Batch Number</th>
                     )}
-                    {isFieldVisible("medicine") && (
-                      <th className="px-4 py-3">Medicine</th>
-                    )}
+                    {isFieldVisible("medicine") && <th className="w-72 px-4 py-3">Medicine</th>}
                     {isFieldVisible("rack") && (
-                      <th className="hidden md:table-cell px-4 py-3">
+                      <th className="hidden md:table-cell w-32 px-4 py-3">
                         <div className="flex items-center gap-1.5">
                           Rack / Zone
-                          <Select value={locFilter} onValueChange={setLocFilter}>
-                            <SelectTrigger className="h-5 min-h-0 w-auto px-1.5 py-0 text-[10px] border-0 bg-transparent hover:bg-muted/50 focus:ring-0 focus:ring-offset-0 cursor-pointer [&>svg:last-child]:hidden" onClick={(e) => e.stopPropagation()}>
-                              <Tag className="h-2.5 w-2.5 text-muted-foreground" strokeWidth={1.5} />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="all">All racks</SelectItem>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <button
+                                type="button"
+                                title="Filter by rack / zone"
+                                className="grid h-5 w-5 cursor-pointer place-items-center rounded hover:bg-muted/50"
+                              >
+                                <Tag
+                                  className={cn(
+                                    "h-2.5 w-2.5",
+                                    locFilters.length > 0
+                                      ? "text-[#007A87]"
+                                      : "text-muted-foreground",
+                                  )}
+                                  strokeWidth={1.5}
+                                />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent
+                              align="start"
+                              className="w-52 max-h-64 overflow-y-auto"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               {locationOptions.map((loc) => (
-                                <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                                <BatchCheckboxItem
+                                  key={loc}
+                                  checked={locFilters.includes(loc)}
+                                  onCheckedChange={() => toggleLoc(loc)}
+                                  onSelect={(e) => e.preventDefault()}
+                                >
+                                  {loc}
+                                </BatchCheckboxItem>
                               ))}
-                            </SelectContent>
-                          </Select>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem
+                                onSelect={() => setLocFilters([])}
+                                disabled={locFilters.length === 0}
+                                className="justify-center text-xs"
+                              >
+                                All racks
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </th>
                     )}
                     {isFieldVisible("quantity") && (
-                      <th className="px-4 py-3 text-right">Available Qty</th>
+                      <th className="w-36 px-4 py-3 text-right">Available Qty</th>
                     )}
                     {isFieldVisible("mfg") && (
-                      <th className="hidden md:table-cell px-4 py-3 text-center">Mfg Date</th>
+                      <th className="hidden md:table-cell w-28 px-4 py-3 text-center">Mfg Date</th>
                     )}
                     {isFieldVisible("expiry") && (
-                      <th className="px-4 py-3 text-center">Expiry Date</th>
+                      <th className="w-32 px-4 py-3 text-center">Expiry Date</th>
                     )}
                     {isFieldVisible("status") && (
-                      <th className="hidden md:table-cell px-4 py-3">Status</th>
+                      <th className="hidden md:table-cell w-28 px-4 py-3">Status</th>
                     )}
-                    <th className="px-4 py-3 text-center sticky right-0 bg-white border-l border-border/40">Actions</th>
+                    <th className="w-14 px-2 py-3 text-center sticky right-0 bg-white border-l border-border/40">
+                      Actions
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/80">
@@ -795,21 +949,21 @@ export default function BatchesPage() {
                       key={row.batch.id}
                       className="group hover:bg-muted/10 transition-colors duration-200 bg-white border-b border-border/40 last:border-b-0"
                     >
-                      <td className="px-4 py-3 text-center align-middle">
+                      <td className="px-2 py-3 text-center align-middle">
                         <Checkbox
                           checked={selected.has(row.batch.id)}
                           onCheckedChange={() => toggleRow(row.batch.id)}
                           aria-label={`Select ${row.batch.batchNumber}`}
-                          className="mx-auto"
+                          className="mx-auto cursor-pointer"
                         />
                       </td>
                       {isFieldVisible("batchNumber") && (
-                        <td className="whitespace-nowrap px-4 py-3 align-middle font-semibold text-foreground group-hover:text-[#007A87] transition-colors">
+                        <td className="whitespace-nowrap max-w-[176px] overflow-hidden px-4 py-3 align-middle font-semibold text-foreground group-hover:text-[#007A87] transition-colors">
                           <BatchChip batchId={row.batch.id} batchNumber={row.batch.batchNumber} />
                         </td>
                       )}
                       {isFieldVisible("medicine") && (
-                        <td className="px-4 py-3 align-middle">
+                        <td className="max-w-[320px] overflow-hidden px-4 py-3 align-middle">
                           <div className="flex items-center gap-3 min-w-0">
                             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-lg bg-[#E6F4F1] text-[#007A5A]">
                               <PackageOpen className="h-4 w-4" strokeWidth={1.5} />
@@ -852,7 +1006,7 @@ export default function BatchesPage() {
                           <StatusBadge status={row.status} />
                         </td>
                       )}
-                      <td className="whitespace-nowrap px-4 py-3 text-center sticky right-0 bg-white border-l border-border/40 align-middle">
+                      <td className="whitespace-nowrap px-2 py-3 text-center sticky right-0 bg-white border-l border-border/40 align-middle">
                         <BatchActions
                           row={row}
                           onQr={(r) => openQr([{ batch: r.batch, med: r.med }])}
@@ -867,22 +1021,6 @@ export default function BatchesPage() {
           )}
         </div>
       </div>
-
-      {someSelected && (
-        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
-          <span className="text-sm font-medium text-foreground">
-            {selected.size} batch{selected.size === 1 ? "" : "es"} selected
-          </span>
-          <div className="flex items-center gap-2">
-            <Button size="sm" onClick={() => openQr(selectedRows)}>
-              <QrCode className="mr-1.5 h-4 w-4" strokeWidth={1.5} /> Generate QR labels
-            </Button>
-            <Button size="sm" variant="ghost" onClick={clearSelection}>
-              <X className="mr-1.5 h-4 w-4" strokeWidth={1.5} /> Clear
-            </Button>
-          </div>
-        </div>
-      )}
 
       {totalPages > 0 && (
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4 px-4 bg-white border-t border-border/40 mt-auto">

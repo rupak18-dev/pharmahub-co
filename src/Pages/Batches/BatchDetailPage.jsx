@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
 import { format, isValid } from "date-fns";
-import { ArrowLeft, Download, FileSpreadsheet, QrCode } from "lucide-react";
+import { ArrowLeft, Download, FileSpreadsheet, Pencil, QrCode, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { useDb } from "@/hooks/useDb";
 import { apiRequest } from "@/lib/api";
@@ -131,6 +131,16 @@ export default function BatchDetailPage() {
           actions={
             <>
               <StatusBadge status={status} />
+              <Button asChild variant="outline" size="sm">
+                <Link to={`/batches/${batchId}/edit`}>
+                  <Pencil className="mr-1.5 h-4 w-4" /> Edit
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="sm">
+                <Link to={`/batches/${batchId}/quarantine`}>
+                  <ShieldAlert className="mr-1.5 h-4 w-4" /> Quarantine
+                </Link>
+              </Button>
               <Button
                 variant="outline"
                 size="sm"

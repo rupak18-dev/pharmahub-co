@@ -7,18 +7,28 @@ const AuthContext = createContext(null);
 function readSession() {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
+    const raw =
+      window.localStorage.getItem(SESSION_KEY) ?? window.sessionStorage.getItem(SESSION_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
   }
 }
 
-function writeSession(payload) {
+// `remember` decides where the session lives: localStorage survives browser
+// restarts ("Keep me signed in"), sessionStorage is wiped when the browser
+// closes. Clearing always removes it from both.
+function writeSession(payload, { remember = true } = {}) {
   if (typeof window === "undefined") return;
   try {
-    if (payload) window.localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
-    else window.localStorage.removeItem(SESSION_KEY);
+    if (payload) {
+      const raw = JSON.stringify(payload);
+      if (remember) window.localStorage.setItem(SESSION_KEY, raw);
+      else window.sessionStorage.setItem(SESSION_KEY, raw);
+    } else {
+      window.localStorage.removeItem(SESSION_KEY);
+      window.sessionStorage.removeItem(SESSION_KEY);
+    }
   } catch {
     // ignore
   }
@@ -56,12 +66,12 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const signIn = useCallback(async (email, password) => {
+  const signIn = useCallback(async (email, password, { remember = true } = {}) => {
     const data = await apiRequest("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, remember }),
     });
-    writeSession({ token: data.token, user: data.user });
+    writeSession({ token: data.token, user: data.user }, { remember });
     setUser(data.user);
     return data.user;
   }, []);
@@ -147,9 +157,18 @@ export function AuthProvider({ children }) {
     [user],
   );
 
-  const requestPasswordReset = useCallback(async () => {
-    // No backend endpoint yet — simulate.
-    await new Promise((r) => setTimeout(r, 400));
+  const requestPasswordReset = useCallback(async (email) => {
+    await apiRequest("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }, []);
+
+  const resetPassword = useCallback(async ({ email, code, newPassword }) => {
+    await apiRequest("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ email, code, newPassword }),
+    });
   }, []);
 
   return (
@@ -165,6 +184,7 @@ export function AuthProvider({ children }) {
         restoreSession,
         completeGoogleOtp,
         requestPasswordReset,
+        resetPassword,
       }}
     >
       {children}
