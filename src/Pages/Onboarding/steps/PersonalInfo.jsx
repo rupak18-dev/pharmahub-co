@@ -93,7 +93,7 @@ export function PersonalInfo({ onboarding, updateData, nextStep, prevStep }) {
       />
 
       <div className="space-y-5 mt-8">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 min-[420px]:grid-cols-2 gap-4">
           <InputField
             id="firstName"
             name="firstName"
@@ -169,9 +169,11 @@ export function PersonalInfo({ onboarding, updateData, nextStep, prevStep }) {
               </button>
             </PopoverTrigger>
             <PopoverContent
-              className="w-[--radix-popover-trigger-width] p-1.5 rounded-[16px] shadow-xl border-border bg-popover z-[100]"
+              className="w-[var(--radix-popover-trigger-width)] p-1.5 rounded-[16px] shadow-xl border-border bg-popover z-[100]"
               align="start"
+              side="bottom"
               sideOffset={8}
+              avoidCollisions={false}
             >
               <Command className="bg-transparent">
                 <CommandInput

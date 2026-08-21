@@ -15,7 +15,7 @@ export function ProgressSidebar({ currentStep }) {
       }}
     >
       <div className="relative z-10">
-        <Logo isWhite />
+        <Logo isWhite tagline={null} />
 
         <div className="mt-[40px]">
           <h2 className="text-3xl font-bold tracking-tight text-white">Create your workspace</h2>

@@ -25,7 +25,7 @@ export function BusinessCard({ title, description, icon: Icon, selected, onClick
           <Icon className="w-5 h-5" />
         </div>
 
-        <div className="flex-1 pr-16">
+        <div className="flex-1 pr-14 min-[420px]:pr-16">
           <div className="flex items-center">
             <h3 className="auth-card-title">{title}</h3>
           </div>

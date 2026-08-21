@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { StepHeader } from "../components/StepHeader";
 import { StepNavigation } from "../components/StepNavigation";
 import { InputField } from "@/Pages/Auth/components/Shared/InputField";
+import { LocationAutocomplete } from "../components/LocationAutocomplete";
 import { BUSINESS_CONFIG } from "../config/businessConfig";
 import { ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
 
@@ -117,12 +118,13 @@ export function WorkspaceSetup({ onboarding, updateData, nextStep, prevStep }) {
               </div>
 
               <div>
-                <InputField
+                <LocationAutocomplete
                   id="branchName"
-                  name="branchName"
                   label={dynamicContent.branchLabel}
                   value={workspace.branchName || ""}
-                  onChange={handleChange}
+                  onChange={(value) =>
+                    updateData({ workspace: { ...workspace, branchName: value } })
+                  }
                   placeholder={dynamicContent.branchPlaceholder}
                   className="h-12 rounded-[12px] text-[15px] border-2 shadow-sm"
                   labelClassName="auth-label mb-1.5 block"

@@ -12,7 +12,9 @@ function apiMiddleware() {
     name: "api-handlers",
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
+        // `/api/v1/*` is proxied to the pharmahub-server backend — skip here.
         if (!req.url || !req.url.startsWith("/api/")) return next();
+        if (req.url.startsWith("/api/v1")) return next();
         try {
           const url = new URL(req.url, "http://localhost");
           const parts = url.pathname.split("/").filter(Boolean); // ["api","batches","<id>"]
@@ -90,5 +92,39 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "src"),
     },
   },
-  server: { port: 8080, strictPort: true, host: true },
+  // The dev server must NOT pre-bundle @vercel/analytics: the package ships a
+  // top-level `isProduction` in several entry files, and the optimizer merging
+  // them into one module scope throws `Identifier 'isProduction' has already
+  // been declared`. Excluding keeps them served as-is (they're valid ESM).
+  optimizeDeps: {
+    exclude: [
+      "@vercel/analytics",
+      "@vercel/analytics/react",
+      "@vercel/speed-insights",
+      "@vercel/speed-insights/react",
+    ],
+  },
+  server: {
+    // Port 8080 is browser-safe. (6000 is NOT — Chromium blocks it with
+    // ERR_UNSAFE_PORT, so it can never open in Chrome/Edge.) Non-strict: if
+    // 8080 is busy Vite picks 8081, then 8082, and so on.
+    port: 8080,
+    strictPort: false,
+    host: true,
+    proxy: {
+      "/api/v1": {
+        target: "https://pharmahub-server.onrender.com",
+        changeOrigin: true,
+        secure: true,
+        configure(proxy) {
+          // The browser thinks the request is same-origin (it goes through the
+          // Vite proxy), so strip the Origin header — otherwise the backend's
+          // production CSRF/CORS guard sees a localhost origin and rejects it.
+          proxy.on("proxyReq", (proxyReq) => {
+            proxyReq.removeHeader("origin");
+          });
+        },
+      },
+    },
+  },
 });
