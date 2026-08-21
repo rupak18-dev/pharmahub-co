@@ -38,3 +38,10 @@ build/
 # Tool-generated junk
 .tanstack
 .kilo
+pharmahub-server/.git_backup/
+pharmahub-server/.git_backup/
+pharmahub-server/.git_backup/
+pharmahub-server/tmp-emails/
+pharmahub-server/uploads/
+pharmahub-co/
+team-pharmahub-co/

@@ -2,51 +2,40 @@ import { useMemo, useState } from "react";
 import {
   Search,
   Check,
-  ShieldCheck,
   Zap,
   RotateCcw,
   LayoutDashboard,
   Pill as PillIcon,
   Layers,
-  Boxes,
+  ListChecks,
+  Plug,
   ShoppingCart,
   Receipt,
   CalendarClock,
   ClipboardCheck,
   Users,
   BarChart3,
-  Bell,
-  Sparkles,
   Settings,
   Lock,
 } from "lucide-react";
-import { db } from "@/lib/db";
-import { useDb } from "@/hooks/useDb";
-import { ALL_MODULES, ALL_ROLES } from "@/lib/permissions";
+import { ALL_MODULES } from "@/lib/permissions";
+import { updateRolePermissions } from "@/lib/rolesService";
 import { Input } from "@/Components/ui/input";
 import { Button } from "@/Components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/Components/ui/select";
 import { toast } from "sonner";
 const MODULE_ICONS = {
   dashboard: LayoutDashboard,
   medicines: PillIcon,
   batches: Layers,
-  inventory: Boxes,
-  purchases: ShoppingCart,
-  sales: Receipt,
   expiry: CalendarClock,
   audit: ClipboardCheck,
-  users: Users,
+  purchases: ShoppingCart,
+  sales: Receipt,
+  shortbook: ListChecks,
   reports: BarChart3,
-  notifications: Bell,
-  ai: Sparkles,
+  users: Users,
   admin: Settings,
+  integrations: Plug,
 };
 const ACTION_GROUPS = [
   {
@@ -98,19 +87,15 @@ const ACTION_GROUPS = [
     ],
   },
 ];
-export function AccessPolicyBuilder({
-  initialRole = "Pharmacist",
-  onRoleChange,
-  hideRoleSelector = false,
-}) {
-  const permissions = useDb((d) => d.permissions);
-  const [activeRole, setActiveRole] = useState(initialRole);
+const ACTIONS = ["view", "create", "update", "delete", "approve", "export"];
+
+/* Policy editor for a single backend role. Every change is persisted to the
+   Role collection via PATCH /roles/:id — the matrix passed in by the parent
+   is updated optimistically and reverted if the request fails. */
+export function AccessPolicyBuilder({ role, matrix, onMatrixChange, onSaved }) {
   const [activeModuleKey, setActiveModuleKey] = useState("sales");
   const [moduleSearch, setModuleSearch] = useState("");
-  const handleRoleSelect = (role) => {
-    setActiveRole(role);
-    if (onRoleChange) onRoleChange(role);
-  };
+  const activeRole = role?.name ?? "";
   const isOwner = activeRole === "Owner";
   // Filter modules by search string
   const filteredModules = useMemo(() => {
@@ -123,88 +108,69 @@ export function AccessPolicyBuilder({
   const activeModule = ALL_MODULES.find((m) => m.key === activeModuleKey) || ALL_MODULES[0];
   // Helper to count active permissions for a module
   const getModuleActiveCount = (modKey) => {
-    const modPerms = permissions[activeRole]?.[modKey];
+    const modPerms = matrix?.[modKey];
     if (!modPerms) return 0;
     return Object.values(modPerms).filter(Boolean).length;
   };
-  // Toggle a single permission action pill
-  const togglePermission = (actionKey) => {
+
+  /* Apply a change to the module -> actions matrix: optimistic local update,
+     then persist. Returns the previous snapshot so failures can revert. */
+  const applyChange = async (mutate) => {
     if (isOwner) {
       toast.info("Owner policy is immutable and maintains full unrestricted access.");
       return;
     }
-    db.set((d) => {
-      const roleObj = d.permissions[activeRole];
-      if (roleObj && roleObj[activeModuleKey]) {
-        roleObj[activeModuleKey][actionKey] = !roleObj[activeModuleKey][actionKey];
-      }
+    if (!role?.roleId) {
+      toast.error("This role has not been saved to the database yet.");
+      return;
+    }
+    const previous = matrix;
+    const next = {
+      ...Object.fromEntries(
+        ALL_MODULES.map((m) => [
+          m.key,
+          { ...(matrix?.[m.key] ?? Object.fromEntries(ACTIONS.map((a) => [a, false]))) },
+        ]),
+      ),
+    };
+    mutate(next);
+    onMatrixChange?.(next);
+    try {
+      await updateRolePermissions(role.roleId, next);
+      onSaved?.();
+    } catch (e) {
+      onMatrixChange?.(previous);
+      toast.error(e instanceof Error ? e.message : "Failed to save role permissions.");
+    }
+  };
+  // Toggle a single permission action pill
+  const togglePermission = (actionKey) => {
+    applyChange((next) => {
+      next[activeModuleKey][actionKey] = !next[activeModuleKey]?.[actionKey];
     });
   };
   // Bulk enable all permissions for active module
   const enableAllForModule = () => {
     if (isOwner) return;
-    db.set((d) => {
-      const mod = d.permissions[activeRole]?.[activeModuleKey];
-      if (mod) {
-        mod.view = true;
-        mod.create = true;
-        mod.update = true;
-        mod.delete = true;
-        mod.approve = true;
-        mod.export = true;
-      }
+    applyChange((next) => {
+      ACTIONS.forEach((a) => {
+        next[activeModuleKey][a] = true;
+      });
     });
     toast.success(`Enabled all actions for ${activeModule.label}`);
   };
   // Bulk clear permissions for active module
   const clearAllForModule = () => {
     if (isOwner) return;
-    db.set((d) => {
-      const mod = d.permissions[activeRole]?.[activeModuleKey];
-      if (mod) {
-        mod.view = false;
-        mod.create = false;
-        mod.update = false;
-        mod.delete = false;
-        mod.approve = false;
-        mod.export = false;
-      }
+    applyChange((next) => {
+      ACTIONS.forEach((a) => {
+        next[activeModuleKey][a] = false;
+      });
     });
     toast.success(`Cleared permissions for ${activeModule.label}`);
   };
   return (
     <div className="space-y-4">
-      {/* Top Header & Role Selector */}
-      {!hideRoleSelector && (
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
-          <div className="space-y-0.5">
-            <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-              <ShieldCheck className="h-4 w-4 text-primary" /> Access Policy Builder
-            </h3>
-            <p className="text-xs text-muted-foreground">
-              Configure module access & action pills for system roles. Changes auto-save instantly.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
-              Editing Role:
-            </span>
-            <Select value={activeRole} onValueChange={(v) => handleRoleSelect(v)}>
-              <SelectTrigger className="h-9 w-[180px] text-xs font-medium bg-background">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {ALL_ROLES.map((r) => (
-                  <SelectItem key={r} value={r} className="text-xs">
-                    {r}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-      )}
-
       {isOwner && (
         <div className="rounded-lg border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-300 flex items-center gap-2">
           <Lock className="h-4 w-4 shrink-0" />
@@ -241,7 +207,7 @@ export function AccessPolicyBuilder({
                 const Icon = MODULE_ICONS[mod.key] || Settings;
                 const isSelected = mod.key === activeModuleKey;
                 const activeCount = getModuleActiveCount(mod.key);
-                const hasView = permissions[activeRole]?.[mod.key]?.view;
+                const hasView = matrix?.[mod.key]?.view;
                 return (
                   <button
                     key={mod.key}
@@ -349,8 +315,7 @@ export function AccessPolicyBuilder({
 
                 <div className="flex flex-wrap gap-2.5">
                   {group.actions.map((act) => {
-                    const isEnabled =
-                      permissions[activeRole]?.[activeModuleKey]?.[act.key] ?? false;
+                    const isEnabled = matrix?.[activeModuleKey]?.[act.key] ?? false;
                     return (
                       <button
                         key={act.key}
@@ -383,7 +348,7 @@ export function AccessPolicyBuilder({
           <div className="rounded-lg border border-border/80 bg-muted/20 p-3 text-xs flex items-center justify-between">
             <span className="text-muted-foreground">
               Module Status:{" "}
-              {permissions[activeRole]?.[activeModuleKey]?.view ? (
+              {matrix?.[activeModuleKey]?.view ? (
                 <strong className="text-emerald-600 dark:text-emerald-400 font-medium">
                   Accessible in Navigation
                 </strong>

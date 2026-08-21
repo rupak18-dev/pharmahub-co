@@ -10,11 +10,13 @@ import {
   Trash2,
   ChevronRight,
   FileBarChart2,
+  Database,
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { useNavigate } from "react-router";
 import { useDb } from "@/hooks/useDb";
 import { reportService } from "@/lib/reportService";
 import { Button } from "@/Components/ui/button";
@@ -32,11 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import ReportBuilder from "./ReportBuilder";
 import ModulePickerModal from "./components/ModulePickerModal";
-import {
-  REPORT_CATEGORIES,
-  REPORT_MODULES,
-  getModule,
-} from "./reportModules";
+import { REPORT_CATEGORIES, REPORT_MODULES, getModule } from "./reportModules";
 
 export const handle = { title: "Reports · PharmaHub" };
 
@@ -69,6 +67,7 @@ const CATEGORY_ACCENT_BARS = {
 export default function ReportsPage() {
   const dbData = useDb((d) => d);
   const currency = dbData.settings?.currency ?? "₹";
+  const navigate = useNavigate();
 
   const [view, setView] = useState("list");
   const [activeModuleId, setActiveModuleId] = useState(null);
@@ -212,6 +211,15 @@ export default function ReportsPage() {
             </Button>
             <Button
               size="sm"
+              variant="outline"
+              className="h-9 text-xs font-medium gap-1.5"
+              onClick={() => navigate("/reports/data")}
+            >
+              <Database className="h-3.5 w-3.5 text-muted-foreground" />
+              Report Data
+            </Button>
+            <Button
+              size="sm"
               className="h-9 text-xs font-semibold gap-1.5"
               onClick={() => setIsModulePickerOpen(true)}
             >
@@ -285,9 +293,7 @@ export default function ReportsPage() {
             <div className="flex items-center gap-2">
               <Bell className="h-3.5 w-3.5 text-primary" />
               <h2 className="text-sm font-semibold text-foreground">Scheduled Alerts</h2>
-              <span className="text-[11px] text-muted-foreground">
-                ({scheduledReports.length})
-              </span>
+              <span className="text-[11px] text-muted-foreground">({scheduledReports.length})</span>
             </div>
             <button
               type="button"
@@ -307,7 +313,8 @@ export default function ReportsPage() {
                   <p className="font-semibold text-foreground truncate">{sched.reportName}</p>
                   <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                     {sched.frequency} at {sched.time}
-                    {sched.recipients?.length > 0 && ` · ${sched.recipients.length} recipient${sched.recipients.length > 1 ? "s" : ""}`}
+                    {sched.recipients?.length > 0 &&
+                      ` · ${sched.recipients.length} recipient${sched.recipients.length > 1 ? "s" : ""}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -520,7 +527,8 @@ export default function ReportsPage() {
                               </p>
                               <p className="text-xs text-muted-foreground truncate">
                                 {mod?.title ?? cfg.module}
-                                {cfg.fields?.length > 0 && ` · ${cfg.fields.length} field${cfg.fields.length > 1 ? "s" : ""}`}
+                                {cfg.fields?.length > 0 &&
+                                  ` · ${cfg.fields.length} field${cfg.fields.length > 1 ? "s" : ""}`}
                                 {(cfg.summarizeBy?.length > 0 || cfg.measures?.length > 0) &&
                                   ` · ${cfg.summarizeBy?.length ?? cfg.measures?.length} metric${(cfg.summarizeBy?.length ?? cfg.measures?.length) > 1 ? "s" : ""}`}
                               </p>

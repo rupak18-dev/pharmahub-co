@@ -8,7 +8,7 @@ import { Button } from "@/Components/ui/button";
 import { Checkbox } from "@/Components/ui/checkbox";
 import { Label } from "@/Components/ui/label";
 
-export function LoginForm({ onSubmit, register, errors, isSubmitting, onGoogleClick }) {
+export function LoginForm({ onSubmit, register, errors, isSubmitting, onGoogleClick, onDemoClick }) {
   return (
     <div className="w-full max-w-[420px] mx-auto flex flex-col justify-center min-h-[100dvh] py-12 px-4 sm:px-6">
       <div className="mb-10 flex flex-col justify-center lg:justify-start">
@@ -88,6 +88,56 @@ export function LoginForm({ onSubmit, register, errors, isSubmitting, onGoogleCl
               Create your account &rarr;
             </Link>
           </p>
+        </div>
+
+        <div className="mt-4 flex flex-col items-center gap-2">
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            <span className="text-xs text-muted-foreground">Quick login:</span>
+            <button
+              type="button"
+              onClick={() => {
+                const emailEl = document.getElementById("email");
+                const passEl = document.getElementById("password");
+                if (emailEl) {
+                  emailEl.value = "owner@pharmahub.demo";
+                  emailEl.dispatchEvent(new Event("input", { bubbles: true }));
+                }
+                if (passEl) {
+                  passEl.value = "password123";
+                  passEl.dispatchEvent(new Event("input", { bubbles: true }));
+                }
+              }}
+              className="text-xs px-2.5 py-1 rounded-md bg-secondary/80 hover:bg-secondary text-secondary-foreground font-medium transition-colors cursor-pointer"
+            >
+              Owner (Demo)
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const emailEl = document.getElementById("email");
+                const passEl = document.getElementById("password");
+                if (emailEl) {
+                  emailEl.value = "admin@pharmahub.demo";
+                  emailEl.dispatchEvent(new Event("input", { bubbles: true }));
+                }
+                if (passEl) {
+                  passEl.value = "password123";
+                  passEl.dispatchEvent(new Event("input", { bubbles: true }));
+                }
+              }}
+              className="text-xs px-2.5 py-1 rounded-md bg-secondary/80 hover:bg-secondary text-secondary-foreground font-medium transition-colors cursor-pointer"
+            >
+              Admin (Demo)
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={onDemoClick}
+            disabled={isSubmitting}
+            className="text-sm font-semibold text-muted-foreground hover:text-primary transition-colors disabled:opacity-50 cursor-pointer mt-1"
+          >
+            Passwordless Demo Link &rarr;
+          </button>
         </div>
       </form>
     </div>
