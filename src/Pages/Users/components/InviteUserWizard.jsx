@@ -510,7 +510,8 @@ export function InviteUserWizard({ isOpen, onClose }) {
               onClick={handleCreateEmployee}
               className="gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              <UserPlus className="h-4 w-4" /> {submitting ? "Sending Invitation…" : "Provision & Create Account"}
+              <UserPlus className="h-4 w-4" />{" "}
+              {submitting ? "Sending Invitation…" : "Provision & Create Account"}
             </Button>
           )}
         </div>

@@ -1,13 +1,4 @@
-import {
-  Shield,
-  Store,
-  Stethoscope,
-  Pill,
-  Syringe,
-  Boxes,
-  Receipt,
-  Settings,
-} from "lucide-react";
+import { Shield, Store, Stethoscope, Pill, Syringe, Boxes, Receipt, Settings } from "lucide-react";
 
 export const ROLE_CATEGORIES = [
   { key: "operations", label: "Operations" },
@@ -39,20 +30,20 @@ const TONES = {
   },
 };
 
+/* Module keys mirror the sidebar exactly (see ALL_MODULES in @/lib/permissions). */
 const ALL_MODULE_KEYS = [
   "dashboard",
   "medicines",
   "batches",
-  "inventory",
-  "purchases",
-  "sales",
   "expiry",
   "audit",
-  "users",
+  "purchases",
+  "sales",
+  "shortbook",
   "reports",
-  "notifications",
-  "ai",
+  "users",
   "admin",
+  "integrations",
 ];
 
 /**
@@ -88,14 +79,11 @@ export const ROLE_CATALOG = [
       "dashboard",
       "medicines",
       "batches",
-      "inventory",
       "purchases",
       "sales",
       "expiry",
       "audit",
       "reports",
-      "notifications",
-      "ai",
       "admin",
     ],
   },
@@ -113,12 +101,9 @@ export const ROLE_CATALOG = [
       "dashboard",
       "medicines",
       "batches",
-      "inventory",
       "sales",
       "expiry",
       "reports",
-      "notifications",
-      "ai",
     ],
   },
   {
@@ -131,7 +116,7 @@ export const ROLE_CATALOG = [
     icon: Syringe,
     tone: "green",
     priority: 2,
-    modules: ["dashboard", "medicines", "batches", "inventory", "sales", "expiry", "notifications"],
+    modules: ["dashboard", "medicines", "batches", "sales", "expiry"],
   },
 
   // ── Inventory & Procurement ──────────────────────────────────────────────────
@@ -149,13 +134,10 @@ export const ROLE_CATALOG = [
       "dashboard",
       "medicines",
       "batches",
-      "inventory",
       "purchases",
       "expiry",
       "audit",
       "reports",
-      "notifications",
-      "ai",
     ],
   },
 
@@ -170,7 +152,7 @@ export const ROLE_CATALOG = [
     icon: Receipt,
     tone: "teal",
     priority: 1,
-    modules: ["dashboard", "medicines", "batches", "sales", "notifications"],
+    modules: ["dashboard", "medicines", "batches", "sales", "shortbook"],
   },
 
   // ── Administration ───────────────────────────────────────────────────────────
@@ -202,6 +184,73 @@ const FALLBACK_ROLE = {
 
 export function getRoleTone(tone) {
   return TONES[tone] ?? TONES.blue;
+}
+
+/* Presentation metadata for the canonical backend roles (constants.roles on
+   pharmahub-server). Used when rendering roles fetched from GET /roles so
+   cards keep their category, icon, and tone without duplicating role data.
+   Descriptions mirror DEFAULT_ROLE_META on the server. */
+const CANONICAL_ROLE_META = {
+  Owner: {
+    category: "admin-compliance",
+    tone: "purple",
+    icon: Shield,
+    priority: 0,
+    description:
+      "Full unrestricted access to every module and setting. The Owner manages the pharmacy, staff and all business data.",
+  },
+  Admin: {
+    category: "admin-compliance",
+    tone: "purple",
+    icon: Settings,
+    priority: 3,
+    description:
+      "Operational administrator with access to staff management, reports and all core modules.",
+  },
+  Pharmacist: {
+    category: "operations",
+    tone: "green",
+    icon: Pill,
+    priority: 2,
+    description:
+      "Runs day-to-day pharmacy operations: dispensing sales, managing medicines, batches and expiry tracking.",
+  },
+  Cashier: {
+    category: "sales-finance",
+    tone: "teal",
+    icon: Receipt,
+    priority: 1,
+    description:
+      "Handles the sales counter: ringing up sales and looking up medicines and batches.",
+  },
+  "Store Keeper": {
+    category: "inventory-procurement",
+    tone: "orange",
+    icon: Boxes,
+    priority: 2,
+    description:
+      "Manages the store: receiving and stocking inventory, tracking batches and expiry of stocked items.",
+  },
+  "Inventory Manager": {
+    category: "inventory-procurement",
+    tone: "orange",
+    icon: Boxes,
+    priority: 1,
+    description:
+      "Owns the inventory pipeline: purchases, batches, expiry tracking and audit of stock movements.",
+  },
+};
+
+export function getCanonicalRoleMeta(name) {
+  return (
+    CANONICAL_ROLE_META[name] ?? {
+      category: "admin-compliance",
+      tone: "blue",
+      icon: Shield,
+      priority: 3,
+      description: "",
+    }
+  );
 }
 
 export function getRoleByName(name) {

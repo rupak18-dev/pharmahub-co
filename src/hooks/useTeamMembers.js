@@ -67,6 +67,23 @@ export function useTeamMembers() {
     return () => window.removeEventListener("pharmahub:invitations-changed", handler);
   }, [loadRemote]);
 
+  // Refetch when the tab/window regains focus. An invitee accepts their
+  // invitation in their own browser, so this session can't be pushed the
+  // change — refreshing on focus keeps the Users/Staff Access lists current
+  // (accepted invitations flip from pending rows to real user rows) without
+  // waiting for a remount or manual reload.
+  useEffect(() => {
+    const handler = () => {
+      if (document.visibilityState === "visible") loadRemote();
+    };
+    window.addEventListener("focus", handler);
+    document.addEventListener("visibilitychange", handler);
+    return () => {
+      window.removeEventListener("focus", handler);
+      document.removeEventListener("visibilitychange", handler);
+    };
+  }, [loadRemote]);
+
   // Merge backend users + invitations into one row list. Only PENDING
   // invitations appear as rows; accepted/used invitations are lifecycle
   // records of users who already joined, represented by their user row from

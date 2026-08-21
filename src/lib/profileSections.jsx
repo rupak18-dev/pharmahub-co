@@ -3,6 +3,5 @@ export const PROFILE_SECTION_IDS = [
   "business-settings",
   "security",
   "integrations",
-  "about-pharma",
   "danger-zone",
 ];
