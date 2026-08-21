@@ -80,6 +80,8 @@ export const router = createBrowserRouter([
             lazy: lazyPage(() => import("@/Pages/Notifications/NotificationsPage")),
           },
           { path: "/admin", lazy: lazyPage(() => import("@/Pages/Admin/AdminPage")) },
+          { path: "/profile", lazy: lazyPage(() => import("@/Pages/Profile/ProfilePage")) },
+          { path: "/profile/edit", lazy: lazyPage(() => import("@/Pages/Profile/EditProfilePage")) },
           {
             path: "/integrations",
             lazy: lazyPage(() => import("@/Pages/Integrations/IntegrationsPage")),
