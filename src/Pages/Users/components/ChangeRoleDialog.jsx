@@ -74,13 +74,14 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
       setAccess(profile.accessIds ?? []);
 
       const isAdmin = profile.role === "Store Administrator" || profile.role === "Pharmacy Manager";
+      const storedFeatures = profile.featureAccess ?? {};
       setFeatures({
-        processSales: true,
-        stockAudit: true,
-        purchasing: true,
-        dataExport: true,
-        notifications: true,
-        userAdmin: isAdmin,
+        processSales: storedFeatures.processSales ?? true,
+        stockAudit: storedFeatures.stockAudit ?? true,
+        purchasing: storedFeatures.purchasing ?? true,
+        dataExport: storedFeatures.dataExport ?? true,
+        notifications: storedFeatures.notifications ?? true,
+        userAdmin: storedFeatures.userAdmin ?? isAdmin,
       });
     }
   }, [open, profile]);
@@ -97,6 +98,7 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
       department,
       designation,
       phone,
+      features,
     });
     onOpenChange(false);
   };
@@ -117,7 +119,8 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
               </SheetTitle>
             </div>
             <SheetDescription className="text-xs text-muted-foreground mt-0.5">
-              Update staff details, role assignment, and permissions for {profile?.name ?? "staff member"}.
+              Update staff details, role assignment, and permissions for{" "}
+              {profile?.name ?? "staff member"}.
             </SheetDescription>
           </div>
 
@@ -246,7 +249,9 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
                   <p className="text-xs font-bold text-foreground flex items-center gap-1.5">
                     <ShieldCheck className="h-3.5 w-3.5 text-primary" /> {role} Overview
                   </p>
-                  <p className="text-xs text-muted-foreground leading-relaxed">{meta.description}</p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {meta.description}
+                  </p>
                 </div>
               )}
             </div>
@@ -257,7 +262,9 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
               <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
                 <Info className="h-4 w-4 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-foreground">Select pages this staff member will have access to.</p>
+                  <p className="font-semibold text-foreground">
+                    Select pages this staff member will have access to.
+                  </p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground">
                     Customize navigation and module permissions for {name || "staff"}.
                   </p>
@@ -271,7 +278,9 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
                 </div>
 
                 {access.length === 0 ? (
-                  <p className="text-xs text-muted-foreground italic">No specific module access assigned.</p>
+                  <p className="text-xs text-muted-foreground italic">
+                    No specific module access assigned.
+                  </p>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {access.map((id) => {
@@ -315,21 +324,52 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
 
               <div className="space-y-3">
                 {[
-                  { key: "processSales", title: "Process Sales & Refunds", desc: "Allow POS billing checkout and issuing refunds." },
-                  { key: "stockAudit", title: "Stock Audit & Adjustments", desc: "Allow inventory count adjustments and batch write-offs." },
-                  { key: "purchasing", title: "Supplier Purchase Orders", desc: "Allow creating supplier purchase orders and receiving stock." },
-                  { key: "dataExport", title: "Data Export & Reports", desc: "Allow downloading analytics and sales logs as Excel/PDF." },
-                  { key: "notifications", title: "Automated Alerts", desc: "Receive alerts for low stock and expiring batches." },
-                  { key: "userAdmin", title: "Staff Administration", desc: "Allow inviting new staff and changing system roles." },
+                  {
+                    key: "processSales",
+                    title: "Process Sales & Refunds",
+                    desc: "Allow POS billing checkout and issuing refunds.",
+                  },
+                  {
+                    key: "stockAudit",
+                    title: "Stock Audit & Adjustments",
+                    desc: "Allow inventory count adjustments and batch write-offs.",
+                  },
+                  {
+                    key: "purchasing",
+                    title: "Supplier Purchase Orders",
+                    desc: "Allow creating supplier purchase orders and receiving stock.",
+                  },
+                  {
+                    key: "dataExport",
+                    title: "Data Export & Reports",
+                    desc: "Allow downloading analytics and sales logs as Excel/PDF.",
+                  },
+                  {
+                    key: "notifications",
+                    title: "Automated Alerts",
+                    desc: "Receive alerts for low stock and expiring batches.",
+                  },
+                  {
+                    key: "userAdmin",
+                    title: "Staff Administration",
+                    desc: "Allow inviting new staff and changing system roles.",
+                  },
                 ].map((feat) => (
-                  <div key={feat.key} className="flex items-start justify-between p-4 rounded-xl border border-border/80 bg-card gap-4">
+                  <div
+                    key={feat.key}
+                    className="flex items-start justify-between p-4 rounded-xl border border-border/80 bg-card gap-4"
+                  >
                     <div className="space-y-1 min-w-0 flex-1">
                       <p className="text-xs font-bold text-foreground">{feat.title}</p>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed">{feat.desc}</p>
+                      <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        {feat.desc}
+                      </p>
                     </div>
                     <Switch
                       checked={features[feat.key] ?? false}
-                      onCheckedChange={(val) => setFeatures((prev) => ({ ...prev, [feat.key]: val }))}
+                      onCheckedChange={(val) =>
+                        setFeatures((prev) => ({ ...prev, [feat.key]: val }))
+                      }
                       className="mt-0.5 data-[state=checked]:bg-primary"
                     />
                   </div>

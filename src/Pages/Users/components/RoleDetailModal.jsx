@@ -1,15 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/Components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/Components/ui/avatar";
 import { Button } from "@/Components/ui/button";
 import { Users, LayoutGrid, Sliders } from "lucide-react";
-import { useDb } from "@/hooks/useDb";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { categoryLabel } from "@/lib/roleCatalog";
+import { resolvePermissionCount } from "@/lib/rolesService";
 import { AccessPolicyBuilder } from "./AccessPolicyBuilder";
 import { AccessPreview } from "./AccessPreview";
 import { StaffStatusBadge, resolveStatus } from "./StaffStatusBadge";
-import { format } from "date-fns";
+import dayjs from "dayjs";
 
 function getInitials(name) {
   const parts = (name ?? "U").trim().split(" ");
@@ -28,17 +29,23 @@ function MetaItem({ label, value }) {
   );
 }
 
-export function RoleDetailModal({ role, open, onClose }) {
-  const profiles = useDb((d) => d.profiles);
-  const permissions = useDb((d) => d.permissions);
+export function RoleDetailModal({ role, open, onClose, onSaved }) {
+  // Assigned users come from the same persisted backend members list rendered
+  // by the Users and Staff Access tabs — never from the local database.
+  const { members } = useTeamMembers();
   const [activeTab, setActiveTab] = useState("builder");
+  // Live permission matrix for this role, persisted to the backend Role
+  // collection by the Policy Builder on every change.
+  const [matrix, setMatrix] = useState(role?.permissions ?? {});
+  useEffect(() => {
+    setMatrix(role?.permissions ?? {});
+  }, [role?.roleId, role?.permissions]);
   const assignedUsers = useMemo(
-    () => (role ? profiles.filter((p) => !p.isDemo && p.role === role.name) : []),
-    [profiles, role],
+    () => members.filter((p) => !p.invitationId && !p.isDemo && p.role === role?.name),
+    [members, role],
   );
   if (!role) return null;
   const Icon = role.icon;
-  const rolePerms = permissions[role.name];
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -77,8 +84,8 @@ export function RoleDetailModal({ role, open, onClose }) {
             <MetaItem
               label="Permissions"
               value={
-                role.permissionCount != null
-                  ? `${role.permissionCount} configured`
+                resolvePermissionCount(matrix) != null
+                  ? `${resolvePermissionCount(matrix)} configured`
                   : "Permissions not configured"
               }
             />
@@ -101,11 +108,17 @@ export function RoleDetailModal({ role, open, onClose }) {
               </TabsList>
 
               <TabsContent value="builder" className="pt-1">
-                <AccessPolicyBuilder key={role.name} initialRole={role.name} hideRoleSelector />
+                <AccessPolicyBuilder
+                  key={role.roleId ?? role.name}
+                  role={role}
+                  matrix={matrix}
+                  onMatrixChange={setMatrix}
+                  onSaved={onSaved}
+                />
               </TabsContent>
 
               <TabsContent value="preview" className="pt-1">
-                <AccessPreview roleName={role.name} permissions={rolePerms} />
+                <AccessPreview roleName={role.name} permissions={matrix} />
               </TabsContent>
 
               <TabsContent value="users" className="pt-1">
@@ -139,8 +152,8 @@ export function RoleDetailModal({ role, open, onClose }) {
                           </div>
                           <div className="flex items-center gap-4 text-muted-foreground">
                             <span className="font-mono text-[11px]">
-                              {u.createdAt
-                                ? `Joined ${format(new Date(u.createdAt), "MMM d, yyyy")}`
+                              {u.createdAt && dayjs(u.createdAt).isValid()
+                                ? `Joined ${dayjs(u.createdAt).format("DD MMM YYYY")}`
                                 : ""}
                             </span>
                             <StaffStatusBadge status={resolveStatus(u)} className="text-[11px]" />

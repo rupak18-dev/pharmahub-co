@@ -1,23 +1,22 @@
 import {
   BarChart3,
-  Bell,
-  Boxes,
   CalendarClock,
   ClipboardCheck,
   LayoutDashboard,
   Layers,
+  ListChecks,
   Pill,
+  Plug,
   Receipt,
   Settings,
   ShoppingCart,
-  Sparkles,
   Users,
 } from "lucide-react";
 import { ALL_MODULES } from "@/lib/permissions";
 
 /* Central catalog of PharmaHub modules available for manual staff access
    assignment. Built once from the real module set in @/lib/permissions so
-   the list is never duplicated across components. */
+   the list is never duplicated across components. Keys mirror the sidebar. */
 const MODULE_META = {
   dashboard: {
     description: "Overview of pharmacy performance and key metrics.",
@@ -31,9 +30,13 @@ const MODULE_META = {
     description: "Track medicine batches, expiry dates, and stock lots.",
     icon: Layers,
   },
-  inventory: {
-    description: "View and manage pharmacy stock and inventory.",
-    icon: Boxes,
+  expiry: {
+    description: "Monitor expiring stock and expiry alerts.",
+    icon: CalendarClock,
+  },
+  audit: {
+    description: "Review stock movements and monitor inventory levels.",
+    icon: ClipboardCheck,
   },
   purchases: {
     description: "Manage suppliers, purchase orders, and goods received.",
@@ -43,13 +46,9 @@ const MODULE_META = {
     description: "Process point-of-sale transactions and customer billing.",
     icon: Receipt,
   },
-  expiry: {
-    description: "Monitor expiring stock and expiry alerts.",
-    icon: CalendarClock,
-  },
-  audit: {
-    description: "Review stock movements and audit records.",
-    icon: ClipboardCheck,
+  shortbook: {
+    description: "Track credit sales and customer due payments.",
+    icon: ListChecks,
   },
   users: {
     description: "Manage staff accounts and role assignments.",
@@ -59,17 +58,13 @@ const MODULE_META = {
     description: "View operational and business reports.",
     icon: BarChart3,
   },
-  notifications: {
-    description: "View alerts and system notifications.",
-    icon: Bell,
-  },
-  ai: {
-    description: "Use AI-powered insights and recommendations.",
-    icon: Sparkles,
-  },
   admin: {
     description: "Manage profile and store settings.",
     icon: Settings,
+  },
+  integrations: {
+    description: "Connect third-party services and data imports.",
+    icon: Plug,
   },
 };
 
@@ -77,7 +72,7 @@ export const ACCESS_MODULES = ALL_MODULES.map((m) => ({
   id: m.key,
   name: m.label,
   description: MODULE_META[m.key]?.description ?? "PharmaHub module access.",
-  icon: MODULE_META[m.key]?.icon ?? Boxes,
+  icon: MODULE_META[m.key]?.icon ?? Settings,
 }));
 
 export function getAccessModule(id) {
