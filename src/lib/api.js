@@ -24,6 +24,17 @@ function resolveApiBase() {
 
 export const API_BASE = resolveApiBase();
 
+export function resolveAssetUrl(path) {
+  if (!path) return null;
+  if (/^(https?:)?\/\//.test(path) || path.startsWith("data:") || path.startsWith("blob:"))
+    return path;
+  if (path.startsWith("/")) {
+    const origin = API_BASE.replace(/\/api\/v1\/?$/, "");
+    return `${origin}${path}`;
+  }
+  return path;
+}
+
 export function isNetworkError(err) {
   return (
     err instanceof TypeError ||

@@ -45,7 +45,7 @@ export function SidebarProfile() {
     };
   }, []);
   if (!user) return null;
-  const initials = user.name
+  const initials = (user.name ?? "")
     .split(" ")
     .map((s) => s[0])
     .join("")
@@ -142,7 +142,7 @@ export function SidebarProfile() {
           </DropdownMenuSubContent>
         </DropdownMenuSub>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={() => navigate("/users")}>
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
           <UserIcon className="mr-2 h-4 w-4" /> Profile
         </DropdownMenuItem>
         <DropdownMenuItem onClick={() => navigate("/admin")}>

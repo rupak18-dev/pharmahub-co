@@ -73,6 +73,10 @@ export const router = createBrowserRouter([
           { path: "/expiry", lazy: lazyPage(() => import("@/Pages/Expiry/ExpiryPage")) },
           { path: "/audit", lazy: lazyPage(() => import("@/Pages/Audit/AuditPage")) },
           { path: "/reports", lazy: lazyPage(() => import("@/Pages/Reports/ReportsPage")) },
+          {
+            path: "/reports/data",
+            lazy: lazyPage(() => import("@/Pages/Reports/data/ReportDataPage")),
+          },
           { path: "/users", lazy: lazyPage(() => import("@/Pages/Users/UsersPage")) },
           { path: "/ai", lazy: lazyPage(() => import("@/Pages/AI/AiAssistantPage")) },
           {

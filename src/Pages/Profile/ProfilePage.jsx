@@ -332,7 +332,9 @@ export default function ProfilePage() {
           {/* Right column — stretches with the row; the Profile BOX itself is
               the sticky element (pinned just below the 64px app header). */}
           <div className="lg:col-span-4">
-            <PharmaCard className="lg:sticky lg:top-20" />
+            <div className="lg:sticky lg:top-20">
+              <PharmaCard />
+            </div>
           </div>
         </div>
       </div>
