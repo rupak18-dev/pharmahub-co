@@ -1,23 +1,16 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/Components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import { Avatar, AvatarFallback } from "@/Components/ui/avatar";
 import { Button } from "@/Components/ui/button";
 import { Users, LayoutGrid, Sliders } from "lucide-react";
-import { useDb } from "@/hooks/useDb";
-<<<<<<< Updated upstream
-=======
 import { useTeamMembers } from "@/hooks/useTeamMembers";
->>>>>>> Stashed changes
 import { categoryLabel } from "@/lib/roleCatalog";
+import { resolvePermissionCount } from "@/lib/rolesService";
 import { AccessPolicyBuilder } from "./AccessPolicyBuilder";
 import { AccessPreview } from "./AccessPreview";
 import { StaffStatusBadge, resolveStatus } from "./StaffStatusBadge";
-<<<<<<< Updated upstream
-import { format } from "date-fns";
-=======
 import dayjs from "dayjs";
->>>>>>> Stashed changes
 
 function getInitials(name) {
   const parts = (name ?? "U").trim().split(" ");
@@ -26,7 +19,6 @@ function getInitials(name) {
 }
 
 function MetaItem({ label, value }) {
-<<<<<<< Updated upstream
   return (
     <div className="rounded-lg border border-border bg-muted/20 px-3 py-2">
       <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -37,46 +29,25 @@ function MetaItem({ label, value }) {
   );
 }
 
-export function RoleDetailModal({ role, open, onClose }) {
-  const profiles = useDb((d) => d.profiles);
-  const permissions = useDb((d) => d.permissions);
-  const [activeTab, setActiveTab] = useState("builder");
-  const assignedUsers = useMemo(
-    () => (role ? profiles.filter((p) => !p.isDemo && p.role === role.name) : []),
-    [profiles, role],
-  );
-  if (!role) return null;
-  const Icon = role.icon;
-  const rolePerms = permissions[role.name];
-
-  return (
-=======
-  return (
-    <div className="rounded-lg border border-border bg-muted/20 px-3 py-2">
-      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-        {label}
-      </p>
-      <p className="mt-0.5 text-sm font-medium text-foreground">{value}</p>
-    </div>
-  );
-}
-
-export function RoleDetailModal({ role, open, onClose }) {
-  const permissions = useDb((d) => d.permissions);
+export function RoleDetailModal({ role, open, onClose, onSaved }) {
   // Assigned users come from the same persisted backend members list rendered
   // by the Users and Staff Access tabs — never from the local database.
   const { members } = useTeamMembers();
   const [activeTab, setActiveTab] = useState("builder");
+  // Live permission matrix for this role, persisted to the backend Role
+  // collection by the Policy Builder on every change.
+  const [matrix, setMatrix] = useState(role?.permissions ?? {});
+  useEffect(() => {
+    setMatrix(role?.permissions ?? {});
+  }, [role?.roleId, role?.permissions]);
   const assignedUsers = useMemo(
     () => members.filter((p) => !p.invitationId && !p.isDemo && p.role === role?.name),
     [members, role],
   );
   if (!role) return null;
   const Icon = role.icon;
-  const rolePerms = permissions[role.name];
 
   return (
->>>>>>> Stashed changes
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col gap-0 p-0 overflow-hidden">
         <DialogHeader className="border-b border-border px-6 py-4">
@@ -113,8 +84,8 @@ export function RoleDetailModal({ role, open, onClose }) {
             <MetaItem
               label="Permissions"
               value={
-                role.permissionCount != null
-                  ? `${role.permissionCount} configured`
+                resolvePermissionCount(matrix) != null
+                  ? `${resolvePermissionCount(matrix)} configured`
                   : "Permissions not configured"
               }
             />
@@ -137,11 +108,17 @@ export function RoleDetailModal({ role, open, onClose }) {
               </TabsList>
 
               <TabsContent value="builder" className="pt-1">
-                <AccessPolicyBuilder key={role.name} initialRole={role.name} hideRoleSelector />
+                <AccessPolicyBuilder
+                  key={role.roleId ?? role.name}
+                  role={role}
+                  matrix={matrix}
+                  onMatrixChange={setMatrix}
+                  onSaved={onSaved}
+                />
               </TabsContent>
 
               <TabsContent value="preview" className="pt-1">
-                <AccessPreview roleName={role.name} permissions={rolePerms} />
+                <AccessPreview roleName={role.name} permissions={matrix} />
               </TabsContent>
 
               <TabsContent value="users" className="pt-1">
@@ -175,13 +152,8 @@ export function RoleDetailModal({ role, open, onClose }) {
                           </div>
                           <div className="flex items-center gap-4 text-muted-foreground">
                             <span className="font-mono text-[11px]">
-<<<<<<< Updated upstream
-                              {u.createdAt
-                                ? `Joined ${format(new Date(u.createdAt), "MMM d, yyyy")}`
-=======
                               {u.createdAt && dayjs(u.createdAt).isValid()
                                 ? `Joined ${dayjs(u.createdAt).format("DD MMM YYYY")}`
->>>>>>> Stashed changes
                                 : ""}
                             </span>
                             <StaffStatusBadge status={resolveStatus(u)} className="text-[11px]" />

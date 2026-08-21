@@ -10,19 +10,13 @@ import {
   Trash2,
   ChevronRight,
   FileBarChart2,
-<<<<<<< Updated upstream
-=======
   Database,
->>>>>>> Stashed changes
   CheckCircle2,
   AlertCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
-<<<<<<< Updated upstream
-=======
 import { useNavigate } from "react-router";
->>>>>>> Stashed changes
 import { useDb } from "@/hooks/useDb";
 import { reportService } from "@/lib/reportService";
 import { Button } from "@/Components/ui/button";
@@ -40,15 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import ReportBuilder from "./ReportBuilder";
 import ModulePickerModal from "./components/ModulePickerModal";
-<<<<<<< Updated upstream
-import {
-  REPORT_CATEGORIES,
-  REPORT_MODULES,
-  getModule,
-} from "./reportModules";
-=======
 import { REPORT_CATEGORIES, REPORT_MODULES, getModule } from "./reportModules";
->>>>>>> Stashed changes
 
 export const handle = { title: "Reports · PharmaHub" };
 
@@ -81,10 +67,7 @@ const CATEGORY_ACCENT_BARS = {
 export default function ReportsPage() {
   const dbData = useDb((d) => d);
   const currency = dbData.settings?.currency ?? "₹";
-<<<<<<< Updated upstream
-=======
   const navigate = useNavigate();
->>>>>>> Stashed changes
 
   const [view, setView] = useState("list");
   const [activeModuleId, setActiveModuleId] = useState(null);
@@ -228,8 +211,6 @@ export default function ReportsPage() {
             </Button>
             <Button
               size="sm"
-<<<<<<< Updated upstream
-=======
               variant="outline"
               className="h-9 text-xs font-medium gap-1.5"
               onClick={() => navigate("/reports/data")}
@@ -239,7 +220,6 @@ export default function ReportsPage() {
             </Button>
             <Button
               size="sm"
->>>>>>> Stashed changes
               className="h-9 text-xs font-semibold gap-1.5"
               onClick={() => setIsModulePickerOpen(true)}
             >
@@ -313,13 +293,7 @@ export default function ReportsPage() {
             <div className="flex items-center gap-2">
               <Bell className="h-3.5 w-3.5 text-primary" />
               <h2 className="text-sm font-semibold text-foreground">Scheduled Alerts</h2>
-<<<<<<< Updated upstream
-              <span className="text-[11px] text-muted-foreground">
-                ({scheduledReports.length})
-              </span>
-=======
               <span className="text-[11px] text-muted-foreground">({scheduledReports.length})</span>
->>>>>>> Stashed changes
             </div>
             <button
               type="button"
@@ -339,12 +313,8 @@ export default function ReportsPage() {
                   <p className="font-semibold text-foreground truncate">{sched.reportName}</p>
                   <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                     {sched.frequency} at {sched.time}
-<<<<<<< Updated upstream
-                    {sched.recipients?.length > 0 && ` · ${sched.recipients.length} recipient${sched.recipients.length > 1 ? "s" : ""}`}
-=======
                     {sched.recipients?.length > 0 &&
                       ` · ${sched.recipients.length} recipient${sched.recipients.length > 1 ? "s" : ""}`}
->>>>>>> Stashed changes
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -557,12 +527,8 @@ export default function ReportsPage() {
                               </p>
                               <p className="text-xs text-muted-foreground truncate">
                                 {mod?.title ?? cfg.module}
-<<<<<<< Updated upstream
-                                {cfg.fields?.length > 0 && ` · ${cfg.fields.length} field${cfg.fields.length > 1 ? "s" : ""}`}
-=======
                                 {cfg.fields?.length > 0 &&
                                   ` · ${cfg.fields.length} field${cfg.fields.length > 1 ? "s" : ""}`}
->>>>>>> Stashed changes
                                 {(cfg.summarizeBy?.length > 0 || cfg.measures?.length > 0) &&
                                   ` · ${cfg.summarizeBy?.length ?? cfg.measures?.length} metric${(cfg.summarizeBy?.length ?? cfg.measures?.length) > 1 ? "s" : ""}`}
                               </p>

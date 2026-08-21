@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { Plus, Search, ShieldAlert } from "lucide-react";
 import { ROLE_CATEGORIES, categoryLabel } from "@/lib/roleCatalog";
 import { useRoles } from "@/hooks/useRoles";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { usePermission } from "@/hooks/usePermission";
 import { Input } from "@/Components/ui/input";
 import { Button } from "@/Components/ui/button";
@@ -41,7 +42,10 @@ function RoleCardSkeleton() {
 }
 
 export function RolesPanel() {
-  const { status, error, roles, refresh } = useRoles();
+  const { status, error, roles: backendRoles, refresh } = useRoles();
+  // Assigned staff per role come from the same persisted backend members list
+  // rendered by the Users and Staff Access tabs.
+  const { members } = useTeamMembers();
   const has = usePermission();
   const canCreate = has("users", "update");
   const [search, setSearch] = useState("");
@@ -49,6 +53,17 @@ export function RolesPanel() {
   const [typeFilter, setTypeFilter] = useState("all");
   const [selectedRole, setSelectedRole] = useState(null);
   const [createOpen, setCreateOpen] = useState(false);
+
+  const roles = useMemo(
+    () =>
+      backendRoles.map((r) => ({
+        ...r,
+        assignedUsers: members.filter(
+          (m) => !m.invitationId && !m.isDemo && m.role === r.name,
+        ),
+      })),
+    [backendRoles, members],
+  );
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -187,6 +202,7 @@ export function RolesPanel() {
         role={selectedRole}
         open={!!selectedRole}
         onClose={() => setSelectedRole(null)}
+        onSaved={refresh}
       />
       <CreateCustomRoleDialog open={createOpen} onOpenChange={setCreateOpen} />
     </div>

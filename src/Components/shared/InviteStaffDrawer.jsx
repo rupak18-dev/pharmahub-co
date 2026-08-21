@@ -11,35 +11,30 @@ import {
   User,
   Mail,
   Phone,
-  Briefcase,
-  Building2,
-  Camera,
-  Upload,
-  Trash2,
   LayoutDashboard,
   Pill,
   Layers,
-  Boxes,
+  ListChecks,
+  Plug,
   ShoppingBag,
   Receipt,
   Users as UsersIcon,
   BarChart3,
-  Bell,
   AlertTriangle,
   ClipboardCheck,
   CheckCircle2,
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useDb } from "@/hooks/useDb";
-import { db } from "@/lib/db";
+import { invitationService } from "@/lib/invitationService";
+import { listRoles } from "@/lib/rolesService";
 import { ALL_ROLES, ALL_MODULES, DEFAULT_PERMISSIONS } from "@/lib/permissions";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Switch } from "@/Components/ui/switch";
 import { Badge } from "@/Components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
+
 import {
   Select,
   SelectContent,
@@ -64,23 +59,19 @@ const DEPARTMENTS = [
   "Accounts & Finance",
 ];
 
-const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/jpg", "image/webp"];
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
-
 const MODULE_ICONS = {
   dashboard: LayoutDashboard,
   medicines: Pill,
   batches: Layers,
-  inventory: Boxes,
-  purchases: ShoppingBag,
-  sales: Receipt,
   expiry: AlertTriangle,
   audit: ClipboardCheck,
+  purchases: ShoppingBag,
+  sales: Receipt,
+  shortbook: ListChecks,
   users: UsersIcon,
   reports: BarChart3,
-  notifications: Bell,
-  ai: Sparkles,
   admin: ShieldCheck,
+  integrations: Plug,
 };
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -92,7 +83,6 @@ export function openInviteStaff() {
 }
 
 export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controlledOnOpenChange }) {
-  const profiles = useDb((d) => d.profiles);
   const [internalOpen, setInternalOpen] = useState(false);
   const isControlled = controlledOpen !== undefined;
   const isOpen = isControlled ? controlledOpen : internalOpen;
@@ -118,59 +108,24 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
   const [step, setStep] = useState(1);
 
   // Step 1 Form Fields
-  const [name, setName] = useState("");
-  const [position, setPosition] = useState("");
-  const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
+  const [fullName, setFullName] = useState("");
+  const [workEmail, setWorkEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
   const [role, setRole] = useState("Pharmacist");
   const [department, setDepartment] = useState("Pharmacy Operations");
-  const [designation, setDesignation] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
-  const [allowDashboardAccess, setAllowDashboardAccess] = useState(true);
+
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
 
-  const fileInputRef = useRef(null);
-
-  const handlePhotoUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (!ALLOWED_IMAGE_TYPES.includes(file.type.toLowerCase())) {
-      toast.error("Invalid image format. Please upload a JPG, JPEG, PNG, or WEBP file.");
-      e.target.value = "";
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE_BYTES) {
-      toast.error("File size exceeds 5MB limit. Please choose a smaller photo.");
-      e.target.value = "";
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === "string") {
-        setAvatarUrl(reader.result);
-        toast.success("Profile photo loaded successfully");
-      }
-    };
-    reader.onerror = () => {
-      toast.error("Failed to read image file.");
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRemovePhoto = () => {
-    setAvatarUrl("");
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-  };
-
   // Step 2 Module Permissions Map
   const [moduleAccess, setModuleAccess] = useState({});
+  // Role permission matrices fetched from the backend (GET /roles). The
+  // toggles initialize from the role's configured defaults in the database,
+  // falling back to the hardcoded defaults if the backend is unreachable.
+  const [roleConfigs, setRoleConfigs] = useState({});
+  const roleConfigsRef = useRef({});
+  const moduleTouchedRef = useRef(false);
 
   // Step 3 Features Map
   const [features, setFeatures] = useState({
@@ -182,31 +137,41 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
     userAdmin: false,
   });
 
+  // Default module toggles for a role: backend role configuration when
+  // available, otherwise the hardcoded role defaults. Reads configs through a
+  // ref so the function identity stays stable across renders.
+  const moduleDefaultsFor = useCallback((roleName) => {
+    const map = {};
+    const configured = roleConfigsRef.current[roleName];
+    if (configured) {
+      ALL_MODULES.forEach((m) => {
+        map[m.key] = Boolean(configured[m.key]?.view);
+      });
+      return map;
+    }
+    const fallback = DEFAULT_PERMISSIONS[roleName] || {};
+    ALL_MODULES.forEach((m) => {
+      map[m.key] = fallback[m.key]?.view ?? false;
+    });
+    return map;
+  }, []);
+
   // Reset form when drawer opens
   useEffect(() => {
     if (isOpen) {
       setStep(1);
-      setName("");
-      setPosition("");
-      setEmail("");
-      setPhone("");
+      setFullName("");
+      setWorkEmail("");
+      setPhoneNumber("");
       setRole("Pharmacist");
       setDepartment("Pharmacy Operations");
-      setDesignation("");
-      setAvatarUrl("");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      setAllowDashboardAccess(true);
       setErrors({});
       setSubmitting(false);
       submittingRef.current = false;
+      moduleTouchedRef.current = false;
 
       // Initialize default module permissions for Pharmacist
-      const defaultRolePerms = DEFAULT_PERMISSIONS["Pharmacist"] || {};
-      const initialMap = {};
-      ALL_MODULES.forEach((m) => {
-        initialMap[m.key] = defaultRolePerms[m.key]?.view ?? true;
-      });
-      setModuleAccess(initialMap);
+      setModuleAccess(moduleDefaultsFor("Pharmacist"));
 
       setFeatures({
         processSales: true,
@@ -216,18 +181,39 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
         notifications: true,
         userAdmin: false,
       });
+
+      // Fetch the configured role matrices so toggles reflect what the
+      // admin configured in Role Configuration (persisted in the database).
+      let cancelled = false;
+      listRoles()
+        .then((roles) => {
+          if (cancelled) return;
+          const map = {};
+          roles.forEach((r) => {
+            map[r.name] = r.permissions;
+          });
+          roleConfigsRef.current = map;
+          setRoleConfigs(map);
+        })
+        .catch(() => {});
+      return () => {
+        cancelled = true;
+      };
     }
-  }, [isOpen]);
+  }, [isOpen, moduleDefaultsFor]);
+
+  // Re-sync toggles once backend role configs arrive (unless already edited)
+  useEffect(() => {
+    if (!isOpen) return;
+    if (moduleTouchedRef.current) return;
+    setModuleAccess(moduleDefaultsFor(role));
+  }, [roleConfigs, isOpen, moduleDefaultsFor, role]);
 
   // When Role changes in Step 1, auto update default perms
   const handleRoleChange = (newRole) => {
     setRole(newRole);
-    const rolePerms = DEFAULT_PERMISSIONS[newRole] || {};
-    const newMap = {};
-    ALL_MODULES.forEach((m) => {
-      newMap[m.key] = rolePerms[m.key]?.view ?? true;
-    });
-    setModuleAccess(newMap);
+    moduleTouchedRef.current = false;
+    setModuleAccess(moduleDefaultsFor(newRole));
 
     const isAdminRole = newRole === "Owner" || newRole === "Admin";
     setFeatures((prev) => ({
@@ -238,13 +224,10 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
 
   const validateDetails = () => {
     const errs = {};
-    if (!name.trim()) errs.name = "Full Name is required.";
-    if (!position.trim()) errs.position = "Position is required.";
-    if (!email.trim()) errs.email = "Work Email is required.";
-    else if (!EMAIL_PATTERN.test(email.trim())) errs.email = "Please enter a valid work email.";
-    else if (profiles.some((p) => p.email.toLowerCase() === email.trim().toLowerCase())) {
-      errs.email = "A staff member with this email already exists.";
-    }
+    if (!fullName.trim()) errs.fullName = "Full Name is required.";
+    if (!workEmail.trim()) errs.workEmail = "Work Email is required.";
+    else if (!EMAIL_PATTERN.test(workEmail.trim()))
+      errs.workEmail = "Please enter a valid work email.";
     if (!role) errs.role = "Role is required.";
     return errs;
   };
@@ -269,6 +252,7 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
 
   // Toggle single module access in Step 2
   const toggleModule = (modKey) => {
+    moduleTouchedRef.current = true;
     setModuleAccess((prev) => ({
       ...prev,
       [modKey]: !prev[modKey],
@@ -283,8 +267,8 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
     }));
   };
 
-  // Step 3 Submission
-  const handleSubmit = () => {
+  // Step 3 Submission — call backend invitation API
+  const handleSubmit = async () => {
     if (submittingRef.current) return;
 
     const errs = validateDetails();
@@ -298,36 +282,50 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
     setSubmitting(true);
 
     try {
-      const newStaffId = db.uid();
-      db.set((d) => {
-        d.profiles.push({
-          id: newStaffId,
-          name: name.trim(),
-          email: email.trim(),
-          phone: phone.trim() || undefined,
-          role: role,
-          department: department || undefined,
-          designation: designation.trim() || position.trim(),
-          avatarUrl: avatarUrl || undefined,
-          active: false,
-          status: "pending",
-          orgName: "PharmaHub Pharmacy",
-          createdAt: new Date().toISOString(),
-          moduleAccess,
-          features,
-        });
+      const accessIds = Object.entries(moduleAccess)
+        .filter(([, enabled]) => enabled)
+        .map(([key]) => key);
+
+      const result = await invitationService.invite({
+        name: fullName.trim(),
+        email: workEmail.trim().toLowerCase(),
+        phone: phoneNumber.trim() || undefined,
+        department: department?.trim() || undefined,
+        role,
+        permissions: {},
+        featureAccess: features,
+        accessIds,
       });
 
-      toast.success(`Invitation sent to ${email.trim()}`);
+      if (result?.emailSent) {
+        toast.success(`Invitation sent to ${workEmail.trim()}`);
+      } else if (result?.emailSkipped) {
+        toast.info(
+          `Invitation created for ${workEmail.trim()}. Email delivery skipped — SMTP is not configured.`,
+        );
+        if (result?.link) {
+          await navigator.clipboard.writeText(result.link).catch(() => {});
+          toast.info("Invitation link copied to clipboard for manual sharing.");
+        }
+      } else {
+        toast.success(`Invitation created for ${workEmail.trim()}`);
+      }
+
+      // Notify the users list to refresh
+      window.dispatchEvent(new Event("pharmahub:invitations-changed"));
       handleOpenChange(false);
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : "Failed to send invitation. Please try again.";
+      toast.error(message);
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
     }
   };
 
-  const initials = name.trim()
-    ? name
+  const initials = fullName.trim()
+    ? fullName
         .trim()
         .split(" ")
         .map((n) => n[0])
@@ -413,66 +411,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
           {/* STEP 1: DETAILS */}
           {step === 1 && (
             <div className="space-y-4">
-              {/* Profile Photo Upload */}
-              <div className="flex items-center gap-4 p-3.5 rounded-xl border border-border/70 bg-card">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/png, image/jpeg, image/jpg, image/webp"
-                  onChange={handlePhotoUpload}
-                  className="hidden"
-                />
-
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="relative group h-14 w-14 rounded-full cursor-pointer overflow-hidden border border-border shadow-xs shrink-0 focus:outline-none focus:ring-2 focus:ring-primary/30 transition-transform active:scale-95"
-                  title="Click to select profile photo"
-                >
-                  <Avatar className="h-full w-full">
-                    {avatarUrl ? (
-                      <AvatarImage src={avatarUrl} alt={name || "Profile photo"} className="object-cover h-full w-full" />
-                    ) : null}
-                    <AvatarFallback className="bg-primary/10 text-primary font-bold text-base">
-                      {initials}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                    <Camera className="h-5 w-5 text-white drop-shadow-md" />
-                  </div>
-                </button>
-
-                <div className="space-y-1 min-w-0 flex-1">
-                  <Label className="text-xs font-semibold text-foreground block">Profile Photo</Label>
-                  <div className="flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => fileInputRef.current?.click()}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:text-primary/80 hover:underline cursor-pointer"
-                    >
-                      <Upload className="h-3.5 w-3.5" />
-                      {avatarUrl ? "Change Photo" : "Upload Photo"}
-                    </button>
-                    {avatarUrl && (
-                      <>
-                        <span className="text-muted-foreground/40 text-xs">•</span>
-                        <button
-                          type="button"
-                          onClick={handleRemovePhoto}
-                          className="inline-flex items-center gap-1 text-xs font-medium text-destructive hover:underline cursor-pointer"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          Remove
-                        </button>
-                      </>
-                    )}
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Supports JPG, PNG, or WEBP (Max 5MB)
-                  </p>
-                </div>
-              </div>
-
               {/* Form Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
@@ -484,29 +422,14 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                     <Input
                       id="staff-name"
                       placeholder="e.g. Dr. Ananya Sharma"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className={`pl-9 text-xs rounded-xl ${errors.name ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
+                      value={fullName}
+                      onChange={(e) => setFullName(e.target.value)}
+                      className={`pl-9 text-xs rounded-xl ${errors.fullName ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
                     />
                   </div>
-                  {errors.name && <p className="text-[11px] text-destructive">{errors.name}</p>}
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label htmlFor="staff-position" className="text-xs font-semibold">
-                    Position *
-                  </Label>
-                  <div className="relative">
-                    <Briefcase className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="staff-position"
-                      placeholder="e.g. Senior Clinical Pharmacist"
-                      value={position}
-                      onChange={(e) => setPosition(e.target.value)}
-                      className={`pl-9 text-xs rounded-xl ${errors.position ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
-                    />
-                  </div>
-                  {errors.position && <p className="text-[11px] text-destructive">{errors.position}</p>}
+                  {errors.fullName && (
+                    <p className="text-[11px] text-destructive">{errors.fullName}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -519,12 +442,14 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                       id="staff-email"
                       type="email"
                       placeholder="ananya@pharmahub.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className={`pl-9 text-xs rounded-xl ${errors.email ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
+                      value={workEmail}
+                      onChange={(e) => setWorkEmail(e.target.value)}
+                      className={`pl-9 text-xs rounded-xl ${errors.workEmail ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
                     />
                   </div>
-                  {errors.email && <p className="text-[11px] text-destructive">{errors.email}</p>}
+                  {errors.workEmail && (
+                    <p className="text-[11px] text-destructive">{errors.workEmail}</p>
+                  )}
                 </div>
 
                 <div className="space-y-1.5">
@@ -536,8 +461,8 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                     <Input
                       id="staff-phone"
                       placeholder="+91 98765 43210"
-                      value={phone}
-                      onChange={(e) => setPhone(e.target.value)}
+                      value={phoneNumber}
+                      onChange={(e) => setPhoneNumber(e.target.value)}
                       className="pl-9 text-xs rounded-xl"
                     />
                   </div>
@@ -575,36 +500,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                     </SelectContent>
                   </Select>
                 </div>
-
-                <div className="sm:col-span-2 space-y-1.5">
-                  <Label htmlFor="staff-desig" className="text-xs font-semibold">
-                    Designation
-                  </Label>
-                  <Input
-                    id="staff-desig"
-                    placeholder="e.g. Lead Clinical & POS Pharmacist"
-                    value={designation}
-                    onChange={(e) => setDesignation(e.target.value)}
-                    className="text-xs rounded-xl"
-                  />
-                </div>
-              </div>
-
-              {/* Staff Access Option */}
-              <div className="flex items-center justify-between rounded-xl border border-border/70 bg-muted/20 p-4 mt-2">
-                <div className="space-y-0.5 pr-4">
-                  <Label className="text-xs font-bold text-foreground block">
-                    Dashboard & Mobile Access
-                  </Label>
-                  <p className="text-[11px] text-muted-foreground leading-snug">
-                    Enable login credentials allowing this staff member to sign in to the PharmaHub web & mobile app.
-                  </p>
-                </div>
-                <Switch
-                  checked={allowDashboardAccess}
-                  onCheckedChange={setAllowDashboardAccess}
-                  className="data-[state=checked]:bg-primary"
-                />
               </div>
             </div>
           )}
@@ -616,9 +511,12 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
               <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
                 <Info className="h-4 w-4 shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-foreground">Select pages this role will have access to.</p>
+                  <p className="font-semibold text-foreground">
+                    Select pages this role will have access to.
+                  </p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                    Toggle module access for <strong>{name || "this staff member"}</strong> (Role: {role}).
+                    Toggle module access for <strong>{fullName || "this staff member"}</strong>{" "}
+                    (Role: {role}).
                   </p>
                 </div>
               </div>
@@ -676,7 +574,8 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                 <div>
                   <p className="font-semibold text-foreground">Configure Feature Capabilities</p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                    Enable or disable specific operational capabilities and special privileges for {name || "staff"}.
+                    Enable or disable specific operational capabilities and special privileges for{" "}
+                    {fullName || "staff"}.
                   </p>
                 </div>
               </div>
@@ -723,7 +622,9 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                     >
                       <div className="space-y-1 min-w-0 flex-1">
                         <p className="text-xs font-bold text-foreground">{feat.title}</p>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">{feat.desc}</p>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                          {feat.desc}
+                        </p>
                       </div>
 
                       <Switch
