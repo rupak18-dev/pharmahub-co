@@ -58,9 +58,7 @@ export function RolesPanel() {
     () =>
       backendRoles.map((r) => ({
         ...r,
-        assignedUsers: members.filter(
-          (m) => !m.invitationId && !m.isDemo && m.role === r.name,
-        ),
+        assignedUsers: members.filter((m) => !m.invitationId && !m.isDemo && m.role === r.name),
       })),
     [backendRoles, members],
   );

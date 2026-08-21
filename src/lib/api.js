@@ -38,8 +38,7 @@ export function resolveAssetUrl(path) {
 export function isNetworkError(err) {
   return (
     err instanceof TypeError ||
-    (typeof err?.message === "string" &&
-      /fetch|network|load failed/i.test(err.message))
+    (typeof err?.message === "string" && /fetch|network|load failed/i.test(err.message))
   );
 }
 

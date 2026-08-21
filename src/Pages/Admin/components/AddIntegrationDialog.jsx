@@ -91,9 +91,7 @@ export function AddIntegrationDialog({ open, onOpenChange, connectedKeys, onConn
                             </Badge>
                           )}
                         </div>
-                        <p className="truncate text-xs text-muted-foreground">
-                          {item.description}
-                        </p>
+                        <p className="truncate text-xs text-muted-foreground">{item.description}</p>
                       </div>
                       <Button
                         size="sm"

@@ -97,14 +97,7 @@ export const ROLE_CATALOG = [
     icon: Pill,
     tone: "green",
     priority: 2,
-    modules: [
-      "dashboard",
-      "medicines",
-      "batches",
-      "sales",
-      "expiry",
-      "reports",
-    ],
+    modules: ["dashboard", "medicines", "batches", "sales", "expiry", "reports"],
   },
   {
     roleId: "pharmacy-technician",
@@ -130,15 +123,7 @@ export const ROLE_CATALOG = [
     icon: Boxes,
     tone: "orange",
     priority: 1,
-    modules: [
-      "dashboard",
-      "medicines",
-      "batches",
-      "purchases",
-      "expiry",
-      "audit",
-      "reports",
-    ],
+    modules: ["dashboard", "medicines", "batches", "purchases", "expiry", "audit", "reports"],
   },
 
   // ── Sales & Finance ──────────────────────────────────────────────────────────

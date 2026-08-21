@@ -46,7 +46,7 @@ export default function SettingsPage() {
   const [closeTime, setCloseTime] = useState(settings.operatingHours?.close || "21:00");
   const [showGst, setShowGst] = useState(settings.invoicePreferences?.showGst ?? true);
   const [showPharmacyDetails, setShowPharmacyDetails] = useState(
-    settings.invoicePreferences?.showPharmacyDetails ?? true
+    settings.invoicePreferences?.showPharmacyDetails ?? true,
   );
   const [saving, setSaving] = useState(false);
 
@@ -111,7 +111,9 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <Label htmlFor="currency" className="text-xs font-semibold">Active Currency</Label>
+                <Label htmlFor="currency" className="text-xs font-semibold">
+                  Active Currency
+                </Label>
                 <Select value={currency} onValueChange={setCurrency}>
                   <SelectTrigger id="currency" className="rounded-xl text-sm">
                     <SelectValue />
@@ -127,7 +129,9 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="gstDefault" className="text-xs font-semibold">Default GST Rate (%)</Label>
+                <Label htmlFor="gstDefault" className="text-xs font-semibold">
+                  Default GST Rate (%)
+                </Label>
                 <Input
                   id="gstDefault"
                   type="number"
@@ -153,7 +157,9 @@ export default function SettingsPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <Label htmlFor="openTime" className="text-xs font-semibold">Opening Time</Label>
+                <Label htmlFor="openTime" className="text-xs font-semibold">
+                  Opening Time
+                </Label>
                 <Input
                   id="openTime"
                   type="time"
@@ -164,7 +170,9 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="closeTime" className="text-xs font-semibold">Closing Time</Label>
+                <Label htmlFor="closeTime" className="text-xs font-semibold">
+                  Closing Time
+                </Label>
                 <Input
                   id="closeTime"
                   type="time"
@@ -190,18 +198,33 @@ export default function SettingsPage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/60 bg-muted/20">
                 <div>
-                  <Label htmlFor="showGstSwitch" className="text-xs font-semibold block">Display GST Breakdown on Invoices</Label>
-                  <span className="text-[11px] text-muted-foreground">Shows CGST/SGST line items on printed receipts</span>
+                  <Label htmlFor="showGstSwitch" className="text-xs font-semibold block">
+                    Display GST Breakdown on Invoices
+                  </Label>
+                  <span className="text-[11px] text-muted-foreground">
+                    Shows CGST/SGST line items on printed receipts
+                  </span>
                 </div>
                 <Switch id="showGstSwitch" checked={showGst} onCheckedChange={setShowGst} />
               </div>
 
               <div className="flex items-center justify-between p-3.5 rounded-xl border border-border/60 bg-muted/20">
                 <div>
-                  <Label htmlFor="showPharmacyDetailsSwitch" className="text-xs font-semibold block">Print Pharmacy Address & License</Label>
-                  <span className="text-[11px] text-muted-foreground">Includes pharmacy license number and full address on header</span>
+                  <Label
+                    htmlFor="showPharmacyDetailsSwitch"
+                    className="text-xs font-semibold block"
+                  >
+                    Print Pharmacy Address & License
+                  </Label>
+                  <span className="text-[11px] text-muted-foreground">
+                    Includes pharmacy license number and full address on header
+                  </span>
                 </div>
-                <Switch id="showPharmacyDetailsSwitch" checked={showPharmacyDetails} onCheckedChange={setShowPharmacyDetails} />
+                <Switch
+                  id="showPharmacyDetailsSwitch"
+                  checked={showPharmacyDetails}
+                  onCheckedChange={setShowPharmacyDetails}
+                />
               </div>
             </div>
           </div>
