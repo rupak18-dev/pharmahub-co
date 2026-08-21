@@ -24,6 +24,14 @@ function resolveApiBase() {
 
 export const API_BASE = resolveApiBase();
 
+export function isNetworkError(err) {
+  return (
+    err instanceof TypeError ||
+    (typeof err?.message === "string" &&
+      /fetch|network|load failed/i.test(err.message))
+  );
+}
+
 function withLimit(url) {
   if (url.includes("?") || /\/([0-9a-fA-F]{24})$/.test(url)) return url;
   return `${url}${url.includes("?") ? "&" : "?"}limit=100`;

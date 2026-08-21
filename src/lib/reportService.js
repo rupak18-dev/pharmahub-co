@@ -1,13 +1,12 @@
+import { apiRequest } from "./api";
 import { db } from "./db";
 
-const API_BASE_URL =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:5000/api/v1/reports"
-    : "/api/v1/reports";
+const REPORTS = "/reports";
 
 /**
  * Service layer for Reports module.
- * Separates backend API communication from UI components.
+ * All API calls go through the shared apiRequest wrapper so every request
+ * carries the authenticated session token and hits the correct backend URL.
  * Operates strictly on REAL database / store records — ZERO demo data.
  */
 export const reportService = {
@@ -16,12 +15,9 @@ export const reportService = {
    */
   async getReports() {
     try {
-      const res = await fetch(`${API_BASE_URL}`);
-      if (!res.ok) throw new Error("Failed to fetch reports from backend API");
-      const json = await res.json();
-      return json.data ?? [];
+      const data = await apiRequest(`${REPORTS}`);
+      return Array.isArray(data) ? data : [];
     } catch {
-      // Return empty array if API is offline
       return [];
     }
   },
@@ -31,15 +27,11 @@ export const reportService = {
    */
   async generateCustomReport(payload) {
     try {
-      const res = await fetch(`${API_BASE_URL}/custom`, {
+      const data = await apiRequest(`${REPORTS}/custom`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (res.ok) {
-        const json = await res.json();
-        return json.data;
-      }
+      return data;
     } catch {
       // Fallback: Query actual client store (db.js) — ONLY REAL USER DATA
     }
@@ -52,11 +44,8 @@ export const reportService = {
    */
   async getSavedReports() {
     try {
-      const res = await fetch(`${API_BASE_URL}/saved`);
-      if (res.ok) {
-        const json = await res.json();
-        return json.data ?? [];
-      }
+      const data = await apiRequest(`${REPORTS}/saved`);
+      return Array.isArray(data) ? data : [];
     } catch {
       // Fallback to local store
     }
@@ -69,15 +58,11 @@ export const reportService = {
    */
   async saveReport(config) {
     try {
-      const res = await fetch(`${API_BASE_URL}/saved`, {
+      const data = await apiRequest(`${REPORTS}/saved`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(config),
       });
-      if (res.ok) {
-        const json = await res.json();
-        return json.data;
-      }
+      return data;
     } catch {
       // Fallback to local store
     }
@@ -103,7 +88,7 @@ export const reportService = {
    */
   async deleteSavedReport(id) {
     try {
-      await fetch(`${API_BASE_URL}/saved/${id}`, { method: "DELETE" });
+      await apiRequest(`${REPORTS}/saved/${id}`, { method: "DELETE" });
     } catch {
       // Fallback to local store
     }
@@ -120,11 +105,8 @@ export const reportService = {
    */
   async getScheduledReports() {
     try {
-      const res = await fetch(`${API_BASE_URL}/schedules`);
-      if (res.ok) {
-        const json = await res.json();
-        return json.data ?? [];
-      }
+      const data = await apiRequest(`${REPORTS}/schedules`);
+      return Array.isArray(data) ? data : [];
     } catch {
       // Fallback to local store
     }
@@ -137,15 +119,11 @@ export const reportService = {
    */
   async scheduleReport(scheduleData) {
     try {
-      const res = await fetch(`${API_BASE_URL}/schedules`, {
+      const data = await apiRequest(`${REPORTS}/schedules`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(scheduleData),
       });
-      if (res.ok) {
-        const json = await res.json();
-        return json.data;
-      }
+      return data;
     } catch {
       // Fallback to local store
     }
@@ -169,7 +147,7 @@ export const reportService = {
    */
   async deleteSchedule(id) {
     try {
-      await fetch(`${API_BASE_URL}/schedules/${id}`, { method: "DELETE" });
+      await apiRequest(`${REPORTS}/schedules/${id}`, { method: "DELETE" });
     } catch {
       // Fallback to local store
     }
@@ -178,6 +156,183 @@ export const reportService = {
       if (d.scheduledReports) {
         d.scheduledReports = d.scheduledReports.filter((s) => s.id !== id);
       }
+    });
+  },
+
+  /**
+   * Create a new report bill (unified bill manager — ReportBill collection)
+   */
+  async createReportBill(payload) {
+    return apiRequest(`${REPORTS}/data/bills`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  /**
+   * Update an existing report bill
+   */
+  async updateReportBill(id, payload) {
+    return apiRequest(`${REPORTS}/data/bills/${id}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    });
+  },
+
+  /**
+   * Delete a report bill
+   */
+  async deleteReportBill(id) {
+    return apiRequest(`${REPORTS}/data/bills/${id}`, {
+      method: "DELETE",
+    });
+  },
+
+  /**
+   * Send a bill via WhatsApp (or retrieve status)
+   */
+  async sendReportBillWhatsApp(id) {
+    return apiRequest(`${REPORTS}/data/bills/${id}/whatsapp`, {
+      method: "POST",
+    });
+  },
+
+  /**
+   * Upload a purchase document (e.g., GRN image) — multipart/form-data.
+   * The apiRequest wrapper detects FormData and omits Content-Type so the
+   * browser can set the multipart boundary automatically.
+   */
+  async uploadPurchaseDocument(file) {
+    const form = new FormData();
+    form.append("file", file);
+    return apiRequest(`${REPORTS}/data/purchases/upload`, {
+      method: "POST",
+      body: form,
+    });
+  },
+
+  /**
+   * Upload a sales bill image — multipart/form-data.
+   */
+  async uploadSalesBillImage(file) {
+    const form = new FormData();
+    form.append("file", file);
+    return apiRequest(`${REPORTS}/data/sales/upload`, {
+      method: "POST",
+      body: form,
+    });
+  },
+
+  /**
+   * List sales bills (Report Data — Sales & Bills tab)
+   */
+  async listSalesBills(params = {}) {
+    const query = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== "") query.set(k, v);
+    }
+    const qs = query.toString();
+    return apiRequest(`${REPORTS}/data/sales${qs ? `?${qs}` : ""}`);
+  },
+
+  /**
+   * List purchases (Report Data — Purchases tab)
+   */
+  async listPurchases(params = {}) {
+    const query = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== "") query.set(k, v);
+    }
+    const qs = query.toString();
+    return apiRequest(`${REPORTS}/data/purchases${qs ? `?${qs}` : ""}`);
+  },
+
+  /**
+   * List unified report bills (Report Data — Bills tab)
+   */
+  async listReportBills(params = {}) {
+    const query = new URLSearchParams();
+    for (const [k, v] of Object.entries(params)) {
+      if (v !== undefined && v !== null && v !== "") query.set(k, v);
+    }
+    const qs = query.toString();
+    return apiRequest(`${REPORTS}/data/bills${qs ? `?${qs}` : ""}`);
+  },
+
+  /**
+   * Get report data sources overview
+   */
+  async getDataSources() {
+    return apiRequest(`${REPORTS}/data`);
+  },
+
+  /**
+   * Validate sales CSV import
+   */
+  async validateSalesImport(csv) {
+    return apiRequest(`${REPORTS}/data/sales/validate-import`, {
+      method: "POST",
+      body: JSON.stringify({ csv }),
+    });
+  },
+
+  /**
+   * Validate purchase CSV import
+   */
+  async validatePurchaseImport(csv) {
+    return apiRequest(`${REPORTS}/data/purchases/validate-import`, {
+      method: "POST",
+      body: JSON.stringify({ csv }),
+    });
+  },
+
+  /**
+   * Import sales bills from CSV
+   */
+  async importSalesBills(rows, duplicateMode = "skip") {
+    return apiRequest(`${REPORTS}/data/sales/import`, {
+      method: "POST",
+      body: JSON.stringify({ rows, duplicateMode }),
+    });
+  },
+
+  /**
+   * Import purchases from CSV
+   */
+  async importPurchases(rows, duplicateMode = "skip") {
+    return apiRequest(`${REPORTS}/data/purchases/import`, {
+      method: "POST",
+      body: JSON.stringify({ rows, duplicateMode }),
+    });
+  },
+
+  /**
+   * Upload a sales bill image — alias for uploadSalesBillImage
+   */
+  async uploadBillImage(file) {
+    return this.uploadSalesBillImage(file);
+  },
+
+  /**
+   * Get unified report bills (alias for listReportBills used by ReportDataPage)
+   */
+  async getReportBills(params = {}) {
+    return this.listReportBills(params);
+  },
+
+  /**
+   * Get report bills summary
+   */
+  async getReportBillsSummary() {
+    return apiRequest(`${REPORTS}/data/bills/summary`);
+  },
+
+  /**
+   * Retry WhatsApp delivery for a bill
+   */
+  async retryReportBillWhatsApp(id) {
+    return apiRequest(`${REPORTS}/data/bills/${id}/whatsapp/retry`, {
+      method: "POST",
     });
   },
 };
