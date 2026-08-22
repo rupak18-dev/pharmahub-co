@@ -27,9 +27,7 @@ export default function LoginPage() {
   const navigate = useNavigate();
   const [showLoader, setShowLoader] = useState(false);
   const [signedInUser, setSignedInUser] = useState(null);
-  const [showDemoModal, setShowDemoModal] = useState(false);
-  const [demoEmailSent, setDemoEmailSent] = useState(false);
-  const [demoSubmitting, setDemoSubmitting] = useState(false);
+  const [remember, setRemember] = useState(true);
 
   const {
     register,
@@ -48,7 +46,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data) => {
     try {
-      const user = await signIn(data.email, data.password);
+      const user = await signIn(data.email, data.password, { remember });
       setSignedInUser(user);
       toast.success("Successfully logged in!");
       setShowLoader(true);
@@ -104,7 +102,8 @@ export default function LoginPage() {
               errors={errors}
               isSubmitting={isSubmitting}
               onGoogleClick={handleGoogleClick}
-              onDemoClick={openDemoModal}
+              remember={remember}
+              onRememberChange={setRemember}
             />
           </motion.div>
         </AnimatePresence>
@@ -187,6 +186,8 @@ export default function LoginPage() {
 
       {showLoader && (
         <CapsuleLoader
+          minimumMs={1200}
+          variant="circular"
           message="Signing you in…"
           onDone={() => navigate(signedInUser ? afterAuthPath(signedInUser) : "/dashboard")}
         />

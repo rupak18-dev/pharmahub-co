@@ -29,7 +29,9 @@ export const login = asyncHandler(async (req, res) => {
     ip: req.ip,
   });
   // Session JWT is delivered as an httpOnly cookie — never in the body.
-  setAuthCookie(res, result.token);
+  // "Remember me" (default true) picks session-scope vs persistent cookie.
+  const remember = req.body?.remember !== false;
+  setAuthCookie(res, result.token, { remember });
   return ok(res, { user: result.user }, "Login successful");
 });
 

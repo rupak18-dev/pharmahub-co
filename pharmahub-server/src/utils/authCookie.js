@@ -26,8 +26,11 @@ function cookieOptions() {
   };
 }
 
-export function setAuthCookie(res, token) {
-  res.cookie(env.authCookieName, token, { ...cookieOptions(), maxAge: parseExpiresMs(env.jwtExpiresIn) });
+export function setAuthCookie(res, token, { remember = true } = {}) {
+  // remember=false issues a browser-session cookie (no Max-Age/Expires) that
+  // disappears when the browser closes; true keeps it for the JWT lifetime.
+  const maxAge = remember ? parseExpiresMs(env.jwtExpiresIn) : undefined;
+  res.cookie(env.authCookieName, token, { ...cookieOptions(), maxAge });
 }
 
 export function clearAuthCookie(res) {

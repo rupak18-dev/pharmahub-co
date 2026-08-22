@@ -124,6 +124,8 @@ export const authSchemas = {
   login: z.object({
     email: emailSchema,
     password: z.string().min(1, "Password is required"),
+    // "Remember me" — controls the session cookie lifetime server-side.
+    remember: z.boolean().optional(),
   }),
   changePassword: z.object({
     currentPassword: z.string().min(1),

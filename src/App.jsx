@@ -50,7 +50,7 @@ export const router = createBrowserRouter([
           },
           {
             path: "/medicines",
-            lazy: lazyPage(() => import("@/Pages/Medicines/MedicinesStorePage")),
+            lazy: lazyPage(() => import("@/Pages/Medicines/MedicinesCatalogPage")),
           },
           {
             path: "/medicines/catalog",
@@ -72,6 +72,14 @@ export const router = createBrowserRouter([
           {
             path: "/batches/:batchId",
             lazy: lazyPage(() => import("@/Pages/Batches/BatchDetailPage")),
+          },
+          {
+            path: "/batches/:batchId/edit",
+            lazy: lazyPage(() => import("@/Pages/Batches/EditBatchPage")),
+          },
+          {
+            path: "/batches/:batchId/quarantine",
+            lazy: lazyPage(() => import("@/Pages/Batches/QuarantineBatchPage")),
           },
           { path: "/sales", lazy: lazyPage(() => import("@/Pages/Sales/SalesPage")) },
           { path: "/sales/:saleId", lazy: lazyPage(() => import("@/Pages/Sales/SaleDetailPage")) },

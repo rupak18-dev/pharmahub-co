@@ -89,7 +89,10 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
               variant="secondary"
               className="h-5 gap-1 border-emerald-500/20 bg-emerald-500/10 px-1.5 text-[10px] font-semibold text-emerald-700"
             >
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden="true" />
+              <span
+                className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600"
+                aria-hidden="true"
+              />
               <span
                 className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600"
                 aria-hidden="true"
@@ -410,8 +413,6 @@ export default function IntegrationsPage() {
       await disconnectIntegration(integration.id ?? integration.key);
       toast.success(`${findIntegration(integration.key)?.name ?? "Integration"} disconnected`);
       await refresh();
-    } catch {
-      toast.error("Unable to disconnect. The integrations backend is not available yet.");
     } catch (err) {
       toast.error(err?.message ?? "Unable to disconnect. Please try again.");
     }

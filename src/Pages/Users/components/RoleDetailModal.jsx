@@ -11,7 +11,6 @@ import { AccessPolicyBuilder } from "./AccessPolicyBuilder";
 import { AccessPreview } from "./AccessPreview";
 import { StaffStatusBadge, resolveStatus } from "./StaffStatusBadge";
 import dayjs from "dayjs";
-import { format } from "date-fns";
 
 function getInitials(name) {
   const parts = (name ?? "U").trim().split(" ");
@@ -155,8 +154,6 @@ export function RoleDetailModal({ role, open, onClose, onSaved }) {
                             <span className="font-mono text-[11px]">
                               {u.createdAt && dayjs(u.createdAt).isValid()
                                 ? `Joined ${dayjs(u.createdAt).format("DD MMM YYYY")}`
-                              {u.createdAt
-                                ? `Joined ${format(new Date(u.createdAt), "MMM d, yyyy")}`
                                 : ""}
                             </span>
                             <StaffStatusBadge status={resolveStatus(u)} className="text-[11px]" />

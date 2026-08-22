@@ -6,6 +6,7 @@ import { AppShellSkeleton, RouteSkeleton } from "@/Components/shared/PageSkeleto
 import { useAuth } from "@/lib/auth";
 import { useDb } from "@/hooks/useDb";
 import { buildNotifications } from "@/lib/expiry";
+import { prefetch } from "@/lib/api";
 import { Bell } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 import { Badge } from "@/Components/ui/badge";
@@ -53,24 +54,15 @@ export default function AppLayout() {
   }, [pathname]);
   useEffect(() => {
     if (loading) return;
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    if (!user.onboarded) {
-      navigate("/onboarding");
-      return;
-    }
-    if (user.role === "Owner") return;
-    const base = "/" + pathname.split("/").filter(Boolean)[0];
-    const required = ROUTE_PERMISSIONS[base];
-    if (required) {
-      const [mod, act] = required;
-      if (!user.permissions?.[mod]?.[act]) {
-        navigate("/dashboard");
-      }
-    }
-  }, [user, loading, navigate, pathname]);
+    if (!user) navigate("/login");
+    else if (!user.onboarded) navigate("/onboarding");
+  }, [user, loading, navigate]);
+  const prefetchedRef = useRef(false);
+  useEffect(() => {
+    if (loading || !user || prefetchedRef.current) return;
+    prefetchedRef.current = true;
+    prefetch(["/batches", "/medicines", "/suppliers"]);
+  }, [loading, user]);
   if (loading) {
     return <AppShellSkeleton pathname={pathname} />;
   }

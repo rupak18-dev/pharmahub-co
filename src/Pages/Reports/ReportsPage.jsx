@@ -35,11 +35,6 @@ import { cn } from "@/lib/utils";
 import ReportBuilder from "./ReportBuilder";
 import ModulePickerModal from "./components/ModulePickerModal";
 import { REPORT_CATEGORIES, REPORT_MODULES, getModule } from "./reportModules";
-import {
-  REPORT_CATEGORIES,
-  REPORT_MODULES,
-  getModule,
-} from "./reportModules";
 
 export const handle = { title: "Reports · PharmaHub" };
 
@@ -299,9 +294,7 @@ export default function ReportsPage() {
               <Bell className="h-3.5 w-3.5 text-primary" />
               <h2 className="text-sm font-semibold text-foreground">Scheduled Alerts</h2>
               <span className="text-[11px] text-muted-foreground">({scheduledReports.length})</span>
-              <span className="text-[11px] text-muted-foreground">
-                ({scheduledReports.length})
-              </span>
+              <span className="text-[11px] text-muted-foreground">({scheduledReports.length})</span>
             </div>
             <button
               type="button"
@@ -323,7 +316,8 @@ export default function ReportsPage() {
                     {sched.frequency} at {sched.time}
                     {sched.recipients?.length > 0 &&
                       ` · ${sched.recipients.length} recipient${sched.recipients.length > 1 ? "s" : ""}`}
-                    {sched.recipients?.length > 0 && ` · ${sched.recipients.length} recipient${sched.recipients.length > 1 ? "s" : ""}`}
+                    {sched.recipients?.length > 0 &&
+                      ` · ${sched.recipients.length} recipient${sched.recipients.length > 1 ? "s" : ""}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0 ml-3">
@@ -538,7 +532,8 @@ export default function ReportsPage() {
                                 {mod?.title ?? cfg.module}
                                 {cfg.fields?.length > 0 &&
                                   ` · ${cfg.fields.length} field${cfg.fields.length > 1 ? "s" : ""}`}
-                                {cfg.fields?.length > 0 && ` · ${cfg.fields.length} field${cfg.fields.length > 1 ? "s" : ""}`}
+                                {cfg.fields?.length > 0 &&
+                                  ` · ${cfg.fields.length} field${cfg.fields.length > 1 ? "s" : ""}`}
                                 {(cfg.summarizeBy?.length > 0 || cfg.measures?.length > 0) &&
                                   ` · ${cfg.summarizeBy?.length ?? cfg.measures?.length} metric${(cfg.summarizeBy?.length ?? cfg.measures?.length) > 1 ? "s" : ""}`}
                               </p>

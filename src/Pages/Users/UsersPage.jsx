@@ -406,7 +406,6 @@ function UsersTab() {
   const pageStart = (currentPage - 1) * USERS_PER_PAGE;
   const pagedRows = filtered.slice(pageStart, pageStart + USERS_PER_PAGE);
   const pageEnd = pageStart + pagedRows.length;
-  }, [profiles, search, filterRole, filterStatus, sortBy]);
 
   const teamRows = members.filter((p) => !p.invitationId);
   const totalActive = teamRows.filter((p) => resolveStatus(p) === "active").length;
@@ -420,7 +419,6 @@ function UsersTab() {
     {
       label: "Total Staff",
       value: teamRows.length,
-      value: profiles.length,
       sub: totalPending > 0 ? `${totalPending} pending` : "All staff",
       icon: Users,
       iconBg: "bg-blue-50",
@@ -630,23 +628,11 @@ function UsersTab() {
                 <div
                   key={p.id}
                   className="group relative flex min-w-0 flex-col justify-between rounded-xl border border-border/80 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-primary/40"
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filtered.map((p) => {
-              const status = resolveStatus(p);
-              const isSelf = user?.id === p.id;
-              const isOwner = p.role === "Owner";
-              const canChangeRole = canUpdate && (isSelf ? user?.role === "Owner" : !isOwner);
-              const canManageStatus = canUpdate && !isSelf;
-              return (
-                <div
-                  key={p.id}
-                  className="group relative flex flex-col justify-between rounded-xl border border-border/80 bg-white p-5 shadow-xs transition-all duration-200 hover:shadow-md hover:border-primary/40"
                 >
                   <div className="space-y-4">
                     {/* Header: Avatar + Info + Actions */}
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex items-center gap-3">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-sm font-bold text-primary shadow-2xs">
                           {getInitials(p.name)}
                         </div>
@@ -655,15 +641,11 @@ function UsersTab() {
                             <span className="truncate min-w-0">{p.name}</span>
                             {isSelf && (
                               <span className="shrink-0 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
-                          <h3 className="font-bold text-sm text-foreground truncate flex items-center gap-1.5">
-                            {p.name}
-                            {isSelf && (
-                              <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
                                 You
                               </span>
                             )}
                           </h3>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">{p.role}</p>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
                             {p.designation || p.role}
                           </p>
                         </div>
@@ -852,8 +834,6 @@ function UsersTab() {
                   const status = resolveStatus(p);
                   const isSelf = user?.id === p.id;
                   const isOwner = p.role === "Owner";
-                  const canChangeRole = canUpdate && (isSelf ? user?.role === "Owner" : !isOwner);
-                  const canManageStatus = canUpdate && !isSelf;
                   const isProtectedOwner = isOwner || p.email === "demo@pharmahub.local";
                   const canEditRow = canUpdate && !p.invitationId && !isSelf;
                   const canChangeRole = canUpdate && !p.invitationId && !isSelf && !isOwner;
@@ -885,9 +865,7 @@ function UsersTab() {
                       <td className="px-4 py-3 text-muted-foreground">{p.email}</td>
                       <td className="px-4 py-3">
                         <span className="text-xs font-medium text-foreground/80">{p.role}</span>
-                        <span className="text-xs font-medium text-foreground/80">
-                          {p.role}
-                        </span>
+                        <span className="text-xs font-medium text-foreground/80">{p.role}</span>
                       </td>
                       <td className="px-4 py-3">
                         <StaffStatusBadge status={status} className="text-[11px]" />
@@ -945,11 +923,6 @@ function UsersTab() {
                                   >
                                     <Ban className="mr-2 h-4 w-4" />
                                     Cancel Invitation
-                                    className="text-emerald-600 focus:text-emerald-700 focus:bg-emerald-50 dark:focus:bg-emerald-500/10"
-                                    onClick={() => activateStaff(p)}
-                                  >
-                                    <Play className="mr-2 h-4 w-4" />
-                                    Activate Staff
                                   </DropdownMenuItem>
                                 )}
                               </>
@@ -984,7 +957,6 @@ function UsersTab() {
                                 </>
                               )}
                             {canRemove && (
-                            {(status === "suspended" || status === "inactive") && canManageStatus && (
                               <>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuItem
@@ -1008,7 +980,6 @@ function UsersTab() {
           {filtered.length > 0 && (
             <div className="border-t border-border bg-muted/20 px-4 py-2 text-xs text-muted-foreground">
               Showing {pageStart + 1}–{pageEnd} of {filtered.length} members
-              Showing {filtered.length} of {profiles.length} staff
             </div>
           )}
         </div>

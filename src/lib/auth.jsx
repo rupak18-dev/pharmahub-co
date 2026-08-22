@@ -27,11 +27,13 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const signIn = useCallback(async (email, password) => {
+  const signIn = useCallback(async (email, password, { remember = true } = {}) => {
     const data = await apiRequest("/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, remember }),
     });
+    // The server decides the cookie lifetime from `remember` (browser-session
+    // vs persistent). Nothing about auth is stored client-side.
     setUser(data.user);
     return data.user;
   }, []);
@@ -111,9 +113,18 @@ export function AuthProvider({ children }) {
     [user],
   );
 
-  const requestPasswordReset = useCallback(async () => {
-    // No backend endpoint yet — simulate.
-    await new Promise((r) => setTimeout(r, 400));
+  const requestPasswordReset = useCallback(async (email) => {
+    await apiRequest("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }, []);
+
+  const resetPassword = useCallback(async ({ email, code, newPassword }) => {
+    await apiRequest("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ email, code, newPassword }),
+    });
   }, []);
 
   const demoLoginRequest = useCallback(async (email) => {
@@ -146,6 +157,7 @@ export function AuthProvider({ children }) {
         restoreSession,
         completeGoogleOtp,
         requestPasswordReset,
+        resetPassword,
         demoLoginRequest,
         demoLoginVerify,
         setUser,

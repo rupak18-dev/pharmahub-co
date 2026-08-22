@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router";
 import { Logo } from "../Shared/Logo";
+import { WavingHand } from "../Shared/WavingHand";
 import { GoogleAuthButton } from "../Shared/GoogleAuthButton";
 import { InputField } from "../Shared/InputField";
 import { PasswordField } from "../Shared/PasswordField";
@@ -8,19 +9,30 @@ import { Button } from "@/Components/ui/button";
 import { Checkbox } from "@/Components/ui/checkbox";
 import { Label } from "@/Components/ui/label";
 
-export function LoginForm({ onSubmit, register, errors, isSubmitting, onGoogleClick, onDemoClick }) {
+export function LoginForm({
+  onSubmit,
+  register,
+  errors,
+  isSubmitting,
+  onGoogleClick,
+  remember,
+  onRememberChange,
+}) {
   return (
-    <div className="w-full max-w-[420px] mx-auto flex flex-col justify-center min-h-[100dvh] py-12 px-4 sm:px-6">
-      <div className="mb-10 flex flex-col justify-center lg:justify-start">
+    <div className="w-full max-w-[420px] mx-auto flex flex-col justify-center min-h-[100dvh] py-8 px-4 sm:px-6">
+      <div className="mb-8 flex flex-col justify-center lg:justify-start">
         <Logo />
-        <h1 className="auth-title mt-6">Welcome</h1>
+        <h1 className="auth-title mt-6 flex items-center gap-2.5">
+          Welcome
+          <WavingHand className="h-8 w-8 sm:h-9 sm:w-9" />
+        </h1>
       </div>
 
       <GoogleAuthButton onClick={onGoogleClick} disabled={isSubmitting} />
 
-      <div className="relative my-6">
+      <div className="relative my-5">
         <div className="absolute inset-0 flex items-center">
-          <span className="w-full border-t border-border/60" />
+          <span className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-sm">
           <span className="bg-background px-3 text-muted-foreground font-medium">
@@ -30,7 +42,7 @@ export function LoginForm({ onSubmit, register, errors, isSubmitting, onGoogleCl
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6">
-        <div className="space-y-5">
+        <div className="space-y-4">
           <InputField
             id="email"
             label="EMAIL"
@@ -57,20 +69,24 @@ export function LoginForm({ onSubmit, register, errors, isSubmitting, onGoogleCl
 
         <div className="flex items-center justify-between mt-4">
           <div className="flex items-center space-x-2">
-            <Checkbox id="remember-me" />
+            <Checkbox
+              id="remember-me"
+              checked={remember}
+              onCheckedChange={(checked) => onRememberChange?.(checked === true)}
+            />
             <Label
               htmlFor="remember-me"
-              className="text-sm font-medium text-muted-foreground leading-none"
+              className="text-sm font-medium text-muted-foreground leading-none cursor-pointer"
             >
               Keep me signed in
             </Label>
           </div>
-          <Link to="/forgot-password" className="text-sm font-bold text-primary hover:underline">
+          <Link to="/forgot-password" className="text-sm font-normal text-primary hover:underline">
             Forgot password?
           </Link>
         </div>
 
-        <div className="pt-4">
+        <div className="pt-2">
           <Button
             type="submit"
             size="lg"
@@ -81,7 +97,7 @@ export function LoginForm({ onSubmit, register, errors, isSubmitting, onGoogleCl
           </Button>
         </div>
 
-        <div className="mt-8 text-center pt-2">
+        <div className="mt-6 text-center pt-2">
           <p className="text-sm font-medium text-muted-foreground">
             New to PharmaHub?{" "}
             <Link to="/signup" className="font-bold text-primary hover:underline">
