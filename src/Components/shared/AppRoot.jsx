@@ -1,5 +1,7 @@
 import { Suspense, useEffect } from "react";
-import { Outlet, isRouteErrorResponse, useMatches, useRouteError } from "react-router";
+import { Outlet, isRouteErrorResponse, useLocation, useMatches, useRouteError } from "react-router";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Toaster } from "@/Components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
 import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
@@ -16,6 +18,7 @@ function resolveTitle(matches) {
 
 export function AppRoot() {
   const matches = useMatches();
+  const { pathname } = useLocation();
   useEffect(() => {
     document.title = resolveTitle(matches);
   }, [matches]);
@@ -25,6 +28,8 @@ export function AppRoot() {
         <Outlet />
       </Suspense>
       <Toaster richColors position="top-right" />
+      <Analytics />
+      <SpeedInsights route={pathname} />
     </AuthProvider>
   );
 }
