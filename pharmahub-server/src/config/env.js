@@ -2,6 +2,22 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
+// Secrets must come from the environment (.env / hosting provider dashboard).
+// The server refuses to boot without them instead of silently using a default.
+function requireEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(
+      `[config] Missing required environment variable ${name}. ` +
+        `Set it in pharmahub-server/.env (local) or your hosting provider's env settings.`,
+    );
+  }
+  return value;
+}
+
+const mongoUri = process.env.MONGO_URI ?? process.env.MONGO_URL ?? requireEnv("MONGO_URI");
+const jwtSecret = requireEnv("JWT_SECRET");
+
 export const env = {
   nodeEnv: process.env.NODE_ENV ?? "development",
   isProduction: process.env.NODE_ENV === "production",
@@ -12,17 +28,17 @@ export const env = {
   frontendUrl: process.env.FRONTEND_URL ?? "http://localhost:8080",
 
   // Canonical MongoDB connection variable.
-  mongoUri:
-    process.env.MONGO_URI ??
-    process.env.MONGO_URL ??
-    "mongodb+srv://rupak18dev_db_user:TechEssentials@pharmahub.2isfiav.mongodb.net/?appName=PharmaHub",
+  mongoUri,
 
   resetTokenTtlMs: parseInt(process.env.PASSWORD_RESET_TTL_MS ?? "3600000", 10),
 
-  jwtSecret:
-    process.env.JWT_SECRET ??
-    "3a45a804a2c5ef06795efd8d1909c1486e08a3b0cbcdbdd32a8733c61420b929b55da496c",
+  jwtSecret,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN ?? "7d",
+
+  authCookieName: process.env.AUTH_COOKIE_NAME ?? "pharmahub_session",
+  cookieSecure: process.env.COOKIE_SECURE
+    ? process.env.COOKIE_SECURE === "true"
+    : process.env.NODE_ENV === "production",
 
   corsOrigin: process.env.CORS_ORIGIN ?? "*",
 

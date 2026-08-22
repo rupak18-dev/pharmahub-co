@@ -5,17 +5,6 @@ import { useAuth } from "@/lib/auth";
 import { CapsuleLoader } from "@/Components/shared/CapsuleLoader";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 
-function decodeUser(raw) {
-  if (!raw) return null;
-  try {
-    const base64 = raw.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
-    return JSON.parse(atob(padded));
-  } catch {
-    return null;
-  }
-}
-
 export default function GoogleCallbackPage() {
   const { restoreSession, user } = useAuth();
   const navigate = useNavigate();
@@ -27,17 +16,11 @@ export default function GoogleCallbackPage() {
     if (ranRef.current) return;
     ranRef.current = true;
 
-    const params = new URLSearchParams(window.location.hash.slice(1));
-    const token = params.get("token");
-    if (!token) {
-      setFailed(true);
-      toast.error("Google sign-in did not complete. Please try again.");
-      return;
-    }
-    restoreSession({ token, user: decodeUser(params.get("user")) })
+    // The backend sets the session as an httpOnly cookie before redirecting
+    // here. No token ever appears in the URL — hydrate the user via /auth/me.
+    restoreSession()
       .then(() => {
         toast.success("Successfully logged in!");
-        // Don't leave the bearer token lingering in the address bar.
         window.history.replaceState(null, "", "/auth/callback");
       })
       .catch(() => {

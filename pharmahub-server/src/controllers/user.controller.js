@@ -13,6 +13,7 @@ import { buildInvitationEmail, buildRoleChangeEmail, buildStaffRemovalEmail } fr
 import { saveProfileCompletion, computeProfileCompletion } from "../services/profileCompletion.service.js";
 import { sanitizePermissionOverrides, normalizePermissions, getEffectivePermissions } from "../services/permissions.service.js";
 import { deleteStoredFile } from "../middlewares/upload.js";
+import { setAuthCookie } from "../utils/authCookie.js";
 import { env } from "../config/env.js";
 import { constants } from "../config/constants.js";
 import bcrypt from "bcryptjs";
@@ -801,7 +802,9 @@ export const acceptInvitation = asyncHandler(async (req, res) => {
   const authToken = issueToken(user._id);
   const publicUser = await toAuthUser(user.toObject());
   publicUser.profileCompletion = await saveProfileCompletion(user);
-  return created(res, { token: authToken, user: publicUser }, "Invitation accepted");
+  // Session JWT goes into an httpOnly cookie — never in the response body.
+  setAuthCookie(res, authToken);
+  return created(res, { user: publicUser }, "Invitation accepted");
 });
 
 // POST /users/invite/:id/resend — issues a fresh one-time token, replaces the

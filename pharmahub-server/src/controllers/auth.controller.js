@@ -3,6 +3,7 @@ import { ok, created } from "../core/responses.js";
 import { loginUser, registerUser, changePassword } from "../services/auth.service.js";
 import { requestDemoLogin, verifyDemoLogin } from "../services/demo-login.service.js";
 import { recordAudit } from "../services/audit.service.js";
+import { setAuthCookie, clearAuthCookie } from "../utils/authCookie.js";
 
 export const register = asyncHandler(async (req, res) => {
   const result = await registerUser(req.body);
@@ -27,7 +28,14 @@ export const login = asyncHandler(async (req, res) => {
     entityId: result.user.id,
     ip: req.ip,
   });
-  return ok(res, result, "Login successful");
+  // Session JWT is delivered as an httpOnly cookie — never in the body.
+  setAuthCookie(res, result.token);
+  return ok(res, { user: result.user }, "Login successful");
+});
+
+export const logout = asyncHandler(async (req, res) => {
+  clearAuthCookie(res);
+  return ok(res, null, "Logged out");
 });
 
 export const me = asyncHandler(async (req, res) => {
@@ -54,5 +62,6 @@ export const demoLoginVerify = asyncHandler(async (req, res) => {
     entityId: result.user.id,
     ip: req.ip,
   });
-  return ok(res, result, "Login successful");
+  setAuthCookie(res, result.token);
+  return ok(res, { user: result.user }, "Login successful");
 });

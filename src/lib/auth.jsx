@@ -1,28 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { apiRequest } from "./api";
 
-const SESSION_KEY = "PharmaHub_session_v2";
 const AuthContext = createContext(null);
-
-function readSession() {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
-}
-
-function writeSession(payload) {
-  if (typeof window === "undefined") return;
-  try {
-    if (payload) window.localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
-    else window.localStorage.removeItem(SESSION_KEY);
-  } catch {
-    // ignore
-  }
-}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -31,22 +10,14 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      // Session lives in an httpOnly cookie — hydrate the user from the
+      // server. Nothing about auth is persisted client-side.
       try {
         const me = await apiRequest("/auth/me");
-        if (cancelled) return;
-        const stored = readSession();
-        // The deployed backend may still run a dev-bypass that returns a
-        // hardcoded demo user on /auth/me. Don't let that clobber a real
-        // stored session (which may carry `onboarded` and the user's profile).
-        const isDevBypass = !!me && me.email === "owner@pharmahub.demo";
-        const nextUser = stored?.token && isDevBypass && stored.user ? stored.user : me;
-        if (stored?.token) writeSession({ token: stored.token, user: nextUser });
-        setUser(nextUser);
+        if (!cancelled) setUser(me);
       } catch {
-        // No valid session (token missing/expired) — stay signed out or restore cached.
-        if (cancelled) return;
-        const stored = readSession();
-        setUser(stored?.user ?? null);
+        // No valid session (cookie missing/expired) — stay signed out.
+        if (!cancelled) setUser(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -61,7 +32,6 @@ export function AuthProvider({ children }) {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
-    writeSession({ token: data.token, user: data.user });
     setUser(data.user);
     return data.user;
   }, []);
@@ -75,27 +45,24 @@ export function AuthProvider({ children }) {
         name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
       }),
     });
-    writeSession({ token: data.token, user: data.user });
-    setUser(data.user);
-    return data.user;
+    return data;
   }, []);
 
-  // Used by the Google redirect callback page to restore the session handed
-  // back via the URL fragment.
-  const restoreSession = useCallback(async ({ token, user }) => {
-    writeSession({ token, user });
-    setUser(user);
-    return user;
+  // Used by flows where the server has already set the session cookie
+  // (e.g. OAuth callback pages): re-hydrate the user from /auth/me.
+  const restoreSession = useCallback(async () => {
+    const me = await apiRequest("/auth/me");
+    setUser(me);
+    return me;
   }, []);
 
   // Final step of a Google sign-up: verify the emailed OTP, then the backend
-  // creates the account and returns a fresh session.
+  // creates the account and sets a fresh session cookie.
   const completeGoogleOtp = useCallback(async ({ token, code }) => {
     const data = await apiRequest("/auth/google/verify-otp", {
       method: "POST",
       body: JSON.stringify({ token, code }),
     });
-    writeSession({ token: data.token, user: data.user });
     setUser(data.user);
     return data.user;
   }, []);
@@ -106,7 +73,6 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore — session is cleared locally regardless
     } finally {
-      writeSession(null);
       setUser(null);
     }
   }, []);
@@ -135,12 +101,10 @@ export function AuthProvider({ children }) {
         });
       } catch {
         // Backend may not expose PUT /auth/profile yet — apply locally so the
-        // session (and the `onboarded` flag) still update.
+        // UI still reflects the change.
         me = { ...(user || {}), ...body };
       }
 
-      const stored = readSession();
-      if (stored?.token) writeSession({ token: stored.token, user: me });
       setUser(me);
       return me;
     },
@@ -165,7 +129,6 @@ export function AuthProvider({ children }) {
       method: "POST",
       body: JSON.stringify({ token }),
     });
-    writeSession({ token: data.token, user: data.user });
     setUser(data.user);
     return data.user;
   }, []);
@@ -185,6 +148,7 @@ export function AuthProvider({ children }) {
         requestPasswordReset,
         demoLoginRequest,
         demoLoginVerify,
+        setUser,
       }}
     >
       {children}

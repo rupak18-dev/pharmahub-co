@@ -6,12 +6,17 @@ import { asyncHandler } from "../core/asyncHandler.js";
 import { User } from "../models/User.js";
 
 export const auth = asyncHandler(async (req, _res, next) => {
-  const header = req.headers.authorization;
-  if (!header || !header.startsWith("Bearer ")) {
-    throw ApiError.unauthorized("Missing or malformed Authorization header");
+  // Primary: httpOnly session cookie. Fallback: Bearer header, kept only so
+  // clients deployed before the cookie rollout keep working.
+  let token = req.cookies?.[env.authCookieName] ?? null;
+  if (!token) {
+    const header = req.headers.authorization;
+    if (!header || !header.startsWith("Bearer ")) {
+      throw ApiError.unauthorized("Not authenticated");
+    }
+    token = header.slice(7).trim();
   }
 
-  const token = header.slice(7).trim();
   let payload;
   try {
     payload = jwt.verify(token, env.jwtSecret);

@@ -140,12 +140,16 @@ test("End-to-End Staff Invitation Flow", async (t) => {
         resData = data;
         return this;
       },
+      cookie() {
+        return this;
+      },
     };
 
     await acceptInvitation(req, res);
     assert.equal(resCode, 201);
     assert.equal(resData.success, true);
-    assert.ok(resData.data.token, "Expected issued auth token");
+    // The JWT is delivered via httpOnly cookie — never in the body.
+    assert.equal(resData.data.token, undefined);
     assert.equal(resData.data.user.email, testEmail);
     assert.equal(resData.data.user.active, true);
 

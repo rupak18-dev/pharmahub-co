@@ -26,10 +26,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export const handle = { title: "Accept Invitation · PharmaHub" };
 
-const passwordSchema = z
-  .string()
-  .min(6, "Password must be at least 6 characters")
-  .max(128);
+const passwordSchema = z.string().min(6, "Password must be at least 6 characters").max(128);
 
 const schema = z
   .object({
@@ -46,7 +43,7 @@ export default function AcceptInvitationPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
-  const { restoreSession } = useAuth();
+  const { setUser } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [invitation, setInvitation] = useState(null);
@@ -79,7 +76,7 @@ export default function AcceptInvitationPage() {
           setError(
             data?.status === "expired"
               ? "This invitation has expired. Please request a new invitation from your administrator."
-              : "This invitation link is invalid or has already been used."
+              : "This invitation link is invalid or has already been used.",
           );
         } else {
           setInvitation(data);
@@ -109,15 +106,17 @@ export default function AcceptInvitationPage() {
         password: formData.password,
       });
 
-      if (data?.token && data?.user) {
-        await restoreSession({ token: data.token, user: data.user });
+      // The server sets the session as an httpOnly cookie — the response
+      // carries only the user profile.
+      if (data?.user) {
+        setUser(data.user);
       }
 
       toast.success("Account activated successfully! Welcome to PharmaHub.");
       navigate("/dashboard");
     } catch (err) {
       toast.error(
-        err instanceof Error ? err.message : "Failed to accept invitation. Please try again."
+        err instanceof Error ? err.message : "Failed to accept invitation. Please try again.",
       );
     }
   };
@@ -177,7 +176,10 @@ export default function AcceptInvitationPage() {
                 {invitation.orgName && (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Building2 className="h-3.5 w-3.5 shrink-0" />
-                    <span>Organization: <strong className="text-foreground">{invitation.orgName}</strong></span>
+                    <span>
+                      Organization:{" "}
+                      <strong className="text-foreground">{invitation.orgName}</strong>
+                    </span>
                   </div>
                 )}
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -218,7 +220,9 @@ export default function AcceptInvitationPage() {
                       type="password"
                       placeholder="••••••••"
                       className={`pl-9 text-xs rounded-xl h-11 ${
-                        errors.password ? "border-destructive focus-visible:ring-destructive/30" : ""
+                        errors.password
+                          ? "border-destructive focus-visible:ring-destructive/30"
+                          : ""
                       }`}
                       {...register("password")}
                     />
@@ -247,9 +251,7 @@ export default function AcceptInvitationPage() {
                     />
                   </div>
                   {errors.confirmPassword && (
-                    <p className="text-[11px] text-destructive">
-                      {errors.confirmPassword.message}
-                    </p>
+                    <p className="text-[11px] text-destructive">{errors.confirmPassword.message}</p>
                   )}
                 </div>
 
@@ -274,7 +276,8 @@ export default function AcceptInvitationPage() {
 
               <div className="text-center pt-2">
                 <Link to="/login" className="text-xs text-muted-foreground hover:text-foreground">
-                  Already have an active account? <span className="font-semibold text-primary">Sign in</span>
+                  Already have an active account?{" "}
+                  <span className="font-semibold text-primary">Sign in</span>
                 </Link>
               </div>
             </motion.div>

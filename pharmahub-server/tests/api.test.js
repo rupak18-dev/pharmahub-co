@@ -33,15 +33,25 @@ after(async () => {
   await mongoose.disconnect();
 });
 
-async function request(path, { method = "GET", body, token } = {}) {
+async function request(path, { method = "GET", body, token, cookie } = {}) {
   return fetch(`${base}/api/v1${path}`, {
     method,
     headers: {
       "Content-Type": "application/json",
+      "X-PharmaHub-Client": "web",
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(cookie ? { Cookie: cookie } : {}),
     },
     body: body ? JSON.stringify(body) : undefined,
   });
+}
+
+// Extracts the session cookie from a login/verify response.
+function sessionCookie(res) {
+  const raw = res.headers.get("set-cookie");
+  if (!raw) throw new Error("Expected Set-Cookie on session response");
+  assert.ok(/httponly/i.test(raw), "Session cookie must be httpOnly");
+  return raw.split(";")[0];
 }
 
 describe("full API flow (requires MongoDB)", { skip: !connected && "MongoDB not available - skipped" }, () => {
@@ -63,42 +73,55 @@ describe("full API flow (requires MongoDB)", { skip: !connected && "MongoDB not 
     assert.equal(res.status, 201);
   });
 
-  let token;
-  test("login as the new user", async () => {
+  let cookie;
+  test("login as the new user — session arrives as httpOnly cookie, not in body", async () => {
     const res = await request("/auth/login", {
       method: "POST",
       body: { email, password: "password123" },
     });
     assert.equal(res.status, 200);
     const body = await res.json();
-    token = body.data.token;
-    assert.ok(token);
+    // The JWT must never appear in the response body.
+    assert.equal(body.data.token, undefined);
     assert.equal(body.data.user.role, "Pharmacist");
+    cookie = sessionCookie(res);
   });
 
-  test("get current user via /auth/me", async () => {
-    const res = await request("/auth/me", { token });
+  test("get current user via /auth/me using the session cookie", async () => {
+    const res = await request("/auth/me", { cookie });
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(body.data.email, email);
   });
 
-  test("create a category with the token", async () => {
+  test("create a category with the session cookie", async () => {
     // Promote the test user to Admin so the category creation is permitted.
     await User.updateOne({ email }, { $set: { role: "Admin" } });
     const res = await request("/categories", {
       method: "POST",
-      token,
+      cookie,
       body: { name: `Cat-${Date.now()}` },
     });
     assert.equal(res.status, 201);
+  });
+
+  test("mutating requests without the client header are rejected (CSRF guard)", async () => {
+    const res = await fetch(`${base}/api/v1/categories`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Cookie: cookie,
+      },
+      body: JSON.stringify({ name: `NoHeader-${Date.now()}` }),
+    });
+    assert.equal(res.status, 403);
   });
 
   test("read-only role (Cashier) is denied medicine creation", async () => {
     const cashierEmail = `c-${Date.now()}@pharmahub.demo`;
     const created = await request("/users", {
       method: "POST",
-      token,
+      cookie,
       body: { name: "Test Cashier", email: cashierEmail, password: "password123", role: "Cashier" },
     });
     assert.equal(created.status, 201);
@@ -107,20 +130,28 @@ describe("full API flow (requires MongoDB)", { skip: !connected && "MongoDB not 
       method: "POST",
       body: { email: cashierEmail, password: "password123" },
     });
-    const cashierToken = (await login.json()).data.token;
+    const cashierCookie = sessionCookie(login);
 
     const res = await request("/medicines", {
       method: "POST",
-      token: cashierToken,
+      cookie: cashierCookie,
       body: { name: "Should Not Exist" },
     });
     assert.equal(res.status, 403);
   });
 
   test("list medicines (Pharmacist has view access)", async () => {
-    const res = await request("/medicines", { token });
+    const res = await request("/medicines", { cookie });
     assert.equal(res.status, 200);
     const body = await res.json();
     assert.equal(Array.isArray(body.data), true);
+  });
+
+  test("logout clears the session cookie", async () => {
+    const res = await request("/auth/logout", { method: "POST" });
+    assert.equal(res.status, 200);
+    const raw = res.headers.get("set-cookie") ?? "";
+    assert.ok(/httponly/i.test(raw));
+    assert.ok(/expires=Thu, 01 Jan 1970/i.test(raw), "Logout must expire the session cookie");
   });
 });

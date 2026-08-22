@@ -1,7 +1,8 @@
 // Fetch wrapper for the pharmahub-server Express API (`/api/v1`).
-// Auth is session-cookie based: the server sets an httpOnly cookie and the
-// browser sends it automatically via `credentials: "include"`. No token is
-// ever stored in localStorage or touched by JS.
+// Auth is session-cookie based: the server sets an httpOnly cookie at login
+// and the browser sends it automatically via `credentials: "include"`.
+// No token is ever exposed to JavaScript — nothing is stored in
+// localStorage/sessionStorage or visible in DevTools storage panes.
 //
 // Backend envelope: `{ success, message, data, meta }` on success and
 // `{ success: false, error: { message, details } }` on failure.
@@ -43,54 +44,23 @@ export function isNetworkError(err) {
   );
 }
 
-export function resolveAssetUrl(path) {
-  if (!path) return null;
-  if (/^(https?:)?\/\//.test(path) || path.startsWith("data:") || path.startsWith("blob:"))
-    return path;
-  if (path.startsWith("/")) {
-    const origin = API_BASE.replace(/\/api\/v1\/?$/, "");
-    return `${origin}${path}`;
-  }
-  return path;
-}
-
-export function isNetworkError(err) {
-  return (
-    err instanceof TypeError ||
-    (typeof err?.message === "string" && /fetch|network|load failed/i.test(err.message))
-  );
-}
-
 function withLimit(url) {
   if (url.includes("?") || /\/([0-9a-fA-F]{24})$/.test(url)) return url;
   return `${url}${url.includes("?") ? "&" : "?"}limit=100`;
 }
 
-const SESSION_KEY = "PharmaHub_session_v2";
-
-export function getAuthToken() {
-  return getSessionToken();
-}
-
-function getSessionToken() {
-  if (typeof window === "undefined") return null;
-  try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
-    const parsed = raw ? JSON.parse(raw) : null;
-    return parsed?.token || null;
-  } catch {
-    return null;
-  }
-}
+// Custom header required by the server on mutating requests — cross-site
+// form posts cannot add it, which gives lightweight CSRF protection for the
+// cookie session.
+const CLIENT_HEADER = { "X-PharmaHub-Client": "web" };
 
 async function request(path, options = {}) {
   const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
   const finalUrl = !options.method || options.method === "GET" ? withLimit(url) : url;
-  const headers = { ...(options.headers ?? {}) };
-  const token = getSessionToken();
-  if (token && !headers["Authorization"]) {
-    headers["Authorization"] = `Bearer ${token}`;
-  }
+  const headers = {
+    ...CLIENT_HEADER,
+    ...(options.headers ?? {}),
+  };
 
   // Never set Content-Type header when sending FormData, Blob, or ArrayBuffer.
   // The browser fetch API must automatically generate the multipart boundary.
