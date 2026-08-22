@@ -117,9 +117,6 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
         configure(proxy) {
-          // The browser thinks the request is same-origin (it goes through the
-          // Vite proxy), so strip the Origin header — otherwise the backend's
-          // production CSRF/CORS guard sees a localhost origin and rejects it.
           proxy.on("proxyReq", (proxyReq) => {
             proxyReq.removeHeader("origin");
           });

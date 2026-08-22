@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "@tanstack/react-router";
+import { useLocation, useNavigate } from "react-router";
 import { usePermission } from "@/hooks/usePermission";
 import { useActiveSection } from "@/hooks/useActiveSection";
 import { PROFILE_SECTION_IDS } from "@/lib/profileSections";
@@ -21,8 +21,6 @@ import { ProfileCompletionCard } from "./components/ProfileCompletionCard";
 import { OrganizationSection } from "@/Pages/Admin/components/OrganizationSection";
 import { BusinessSettingsSection } from "@/Pages/Admin/components/BusinessSettingsSection";
 import { SecuritySection } from "@/Pages/Admin/components/SecuritySection";
-
-import { AboutPharmaSection } from "@/Pages/Admin/components/AboutPharmaSection";
 import { DangerZoneSection } from "@/Pages/Admin/components/DangerZoneSection";
 import { PharmaCard } from "@/Pages/Admin/components/PharmaCard";
 
@@ -79,7 +77,10 @@ function ChangePasswordModal({ open, onOpenChange }) {
       toast.success("Password updated successfully");
       handleClose();
     } catch (err) {
-      setErrors((prev) => ({ ...prev, currentPassword: err.message || "Incorrect current password" }));
+      setErrors((prev) => ({
+        ...prev,
+        currentPassword: err.message || "Incorrect current password",
+      }));
     } finally {
       setSaving(false);
     }
@@ -109,7 +110,10 @@ function ChangePasswordModal({ open, onOpenChange }) {
                 id="cp-current"
                 type={showCurrent ? "text" : "password"}
                 value={currentPassword}
-                onChange={(e) => { setCurrentPassword(e.target.value); setErrors((p) => ({ ...p, currentPassword: null })); }}
+                onChange={(e) => {
+                  setCurrentPassword(e.target.value);
+                  setErrors((p) => ({ ...p, currentPassword: null }));
+                }}
                 placeholder="Enter current password"
                 className="pr-9 rounded-lg text-xs h-9"
                 autoComplete="current-password"
@@ -123,7 +127,9 @@ function ChangePasswordModal({ open, onOpenChange }) {
                 {showCurrent ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
-            {errors.currentPassword && <p className="text-[11px] text-destructive">{errors.currentPassword}</p>}
+            {errors.currentPassword && (
+              <p className="text-[11px] text-destructive">{errors.currentPassword}</p>
+            )}
           </div>
 
           {/* New Password */}
@@ -136,7 +142,10 @@ function ChangePasswordModal({ open, onOpenChange }) {
                 id="cp-new"
                 type={showNew ? "text" : "password"}
                 value={newPassword}
-                onChange={(e) => { setNewPassword(e.target.value); setErrors((p) => ({ ...p, newPassword: null, confirmPassword: null })); }}
+                onChange={(e) => {
+                  setNewPassword(e.target.value);
+                  setErrors((p) => ({ ...p, newPassword: null, confirmPassword: null }));
+                }}
                 placeholder="Min. 6 characters"
                 className="pr-9 rounded-lg text-xs h-9"
                 autoComplete="new-password"
@@ -150,7 +159,9 @@ function ChangePasswordModal({ open, onOpenChange }) {
                 {showNew ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
-            {errors.newPassword && <p className="text-[11px] text-destructive">{errors.newPassword}</p>}
+            {errors.newPassword && (
+              <p className="text-[11px] text-destructive">{errors.newPassword}</p>
+            )}
           </div>
 
           {/* Confirm New Password */}
@@ -163,7 +174,10 @@ function ChangePasswordModal({ open, onOpenChange }) {
                 id="cp-confirm"
                 type={showConfirm ? "text" : "password"}
                 value={confirmPassword}
-                onChange={(e) => { setConfirmPassword(e.target.value); setErrors((p) => ({ ...p, confirmPassword: null })); }}
+                onChange={(e) => {
+                  setConfirmPassword(e.target.value);
+                  setErrors((p) => ({ ...p, confirmPassword: null }));
+                }}
                 placeholder="Re-enter new password"
                 className="pr-9 rounded-lg text-xs h-9"
                 autoComplete="new-password"
@@ -177,12 +191,21 @@ function ChangePasswordModal({ open, onOpenChange }) {
                 {showConfirm ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
               </button>
             </div>
-            {errors.confirmPassword && <p className="text-[11px] text-destructive">{errors.confirmPassword}</p>}
+            {errors.confirmPassword && (
+              <p className="text-[11px] text-destructive">{errors.confirmPassword}</p>
+            )}
           </div>
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="ghost" size="sm" className="h-9 text-xs" onClick={handleClose} disabled={saving}>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="h-9 text-xs"
+            onClick={handleClose}
+            disabled={saving}
+          >
             Cancel
           </Button>
           <Button
@@ -192,7 +215,11 @@ function ChangePasswordModal({ open, onOpenChange }) {
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5" />}
+            {saving ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <KeyRound className="h-3.5 w-3.5" />
+            )}
             {saving ? "Updating…" : "Update Password"}
           </Button>
         </DialogFooter>
@@ -261,7 +288,10 @@ export default function ProfilePage() {
     >
       <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 sm:px-6">
         {/* Page Header */}
-        <div data-profile-header className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-5">
+        <div
+          data-profile-header
+          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-5"
+        >
           <div>
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               Pharma Profile
@@ -286,20 +316,25 @@ export default function ProfilePage() {
         {/* Profile Completion Reference Card */}
         <ProfileCompletionCard profile={user} />
 
-        {/* 2-Column Settings Layout: Main Content (8 cols) vs Right Navigation/Summary (4 cols) */}
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12 lg:items-start">
+        {/* 2-Column Settings Layout: Main Content (8 cols) vs Right Navigation/Summary (4 cols).
+            The grid intentionally stretches both columns to the row height (no items-start):
+            the right column must span the full row so the sticky Profile box inside it has
+            room to travel while the left content scrolls. */}
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
           {/* Main Content Sections Column */}
           <div className="flex flex-col gap-6 lg:col-span-8">
             <OrganizationSection />
             <BusinessSettingsSection />
             <SecuritySection />
-            <AboutPharmaSection />
             <DangerZoneSection />
           </div>
 
-          {/* Right Sticky Settings Navigation & Summary Sidebar */}
-          <div className="flex flex-col gap-6 lg:col-span-4 lg:sticky lg:top-20">
-            <PharmaCard />
+          {/* Right column — stretches with the row; the Profile BOX itself is
+              the sticky element (pinned just below the 64px app header). */}
+          <div className="lg:col-span-4">
+            <div className="lg:sticky lg:top-20">
+              <PharmaCard />
+            </div>
           </div>
         </div>
       </div>

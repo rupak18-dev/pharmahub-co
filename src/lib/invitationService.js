@@ -3,8 +3,9 @@ import { apiRequest } from "./api";
 // Invitation endpoints. The raw one-time token is only ever sent to the
 // backend inside the request URL / body — it is never stored in the browser.
 export const invitationService = {
-  invite({ name, email, phone, role, message, permissions, featureAccess, accessIds }) {
+  invite({ name, email, phone, department, role, message, permissions, featureAccess, accessIds }) {
     const payload = { name, email, phone, role };
+    if (department) payload.department = department;
     if (message) payload.message = message;
     if (permissions && Object.keys(permissions).length > 0) payload.permissions = permissions;
     if (featureAccess && Object.keys(featureAccess).length > 0)

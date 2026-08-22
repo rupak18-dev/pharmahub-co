@@ -65,9 +65,7 @@ export function ConnectIntegrationDialog({
         ? await configureIntegration(item.key, config)
         : await connectIntegration(item.key, config);
       toast.success(
-        isConfigure
-          ? `${item.name} configuration saved`
-          : `${item.name} connected successfully`,
+        isConfigure ? `${item.name} configuration saved` : `${item.name} connected successfully`,
       );
       onOpenChange(false);
       onDone?.(record);
@@ -112,9 +110,7 @@ export function ConnectIntegrationDialog({
                 <Input
                   id={`${item.key}-${field.key}`}
                   value={effectiveValue(field)}
-                  onChange={(e) =>
-                    setValues((prev) => ({ ...prev, [field.key]: e.target.value }))
-                  }
+                  onChange={(e) => setValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
                   placeholder={field.placeholder}
                   className="h-9 rounded-lg text-xs"
                   autoFocus

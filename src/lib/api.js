@@ -43,6 +43,24 @@ export function isNetworkError(err) {
   );
 }
 
+export function resolveAssetUrl(path) {
+  if (!path) return null;
+  if (/^(https?:)?\/\//.test(path) || path.startsWith("data:") || path.startsWith("blob:"))
+    return path;
+  if (path.startsWith("/")) {
+    const origin = API_BASE.replace(/\/api\/v1\/?$/, "");
+    return `${origin}${path}`;
+  }
+  return path;
+}
+
+export function isNetworkError(err) {
+  return (
+    err instanceof TypeError ||
+    (typeof err?.message === "string" && /fetch|network|load failed/i.test(err.message))
+  );
+}
+
 function withLimit(url) {
   if (url.includes("?") || /\/([0-9a-fA-F]{24})$/.test(url)) return url;
   return `${url}${url.includes("?") ? "&" : "?"}limit=100`;

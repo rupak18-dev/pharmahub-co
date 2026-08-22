@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, Fragment } from "react";
 import {
   Eye,
   Filter,
@@ -10,15 +10,24 @@ import {
   Users,
 } from "lucide-react";
 import { toast } from "sonner";
-import { db } from "@/lib/db";
-import { useRoles } from "@/hooks/useRoles";
+import { useTeamMembers } from "@/hooks/useTeamMembers";
 import { useAuth } from "@/lib/auth";
 import { usePermission } from "@/hooks/usePermission";
 import { ALL_ROLES } from "@/lib/permissions";
+import { usersService } from "@/lib/usersService";
 import { categoryLabel, getRoleByName } from "@/lib/roleCatalog";
 import { EmptyState } from "@/Components/shared/EmptyState";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationPrevious,
+  PaginationNext,
+  PaginationEllipsis,
+} from "@/Components/ui/pagination";
 import {
   Select,
   SelectContent,
@@ -37,6 +46,9 @@ const STATUS_OPTIONS = [
   { value: "suspended", label: "Suspended" },
   { value: "inactive", label: "Inactive" },
 ];
+
+// Same fixed page size as the Users tab pagination.
+const STAFF_PER_PAGE = 10;
 
 function getInitials(name) {
   return (name ?? "U")
@@ -92,7 +104,10 @@ function StaffRowSkeleton() {
 }
 
 export function StaffAccessPanel() {
-  const { status, error, profiles, refresh } = useRoles();
+  // Backend is the single source of truth for staff rows (users + pending
+  // invitations), exactly like the Users tab — so accounts created through
+  // accepted invitations always appear here with their assigned role/access.
+  const { members, loadingRemote, offline, loadError, loadRemote } = useTeamMembers();
   const { user } = useAuth();
   const has = usePermission();
   const canUpdate = has("users", "update");
@@ -102,7 +117,7 @@ export function StaffAccessPanel() {
   const [roleChange, setRoleChange] = useState(null);
   const [roleInfo, setRoleInfo] = useState(null);
 
-  const staff = useMemo(() => buildStaffAccess(profiles), [profiles]);
+  const staff = useMemo(() => buildStaffAccess(members), [members]);
 
   const filtered = useMemo(() => {
     let list = staff;
@@ -129,19 +144,54 @@ export function StaffAccessPanel() {
     return list;
   }, [staff, search, filterRole, filterStatus]);
 
+  // Client-side pagination over the filtered list — same behavior as the
+  // Users tab: fixed page size, page numbers + Previous/Next controls.
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / STAFF_PER_PAGE));
+
+  // New search/filter always starts the list back at page 1.
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterRole, filterStatus]);
+
+  // Keep the selected page in range when the list shrinks (e.g. after a
+  // refetch that drops pending invitations or removes a staff member).
+  useEffect(() => {
+    if (currentPage > totalPages) setCurrentPage(totalPages);
+  }, [currentPage, totalPages]);
+
+  const pageStart = (currentPage - 1) * STAFF_PER_PAGE;
+  const pagedRows = filtered.slice(pageStart, pageStart + STAFF_PER_PAGE);
+  const pageEnd = pageStart + pagedRows.length;
+
   const totalStaff = staff.length;
   const activeStaff = staff.filter((s) => s.status === "active").length;
   const rolesAssigned = new Set(staff.map((s) => s.roleName).filter(Boolean)).size;
 
-  const changeRole = (id, payload) => {
-    db.set((d) => {
-      const p = d.profiles.find((x) => x.id === id);
-      if (p) {
-        p.role = payload.role;
-        p.accessIds = payload.accessIds ?? [];
+  const changeRole = async (id, payload) => {
+    try {
+      const result = await usersService.update(id, {
+        role: payload.role,
+        name: payload.name,
+        email: payload.email,
+        accessIds: payload.accessIds ?? [],
+        featureAccess: payload.features ?? {},
+      });
+
+      const emailSkipped = result?.emailSkipped;
+      const emailSent = result?.emailSent;
+      if (emailSkipped) {
+        toast.success("Role and access updated. Notification email skipped — SMTP not configured.");
+      } else if (emailSent === false && result?.emailError) {
+        toast.success("Role and access updated. Notification email could not be sent.");
+      } else {
+        toast.success("Role and access updated. Staff member notified by email.");
       }
-    });
-    toast.success("Role and access updated.");
+
+      loadRemote();
+    } catch (e) {
+      toast.error(e?.message || "Failed to update role. Please try again.");
+    }
   };
 
   const summary = [
@@ -149,6 +199,8 @@ export function StaffAccessPanel() {
     { label: "Active Staff", value: activeStaff, icon: UserCheck },
     { label: "Roles Assigned", value: rolesAssigned, icon: ShieldCheck },
   ];
+
+  const isLoading = loadingRemote && members.length === 0 && !offline;
 
   return (
     <div className="space-y-6">
@@ -159,7 +211,7 @@ export function StaffAccessPanel() {
         </p>
       </div>
 
-      {status === "loading" && (
+      {isLoading && (
         <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
           <table className="w-full text-sm">
             <thead className="border-b border-border bg-muted/30">
@@ -185,20 +237,20 @@ export function StaffAccessPanel() {
         </div>
       )}
 
-      {status === "error" && (
+      {!isLoading && loadError && (
         <EmptyState
           icon={ShieldAlert}
           title="Unable to load staff"
-          description="Please try again."
+          description={loadError}
           action={
-            <Button size="sm" onClick={refresh}>
+            <Button size="sm" onClick={loadRemote}>
               Retry
             </Button>
           }
         />
       )}
 
-      {status === "loaded" && staff.length === 0 && (
+      {!isLoading && !loadError && staff.length === 0 && (
         <EmptyState
           icon={Users}
           title="No staff members yet"
@@ -206,7 +258,7 @@ export function StaffAccessPanel() {
         />
       )}
 
-      {status === "loaded" && staff.length > 0 && (
+      {!isLoading && !loadError && staff.length > 0 && (
         <>
           <div className="flex flex-wrap divide-x divide-border rounded-xl border border-border bg-white shadow-sm">
             {summary.map((m) => (
@@ -297,15 +349,16 @@ export function StaffAccessPanel() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {filtered.map((s) => {
+                    {pagedRows.map((s) => {
                       const isSelf = user?.id === s.id;
                       const isOwner = s.roleName === "Owner";
+                      const isPending = Boolean(s.invitationId);
                       const validRole = hasValidRole(s.roleName);
                       const role = getRoleByName(s.roleName);
                       const department =
                         s.department ?? (validRole ? categoryLabel(role.category) : "—");
                       const canChangeRole =
-                        canUpdate && (isSelf ? user?.role === "Owner" : !isOwner);
+                        canUpdate && !isPending && (isSelf ? user?.role === "Owner" : !isOwner);
                       return (
                         <tr key={s.id} className="group transition-colors hover:bg-muted/20">
                           <td className="px-4 py-3">
@@ -362,11 +415,13 @@ export function StaffAccessPanel() {
                                 className="h-8 gap-1.5 text-xs font-semibold"
                                 disabled={!canChangeRole}
                                 title={
-                                  canChangeRole
-                                    ? undefined
-                                    : isOwner
-                                      ? "Owner access cannot be changed"
-                                      : "You don't have permission to change roles"
+                                  !canUpdate
+                                    ? "You don't have permission to change roles"
+                                    : isPending
+                                      ? "Pending invitations can't be role-changed. Cancel and re-invite instead."
+                                      : isOwner
+                                        ? "Owner access cannot be changed"
+                                        : undefined
                                 }
                                 onClick={() => setRoleChange(s.id)}
                               >
@@ -381,20 +436,22 @@ export function StaffAccessPanel() {
                   </tbody>
                 </table>
                 <div className="border-t border-border bg-muted/20 px-4 py-2 text-xs text-muted-foreground">
-                  Showing {filtered.length} of {staff.length} staff
+                  Showing {pageStart + 1}–{pageEnd} of {filtered.length} staff
                 </div>
               </div>
 
               {/* Mobile cards */}
               <div className="space-y-3 md:hidden">
-                {filtered.map((s) => {
+                {pagedRows.map((s) => {
                   const isSelf = user?.id === s.id;
                   const isOwner = s.roleName === "Owner";
+                  const isPending = Boolean(s.invitationId);
                   const validRole = hasValidRole(s.roleName);
                   const role = getRoleByName(s.roleName);
                   const department =
                     s.department ?? (validRole ? categoryLabel(role.category) : "—");
-                  const canChangeRole = canUpdate && (isSelf ? user?.role === "Owner" : !isOwner);
+                  const canChangeRole =
+                    canUpdate && !isPending && (isSelf ? user?.role === "Owner" : !isOwner);
                   return (
                     <div
                       key={s.id}
@@ -463,6 +520,73 @@ export function StaffAccessPanel() {
                   );
                 })}
               </div>
+
+              {/* Pagination controls — same design as the Users tab */}
+              {totalPages > 1 && (
+                <div className="flex flex-col items-center gap-2 border-t border-border/40 pt-4">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage((p) => Math.max(1, p - 1));
+                          }}
+                          className={
+                            currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"
+                          }
+                        />
+                      </PaginationItem>
+
+                      {Array.from({ length: totalPages }, (_, i) => i + 1)
+                        .filter(
+                          (p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1,
+                        )
+                        .map((p, i, arr) => (
+                          <Fragment key={p}>
+                            {i > 0 && arr[i - 1] !== p - 1 && (
+                              <PaginationItem>
+                                <PaginationEllipsis />
+                              </PaginationItem>
+                            )}
+                            <PaginationItem>
+                              <PaginationLink
+                                href="#"
+                                isActive={currentPage === p}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  setCurrentPage(p);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                {p}
+                              </PaginationLink>
+                            </PaginationItem>
+                          </Fragment>
+                        ))}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          href="#"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage((p) => Math.min(totalPages, p + 1));
+                          }}
+                          className={
+                            currentPage === totalPages
+                              ? "pointer-events-none opacity-50"
+                              : "cursor-pointer"
+                          }
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                  <p className="text-xs text-muted-foreground">
+                    Page {currentPage} of {totalPages} · {STAFF_PER_PAGE} per page
+                  </p>
+                </div>
+              )}
             </>
           )}
         </>
@@ -471,7 +595,7 @@ export function StaffAccessPanel() {
       <ChangeRoleDialog
         open={!!roleChange}
         onOpenChange={() => setRoleChange(null)}
-        profile={roleChange ? profiles.find((p) => p.id === roleChange) : null}
+        profile={roleChange ? members.find((p) => p.id === roleChange) : null}
         onSave={(payload) => changeRole(roleChange, payload)}
       />
       <RoleInfoDialog
