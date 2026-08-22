@@ -9,8 +9,6 @@ import {
   listInvitations,
   getInvitation,
   acceptInvitation,
-  resendInvitation,
-  cancelInvitation,
   listUsers,
 } from "../src/controllers/user.controller.js";
 

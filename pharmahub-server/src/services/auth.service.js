@@ -6,7 +6,6 @@ import { env } from "../config/env.js";
 import { ApiError } from "../core/ApiError.js";
 import { User } from "../models/User.js";
 import { PasswordResetToken } from "../models/PasswordResetToken.js";
-import { DemoLoginToken } from "../models/DemoLoginToken.js";
 import { computeProfileCompletion } from "./profileCompletion.service.js";
 import { sendEmail } from "./mailer.js";
 import { buildResetEmail } from "./emailTemplates.js";
@@ -16,6 +15,8 @@ import { getEffectivePermissions, normalizePermissions } from "./permissions.ser
 function hashToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
+
+const MAX_RESET_CODE_ATTEMPTS = 5;
 
 export async function registerUser({ name, email, password, orgName }) {
   const normalizedEmail = email.toLowerCase();
@@ -40,24 +41,6 @@ export async function loginUser({ email, password }) {
     .collation({ locale: "en", strength: 2 })
     .select("+passwordHash");
 
-  if (!user && (normalizedEmail.endsWith("@pharmahub.demo") || normalizedEmail === "demo@pharmahub.com")) {
-    const passwordHash = await bcrypt.hash("password123", 10);
-    const role = normalizedEmail.includes("owner")
-      ? "Owner"
-      : normalizedEmail.includes("admin")
-        ? "Admin"
-        : "Pharmacist";
-    user = await User.create({
-      name: `PharmaHub ${role}`,
-      email: normalizedEmail,
-      passwordHash,
-      role,
-      orgName: "PharmaHub Pharmacy",
-      active: true,
-      status: "active",
-    });
-  }
-
   if (!user || !user.active || user.status === "removed") {
     throw ApiError.unauthorized("Invalid email or password");
   }
@@ -69,75 +52,6 @@ export async function loginUser({ email, password }) {
   const publicUser = await toAuthUser(user.toObject());
   publicUser.profileCompletion = computeProfileCompletion(user);
   return { token, user: publicUser };
-}
-
-export async function requestDemoLogin(email) {
-  const normalizedEmail = (email || "").toLowerCase().trim();
-  if (!normalizedEmail) throw ApiError.badRequest("Email is required");
-
-  let user = await User.findOne({ email: normalizedEmail });
-  if (!user) {
-    const passwordHash = await bcrypt.hash("password123", 10);
-    const role = normalizedEmail.includes("owner")
-      ? "Owner"
-      : normalizedEmail.includes("admin")
-        ? "Admin"
-        : "Pharmacist";
-    user = await User.create({
-      name: `PharmaHub ${role}`,
-      email: normalizedEmail,
-      passwordHash,
-      role,
-      orgName: "PharmaHub Pharmacy",
-      active: true,
-      status: "active",
-    });
-  }
-
-  const rawToken = crypto.randomBytes(24).toString("hex");
-  const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
-
-  await DemoLoginToken.create({
-    token: rawToken,
-    email: normalizedEmail,
-    expiresAt,
-  });
-
-  const demoLoginUrl = `${env.frontendUrl}/auth/demo-login?token=${rawToken}`;
-  return {
-    email: normalizedEmail,
-    token: rawToken,
-    demoLoginUrl,
-    expiresIn: "15m",
-  };
-}
-
-export async function verifyDemoLogin(token) {
-  if (!token) throw ApiError.badRequest("Token is required");
-
-  const record = await DemoLoginToken.findOne({ token, used: false });
-  if (!record) {
-    throw ApiError.unauthorized("Invalid or expired demo login token");
-  }
-
-  if (new Date() > record.expiresAt) {
-    throw ApiError.unauthorized("Demo login token has expired");
-  }
-
-  record.used = true;
-  await record.save();
-
-  const user = await User.findOne({ email: record.email });
-  if (!user) {
-    throw ApiError.unauthorized("User account not found");
-  }
-
-  const jwtToken = signToken(user._id);
-  const publicUser = await toAuthUser(user.toObject());
-  return {
-    token: jwtToken,
-    user: publicUser,
-  };
 }
 
 export async function changePassword(userId, { currentPassword, newPassword }) {
@@ -161,9 +75,15 @@ export async function requestPasswordReset(email, ip) {
   const user = await User.findOne({ email: normalizedEmail }).lean();
   if (!user) return { sent: false };
 
-  const rawToken = crypto.randomBytes(32).toString("hex");
-  const tokenHash = hashToken(rawToken);
+  // Only the most recent code for a user stays valid.
+  await PasswordResetToken.updateMany(
+    { userId: user._id, status: "pending" },
+    { $set: { status: "used" } },
+  );
+
   const expiresAt = new Date(Date.now() + env.resetTokenTtlMs);
+  const code = await createUniqueCode();
+  const tokenHash = hashToken(code);
 
   await PasswordResetToken.create({
     userId: user._id,
@@ -172,10 +92,9 @@ export async function requestPasswordReset(email, ip) {
     status: "pending",
   });
 
-  const link = `${env.frontendUrl}/reset-password?token=${rawToken}`;
   const { subject, html, text } = buildResetEmail({
     name: user.name,
-    link,
+    code,
     expiresInMinutes: Math.max(1, Math.round(env.resetTokenTtlMs / 60000)),
   });
 
@@ -194,18 +113,47 @@ export async function requestPasswordReset(email, ip) {
   return { sent: true };
 }
 
-export async function resetPassword({ token, newPassword }, ip) {
-  const tokenHash = hashToken(token);
-  const resetToken = await PasswordResetToken.findOne({ tokenHash }).select("+tokenHash");
-  if (!resetToken || resetToken.status !== "pending") {
-    throw ApiError.badRequest("This password reset link is invalid or has already been used");
+// 6-digit numeric code; retries on the (rare) hash collision with a still-pending code.
+async function createUniqueCode() {
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const candidate = String(crypto.randomInt(0, 1_000_000)).padStart(6, "0");
+    const clash = await PasswordResetToken.findOne({
+      tokenHash: hashToken(candidate),
+      status: "pending",
+    })
+      .select("_id")
+      .lean();
+    if (!clash) return candidate;
   }
-  if (resetToken.expiresAt < new Date()) {
-    throw ApiError.badRequest("This password reset link has expired");
+  throw ApiError.unprocessable("Could not generate a reset code, please try again");
+}
+
+export async function resetPassword({ email, code, newPassword }, ip) {
+  const normalizedEmail = email.toLowerCase();
+  const user = await User.findOne({ email: normalizedEmail }).select("+passwordHash");
+
+  // Uniform error so we never reveal whether the email exists.
+  const invalidError = ApiError.badRequest("This reset code is invalid or has expired");
+  if (!user) throw invalidError;
+
+  const resetToken = await PasswordResetToken.findOne({
+    userId: user._id,
+    tokenHash: hashToken(code),
+    status: "pending",
+  }).select("+tokenHash");
+
+  if (!resetToken || resetToken.expiresAt < new Date()) {
+    throw invalidError;
   }
 
-  const user = await User.findById(resetToken.userId).select("+passwordHash");
-  if (!user) throw ApiError.badRequest("This password reset link is invalid");
+  // Brute-force guard: a wrong entry burns an attempt; 5 wrong entries kill the code.
+  resetToken.attempts = (resetToken.attempts ?? 0) + 1;
+  if (resetToken.attempts > MAX_RESET_CODE_ATTEMPTS) {
+    resetToken.status = "used";
+    await resetToken.save();
+    throw ApiError.badRequest("Too many incorrect attempts. Please request a new code.");
+  }
+  await resetToken.save();
 
   user.passwordHash = await bcrypt.hash(newPassword, 10);
   await user.save();

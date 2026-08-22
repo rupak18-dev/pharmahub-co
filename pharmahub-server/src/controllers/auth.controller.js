@@ -1,7 +1,12 @@
 import { asyncHandler } from "../core/asyncHandler.js";
 import { ok, created } from "../core/responses.js";
-import { loginUser, registerUser, changePassword } from "../services/auth.service.js";
-import { requestDemoLogin, verifyDemoLogin } from "../services/demo-login.service.js";
+import {
+  loginUser,
+  registerUser,
+  changePassword,
+  requestPasswordReset,
+  resetPassword as resetPasswordService,
+} from "../services/auth.service.js";
 import { recordAudit } from "../services/audit.service.js";
 import { setAuthCookie, clearAuthCookie } from "../utils/authCookie.js";
 
@@ -49,21 +54,13 @@ export const updatePassword = asyncHandler(async (req, res) => {
   return ok(res, null, "Password updated");
 });
 
-export const demoLogin = asyncHandler(async (req, res) => {
-  const result = await requestDemoLogin(req.body.email);
-  return ok(res, result, "Demo login link sent to your email");
+export const forgotPassword = asyncHandler(async (req, res) => {
+  await requestPasswordReset(req.body.email, req.ip);
+  // Uniform response — never reveal whether the email exists.
+  return ok(res, { sent: true }, "If an account exists for that email, a reset link has been sent.");
 });
 
-export const demoLoginVerify = asyncHandler(async (req, res) => {
-  const result = await verifyDemoLogin(req.body.token);
-  recordAudit({
-    userId: result.user.id,
-    userName: result.user.name,
-    action: "Demo login verified",
-    entityType: "user",
-    entityId: result.user.id,
-    ip: req.ip,
-  });
-  setAuthCookie(res, result.token);
-  return ok(res, { user: result.user }, "Login successful");
+export const resetPassword = asyncHandler(async (req, res) => {
+  const result = await resetPasswordService(req.body, req.ip);
+  return ok(res, { user: result.user }, "Password has been reset. You can now sign in.");
 });

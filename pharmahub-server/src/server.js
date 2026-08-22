@@ -3,7 +3,6 @@ import { connectDB } from "./config/db.js";
 import { env } from "./config/env.js";
 import { logger } from "./core/logger.js";
 import { Role } from "./models/Role.js";
-import { ensureDevelopmentUser } from "./services/devUser.service.js";
 import { startScheduledReportWorker } from "./jobs/scheduledReports.job.js";
 import { validateEmailConfig } from "./services/mailer.js";
 
@@ -11,7 +10,6 @@ async function bootstrap() {
   try {
     await connectDB();
     await Role.ensureSystemRoles();
-    await ensureDevelopmentUser();
 
     validateEmailConfig();
 
@@ -26,7 +24,7 @@ async function bootstrap() {
     }
   } catch (err) {
     logger.error(
-      "Failed to start server. Check the MongoDB configuration (MONGO_URL / MONGO_URI) in .env — the backend refuses to start without a valid database connection.",
+      "Failed to start server. Check the MongoDB configuration (MONGO_URI) in .env — the backend refuses to start without a valid database connection.",
       err,
     );
     process.exit(1);

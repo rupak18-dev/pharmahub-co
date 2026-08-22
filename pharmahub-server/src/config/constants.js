@@ -5,16 +5,6 @@ export const constants = {
     apiPrefix: "/api/v1",
   },
 
-  development: {
-    demoOwner: {
-      name: "PharmaHub Demo Owner",
-      email: "demo@pharmahub.local",
-      password: "PharmaHub@123",
-      role: "Owner",
-      orgName: "PharmaHub",
-    },
-  },
-
   limits: {
     defaultPageSize: 20,
     maxPageSize: 100,

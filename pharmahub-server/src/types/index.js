@@ -135,11 +135,9 @@ export const authSchemas = {
     email: emailSchema,
   }),
   resetPassword: z.object({
-    token: z.string().trim().min(1),
-    newPassword: passwordSchema,
-  }),
-  demoLogin: z.object({
     email: emailSchema,
+    code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
+    newPassword: passwordSchema,
   }),
 };
 

@@ -256,18 +256,15 @@ function diffFeatures(previousFeatures, newFeatures) {
 // Sent to the affected user whenever an Owner/Admin changes their role or permissions.
 export function buildRoleChangeEmail({
   name,
-  orgName,
   previousRole,
   newRole,
   permissions,
   previousPermissions,
   features,
   previousFeatures,
-  changedBy,
   link,
 }) {
   const greeting = name?.trim() ? `Hello ${name.trim()},` : "Hello,";
-  const org = orgName?.trim() || "PharmaHub";
   const roleChanged = Boolean(previousRole && newRole && previousRole !== newRole);
   const loginLink = link || `${env.frontendUrl}/login`;
 
@@ -398,7 +395,7 @@ export function buildRoleChangeEmail({
 }
 
 // Sent to the staff member AFTER a successful removal from the organization.
-export function buildStaffRemovalEmail({ name, orgName }) {
+export function buildStaffRemovalEmail({ name }) {
   const greeting = name?.trim() ? `Hello ${name.trim()},` : "Hello,";
 
   return wrap({
@@ -472,27 +469,30 @@ function escapeHtml(value) {
     .replace(/'/g, "&#39;");
 }
 
-export function buildResetEmail({ name, link, expiresInMinutes }) {
+export function buildResetEmail({ name, code, expiresInMinutes }) {
   const greeting = name?.trim() ? `Hi ${name.trim()},` : "Hi,";
 
   return wrap({
-    subject: "Reset your PharmaHub password",
+    subject: "Your PharmaHub password reset code",
     heading: "Reset your password",
     htmlBody: `
       <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.6;">${greeting}</p>
-      <p style="margin:0 0 12px;font-size:15px;color:#374151;line-height:1.6;">
-        We received a request to reset your PharmaHub password. If you made this request, use the
-        button below to choose a new one:
+      <p style="margin:0 0 16px;font-size:15px;color:#374151;line-height:1.6;">
+        We received a request to reset your PharmaHub password. Enter this code in the app to
+        choose a new one:
       </p>
-      ${actionButton("Reset Password", link)}
+      <div style="margin:0 0 20px;">
+        <span style="display:inline-block;padding:14px 28px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:12px;font-size:30px;font-weight:700;letter-spacing:8px;color:#111827;">${code}</span>
+      </div>
       <p style="margin:0;font-size:12px;color:#9ca3af;line-height:1.6;">
-        This link expires in ${expiresInMinutes} minutes and can only be used once.
+        This code expires in ${expiresInMinutes} minutes and can only be used once. Never share it with anyone.
       </p>`,
     textBody: `${greeting}
 
-We received a request to reset your PharmaHub password. Open this link within ${expiresInMinutes} minutes to choose a new one (one-time use):
-${link}
+We received a request to reset your PharmaHub password. Enter this code within ${expiresInMinutes} minutes to choose a new one (one-time use):
 
-If you didn't request a password reset, you can safely ignore this email — your password won't change.`,
+${code}
+
+Never share this code with anyone. If you didn't request a password reset, you can safely ignore this email - your password won't change.`,
   });
 }

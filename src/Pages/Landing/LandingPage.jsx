@@ -96,11 +96,11 @@ export default function LandingPage() {
                 </Link>
               </Button>
               <Button asChild variant="outline" size="lg">
-                <Link to="/login">Sign in to demo</Link>
+                <Link to="/login">Sign in</Link>
               </Button>
             </div>
             <p className="mt-4 text-xs text-muted-foreground">
-              Try the demo instantly — pre-seeded with medicines, batches, and roles.
+              Set up your pharmacy in minutes — invite your team and assign roles.
             </p>
           </div>
 
@@ -218,7 +218,7 @@ export default function LandingPage() {
             Start free. Scale when you're ready.
           </h2>
           <p className="mt-4 text-muted-foreground">
-            Full-featured demo available today. Cloud sync and multi-branch pricing coming next.
+            Full-featured trial available today. Cloud sync and multi-branch pricing coming next.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <Button asChild size="lg">

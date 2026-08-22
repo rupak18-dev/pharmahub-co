@@ -55,7 +55,7 @@ function sessionCookie(res) {
 }
 
 describe("full API flow (requires MongoDB)", { skip: !connected && "MongoDB not available - skipped" }, () => {
-  const email = `test-${Date.now()}@pharmahub.demo`;
+  const email = `test-${Date.now()}@example.test`;
 
   test("login with invalid credentials returns 401", async () => {
     const res = await request("/auth/login", {
@@ -118,7 +118,7 @@ describe("full API flow (requires MongoDB)", { skip: !connected && "MongoDB not 
   });
 
   test("read-only role (Cashier) is denied medicine creation", async () => {
-    const cashierEmail = `c-${Date.now()}@pharmahub.demo`;
+    const cashierEmail = `c-${Date.now()}@example.test`;
     const created = await request("/users", {
       method: "POST",
       cookie,

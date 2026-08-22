@@ -10,8 +10,8 @@ const router = Router();
 router.post("/register", validate(authSchemas.register), authController.register);
 router.post("/login", validate(authSchemas.login), authController.login);
 router.post("/logout", authController.logout);
-router.post("/demo-login", validate(authSchemas.demoLogin), authController.demoLogin);
-router.post("/demo-login/verify", validate(authSchemas.demoLoginVerify), authController.demoLoginVerify);
+router.post("/forgot-password", validate(authSchemas.forgotPassword), authController.forgotPassword);
+router.post("/reset-password", validate(authSchemas.resetPassword), authController.resetPassword);
 router.get("/me", auth, authController.me);
 router.post("/change-password", auth, validate(authSchemas.changePassword), authController.updatePassword);
 

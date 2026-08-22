@@ -4,6 +4,7 @@ const passwordResetTokenSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
     tokenHash: { type: String, required: true, select: false },
+    attempts: { type: Number, default: 0 },
     expiresAt: { type: Date, required: true },
     usedAt: { type: Date, default: null },
     status: { type: String, enum: ["pending", "used"], default: "pending", index: true },

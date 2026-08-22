@@ -619,7 +619,7 @@ function UsersTab() {
               const status = resolveStatus(p);
               const isSelf = user?.id === p.id;
               const isOwner = p.role === "Owner";
-              const isProtectedOwner = isOwner || p.email === "demo@pharmahub.local";
+              const isProtectedOwner = isOwner;
               const canEditRow = canUpdate && !p.invitationId && !isSelf;
               const canChangeRole = canUpdate && !p.invitationId && !isSelf && !isOwner;
               const canManageStatus = canUpdate && !isSelf && !p.invitationId;
@@ -834,7 +834,7 @@ function UsersTab() {
                   const status = resolveStatus(p);
                   const isSelf = user?.id === p.id;
                   const isOwner = p.role === "Owner";
-                  const isProtectedOwner = isOwner || p.email === "demo@pharmahub.local";
+                  const isProtectedOwner = isOwner;
                   const canEditRow = canUpdate && !p.invitationId && !isSelf;
                   const canChangeRole = canUpdate && !p.invitationId && !isSelf && !isOwner;
                   const canManageStatus = canUpdate && !isSelf && !p.invitationId;

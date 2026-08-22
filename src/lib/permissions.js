@@ -141,4 +141,3 @@ export function buildPermissionOverrides({ role, accessIds = [], features = {} }
 
   return overrides;
 }
-
