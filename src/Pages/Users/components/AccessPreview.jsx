@@ -3,18 +3,21 @@ import {
   LayoutDashboard,
   Pill,
   Layers,
-  ShoppingBag,
+  ShoppingCart,
   Receipt,
-  AlertTriangle,
+  CalendarClock,
   ClipboardCheck,
+  ListChecks,
   Users,
   BarChart3,
   Settings,
-  PackageSearch,
+  Plug,
   Lock,
   CheckCircle2,
 } from "lucide-react";
 import { ALL_MODULES } from "@/lib/permissions";
+/* Miniature mockup of the real sidebar (see AppSidebar) — same groups, same
+   items, same titles. Only modules that exist in ALL_MODULES may appear. */
 const NAV_GROUPS = [
   {
     label: "Home",
@@ -27,16 +30,16 @@ const NAV_GROUPS = [
     label: "Stock Management",
     items: [
       { key: "batches", title: "Batches", icon: Layers },
-      { key: "expiry", title: "Expiry", icon: AlertTriangle },
+      { key: "expiry", title: "Expiry", icon: CalendarClock },
       { key: "audit", title: "Stock Monitor", icon: ClipboardCheck },
     ],
   },
   {
     label: "Purchase & Trades",
     items: [
-      { key: "purchases", title: "Orders", icon: ShoppingBag },
+      { key: "purchases", title: "Orders", icon: ShoppingCart },
       { key: "sales", title: "Sales & POS", icon: Receipt },
-      { key: "shortbook", title: "Shortbook", icon: PackageSearch },
+      { key: "shortbook", title: "Shortbook", icon: ListChecks },
     ],
   },
   {
@@ -48,6 +51,7 @@ const NAV_GROUPS = [
     items: [
       { key: "users", title: "Users & Roles", icon: Users },
       { key: "admin", title: "Profile", icon: Settings },
+      { key: "integrations", title: "Integrations", icon: Plug },
     ],
   },
 ];
@@ -89,7 +93,7 @@ export function AccessPreview({ roleName, permissions }) {
           <div className="h-4 w-4 rounded bg-primary flex items-center justify-center text-[10px] font-bold text-primary-foreground">
             +
           </div>
-          <span className="font-semibold text-foreground tracking-tight text-xs">PharmaHub</span>
+          <span className="font-semibold text-foreground tracking-tight text-xs">PharmacyOS</span>
         </div>
 
         {/* Grouped Links */}

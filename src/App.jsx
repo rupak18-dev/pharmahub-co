@@ -34,6 +34,14 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import("@/Pages/Auth/ForgotPasswordPage")),
       },
       {
+        path: "/auth/demo-login",
+        lazy: lazyPage(() => import("@/Pages/Auth/DemoLoginPage")),
+      },
+      {
+        path: "/accept-invitation",
+        lazy: lazyPage(() => import("@/Pages/Auth/AcceptInvitationPage")),
+      },
+      {
         Component: AppLayout,
         children: [
           {
@@ -73,6 +81,10 @@ export const router = createBrowserRouter([
           { path: "/expiry", lazy: lazyPage(() => import("@/Pages/Expiry/ExpiryPage")) },
           { path: "/audit", lazy: lazyPage(() => import("@/Pages/Audit/AuditPage")) },
           { path: "/reports", lazy: lazyPage(() => import("@/Pages/Reports/ReportsPage")) },
+          {
+            path: "/reports/data",
+            lazy: lazyPage(() => import("@/Pages/Reports/data/ReportDataPage")),
+          },
           { path: "/users", lazy: lazyPage(() => import("@/Pages/Users/UsersPage")) },
           { path: "/ai", lazy: lazyPage(() => import("@/Pages/AI/AiAssistantPage")) },
           {
@@ -80,6 +92,11 @@ export const router = createBrowserRouter([
             lazy: lazyPage(() => import("@/Pages/Notifications/NotificationsPage")),
           },
           { path: "/admin", lazy: lazyPage(() => import("@/Pages/Admin/AdminPage")) },
+          { path: "/profile", lazy: lazyPage(() => import("@/Pages/Profile/ProfilePage")) },
+          {
+            path: "/profile/edit",
+            lazy: lazyPage(() => import("@/Pages/Profile/EditProfilePage")),
+          },
           {
             path: "/integrations",
             lazy: lazyPage(() => import("@/Pages/Integrations/IntegrationsPage")),

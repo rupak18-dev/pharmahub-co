@@ -16,13 +16,50 @@ function resolveApiBase() {
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {
-      return "http://localhost:5000/api/v1";
+      return "http://localhost:5050/api/v1";
     }
   }
   return "https://pharmahub-server.onrender.com/api/v1";
 }
 
 export const API_BASE = resolveApiBase();
+export const API_BASE_URL = API_BASE;
+
+export function resolveAssetUrl(path) {
+  if (!path) return null;
+  if (/^(https?:)?\/\//.test(path) || path.startsWith("data:") || path.startsWith("blob:"))
+    return path;
+  if (path.startsWith("/")) {
+    const origin = API_BASE.replace(/\/api\/v1\/?$/, "");
+    return `${origin}${path}`;
+  }
+  return path;
+}
+
+export function isNetworkError(err) {
+  return (
+    err instanceof TypeError ||
+    (typeof err?.message === "string" && /fetch|network|load failed/i.test(err.message))
+  );
+}
+
+export function resolveAssetUrl(path) {
+  if (!path) return null;
+  if (/^(https?:)?\/\//.test(path) || path.startsWith("data:") || path.startsWith("blob:"))
+    return path;
+  if (path.startsWith("/")) {
+    const origin = API_BASE.replace(/\/api\/v1\/?$/, "");
+    return `${origin}${path}`;
+  }
+  return path;
+}
+
+export function isNetworkError(err) {
+  return (
+    err instanceof TypeError ||
+    (typeof err?.message === "string" && /fetch|network|load failed/i.test(err.message))
+  );
+}
 
 function withLimit(url) {
   if (url.includes("?") || /\/([0-9a-fA-F]{24})$/.test(url)) return url;
@@ -30,6 +67,10 @@ function withLimit(url) {
 }
 
 const SESSION_KEY = "PharmaHub_session_v2";
+
+export function getAuthToken() {
+  return getSessionToken();
+}
 
 function getSessionToken() {
   if (typeof window === "undefined") return null;
@@ -50,17 +91,42 @@ async function request(path, options = {}) {
   if (token && !headers["Authorization"]) {
     headers["Authorization"] = `Bearer ${token}`;
   }
-  if (options.body && !headers["Content-Type"]) {
+
+  // Never set Content-Type header when sending FormData, Blob, or ArrayBuffer.
+  // The browser fetch API must automatically generate the multipart boundary.
+  const isBinaryOrMultipart =
+    (typeof FormData !== "undefined" && options.body instanceof FormData) ||
+    (typeof Blob !== "undefined" && options.body instanceof Blob) ||
+    (typeof ArrayBuffer !== "undefined" && options.body instanceof ArrayBuffer);
+
+  if (options.body && !headers["Content-Type"] && !isBinaryOrMultipart) {
     headers["Content-Type"] = "application/json";
   }
 
   const res = await fetch(finalUrl, { ...options, headers, credentials: "include" });
-  const text = await res.text();
+  const contentType = res.headers.get("content-type") || "";
   let json = null;
-  try {
-    json = text ? JSON.parse(text) : null;
-  } catch {
-    // non-JSON response (e.g. the SPA index.html fallback) — json stays null
+  let text = null;
+
+  if (contentType.includes("application/json")) {
+    try {
+      json = await res.json();
+    } catch {
+      // JSON parse error
+    }
+  } else {
+    try {
+      text = await res.text();
+      if (text && (text.startsWith("{") || text.startsWith("["))) {
+        try {
+          json = JSON.parse(text);
+        } catch {
+          // not JSON
+        }
+      }
+    } catch {
+      // ignore
+    }
   }
 
   if (!res.ok) {
@@ -68,11 +134,16 @@ async function request(path, options = {}) {
       json?.error?.message ??
       json?.error ??
       (typeof json?.error === "string" ? json.error : null) ??
+      json?.message ??
+      (text && text.length < 200 && !text.includes("<!DOCTYPE") ? text : null) ??
       `Request failed (${res.status})`;
-    throw new Error(message);
+    const error = new Error(message);
+    error.status = res.status;
+    error.data = json;
+    throw error;
   }
 
-  return { status: res.status, json };
+  return { status: res.status, json, text };
 }
 
 // Unwraps the envelope to `data` for the callers that want the payload directly.
