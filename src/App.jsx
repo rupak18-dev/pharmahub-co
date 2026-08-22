@@ -34,6 +34,14 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import("@/Pages/Auth/ForgotPasswordPage")),
       },
       {
+        path: "/auth/demo-login",
+        lazy: lazyPage(() => import("@/Pages/Auth/DemoLoginPage")),
+      },
+      {
+        path: "/accept-invitation",
+        lazy: lazyPage(() => import("@/Pages/Auth/AcceptInvitationPage")),
+      },
+      {
         Component: AppLayout,
         children: [
           {

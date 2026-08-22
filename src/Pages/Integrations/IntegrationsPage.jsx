@@ -55,6 +55,8 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
   const isWhatsApp = integration.key === "whatsapp";
   const whatsappPhone = isWhatsApp ? (integration.config?.phone ?? null) : null;
 
+  // WhatsApp destination comes from real backend configuration only.
+  const whatsappDestination = getWhatsAppDestination(integration);
   const dashboardUrl = integration.config?.dashboardUrl ?? integration.config?.url ?? null;
 
   const handlePrimary = () => {
@@ -87,6 +89,7 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
               variant="secondary"
               className="h-5 gap-1 border-emerald-500/20 bg-emerald-500/10 px-1.5 text-[10px] font-semibold text-emerald-700"
             >
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600" aria-hidden="true" />
               <span
                 className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600"
                 aria-hidden="true"
@@ -407,6 +410,8 @@ export default function IntegrationsPage() {
       await disconnectIntegration(integration.id ?? integration.key);
       toast.success(`${findIntegration(integration.key)?.name ?? "Integration"} disconnected`);
       await refresh();
+    } catch {
+      toast.error("Unable to disconnect. The integrations backend is not available yet.");
     } catch (err) {
       toast.error(err?.message ?? "Unable to disconnect. Please try again.");
     }
@@ -477,6 +482,8 @@ export default function IntegrationsPage() {
           <div className="flex min-h-[320px] items-center justify-center">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
           </div>
+        ) : connected.length === 0 ? (
+          <EmptyState onClick={() => setAddOpen(true)} disabled={!canEdit} />
         ) : (
           <div className="space-y-8">
             {connected.length > 0 && (
