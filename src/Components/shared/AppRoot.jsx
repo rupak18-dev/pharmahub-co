@@ -70,7 +70,7 @@ export function AppRootErrorBoundary(props) {
           below.
         </p>
         {error ? (
-          <pre className="mt-4 max-h-48 overflow-auto rounded-md border border-border bg-muted p-3 text-left font-mono text-[11px] text-destructive leading-relaxed whitespace-pre-wrap break-all">
+          <pre className="mt-4 max-h-48 overflow-auto rounded-md border border-border bg-muted p-3 text-left text-[11px] text-destructive leading-relaxed whitespace-pre-wrap break-all">
             {String(error?.stack || error?.message || error)}
           </pre>
         ) : null}

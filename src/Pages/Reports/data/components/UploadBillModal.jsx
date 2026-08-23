@@ -126,10 +126,10 @@ function ExtractionSummary({ fields, isPurchase, currency }) {
   return (
     <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
       <div className="truncate">
-        Invoice <span className="font-mono font-semibold">{fields?.invoiceNumber || "—"}</span>
+        Invoice <span className="font-semibold">{fields?.invoiceNumber || "—"}</span>
       </div>
       <div className="truncate">
-        Date <span className="font-mono font-semibold">{fields?.invoiceDate || "—"}</span>
+        Date <span className="font-semibold">{fields?.invoiceDate || "—"}</span>
       </div>
       <div className="truncate">
         {isPurchase ? "Supplier" : "Party"}{" "}
@@ -142,7 +142,7 @@ function ExtractionSummary({ fields, isPurchase, currency }) {
       </div>
       <div className="truncate">
         Customer WhatsApp{" "}
-        <span className="font-mono font-semibold">
+        <span className="font-semibold">
           {customerPhone ? (
             <>
               {customerPhone}
@@ -159,11 +159,11 @@ function ExtractionSummary({ fields, isPurchase, currency }) {
       </div>
       <div className="truncate">
         {isPurchase ? "Supplier Phone" : "Phone"}{" "}
-        <span className="font-mono font-semibold">{supplierPhone || "—"}</span>
+        <span className="font-semibold">{supplierPhone || "—"}</span>
       </div>
       <div className="truncate">
         Printed Total{" "}
-        <span className="font-mono font-semibold">
+        <span className="font-semibold">
           {Number(fields?.printedGrandTotal) > 0
             ? `${currency}${money(fields.printedGrandTotal)}`
             : "—"}

@@ -293,7 +293,7 @@ export default function ProfilePage() {
           className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-5"
         >
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Pharma Profile
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">

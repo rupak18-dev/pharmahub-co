@@ -629,7 +629,7 @@ export default function MedicinesCatalogPage() {
                             >
                               {m.name}
                             </Link>
-                            <span className="text-[10px] font-mono text-muted-foreground block">
+                            <span className="text-[10px] text-muted-foreground block">
                               {m.id.slice(0, 8).toUpperCase()}
                             </span>
                           </div>
@@ -665,45 +665,45 @@ export default function MedicinesCatalogPage() {
                       <td className="px-4 py-3 text-muted-foreground">{m.packSize || "—"}</td>
 
                       {/* GTIN / Barcode */}
-                      <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
+                      <td className="px-4 py-3 text-[11px] text-muted-foreground">
                         <div>G: {m.gtin || "—"}</div>
                         <div>B: {m.barcode || "—"}</div>
                       </td>
 
                       {/* Active Batch */}
-                      <td className="px-4 py-3 font-mono text-xs">{meta?.batchNo || "—"}</td>
+                      <td className="px-4 py-3 text-xs">{meta?.batchNo || "—"}</td>
 
                       {/* MRP */}
-                      <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
+                      <td className="px-4 py-3 text-right font-semibold text-foreground">
                         {currency}
                         {meta?.mrp?.toFixed(2) || "0.00"}
                       </td>
 
                       {/* PTR */}
-                      <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                      <td className="px-4 py-3 text-right text-muted-foreground">
                         {currency}
                         {m.ptr?.toFixed(2) || "0.00"}
                       </td>
 
                       {/* Purchase */}
-                      <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                      <td className="px-4 py-3 text-right text-muted-foreground">
                         {currency}
                         {meta?.pur?.toFixed(2) || "0.00"}
                       </td>
 
                       {/* Selling */}
-                      <td className="px-4 py-3 text-right font-mono font-semibold text-emerald-600">
+                      <td className="px-4 py-3 text-right font-semibold text-emerald-600">
                         {currency}
                         {meta?.sell?.toFixed(2) || "0.00"}
                       </td>
 
                       {/* Stock */}
-                      <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
+                      <td className="px-4 py-3 text-right font-semibold text-foreground">
                         {meta?.current} units
                       </td>
 
                       {/* Min Stock */}
-                      <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                      <td className="px-4 py-3 text-right text-muted-foreground">
                         {m.reorderThreshold} units
                       </td>
 
@@ -728,9 +728,7 @@ export default function MedicinesCatalogPage() {
                       </td>
 
                       {/* Rack */}
-                      <td className="px-4 py-3 text-muted-foreground font-mono">
-                        {m.rackLocation || "—"}
-                      </td>
+                      <td className="px-4 py-3 text-muted-foreground">{m.rackLocation || "—"}</td>
 
                       {/* Supplier */}
                       <td className="px-4 py-3 text-muted-foreground truncate max-w-[150px]">
@@ -824,7 +822,7 @@ export default function MedicinesCatalogPage() {
                         >
                           {m.name}
                         </Link>
-                        <span className="text-[10px] text-muted-foreground font-mono">
+                        <span className="text-[10px] text-muted-foreground">
                           {m.genericName || "Generic"}
                         </span>
                       </div>
@@ -841,19 +839,15 @@ export default function MedicinesCatalogPage() {
                   <div className="grid grid-cols-2 gap-2 text-xs border-t border-b py-2 my-2">
                     <div>
                       <span className="text-muted-foreground block text-[10px]">Stock Level</span>
-                      <span className="font-semibold text-foreground font-mono">
-                        {meta?.current} units
-                      </span>
+                      <span className="font-semibold text-foreground">{meta?.current} units</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block text-[10px]">Rack Location</span>
-                      <span className="font-semibold text-foreground font-mono">
-                        {m.rackLocation || "—"}
-                      </span>
+                      <span className="font-semibold text-foreground">{m.rackLocation || "—"}</span>
                     </div>
                     <div>
                       <span className="text-muted-foreground block text-[10px]">Selling Price</span>
-                      <span className="font-semibold text-emerald-600 font-mono">
+                      <span className="font-semibold text-emerald-600">
                         {currency}
                         {meta?.sell?.toFixed(2)}
                       </span>
@@ -861,7 +855,7 @@ export default function MedicinesCatalogPage() {
                     <div>
                       <span className="text-muted-foreground block text-[10px]">Expiry</span>
                       <span
-                        className={`font-semibold font-mono ${meta?.expired ? "text-destructive" : meta?.nearExp ? "text-amber-500" : "text-muted-foreground"}`}
+                        className={`font-semibold ${meta?.expired ? "text-destructive" : meta?.nearExp ? "text-amber-500" : "text-muted-foreground"}`}
                       >
                         {meta?.expiry !== "—"
                           ? new Date(meta?.expiry || "").toLocaleDateString(undefined, {

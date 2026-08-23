@@ -154,13 +154,12 @@ export function VarianceReview({
                       {/* Metadata */}
                       <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                         <span>
-                          Batch:{" "}
-                          <strong className="text-foreground/90 font-mono">{v.batchNumber}</strong>
+                          Batch: <strong className="text-foreground/90">{v.batchNumber}</strong>
                         </span>
                         <span className="text-muted-foreground/40">•</span>
                         <span>
                           Audit:{" "}
-                          <strong className="text-foreground/90 font-mono">
+                          <strong className="text-foreground/90">
                             {audit?.auditNumber ?? v.auditId}
                           </strong>
                         </span>
@@ -206,7 +205,7 @@ export function VarianceReview({
                       <span className="text-[11px] text-muted-foreground block font-medium">
                         System Stock
                       </span>
-                      <strong className="font-mono text-sm text-foreground mt-0.5 block">
+                      <strong className="text-sm text-foreground mt-0.5 block">
                         {v.expectedQty}
                       </strong>
                     </div>
@@ -214,7 +213,7 @@ export function VarianceReview({
                       <span className="text-[11px] text-muted-foreground block font-medium">
                         Counted Stock
                       </span>
-                      <strong className="font-mono text-sm text-foreground mt-0.5 block">
+                      <strong className="text-sm text-foreground mt-0.5 block">
                         {v.actualQty}
                       </strong>
                     </div>
@@ -224,7 +223,7 @@ export function VarianceReview({
                       </span>
                       <strong
                         className={cn(
-                          "font-mono text-sm font-extrabold tracking-tight block mt-0.5",
+                          "text-sm font-extrabold tracking-tight block mt-0.5",
                           v.difference < 0
                             ? "text-destructive"
                             : "text-emerald-600 dark:text-emerald-400",
@@ -263,10 +262,7 @@ export function VarianceReview({
                   </h3>
                   <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
                     <span>
-                      Batch:{" "}
-                      <strong className="font-mono text-foreground/90">
-                        {selected.batchNumber}
-                      </strong>
+                      Batch: <strong className="text-foreground/90">{selected.batchNumber}</strong>
                     </span>
                     <span>•</span>
                     <span>
@@ -305,18 +301,14 @@ export function VarianceReview({
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     System Stock
                   </p>
-                  <p className="font-mono text-base font-semibold text-foreground">
-                    {selected.expectedQty}
-                  </p>
+                  <p className="text-base font-semibold text-foreground">{selected.expectedQty}</p>
                 </div>
 
                 <div className="space-y-1 self-center">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Counted Stock
                   </p>
-                  <p className="font-mono text-base font-semibold text-foreground">
-                    {selected.actualQty}
-                  </p>
+                  <p className="text-base font-semibold text-foreground">{selected.actualQty}</p>
                 </div>
 
                 <div className="space-y-1 rounded-lg bg-background p-2 border border-border/70 shadow-2xs">
@@ -325,7 +317,7 @@ export function VarianceReview({
                   </p>
                   <p
                     className={cn(
-                      "font-mono text-sm font-extrabold tracking-tight",
+                      "text-sm font-extrabold tracking-tight",
                       selected.difference < 0
                         ? "text-destructive"
                         : "text-emerald-600 dark:text-emerald-400",
@@ -339,7 +331,7 @@ export function VarianceReview({
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Estimated Loss
                   </p>
-                  <p className="font-mono text-base font-bold text-foreground">
+                  <p className="text-base font-bold text-foreground">
                     {formatCurrency(selected.varianceValue, currency)}
                   </p>
                 </div>
@@ -349,7 +341,7 @@ export function VarianceReview({
               <div className="grid grid-cols-2 gap-2.5">
                 <div className="rounded-lg border border-border/70 p-2.5 text-center bg-background/50">
                   <p className="text-[11px] font-medium text-muted-foreground">Unit Cost</p>
-                  <p className="font-mono text-sm font-semibold text-foreground mt-0.5">
+                  <p className="text-sm font-semibold text-foreground mt-0.5">
                     {formatCurrency(selected.unitCost, currency)}
                   </p>
                 </div>
@@ -534,8 +526,8 @@ export function VarianceReview({
                 {selected.medicineName}
               </SheetTitle>
               <p className="text-xs text-muted-foreground text-left">
-                Batch: <strong className="font-mono text-foreground">{selected.batchNumber}</strong>{" "}
-                · Branch: {auditByVar.get(selected.auditId)?.branch}
+                Batch: <strong className="text-foreground">{selected.batchNumber}</strong> · Branch:{" "}
+                {auditByVar.get(selected.auditId)?.branch}
               </p>
             </SheetHeader>
 
@@ -545,13 +537,13 @@ export function VarianceReview({
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     System Stock
                   </p>
-                  <p className="font-mono text-base font-semibold">{selected.expectedQty}</p>
+                  <p className="text-base font-semibold">{selected.expectedQty}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                     Counted Stock
                   </p>
-                  <p className="font-mono text-base font-semibold">{selected.actualQty}</p>
+                  <p className="text-base font-semibold">{selected.actualQty}</p>
                 </div>
                 <div className="space-y-1 rounded-lg bg-background p-2 border border-border/70 col-span-2">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -559,7 +551,7 @@ export function VarianceReview({
                   </p>
                   <p
                     className={cn(
-                      "font-mono text-sm font-extrabold",
+                      "text-sm font-extrabold",
                       selected.difference < 0
                         ? "text-destructive"
                         : "text-emerald-600 dark:text-emerald-400",

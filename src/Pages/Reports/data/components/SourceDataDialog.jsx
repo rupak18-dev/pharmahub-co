@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Database, Loader2 } from "lucide-react";
+import { Database } from "lucide-react";
 import { toast } from "sonner";
 import { reportService } from "@/lib/reportService";
 import {
@@ -84,8 +84,11 @@ export function SourceDataDialog({ source, onOpenChange }) {
 
         <div className="flex-1 overflow-y-auto rounded-lg border border-border min-h-0 relative">
           {loading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60">
-              <Loader2 className="h-5 w-5 animate-spin text-primary" />
+            <div className="absolute inset-0 z-10 flex flex-col gap-2 overflow-hidden bg-background p-3">
+              <Skeleton className="h-8 w-full" />
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-9 w-full" />
+              ))}
             </div>
           )}
           {!loading && data && (

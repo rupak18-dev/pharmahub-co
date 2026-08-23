@@ -765,7 +765,7 @@ export default function ShortbookPage() {
     );
   };
   return (
-    <div className="space-y-4 pb-12 select-none font-google-sans-flex text-slate-800">
+    <div className="space-y-4 pb-12 select-none text-slate-800">
       {/* TOP HEADER / BAR */}
       <div className="bg-white rounded-xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-2xs border border-border/50">
         {/* Left Side: ShortBook Title + Info + Mode Switch */}
@@ -1548,7 +1548,7 @@ export default function ShortbookPage() {
                       </div>
                       <div className="flex justify-between">
                         <span className="font-medium text-slate-500">Min / Stock / Qty:</span>
-                        <span className="font-mono font-semibold text-slate-900">
+                        <span className="font-semibold text-slate-900">
                           Min: {item.min} | Stock: {item.stock} |{" "}
                           <span className="text-blue-600">Qty: {item.qty}</span>
                         </span>
@@ -1749,13 +1749,13 @@ export default function ShortbookPage() {
                       </td>
 
                       {/* Min Column */}
-                      <td className="py-3 px-3 text-center align-middle font-mono font-semibold text-slate-700 w-16">
+                      <td className="py-3 px-3 text-center align-middle font-semibold text-slate-700 w-16">
                         {item.min}
                       </td>
 
                       {/* Stock Column with Vertical Separator */}
                       <td className="py-3 px-3 text-center align-middle w-24">
-                        <div className="flex items-center justify-center gap-2 font-mono font-semibold text-slate-800">
+                        <div className="flex items-center justify-center gap-2 font-semibold text-slate-800">
                           <span className="text-slate-300 font-light select-none">|</span>
                           <span>{item.stock}</span>
                         </div>
@@ -1763,7 +1763,7 @@ export default function ShortbookPage() {
 
                       {/* Qty Column */}
                       <td className="py-3 px-3 text-center align-middle w-24">
-                        <span className="font-mono font-bold text-slate-900">{item.qty}</span>
+                        <span className="font-bold text-slate-900">{item.qty}</span>
                       </td>
 
                       {/* Status */}

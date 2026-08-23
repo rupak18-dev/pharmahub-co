@@ -648,7 +648,7 @@ export default function ReportsPage() {
                       </p>
                     </div>
                     {act.format && (
-                      <Badge variant="outline" className="text-[10px] font-mono shrink-0">
+                      <Badge variant="outline" className="text-[10px] shrink-0">
                         {act.format}
                       </Badge>
                     )}

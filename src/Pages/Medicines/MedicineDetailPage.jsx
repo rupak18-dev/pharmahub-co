@@ -132,7 +132,7 @@ export default function MedicineDetailsPage() {
 
         {/* Right Side: Details */}
         <div className="flex flex-col">
-          <h1 className="text-2xl md:text-4xl font-bold text-slate-900 mb-2 leading-tight">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground mb-2 leading-tight">
             {med.name}
           </h1>
           <p className="text-slate-500 mb-6">By {manufacturer}</p>

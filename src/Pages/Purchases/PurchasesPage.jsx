@@ -603,7 +603,7 @@ export default function PurchasesPage() {
                         handleFetchBill();
                       }
                     }}
-                    className="h-9 text-xs font-mono bg-background"
+                    className="h-9 text-xs bg-background"
                   />
                   <Button
                     variant="secondary"
@@ -765,7 +765,7 @@ export default function PurchasesPage() {
                           )}
                         </div>
                         <div className="text-right">
-                          <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                          <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
                             GST {med.gstRate}%
                           </span>
                           <div className="text-[10px] text-muted-foreground">Click to add</div>
@@ -834,7 +834,7 @@ export default function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { batchNumber: e.target.value })
                             }
-                            className="h-7 text-xs font-mono text-center px-1 border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
+                            className="h-7 text-xs text-center px-1 border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -860,7 +860,7 @@ export default function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { mrp: Number(e.target.value) || 0 })
                             }
-                            className="h-7 text-xs text-right px-1 font-mono border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
+                            className="h-7 text-xs text-right px-1 border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -873,7 +873,7 @@ export default function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { ptr: Number(e.target.value) || 0 })
                             }
-                            className="h-7 text-xs text-right px-1 font-mono border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
+                            className="h-7 text-xs text-right px-1 border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -888,7 +888,7 @@ export default function PurchasesPage() {
                                 qty: Math.max(1, Number(e.target.value) || 1),
                               })
                             }
-                            className="h-7 text-xs text-center px-1 font-mono font-bold border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
+                            className="h-7 text-xs text-center px-1 font-bold border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -901,7 +901,7 @@ export default function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { freeQty: Number(e.target.value) || 0 })
                             }
-                            className="h-7 text-xs text-center px-1 font-mono border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
+                            className="h-7 text-xs text-center px-1 border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -916,7 +916,7 @@ export default function PurchasesPage() {
                             onChange={(e) =>
                               updateLineItem(item.id, { discPct: Number(e.target.value) || 0 })
                             }
-                            className="h-7 text-xs text-right px-1 font-mono border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
+                            className="h-7 text-xs text-right px-1 border-0 shadow-none bg-transparent focus-visible:ring-0 focus-visible:bg-muted/40 rounded"
                           />
                         </div>
 
@@ -939,7 +939,7 @@ export default function PurchasesPage() {
 
                         {/* Line Amount & Remove */}
                         <div className="col-span-1 flex items-center justify-end gap-1 pl-1">
-                          <span className="font-mono font-bold text-xs text-foreground">
+                          <span className="font-bold text-xs text-foreground">
                             {currency}
                             {item.lineTotal.toFixed(2)}
                           </span>
@@ -1022,16 +1022,14 @@ export default function PurchasesPage() {
                 ) : (
                   grns.map((g) => (
                     <tr key={g.id} className="hover:bg-muted/30">
-                      <td className="px-4 py-3 font-mono font-semibold text-primary">
-                        {g.grnNumber}
-                      </td>
+                      <td className="px-4 py-3 font-semibold text-primary">{g.grnNumber}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {format(new Date(g.createdAt), "PP")}
                       </td>
                       <td className="px-4 py-3 font-medium">{supplierName(g.supplierId)}</td>
-                      <td className="px-4 py-3 font-mono">{g.invoiceNumber ?? "—"}</td>
-                      <td className="px-4 py-3 text-right font-mono">{g.items.length}</td>
-                      <td className="px-4 py-3 text-right font-mono font-bold text-foreground">
+                      <td className="px-4 py-3">{g.invoiceNumber ?? "—"}</td>
+                      <td className="px-4 py-3 text-right">{g.items.length}</td>
+                      <td className="px-4 py-3 text-right font-bold text-foreground">
                         {currency}
                         {g.totalValue.toLocaleString()}
                       </td>
@@ -1111,7 +1109,7 @@ export default function PurchasesPage() {
                 <div className="text-[11px] text-muted-foreground">
                   Distributor: {supplierName(distributorId)}
                 </div>
-                <div className="font-mono font-bold text-sm text-foreground">
+                <div className="font-bold text-sm text-foreground">
                   Bill #: {billNo || "Auto-Generated"}
                 </div>
                 <div className="text-[11px] text-muted-foreground">
@@ -1120,7 +1118,7 @@ export default function PurchasesPage() {
               </div>
               <div className="text-right">
                 <div className="text-[11px] font-semibold text-muted-foreground">Grand Total</div>
-                <div className="text-xl font-black font-mono text-primary">
+                <div className="text-xl font-black text-primary">
                   {currency}
                   {totals.grandTotal.toFixed(2)}
                 </div>
@@ -1168,7 +1166,7 @@ export default function PurchasesPage() {
                   step="0.01"
                   value={amountPaid}
                   onChange={(e) => setAmountPaid(Number(e.target.value) || 0)}
-                  className="h-9 text-xs font-mono font-bold"
+                  className="h-9 text-xs font-bold"
                 />
               </div>
 
@@ -1178,13 +1176,13 @@ export default function PurchasesPage() {
                   placeholder="e.g. UPI-987654"
                   value={paymentTxnRef}
                   onChange={(e) => setPaymentTxnRef(e.target.value)}
-                  className="h-9 text-xs font-mono"
+                  className="h-9 text-xs"
                 />
               </div>
             </div>
 
             {/* Balance Indicator */}
-            <div className="flex justify-between items-center bg-muted p-2 rounded-md font-mono text-[11px]">
+            <div className="flex justify-between items-center bg-muted p-2 rounded-md text-[11px]">
               <span>Balance Due:</span>
               <span
                 className={
@@ -1236,7 +1234,7 @@ export default function PurchasesPage() {
                   <h2 className="text-lg font-black tracking-tight text-primary">PharmaHub</h2>
                   <p className="text-xs text-muted-foreground">Official Purchase Invoice Receipt</p>
                 </div>
-                <div className="text-right font-mono space-y-0.5">
+                <div className="text-right space-y-0.5">
                   <div className="text-sm font-bold text-foreground">
                     Invoice #{viewingGrn.invoiceNumber ?? viewingGrn.grnNumber}
                   </div>
@@ -1283,7 +1281,7 @@ export default function PurchasesPage() {
                       <th className="p-2 text-right">Total</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-border font-mono">
+                  <tbody className="divide-y divide-border">
                     {viewingGrn.items.map((item, idx) => (
                       <tr key={idx} className="hover:bg-muted/20">
                         <td className="p-2 text-left font-sans font-medium text-foreground">
@@ -1314,7 +1312,7 @@ export default function PurchasesPage() {
 
               {/* Grand Total */}
               <div className="flex justify-end pt-2">
-                <div className="w-56 space-y-1 text-right font-mono">
+                <div className="w-56 space-y-1 text-right">
                   <div className="flex justify-between text-xs font-bold border-t border-border pt-2 text-base text-primary">
                     <span>Grand Total:</span>
                     <span>

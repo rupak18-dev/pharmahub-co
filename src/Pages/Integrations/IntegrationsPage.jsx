@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { usePermission } from "@/hooks/usePermission";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
+import { Skeleton } from "@/Components/ui/skeleton";
 import {
   disconnectIntegration,
   getIntegrations,
@@ -471,17 +472,30 @@ export default function IntegrationsPage() {
       <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 sm:px-6">
         {/* Page Header */}
         <div className="border-b border-border/60 pb-5">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            Integrations
-          </h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Integrations</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Connect third-party services to extend PharmaHub. Changes apply immediately.
           </p>
         </div>
 
         {loading ? (
-          <div className="flex min-h-[320px] items-center justify-center">
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" aria-hidden="true" />
+          <div className="space-y-8">
+            <section className="space-y-4">
+              <Skeleton className="h-3 w-40" />
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 xl:grid-cols-3">
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <Skeleton key={i} className="h-32 rounded-xl" />
+                ))}
+              </div>
+            </section>
+            <section className="space-y-3">
+              <Skeleton className="h-3 w-44" />
+              <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Skeleton key={i} className="h-14 rounded-none border-0" />
+                ))}
+              </div>
+            </section>
           </div>
         ) : connected.length === 0 ? (
           <EmptyState onClick={() => setAddOpen(true)} disabled={!canEdit} />

@@ -606,7 +606,7 @@ export function BillFormModal({
                           </Select>
                         </div>
                         <div className="col-span-3 sm:col-span-1 text-right">
-                          <span className="font-mono text-xs font-semibold">
+                          <span className="text-xs font-semibold">
                             {currency}
                             {money(lt.total)}
                           </span>
@@ -666,33 +666,24 @@ export function BillFormModal({
           <div className="flex flex-wrap items-center justify-end gap-x-5 gap-y-1 border-t border-border pt-3 text-xs">
             <div className="text-muted-foreground">
               Subtotal{" "}
-              <span className="font-mono font-semibold text-foreground">
-                {money(totals.subtotal)}
-              </span>
+              <span className="font-semibold text-foreground">{money(totals.subtotal)}</span>
             </div>
             <div className="text-muted-foreground">
               Discount{" "}
-              <span className="font-mono font-semibold text-foreground">
-                {money(totals.discount)}
-              </span>
+              <span className="font-semibold text-foreground">{money(totals.discount)}</span>
             </div>
             <div className="text-muted-foreground">
-              Taxable{" "}
-              <span className="font-mono font-semibold text-foreground">
-                {money(totals.taxable)}
-              </span>
+              Taxable <span className="font-semibold text-foreground">{money(totals.taxable)}</span>
             </div>
             <div className="text-muted-foreground">
-              GST{" "}
-              <span className="font-mono font-semibold text-foreground">+{money(totals.gst)}</span>
+              GST <span className="font-semibold text-foreground">+{money(totals.gst)}</span>
             </div>
             <div className="text-muted-foreground">
-              Round Off{" "}
-              <span className="font-mono font-semibold text-foreground">{money(roundOff)}</span>
+              Round Off <span className="font-semibold text-foreground">{money(roundOff)}</span>
             </div>
             <div className="text-sm font-semibold text-foreground">
               Grand Total{" "}
-              <span className="font-mono">
+              <span>
                 {currency}
                 {money(grandTotal)}
               </span>
@@ -775,9 +766,9 @@ export function BillFormModal({
           <AlertDialogHeader>
             <AlertDialogTitle className="text-base">This bill already exists</AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-muted-foreground">
-              A bill numbered <span className="font-mono font-semibold">{duplicate.invoiceNo}</span>{" "}
-              already exists for this date in your pharmacy. View the existing bill, or cancel and
-              choose a different bill number.
+              A bill numbered <span className="font-semibold">{duplicate.invoiceNo}</span> already
+              exists for this date in your pharmacy. View the existing bill, or cancel and choose a
+              different bill number.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

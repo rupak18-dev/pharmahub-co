@@ -267,10 +267,9 @@ export function Approvals({
 
                     {/* Second Row: Clear Metadata Line */}
                     <p className="text-xs text-muted-foreground">
-                      Batch:{" "}
-                      <strong className="font-mono text-foreground/90">{a.batchNumber}</strong> •
+                      Batch: <strong className="text-foreground/90">{a.batchNumber}</strong> •
                       Audit:{" "}
-                      <strong className="font-mono text-foreground/90">
+                      <strong className="text-foreground/90">
                         {audit?.auditNumber ?? a.auditId}
                       </strong>{" "}
                       • <strong className="text-foreground/90">{audit?.branch ?? "HQ"}</strong> •
@@ -292,7 +291,7 @@ export function Approvals({
                       <span>Diff:</span>
                       <strong
                         className={cn(
-                          "font-mono font-semibold",
+                          "font-semibold",
                           a.quantity < 0
                             ? "text-destructive"
                             : "text-emerald-600 dark:text-emerald-400",
@@ -310,7 +309,7 @@ export function Approvals({
                     <span className="text-[11px] font-medium text-muted-foreground block">
                       System Stock
                     </span>
-                    <strong className="font-mono text-sm text-foreground mt-0.5 block">
+                    <strong className="text-sm text-foreground mt-0.5 block">
                       {variance?.expectedQty ?? (a.quantity < 0 ? Math.abs(a.quantity) : 0)}
                     </strong>
                   </div>
@@ -318,7 +317,7 @@ export function Approvals({
                     <span className="text-[11px] font-medium text-muted-foreground block">
                       Counted Stock
                     </span>
-                    <strong className="font-mono text-sm text-foreground mt-0.5 block">
+                    <strong className="text-sm text-foreground mt-0.5 block">
                       {variance?.actualQty ?? (a.quantity < 0 ? 0 : a.quantity)}
                     </strong>
                   </div>
@@ -328,7 +327,7 @@ export function Approvals({
                     </span>
                     <strong
                       className={cn(
-                        "font-mono text-sm font-bold tracking-tight block mt-0.5",
+                        "text-sm font-bold tracking-tight block mt-0.5",
                         a.quantity < 0
                           ? "text-destructive"
                           : "text-emerald-600 dark:text-emerald-400",
@@ -341,7 +340,7 @@ export function Approvals({
                     <span className="text-[11px] font-medium text-muted-foreground block">
                       Estimated Loss
                     </span>
-                    <strong className="font-mono text-sm text-foreground mt-0.5 block">
+                    <strong className="text-sm text-foreground mt-0.5 block">
                       {formatCurrency(adjustmentVal, currency)}
                     </strong>
                   </div>

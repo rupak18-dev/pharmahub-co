@@ -44,6 +44,7 @@ import { KpiCard } from "@/Components/shared/KpiCard";
 import { AddBatchSheet } from "@/Components/shared/AddBatchSheet";
 import BatchQrSheet from "@/Components/shared/BatchQrSheet";
 import { Button } from "@/Components/ui/button";
+import { Skeleton } from "@/Components/ui/skeleton";
 import { Input } from "@/Components/ui/input";
 import { Checkbox } from "@/Components/ui/checkbox";
 import {
@@ -78,7 +79,7 @@ const safeFormat = (dateStr, fmt) => {
   return format(d, fmt);
 };
 const chipCls =
-  "inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 font-mono text-xs font-semibold text-primary";
+  "inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary";
 const ACTIVE_REF_DAYS = 365;
 const DEFAULT_SETTINGS = { currency: "₹", nearExpiryDays: 90 };
 
@@ -104,16 +105,12 @@ function BatchChip({ batchId, batchNumber }) {
 }
 function MfgCell({ mfgDate }) {
   return (
-    <span className="font-mono text-xs font-medium text-foreground">
-      {safeFormat(mfgDate, "MM/yyyy")}
-    </span>
+    <span className="text-xs font-medium text-foreground">{safeFormat(mfgDate, "MM/yyyy")}</span>
   );
 }
 function ExpiryCell({ expiryDate }) {
   return (
-    <span className="font-mono text-xs font-medium text-foreground">
-      {safeFormat(expiryDate, "MM/yyyy")}
-    </span>
+    <span className="text-xs font-medium text-foreground">{safeFormat(expiryDate, "MM/yyyy")}</span>
   );
 }
 function LocationPill({ locations }) {
@@ -133,9 +130,7 @@ function LocationPill({ locations }) {
   );
 }
 function StockLevel({ stock }) {
-  return (
-    <span className="block text-center font-mono text-sm font-semibold tabular-nums">{stock}</span>
-  );
+  return <span className="block text-center text-sm font-semibold tabular-nums">{stock}</span>;
 }
 function BatchActions({ row, onQr, onExport }) {
   const navigate = useNavigate();
@@ -261,7 +256,7 @@ function ColumnView({ rows, selected, onToggle, onQr, onExport }) {
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {col.title}
               </span>
-              <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-xs tabular-nums text-foreground">
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-foreground">
                 {items.length}
               </span>
             </div>
@@ -818,8 +813,10 @@ export default function BatchesPage() {
 
         <div className="flex-1 overflow-y-auto p-0">
           {loading && batches.length === 0 ? (
-            <div className="grid place-items-center py-16 text-sm text-muted-foreground">
-              Loading batches…
+            <div className="space-y-2 p-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
             </div>
           ) : error ? (
             <div className="py-16">

@@ -83,15 +83,18 @@ export default function ExpiryPage() {
   const [focusTableToken, setFocusTableToken] = useState(0);
 
   // ── MongoDB API (used when MONGODB_URI is configured) ────────────────────
-  const apiFilters = useMemo(() => ({
-    window: window.kind === "preset" ? window.preset : undefined,
-    from: window.kind === "custom" ? window.from : undefined,
-    to: window.kind === "custom" ? window.to : undefined,
-    status,
-    category,
-    manufacturer,
-    search: query,
-  }), [window, status, category, manufacturer, query]);
+  const apiFilters = useMemo(
+    () => ({
+      window: window.kind === "preset" ? window.preset : undefined,
+      from: window.kind === "custom" ? window.from : undefined,
+      to: window.kind === "custom" ? window.to : undefined,
+      status,
+      category,
+      manufacturer,
+      search: query,
+    }),
+    [window, status, category, manufacturer, query],
+  );
 
   const {
     rows: apiRows,
@@ -147,10 +150,17 @@ export default function ExpiryPage() {
           } else {
             l = l.filter((r) => matchesStatusFilter(r, status));
           }
-          if (category !== "all") l = l.filter((r) => medById.get(r.batch.medicineId)?.categoryId === category);
-          if (manufacturer !== "all") l = l.filter((r) => medById.get(r.batch.medicineId)?.manufacturerId === manufacturer);
+          if (category !== "all")
+            l = l.filter((r) => medById.get(r.batch.medicineId)?.categoryId === category);
+          if (manufacturer !== "all")
+            l = l.filter((r) => medById.get(r.batch.medicineId)?.manufacturerId === manufacturer);
           const q = query.trim().toLowerCase();
-          if (q) l = l.filter((r) => [r.medicineName, r.salt, r.batchNumber, r.manufacturer, r.supplier].some((s) => s && s.toLowerCase().includes(q)));
+          if (q)
+            l = l.filter((r) =>
+              [r.medicineName, r.salt, r.batchNumber, r.manufacturer, r.supplier].some(
+                (s) => s && s.toLowerCase().includes(q),
+              ),
+            );
           return l;
         })();
 
@@ -168,7 +178,21 @@ export default function ExpiryPage() {
       });
     }
     return list;
-  }, [usingApi, apiRows, mockRows, status, window, category, manufacturer, branch, shelf, query, sort, medById, now]);
+  }, [
+    usingApi,
+    apiRows,
+    mockRows,
+    status,
+    window,
+    category,
+    manufacturer,
+    branch,
+    shelf,
+    query,
+    sort,
+    medById,
+    now,
+  ]);
   const shelves = useMemo(
     () =>
       Array.from(new Set(rows.map((r) => r.shelf).filter(Boolean))).sort((a, b) =>
@@ -260,9 +284,20 @@ export default function ExpiryPage() {
       });
     });
     // Also persist to MongoDB
-    returnExpiredBatch({ batchId: row.batch.id, qty, reason: "Returned to supplier (expiry management)", creditNoteNo, userId: u.id })
-      .then(() => { console.log("[ExpiryPage] MongoDB return saved ✓"); refreshApi(); })
-      .catch((e) => console.warn("[ExpiryPage] MongoDB return failed (mock-db still updated):", e.message));
+    returnExpiredBatch({
+      batchId: row.batch.id,
+      qty,
+      reason: "Returned to supplier (expiry management)",
+      creditNoteNo,
+      userId: u.id,
+    })
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB return saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB return failed (mock-db still updated):", e.message),
+      );
     setSelected((s) => {
       const n = new Set(s);
       n.delete(row.batch.id);
@@ -289,8 +324,13 @@ export default function ExpiryPage() {
     });
     // Persist to MongoDB
     applyExpiryDiscount({ batchId: row.batch.id, discountPct: pct, userId: u.id })
-      .then(() => { console.log("[ExpiryPage] MongoDB discount saved ✓"); refreshApi(); })
-      .catch((e) => console.warn("[ExpiryPage] MongoDB discount failed (mock-db still updated):", e.message));
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB discount saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB discount failed (mock-db still updated):", e.message),
+      );
     toast.success(`${pct}% discount will auto-apply at POS for ${row.medicineName}`);
   };
   const clearDiscount = (row) => {
@@ -397,8 +437,13 @@ export default function ExpiryPage() {
     });
     // Persist to MongoDB
     transferExpiredBatch({ batchId: row.batch.id, qty, targetBranch: branch, userId: u.id })
-      .then(() => { console.log("[ExpiryPage] MongoDB transfer saved ✓"); refreshApi(); })
-      .catch((e) => console.warn("[ExpiryPage] MongoDB transfer failed (mock-db still updated):", e.message));
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB transfer saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB transfer failed (mock-db still updated):", e.message),
+      );
     toast.success(`${qty} units transferred to ${branch}`);
   };
   const writeOff = (u, row) => {
@@ -443,9 +488,19 @@ export default function ExpiryPage() {
     });
     writeOff(u, row);
     // Persist to MongoDB
-    disposeExpiredBatch({ batchId: row.batch.id, qty: row.quantity, reason: "Expired — disposed via expiry management", userId: u.id })
-      .then(() => { console.log("[ExpiryPage] MongoDB dispose saved ✓"); refreshApi(); })
-      .catch((e) => console.warn("[ExpiryPage] MongoDB dispose failed (mock-db still updated):", e.message));
+    disposeExpiredBatch({
+      batchId: row.batch.id,
+      qty: row.quantity,
+      reason: "Expired — disposed via expiry management",
+      userId: u.id,
+    })
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB dispose saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB dispose failed (mock-db still updated):", e.message),
+      );
     setSelected((s) => {
       const n = new Set(s);
       n.delete(row.batch.id);
@@ -720,7 +775,7 @@ export default function ExpiryPage() {
       <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-xs md:flex-row md:items-center md:justify-between">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl xl:text-4xl">
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               Medicine Expiry
             </h1>
             <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
