@@ -40,6 +40,31 @@ jobs:
           mongodb-version: "7"
           mongodb-port: 27017
 
+      # invitation.test.js requires an Owner to exist in the database, but a
+      # fresh CI database is empty (the dev user is only seeded by
+      # src/server.js), so create one with the app's own models first.
+      - name: Seed CI database
+        env:
+          JWT_SECRET: ci-only-throwaway-secret
+          MONGO_URI: mongodb://127.0.0.1:27017/pharmahub_test
+        run: |
+          node --input-type=module -e "
+            import mongoose from 'mongoose';
+            await mongoose.connect(process.env.MONGO_URI);
+            const { Role } = await import('./src/models/Role.js');
+            const { User } = await import('./src/models/User.js');
+            await Role.ensureSystemRoles();
+            await User.create({
+              name: 'CI Owner',
+              email: 'ci-owner@pharmahub.test',
+              role: 'Owner',
+              orgName: 'PharmaHub CI',
+              active: true,
+              status: 'active',
+            });
+            await mongoose.disconnect();
+          "
+
       # env.js fails fast at import unless MONGO_URI and JWT_SECRET are set,
       # so both must be present even though these are throwaway CI values.
       - name: Run tests
