@@ -50,6 +50,7 @@ jobs:
         run: |
           node --input-type=module -e "
             import mongoose from 'mongoose';
+            import bcrypt from 'bcryptjs';
             await mongoose.connect(process.env.MONGO_URI);
             const { Role } = await import('./src/models/Role.js');
             const { User } = await import('./src/models/User.js');
@@ -57,6 +58,9 @@ jobs:
             await User.create({
               name: 'CI Owner',
               email: 'ci-owner@pharmahub.test',
+              // passwordHash is required by the User schema; nothing signs in
+              // with this throwaway CI account, but it must satisfy validation.
+              passwordHash: await bcrypt.hash('ci-owner-throwaway', 10),
               role: 'Owner',
               orgName: 'PharmaHub CI',
               active: true,
