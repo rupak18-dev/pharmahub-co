@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from "react-router";
-import { useEffect, Suspense, useMemo } from "react";
+import { useEffect, useRef, Suspense, useMemo } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/Components/ui/sidebar";
 import { AppSidebar } from "@/Components/shared/AppSidebar";
 import { AppShellSkeleton, RouteSkeleton } from "@/Components/shared/PageSkeleton";
