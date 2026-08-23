@@ -30,6 +30,14 @@ function apiMiddleware() {
             load = () => import("./api/batches/[id].js");
           } else if (parts[1] === "medicines" && parts.length === 2) {
             load = () => import("./api/medicines.js");
+          } else if (parts[1] === "expiry" && parts.length === 2) {
+            load = () => import("./api/expiry.js");
+          } else if (parts[1] === "expiry" && parts.length === 3) {
+            req.query = {
+              ...Object.fromEntries(url.searchParams),
+              id: decodeURIComponent(parts[2]),
+            };
+            load = () => import("./api/expiry/[id].js");
           } else {
             res.statusCode = 404;
             res.setHeader("Content-Type", "application/json");
