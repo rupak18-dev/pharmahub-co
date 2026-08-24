@@ -17,14 +17,14 @@ export function ProfileCompletionCard({ profile, onSelectField }) {
   const remainingCount = missingSpecs.length - maxPills;
 
   const handleCompleteProfileClick = () => {
-    navigate({ to: "/profile/edit" });
+    navigate("/profile/edit");
   };
 
   const handlePillClick = (section) => {
     if (onSelectField) {
       onSelectField(section);
     } else {
-      navigate({ to: "/profile/edit", hash: section });
+      navigate(`/profile/edit#${section}`);
     }
   };
 
@@ -76,7 +76,7 @@ export function ProfileCompletionCard({ profile, onSelectField }) {
               {remainingCount > 0 && (
                 <button
                   type="button"
-                  onClick={() => navigate({ to: "/profile/edit" })}
+                  onClick={() => navigate("/profile/edit")}
                   className="inline-flex items-center rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
                 >
                   +{remainingCount} more

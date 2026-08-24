@@ -22,6 +22,8 @@ const PROFILE_EDITABLE_FIELDS = [
   "name",
   "email",
   "phone",
+  "avatarUrl",
+  "logoUrl",
   "orgName",
   "tagline",
   "description",
@@ -38,6 +40,7 @@ const PROFILE_EDITABLE_FIELDS = [
   "businessHours",
   "metaPixelId",
   "branches",
+  "onboarded",
 ];
 
 async function assertRoleExists(role) {

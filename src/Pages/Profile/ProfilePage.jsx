@@ -304,7 +304,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-2 self-start sm:self-auto">
             <Button
               size="sm"
-              onClick={() => navigate({ to: "/profile/edit" })}
+              onClick={() => navigate("/profile/edit")}
               className="font-medium gap-2 rounded-lg shadow-xs px-4 py-2 text-xs sm:text-sm h-9 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               <Edit3 className="h-4 w-4" />

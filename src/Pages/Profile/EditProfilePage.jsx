@@ -161,7 +161,7 @@ export default function EditProfilePage() {
       await new Promise((r) => setTimeout(r, 300));
       await updateProfile(formData);
       toast.success("Profile saved successfully");
-      navigate({ to: "/profile" });
+      navigate("/profile");
     } catch (err) {
       toast.error(err instanceof Error && err.message ? err.message : "Failed to save profile.");
     } finally {
@@ -184,7 +184,7 @@ export default function EditProfilePage() {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => navigate({ to: "/profile" })}
+            onClick={() => navigate("/profile")}
             className="h-9 w-9 rounded-lg"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -494,7 +494,7 @@ export default function EditProfilePage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => navigate({ to: "/profile" })}
+            onClick={() => navigate("/profile")}
             disabled={saving}
             className="rounded-lg h-9 px-4 text-xs font-medium"
           >

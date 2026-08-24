@@ -38,6 +38,7 @@ const userSchema = new Schema(
     phoneVerified: { type: Boolean, default: false },
     phoneVerifiedAt: { type: Date, default: null },
     avatarUrl: { type: String, trim: true },
+    logoUrl: { type: String, trim: true },
     tagline: { type: String, trim: true },
     description: { type: String, trim: true },
     businessEmail: { type: String, trim: true },
