@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { ChevronsUpDown, LogOut, Settings, User as UserIcon, Repeat, Store } from "lucide-react";
+import { ChevronsUpDown, LogOut, Settings, User as UserIcon, Store } from "lucide-react";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Avatar, AvatarImage, AvatarFallback } from "@/Components/ui/avatar";
@@ -17,7 +17,6 @@ import {
 import { useSidebar } from "@/Components/ui/sidebar";
 import { useAuth } from "@/lib/auth";
 import { getStoredOnboarding, getOnboarding } from "@/lib/onboardingApi";
-import { ALL_ROLES } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
 const BRANCHES = [
   { id: "main", name: "Main Branch (HQ)" },
@@ -26,7 +25,7 @@ const BRANCHES = [
 ];
 
 export function SidebarProfile() {
-  const { user, signOut, switchRole } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
@@ -109,25 +108,18 @@ export function SidebarProfile() {
           <div className="flex flex-col">
             <span className="text-sm font-medium">{user.name}</span>
             <span className="text-xs text-muted-foreground">{user.email}</span>
-            <span className="mt-1.5 inline-flex w-fit items-center rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              {user.role}
-            </span>
+            {user.role ? (
+              <span className="mt-1.5 inline-flex w-fit items-center rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {user.role}
+              </span>
+            ) : (
+              <span className="mt-1.5 inline-flex w-fit items-center rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                No role assigned
+              </span>
+            )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Repeat className="mr-2 h-4 w-4" /> Switch role (demo)
-          </DropdownMenuSubTrigger>
-          <DropdownMenuSubContent>
-            {ALL_ROLES.map((r) => (
-              <DropdownMenuItem key={r} onClick={() => switchRole(r)}>
-                <UserIcon className="mr-2 h-4 w-4" /> {r}
-                {r === user.role && <span className="ml-auto text-xs">✓</span>}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <Store className="mr-2 h-4 w-4" /> Switch branch

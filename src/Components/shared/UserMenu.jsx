@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import { Edit3, LogOut, Repeat, Store, User as UserIcon, UserPlus, UserRound } from "lucide-react";
+import { Edit3, LogOut, Store, UserPlus, UserRound } from "lucide-react";
 import { openInviteStaff } from "@/Components/shared/InviteStaffDrawer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
 import { Button } from "@/Components/ui/button";
@@ -17,7 +17,6 @@ import {
   DropdownMenuTrigger,
 } from "@/Components/ui/dropdown-menu";
 import { useAuth } from "@/lib/auth";
-import { ALL_ROLES } from "@/lib/permissions";
 
 const BRANCHES = [
   { id: "main", name: "Main Branch (HQ)" },
@@ -26,7 +25,7 @@ const BRANCHES = [
 ];
 
 export function UserMenu() {
-  const { user, signOut, switchRole } = useAuth();
+  const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
   const [activeBranch, setActiveBranch] = useState(() => {
@@ -62,7 +61,11 @@ export function UserMenu() {
 
           <div className="hidden sm:flex flex-col items-start leading-tight text-left">
             <span className="text-sm font-medium">{user.name}</span>
-            <span className="text-[11px] text-muted-foreground">{user.role}</span>
+            {user.role ? (
+              <span className="text-[11px] text-muted-foreground">{user.role}</span>
+            ) : (
+              <span className="text-[11px] text-muted-foreground italic">No role assigned</span>
+            )}
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -96,23 +99,6 @@ export function UserMenu() {
         </DropdownMenuItem>
 
         <DropdownMenuSeparator />
-
-        <DropdownMenuSub>
-          <DropdownMenuSubTrigger>
-            <Repeat className="mr-2 h-4 w-4" />
-            Switch role (demo)
-          </DropdownMenuSubTrigger>
-
-          <DropdownMenuSubContent className="rounded-xl">
-            {ALL_ROLES.map((r) => (
-              <DropdownMenuItem key={r} onClick={() => switchRole(r)} className="cursor-pointer">
-                <UserIcon className="mr-2 h-4 w-4" />
-                {r}
-                {r === user.role && <span className="ml-auto text-xs">✓</span>}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuSubContent>
-        </DropdownMenuSub>
 
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>

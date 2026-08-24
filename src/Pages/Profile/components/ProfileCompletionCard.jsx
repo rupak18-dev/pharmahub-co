@@ -7,7 +7,8 @@ import { calculateProfileCompletion } from "@/lib/profileCompletion";
 export function ProfileCompletionCard({ profile, onSelectField }) {
   const navigate = useNavigate();
   const liveProfile = useDb((d) => d.profiles.find((p) => p.id === profile?.id)) ?? profile;
-  const owner = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
+  const ownerFromDb = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
+  const owner = ownerFromDb ?? (profile?.role === "Owner" ? profile : profile);
   const completion = calculateProfileCompletion(liveProfile, owner);
   const { percentage, missingFields, missingSpecs, isComplete } = completion;
 

@@ -47,7 +47,7 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [role, setRole] = useState(profile?.role ?? "Pharmacist");
+  const [role, setRole] = useState(profile?.role ?? "");
   const [department, setDepartment] = useState(profile?.department ?? "Pharmacy Operations");
   const [designation, setDesignation] = useState(profile?.designation ?? "");
   const [access, setAccess] = useState(profile?.accessIds ?? []);
@@ -68,7 +68,7 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
       setName(profile.name ?? "");
       setEmail(profile.email ?? "");
       setPhone(profile.phone ?? "");
-      setRole(profile.role ?? "Pharmacist");
+      setRole(profile.role ?? "");
       setDepartment(profile.department ?? "Pharmacy Operations");
       setDesignation(profile.designation ?? "");
       setAccess(profile.accessIds ?? []);

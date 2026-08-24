@@ -35,11 +35,6 @@ import { cn } from "@/lib/utils";
 import ReportBuilder from "./ReportBuilder";
 import ModulePickerModal from "./components/ModulePickerModal";
 import { REPORT_CATEGORIES, REPORT_MODULES, getModule } from "./reportModules";
-import {
-  REPORT_CATEGORIES,
-  REPORT_MODULES,
-  getModule,
-} from "./reportModules";
 
 export const handle = { title: "Reports · PharmaHub" };
 

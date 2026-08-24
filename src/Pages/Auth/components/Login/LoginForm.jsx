@@ -91,45 +91,6 @@ export function LoginForm({ onSubmit, register, errors, isSubmitting, onGoogleCl
         </div>
 
         <div className="mt-4 flex flex-col items-center gap-2">
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <span className="text-xs text-muted-foreground">Quick login:</span>
-            <button
-              type="button"
-              onClick={() => {
-                const emailEl = document.getElementById("email");
-                const passEl = document.getElementById("password");
-                if (emailEl) {
-                  emailEl.value = "owner@pharmahub.demo";
-                  emailEl.dispatchEvent(new Event("input", { bubbles: true }));
-                }
-                if (passEl) {
-                  passEl.value = "password123";
-                  passEl.dispatchEvent(new Event("input", { bubbles: true }));
-                }
-              }}
-              className="text-xs px-2.5 py-1 rounded-md bg-secondary/80 hover:bg-secondary text-secondary-foreground font-medium transition-colors cursor-pointer"
-            >
-              Owner (Demo)
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const emailEl = document.getElementById("email");
-                const passEl = document.getElementById("password");
-                if (emailEl) {
-                  emailEl.value = "admin@pharmahub.demo";
-                  emailEl.dispatchEvent(new Event("input", { bubbles: true }));
-                }
-                if (passEl) {
-                  passEl.value = "password123";
-                  passEl.dispatchEvent(new Event("input", { bubbles: true }));
-                }
-              }}
-              className="text-xs px-2.5 py-1 rounded-md bg-secondary/80 hover:bg-secondary text-secondary-foreground font-medium transition-colors cursor-pointer"
-            >
-              Admin (Demo)
-            </button>
-          </div>
           <button
             type="button"
             onClick={onDemoClick}

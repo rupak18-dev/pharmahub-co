@@ -26,6 +26,17 @@ function writeLocal(data) {
 // best-effort and silently ignored when the route is missing.
 export const getStoredOnboarding = () => readLocal();
 
+// Clears the local cache so one account's wizard data can never leak into
+// another account's onboarding (called on sign-in / sign-out).
+export const resetStoredOnboarding = () => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+};
+
 export const getOnboarding = async () => {
   const local = readLocal();
   try {

@@ -159,11 +159,11 @@ export default function EditProfilePage() {
     setSaving(true);
     try {
       await new Promise((r) => setTimeout(r, 300));
-      updateProfile(formData);
+      await updateProfile(formData);
       toast.success("Profile saved successfully");
       navigate({ to: "/profile" });
     } catch (err) {
-      toast.error("Failed to save profile.");
+      toast.error(err instanceof Error && err.message ? err.message : "Failed to save profile.");
     } finally {
       setSaving(false);
     }

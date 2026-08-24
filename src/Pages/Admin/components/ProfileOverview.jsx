@@ -32,7 +32,8 @@ const CHECKLIST = [
 
 export function ProfileOverview() {
   const { user } = useAuth();
-  const owner = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
+  const ownerFromDb = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
+  const owner = ownerFromDb ?? (user?.role === "Owner" ? user : user);
   const done = CHECKLIST.filter((item) => item.test(user, owner));
   const pending = CHECKLIST.filter((item) => !item.test(user, owner));
   const percent = Math.round((done.length / CHECKLIST.length) * 100);

@@ -155,8 +155,6 @@ export function RoleDetailModal({ role, open, onClose, onSaved }) {
                             <span className="font-mono text-[11px]">
                               {u.createdAt && dayjs(u.createdAt).isValid()
                                 ? `Joined ${dayjs(u.createdAt).format("DD MMM YYYY")}`
-                              {u.createdAt
-                                ? `Joined ${format(new Date(u.createdAt), "MMM d, yyyy")}`
                                 : ""}
                             </span>
                             <StaffStatusBadge status={resolveStatus(u)} className="text-[11px]" />

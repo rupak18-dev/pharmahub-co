@@ -59,9 +59,10 @@ function SummaryRow({ icon: Icon, label, value }) {
 }
 
 function OrganizationManageDialog({ open, onOpenChange }) {
-  const { user } = useAuth();
+  const { user, updateProfile } = useAuth();
   const has = usePermission();
-  const owner = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
+  const ownerFromDb = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
+  const owner = ownerFromDb ?? (user?.role === "Owner" ? user : user);
   const canEdit = has("admin", "update");
   const [form, setForm] = useState({
     orgName: owner?.orgName ?? "",
@@ -71,9 +72,24 @@ function OrganizationManageDialog({ open, onOpenChange }) {
     gstin: owner?.gstin ?? "",
     address: owner?.address ?? "",
   });
+
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
 
-  const save = () => {
+  const save = async () => {
+    try {
+      if (updateProfile) {
+        await updateProfile({
+          orgName: form.orgName,
+          businessType: form.businessType,
+          phone: form.phone,
+          businessEmail: form.businessEmail,
+          gstin: form.gstin,
+          address: form.address,
+        });
+      }
+    } catch {
+      // ignore
+    }
     db.set((d) => {
       const own = d.profiles.find((p) => p.role === "Owner");
       if (own) {
@@ -211,7 +227,9 @@ function OrganizationManageDialog({ open, onOpenChange }) {
 }
 
 export function OrganizationSection() {
-  const owner = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
+  const { user } = useAuth();
+  const ownerFromDb = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
+  const owner = ownerFromDb ?? (user?.role === "Owner" ? user : user);
   const [open, setOpen] = useState(false);
 
   return (
