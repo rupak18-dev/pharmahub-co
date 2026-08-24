@@ -75,8 +75,7 @@ function getDefaultOperator(fieldDef, key = "") {
 export default function FilterBuilder({ filters = [], availableFields = [], onChange }) {
   const [nextId, setNextId] = useState(() => filters.length + 1);
 
-  const getFieldDef = (key) =>
-    availableFields.find((af) => getFieldKey(af) === key);
+  const getFieldDef = (key) => availableFields.find((af) => getFieldKey(af) === key);
 
   const addFilter = () => {
     const firstField = availableFields[0];
@@ -111,7 +110,7 @@ export default function FilterBuilder({ filters = [], availableFields = [], onCh
         }
 
         return updated;
-      })
+      }),
     );
   };
 
@@ -165,7 +164,7 @@ export default function FilterBuilder({ filters = [], availableFields = [], onCh
                 <SelectTrigger
                   className={cn(
                     "h-8 min-w-0 flex-[2] text-xs",
-                    !filter.field && "text-muted-foreground"
+                    !filter.field && "text-muted-foreground",
                   )}
                 >
                   <SelectValue placeholder="Field" />
@@ -270,11 +269,7 @@ export default function FilterBuilder({ filters = [], availableFields = [], onCh
                 <Input
                   type="text"
                   className="h-8 flex-[2] min-w-0 text-xs"
-                  placeholder={
-                    filter.operator === "in"
-                      ? "val1, val2…"
-                      : "Value"
-                  }
+                  placeholder={filter.operator === "in" ? "val1, val2…" : "Value"}
                   value={filter.value || ""}
                   onChange={(e) => updateFilter(filter.id, { value: e.target.value })}
                 />

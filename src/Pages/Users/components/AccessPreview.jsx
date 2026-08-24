@@ -3,52 +3,55 @@ import {
   LayoutDashboard,
   Pill,
   Layers,
-  Boxes,
   ShoppingCart,
   Receipt,
   CalendarClock,
   ClipboardCheck,
+  ListChecks,
   Users,
   BarChart3,
-  Bell,
-  Sparkles,
   Settings,
+  Plug,
   Lock,
   CheckCircle2,
 } from "lucide-react";
 import { ALL_MODULES } from "@/lib/permissions";
+/* Miniature mockup of the real sidebar (see AppSidebar) — same groups, same
+   items, same titles. Only modules that exist in ALL_MODULES may appear. */
 const NAV_GROUPS = [
   {
-    label: "Operations",
+    label: "Home",
     items: [
       { key: "dashboard", title: "Dashboard", icon: LayoutDashboard },
       { key: "medicines", title: "Medicines", icon: Pill },
+    ],
+  },
+  {
+    label: "Stock Management",
+    items: [
       { key: "batches", title: "Batches", icon: Layers },
-      { key: "inventory", title: "Inventory", icon: Boxes },
-    ],
-  },
-  {
-    label: "Commerce",
-    items: [
-      { key: "purchases", title: "Purchases", icon: ShoppingCart },
-      { key: "sales", title: "Sales & POS", icon: Receipt },
-    ],
-  },
-  {
-    label: "Compliance",
-    items: [
       { key: "expiry", title: "Expiry", icon: CalendarClock },
-      { key: "audit", title: "Stock Audit", icon: ClipboardCheck },
-      { key: "reports", title: "Reports", icon: BarChart3 },
+      { key: "audit", title: "Stock Monitor", icon: ClipboardCheck },
     ],
   },
   {
-    label: "System",
+    label: "Purchase & Trades",
+    items: [
+      { key: "purchases", title: "Orders", icon: ShoppingCart },
+      { key: "sales", title: "Sales & POS", icon: Receipt },
+      { key: "shortbook", title: "Shortbook", icon: ListChecks },
+    ],
+  },
+  {
+    label: "Analytics",
+    items: [{ key: "reports", title: "Reports", icon: BarChart3 }],
+  },
+  {
+    label: "Access Management",
     items: [
       { key: "users", title: "Users & Roles", icon: Users },
-      { key: "notifications", title: "Notifications", icon: Bell },
-      { key: "ai", title: "AI Insights", icon: Sparkles },
       { key: "admin", title: "Profile", icon: Settings },
+      { key: "integrations", title: "Integrations", icon: Plug },
     ],
   },
 ];
@@ -77,7 +80,9 @@ export function AccessPreview({ roleName, permissions }) {
         </div>
         <div className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-mono text-foreground">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-          <span>{visibleCount} / 13 Modules Visible</span>
+          <span>
+            {visibleCount} / {ALL_MODULES.length} Modules Visible
+          </span>
         </div>
       </div>
 

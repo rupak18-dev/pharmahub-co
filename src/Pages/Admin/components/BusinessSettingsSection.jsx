@@ -297,9 +297,7 @@ export function BusinessSettingsSection() {
       description="Operational defaults for your pharmacy."
       className="w-full"
       footer={
-        <span className="text-xs text-muted-foreground">
-          Applies to new invoices and records.
-        </span>
+        <span className="text-xs text-muted-foreground">Applies to new invoices and records.</span>
       }
     >
       <dl className="divide-y-0">

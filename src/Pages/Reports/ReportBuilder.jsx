@@ -100,10 +100,7 @@ function MeasureRow({ fieldKey, aggregation, def, onChangeAgg, onRemove }) {
       <div className="min-w-0 flex-1">
         <p className="text-xs font-medium text-foreground truncate">{def?.label ?? fieldKey}</p>
       </div>
-      <Select
-        value={aggregation}
-        onValueChange={onChangeAgg}
-      >
+      <Select value={aggregation} onValueChange={onChangeAgg}>
         <SelectTrigger className="h-7 w-24 text-[11px] px-2 bg-background border-border">
           <SelectValue />
         </SelectTrigger>
@@ -176,9 +173,7 @@ export default function ReportBuilder({
       : "Select Range";
 
   const activePresetLabel =
-    datePreset === "custom"
-      ? "Custom Range"
-      : (DATE_PRESETS[datePreset]?.label ?? "This Month");
+    datePreset === "custom" ? "Custom Range" : (DATE_PRESETS[datePreset]?.label ?? "This Month");
 
   const title = useMemo(
     () =>
@@ -309,11 +304,20 @@ export default function ReportBuilder({
     }
     const filename = `${slugify(effectiveName)}_${format(range.from || new Date(), "yyyy-MM-dd")}`;
     if (fmt === "CSV") {
-      downloadCsv(`${filename}.csv`, reportData.rows, tableColumns.map((c) => c.label));
+      downloadCsv(
+        `${filename}.csv`,
+        reportData.rows,
+        tableColumns.map((c) => c.label),
+      );
     } else if (fmt === "Excel") {
       downloadXls(`${filename}.xlsx`, reportData.rows, effectiveName);
     } else if (fmt === "Print") {
-      const head = tableColumns.map((c) => `<th style="padding:8px 12px;text-align:${c.money ? "right" : "left"}">${c.label}</th>`).join("");
+      const head = tableColumns
+        .map(
+          (c) =>
+            `<th style="padding:8px 12px;text-align:${c.money ? "right" : "left"}">${c.label}</th>`,
+        )
+        .join("");
       const body = reportData.rows
         .map(
           (r) =>
@@ -373,9 +377,7 @@ export default function ReportBuilder({
       <div className="rounded-lg border border-border bg-card shadow-[0_1px_3px_rgba(0,0,0,0.04)] mb-4">
         {/* Title row */}
         <div className="flex items-center gap-3 px-4 pt-4 pb-3 border-b border-border">
-          <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-primary/8 text-primary"
-          >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-primary/8 text-primary">
             <module.icon className="h-4 w-4" />
           </div>
           <div className="flex-1 min-w-0">
@@ -541,7 +543,10 @@ export default function ReportBuilder({
                         Add
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 text-xs max-h-52 overflow-y-auto">
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-48 text-xs max-h-52 overflow-y-auto"
+                    >
                       {remainingFields.map((f) => (
                         <DropdownMenuItem
                           key={f.key}
@@ -619,7 +624,10 @@ export default function ReportBuilder({
                         Add
                       </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-52 text-xs max-h-52 overflow-y-auto">
+                    <DropdownMenuContent
+                      align="end"
+                      className="w-52 text-xs max-h-52 overflow-y-auto"
+                    >
                       {remainingMeasures.map((m) => (
                         <DropdownMenuItem
                           key={m.key}
@@ -664,7 +672,7 @@ export default function ReportBuilder({
               <div className="space-y-1.5">
                 {measures.map((mObj) => {
                   const fieldKey = typeof mObj === "string" ? mObj : mObj.field;
-                  const agg = typeof mObj === "string" ? "SUM" : mObj.aggregation ?? "SUM";
+                  const agg = typeof mObj === "string" ? "SUM" : (mObj.aggregation ?? "SUM");
                   const def = getMeasureDef(module, fieldKey);
                   return (
                     <MeasureRow
@@ -782,9 +790,7 @@ export default function ReportBuilder({
               </p>
               <p>
                 <span className="font-medium text-foreground">Group By:</span>{" "}
-                {selectedFields
-                  .map((k) => getFieldDef(module, k)?.label ?? k)
-                  .join(", ") || "—"}
+                {selectedFields.map((k) => getFieldDef(module, k)?.label ?? k).join(", ") || "—"}
               </p>
               <p>
                 <span className="font-medium text-foreground">Metrics:</span>{" "}

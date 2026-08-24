@@ -1,13 +1,5 @@
 import { useNavigate } from "react-router";
-import {
-  Edit3,
-  LogOut,
-  Repeat,
-  Store,
-  User as UserIcon,
-  UserPlus,
-  UserRound,
-} from "lucide-react";
+import { Edit3, LogOut, Repeat, Store, User as UserIcon, UserPlus, UserRound } from "lucide-react";
 import { openInviteStaff } from "@/Components/shared/InviteStaffDrawer";
 import { Avatar, AvatarFallback, AvatarImage } from "@/Components/ui/avatar";
 import { Button } from "@/Components/ui/button";
@@ -62,9 +54,7 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-9 gap-2 px-2 rounded-xl">
           <Avatar className="h-7 w-7">
-            {user.avatarUrl && (
-              <AvatarImage src={user.avatarUrl} alt={user.name} />
-            )}
+            {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.name} />}
             <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
               {initials}
             </AvatarFallback>
@@ -72,9 +62,7 @@ export function UserMenu() {
 
           <div className="hidden sm:flex flex-col items-start leading-tight text-left">
             <span className="text-sm font-medium">{user.name}</span>
-            <span className="text-[11px] text-muted-foreground">
-              {user.role}
-            </span>
+            <span className="text-[11px] text-muted-foreground">{user.role}</span>
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -83,9 +71,7 @@ export function UserMenu() {
         <DropdownMenuLabel>
           <div className="flex flex-col">
             <span className="text-sm font-medium">{user.name}</span>
-            <span className="text-xs text-muted-foreground">
-              {user.email}
-            </span>
+            <span className="text-xs text-muted-foreground">{user.email}</span>
           </div>
         </DropdownMenuLabel>
 
@@ -99,18 +85,12 @@ export function UserMenu() {
           Profile
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          onClick={() => navigate("/profile/edit")}
-          className="cursor-pointer"
-        >
+        <DropdownMenuItem onClick={() => navigate("/profile/edit")} className="cursor-pointer">
           <Edit3 className="mr-2 h-4 w-4 text-primary" />
           Edit Profile
         </DropdownMenuItem>
 
-        <DropdownMenuItem
-          onClick={() => openInviteStaff()}
-          className="cursor-pointer font-medium"
-        >
+        <DropdownMenuItem onClick={() => openInviteStaff()} className="cursor-pointer font-medium">
           <UserPlus className="mr-2 h-4 w-4 text-primary" />
           Invite Staff
         </DropdownMenuItem>
@@ -125,16 +105,10 @@ export function UserMenu() {
 
           <DropdownMenuSubContent className="rounded-xl">
             {ALL_ROLES.map((r) => (
-              <DropdownMenuItem
-                key={r}
-                onClick={() => switchRole(r)}
-                className="cursor-pointer"
-              >
+              <DropdownMenuItem key={r} onClick={() => switchRole(r)} className="cursor-pointer">
                 <UserIcon className="mr-2 h-4 w-4" />
                 {r}
-                {r === user.role && (
-                  <span className="ml-auto text-xs">✓</span>
-                )}
+                {r === user.role && <span className="ml-auto text-xs">✓</span>}
               </DropdownMenuItem>
             ))}
           </DropdownMenuSubContent>
@@ -155,9 +129,7 @@ export function UserMenu() {
               >
                 <Store className="mr-2 h-4 w-4" />
                 {b.name}
-                {b.id === activeBranch && (
-                  <span className="ml-auto text-xs">✓</span>
-                )}
+                {b.id === activeBranch && <span className="ml-auto text-xs">✓</span>}
               </DropdownMenuItem>
             ))}
           </DropdownMenuSubContent>

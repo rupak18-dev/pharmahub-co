@@ -1,57 +1,43 @@
 /**
  * Service layer for the Integrations module.
- * Mirrors the Reports module pattern (reportService.js): talks to the backend
- * API first and never fabricates connection state.
+ * Talks to the pharmahub-server API through the shared apiRequest wrapper
+ * (src/lib/api.js) so every request carries the authenticated session token.
+ * Connected state is always whatever the backend reports — never fabricated,
+ * never mirrored to localStorage.
  *
- * Backend contract the UI is ready for:
- *   GET  /integrations            -> { data: [{ id, key, status, config, ... }] }
- *   GET  /integrations/:id        -> { data: { id, key, status, config, ... } }
- *   POST /integrations/:id/connect   body { config? }  -> { data: {...} }
- *   PUT  /integrations/:id/configure body { config }   -> { data: {...} }
- *   POST /integrations/:id/disconnect                   -> { data: {...} }
+ * Backend contract (GET /api/v1/integrations, etc.):
+ *   GET  /integrations            -> [{ id, key, status, config, ... }]
+ *   GET  /integrations/:id        -> { id, key, status, config, ... }
+ *   POST /integrations/:id/connect   body { config } -> { ... }
+ *   PUT  /integrations/:id/configure body { config } -> { ... }
+ *   POST /integrations/:id/disconnect                -> { ... }
  *
- * IMPORTANT: Nothing here writes to localStorage. Connected state is always
- * whatever the backend reports. If the backend is unreachable the UI shows the
- * empty state (zero integrations) instead of a fake "Connected" chip.
+ * Gmail (organization-level, Google OAuth, send-only):
+ *   GET    /integrations/gmail/connect -> { authorizationUrl }
+ *   POST   /integrations/gmail/test    -> { to, message }
+ *   DELETE /integrations/gmail         -> { ... }
  */
 
-const API_BASE_URL =
-  typeof window !== "undefined" && window.location.hostname === "localhost"
-    ? "http://localhost:5000/api/v1/integrations"
-    : "/api/v1/integrations";
-
-async function request(path, options = {}) {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json", ...(options.headers ?? {}) },
-    ...options,
-  });
-  if (!res.ok) {
-    throw new Error(`Integration request failed (${res.status})`);
-  }
-  return res.json();
-}
+import { apiRequest, isNetworkError } from "./api";
 
 /**
  * List all integrations and their backend connection state.
- * Returns [] when the backend is unreachable so the page renders a clean
- * empty state — never fake "connected" records.
+ * Network failures (backend unreachable) degrade to [] so the page can render
+ * a clean empty state. Real API errors are rethrown for the page to surface.
  */
 export async function getIntegrations() {
   try {
-    const json = await request("");
-    return json.data ?? [];
-  } catch {
-    return [];
+    const data = await apiRequest("/integrations");
+    return Array.isArray(data) ? data : [];
+  } catch (error) {
+    if (isNetworkError(error)) return [];
+    throw error;
   }
 }
 
 export async function getIntegration(id) {
-  try {
-    const json = await request(`/${id}`);
-    return json.data ?? null;
-  } catch {
-    return null;
-  }
+  const data = await apiRequest(`/integrations/${id}`);
+  return data ?? null;
 }
 
 /**
@@ -60,32 +46,76 @@ export async function getIntegration(id) {
  * so the UI never shows a fabricated success state.
  */
 export async function connectIntegration(id, config = {}) {
-  const json = await request(`/${id}/connect`, {
+  return apiRequest(`/integrations/${id}/connect`, {
     method: "POST",
     body: JSON.stringify({ config }),
   });
-  return json.data ?? json;
 }
 
 /**
  * Push configuration updates for a connected integration to the backend.
  */
 export async function configureIntegration(id, config = {}) {
-  const json = await request(`/${id}/configure`, {
+  return apiRequest(`/integrations/${id}/configure`, {
     method: "PUT",
     body: JSON.stringify({ config }),
   });
-  return json.data ?? json;
 }
 
 /**
  * Ask the backend to disconnect an integration.
  */
 export async function disconnectIntegration(id) {
-  const json = await request(`/${id}/disconnect`, {
+  return apiRequest(`/integrations/${id}/disconnect`, {
     method: "POST",
   });
-  return json.data ?? json;
+}
+
+/**
+ * Start Google OAuth for the organization-level Gmail integration. Resolves
+ * with the Google authorization URL the user must visit. The backend never
+ * considers Gmail connected until the full OAuth flow completes and Google
+ * confirms the account — this only begins that flow.
+ */
+export async function gmailConnect() {
+  try {
+    const data = await apiRequest("/integrations/gmail/connect");
+    return data?.authorizationUrl ?? null;
+  } catch (error) {
+    // 503 = Google OAuth is not configured on the server. Show a friendly,
+    // actionable message instead of exposing credential variable names to
+    // normal users. The technical detail stays in the backend logs.
+    if (error?.status === 503) {
+      const friendly = new Error(
+        "Gmail connection is not available yet. The administrator needs to complete the Google configuration before Gmail can be connected.",
+      );
+      friendly.status = 503;
+      throw friendly;
+    }
+    throw error;
+  }
+}
+
+/**
+ * Ask the backend to send a REAL test email through the connected Gmail
+ * account (Gmail API). Resolves only when Gmail confirms delivery; rejects
+ * with the backend error otherwise.
+ */
+export async function gmailSendTestEmail() {
+  return apiRequest("/integrations/gmail/test", {
+    method: "POST",
+  });
+}
+
+/**
+ * Disconnect the organization's Gmail integration. The backend clears and
+ * revokes the stored credentials. System SMTP email (invitations, password
+ * reset, scheduled reports) is separate and unaffected.
+ */
+export async function gmailDisconnect() {
+  return apiRequest("/integrations/gmail", {
+    method: "DELETE",
+  });
 }
 
 /**
@@ -96,7 +126,13 @@ export async function disconnectIntegration(id) {
 export function getWhatsAppDestination(integration) {
   if (!integration || integration.key !== "whatsapp") return null;
   const config = integration.config ?? {};
-  return config.destinationUrl ?? config.destination ?? config.waLink ?? null;
+  return (
+    config.destinationUrl ??
+    config.destination ??
+    config.waLink ??
+    integration.destinationUrl ??
+    null
+  );
 }
 
 export function isConnected(integration) {

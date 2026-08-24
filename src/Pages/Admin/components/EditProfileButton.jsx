@@ -1,4 +1,4 @@
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate } from "react-router";
 import { Pencil } from "lucide-react";
 import { Button } from "@/Components/ui/button";
 
@@ -8,8 +8,11 @@ export function EditProfileButton({ className }) {
   return (
     <Button
       size="sm"
-      className={className ?? "h-9 text-xs font-semibold rounded-xl gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"}
-      onClick={() => navigate({ to: "/profile/edit" })}
+      className={
+        className ??
+        "h-9 text-xs font-semibold rounded-xl gap-1.5 bg-primary text-primary-foreground hover:bg-primary/90"
+      }
+      onClick={() => navigate("/profile/edit")}
     >
       <Pencil className="h-3.5 w-3.5" /> Edit Profile
     </Button>

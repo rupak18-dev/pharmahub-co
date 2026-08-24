@@ -116,7 +116,8 @@ export default function ReportPreviewTable({
         <div className="space-y-1">
           <p className="text-sm font-semibold text-foreground">Unable to generate report</p>
           <p className="text-xs text-muted-foreground max-w-xs mx-auto">
-            {error.message || "An unexpected error occurred. Please check your configuration and try again."}
+            {error.message ||
+              "An unexpected error occurred. Please check your configuration and try again."}
           </p>
         </div>
         {onRefresh && (
@@ -254,16 +255,10 @@ export default function ReportPreviewTable({
                     key={col.key}
                     className={cn(
                       "px-4 py-2.5 text-xs font-semibold text-foreground",
-                      col.money
-                        ? "text-right font-mono tabular-nums"
-                        : "text-muted-foreground",
+                      col.money ? "text-right font-mono tabular-nums" : "text-muted-foreground",
                     )}
                   >
-                    {col.money
-                      ? fmt(col, totals[col.key] ?? 0)
-                      : ci === 0
-                        ? "Total"
-                        : ""}
+                    {col.money ? fmt(col, totals[col.key] ?? 0) : ci === 0 ? "Total" : ""}
                   </td>
                 ))}
               </tr>

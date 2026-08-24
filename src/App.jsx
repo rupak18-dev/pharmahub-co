@@ -34,6 +34,10 @@ export const router = createBrowserRouter([
         lazy: lazyPage(() => import("@/Pages/Auth/ForgotPasswordPage")),
       },
       {
+        path: "/accept-invitation",
+        lazy: lazyPage(() => import("@/Pages/Auth/AcceptInvitationPage")),
+      },
+      {
         Component: AppLayout,
         children: [
           {
@@ -42,7 +46,7 @@ export const router = createBrowserRouter([
           },
           {
             path: "/medicines",
-            lazy: lazyPage(() => import("@/Pages/Medicines/MedicinesStorePage")),
+            lazy: lazyPage(() => import("@/Pages/Medicines/MedicinesCatalogPage")),
           },
           {
             path: "/medicines/catalog",
@@ -65,6 +69,14 @@ export const router = createBrowserRouter([
             path: "/batches/:batchId",
             lazy: lazyPage(() => import("@/Pages/Batches/BatchDetailPage")),
           },
+          {
+            path: "/batches/:batchId/edit",
+            lazy: lazyPage(() => import("@/Pages/Batches/EditBatchPage")),
+          },
+          {
+            path: "/batches/:batchId/quarantine",
+            lazy: lazyPage(() => import("@/Pages/Batches/QuarantineBatchPage")),
+          },
           { path: "/sales", lazy: lazyPage(() => import("@/Pages/Sales/SalesPage")) },
           { path: "/sales/:saleId", lazy: lazyPage(() => import("@/Pages/Sales/SaleDetailPage")) },
           { path: "/purchases", lazy: lazyPage(() => import("@/Pages/Purchases/PurchasesPage")) },
@@ -73,6 +85,10 @@ export const router = createBrowserRouter([
           { path: "/expiry", lazy: lazyPage(() => import("@/Pages/Expiry/ExpiryPage")) },
           { path: "/audit", lazy: lazyPage(() => import("@/Pages/Audit/AuditPage")) },
           { path: "/reports", lazy: lazyPage(() => import("@/Pages/Reports/ReportsPage")) },
+          {
+            path: "/reports/data",
+            lazy: lazyPage(() => import("@/Pages/Reports/data/ReportDataPage")),
+          },
           { path: "/users", lazy: lazyPage(() => import("@/Pages/Users/UsersPage")) },
           { path: "/ai", lazy: lazyPage(() => import("@/Pages/AI/AiAssistantPage")) },
           {
@@ -80,6 +96,11 @@ export const router = createBrowserRouter([
             lazy: lazyPage(() => import("@/Pages/Notifications/NotificationsPage")),
           },
           { path: "/admin", lazy: lazyPage(() => import("@/Pages/Admin/AdminPage")) },
+          { path: "/profile", lazy: lazyPage(() => import("@/Pages/Profile/ProfilePage")) },
+          {
+            path: "/profile/edit",
+            lazy: lazyPage(() => import("@/Pages/Profile/EditProfilePage")),
+          },
           {
             path: "/integrations",
             lazy: lazyPage(() => import("@/Pages/Integrations/IntegrationsPage")),

@@ -1,4 +1,4 @@
-import { ROLE_CATALOG, getRoleByName, getRoleTone } from "@/lib/roleCatalog";
+import { ROLE_CATALOG, getRoleByName, getRoleTone, getCanonicalRoleMeta } from "@/lib/roleCatalog";
 import { ALL_MODULES } from "@/lib/permissions";
 
 /* Role metadata shared by the Users tab, Invite Staff modal, and the
@@ -27,13 +27,18 @@ export const ROLE_META = Object.fromEntries(
 export function getRoleMeta(role) {
   const found = ROLE_META[role];
   if (found) return found;
+  // Canonical backend roles (Owner, Admin, Cashier, Store Keeper, ...) resolve
+  // through the canonical metadata map; anything else falls back to the
+  // generic custom-role presentation.
+  const canonical = getCanonicalRoleMeta(role);
+  const isKnown = Boolean(canonical.description);
   const fallback = getRoleByName(role);
-  const tone = getRoleTone(fallback.tone);
+  const tone = getRoleTone(isKnown ? canonical.tone : fallback.tone);
   return {
-    icon: fallback.icon,
+    icon: isKnown ? canonical.icon : fallback.icon,
     color: tone.iconColor,
     bg: tone.tileBg,
-    description: fallback.description,
+    description: isKnown ? canonical.description : fallback.description,
     modules: [],
   };
 }
@@ -62,6 +67,9 @@ export function buildStaffAccess(profiles) {
         accessIds: p.accessIds ?? [],
         status: staffStatus(p),
         createdAt: p.createdAt,
+        // Set on pending invitation rows so callers can block account-level
+        // actions (e.g. role changes) until the invitation is accepted.
+        invitationId: p.invitationId ?? null,
       };
     });
 }

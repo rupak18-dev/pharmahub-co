@@ -30,6 +30,14 @@ function apiMiddleware() {
             load = () => import("./api/batches/[id].js");
           } else if (parts[1] === "medicines" && parts.length === 2) {
             load = () => import("./api/medicines.js");
+          } else if (parts[1] === "expiry" && parts.length === 2) {
+            load = () => import("./api/expiry.js");
+          } else if (parts[1] === "expiry" && parts.length === 3) {
+            req.query = {
+              ...Object.fromEntries(url.searchParams),
+              id: decodeURIComponent(parts[2]),
+            };
+            load = () => import("./api/expiry/[id].js");
           } else {
             res.statusCode = 404;
             res.setHeader("Content-Type", "application/json");
@@ -113,13 +121,10 @@ export default defineConfig({
     host: true,
     proxy: {
       "/api/v1": {
-        target: "https://pharmahub-server.onrender.com",
+        target: "http://localhost:5050",
         changeOrigin: true,
-        secure: true,
+        secure: false,
         configure(proxy) {
-          // The browser thinks the request is same-origin (it goes through the
-          // Vite proxy), so strip the Origin header — otherwise the backend's
-          // production CSRF/CORS guard sees a localhost origin and rejects it.
           proxy.on("proxyReq", (proxyReq) => {
             proxyReq.removeHeader("origin");
           });

@@ -11,24 +11,75 @@ import { Badge } from "@/Components/ui/badge";
 import { useState } from "react";
 
 const CATEGORY_COLORS = {
-  Sales: { bg: "bg-blue-50", icon: "text-blue-600", border: "border-blue-200/60", hover: "hover:border-blue-300 hover:bg-blue-50/80" },
-  Purchases: { bg: "bg-purple-50", icon: "text-purple-600", border: "border-purple-200/60", hover: "hover:border-purple-300 hover:bg-purple-50/80" },
-  Inventory: { bg: "bg-teal-50", icon: "text-teal-600", border: "border-teal-200/60", hover: "hover:border-teal-300 hover:bg-teal-50/80" },
-  Medicines: { bg: "bg-sky-50", icon: "text-sky-600", border: "border-sky-200/60", hover: "hover:border-sky-300 hover:bg-sky-50/80" },
-  Customers: { bg: "bg-emerald-50", icon: "text-emerald-600", border: "border-emerald-200/60", hover: "hover:border-emerald-300 hover:bg-emerald-50/80" },
-  Suppliers: { bg: "bg-amber-50", icon: "text-amber-600", border: "border-amber-200/60", hover: "hover:border-amber-300 hover:bg-amber-50/80" },
-  Expiry: { bg: "bg-orange-50", icon: "text-orange-600", border: "border-orange-200/60", hover: "hover:border-orange-300 hover:bg-orange-50/80" },
-  GST: { bg: "bg-green-50", icon: "text-green-600", border: "border-green-200/60", hover: "hover:border-green-300 hover:bg-green-50/80" },
-  Payments: { bg: "bg-cyan-50", icon: "text-cyan-600", border: "border-cyan-200/60", hover: "hover:border-cyan-300 hover:bg-cyan-50/80" },
-  Audit: { bg: "bg-rose-50", icon: "text-rose-600", border: "border-rose-200/60", hover: "hover:border-rose-300 hover:bg-rose-50/80" },
+  Sales: {
+    bg: "bg-blue-50",
+    icon: "text-blue-600",
+    border: "border-blue-200/60",
+    hover: "hover:border-blue-300 hover:bg-blue-50/80",
+  },
+  Purchases: {
+    bg: "bg-purple-50",
+    icon: "text-purple-600",
+    border: "border-purple-200/60",
+    hover: "hover:border-purple-300 hover:bg-purple-50/80",
+  },
+  Inventory: {
+    bg: "bg-teal-50",
+    icon: "text-teal-600",
+    border: "border-teal-200/60",
+    hover: "hover:border-teal-300 hover:bg-teal-50/80",
+  },
+  Medicines: {
+    bg: "bg-sky-50",
+    icon: "text-sky-600",
+    border: "border-sky-200/60",
+    hover: "hover:border-sky-300 hover:bg-sky-50/80",
+  },
+  Customers: {
+    bg: "bg-emerald-50",
+    icon: "text-emerald-600",
+    border: "border-emerald-200/60",
+    hover: "hover:border-emerald-300 hover:bg-emerald-50/80",
+  },
+  Suppliers: {
+    bg: "bg-amber-50",
+    icon: "text-amber-600",
+    border: "border-amber-200/60",
+    hover: "hover:border-amber-300 hover:bg-amber-50/80",
+  },
+  Expiry: {
+    bg: "bg-orange-50",
+    icon: "text-orange-600",
+    border: "border-orange-200/60",
+    hover: "hover:border-orange-300 hover:bg-orange-50/80",
+  },
+  GST: {
+    bg: "bg-green-50",
+    icon: "text-green-600",
+    border: "border-green-200/60",
+    hover: "hover:border-green-300 hover:bg-green-50/80",
+  },
+  Payments: {
+    bg: "bg-cyan-50",
+    icon: "text-cyan-600",
+    border: "border-cyan-200/60",
+    hover: "hover:border-cyan-300 hover:bg-cyan-50/80",
+  },
+  Audit: {
+    bg: "bg-rose-50",
+    icon: "text-rose-600",
+    border: "border-rose-200/60",
+    hover: "hover:border-rose-300 hover:bg-rose-50/80",
+  },
 };
 
 export default function ModulePickerModal({ open, onOpenChange, onSelect }) {
   const [activeCategory, setActiveCategory] = useState("All");
 
-  const filtered = activeCategory === "All"
-    ? REPORT_MODULES
-    : REPORT_MODULES.filter((m) => m.category === activeCategory);
+  const filtered =
+    activeCategory === "All"
+      ? REPORT_MODULES
+      : REPORT_MODULES.filter((m) => m.category === activeCategory);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -36,9 +87,7 @@ export default function ModulePickerModal({ open, onOpenChange, onSelect }) {
         {/* Header */}
         <div className="px-6 pt-6 pb-4 border-b border-border">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold">
-              Choose a Report Module
-            </DialogTitle>
+            <DialogTitle className="text-base font-semibold">Choose a Report Module</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground">
               Select the pharmacy module you want to build a report from.
             </DialogDescription>
@@ -98,9 +147,7 @@ export default function ModulePickerModal({ open, onOpenChange, onSelect }) {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-sm font-semibold text-foreground">
-                        {module.title}
-                      </span>
+                      <span className="text-sm font-semibold text-foreground">{module.title}</span>
                       <Badge
                         variant="outline"
                         className="text-[9px] font-medium px-1 py-0 h-3.5 border-border text-muted-foreground shrink-0"
