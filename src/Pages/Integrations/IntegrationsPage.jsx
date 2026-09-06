@@ -25,6 +25,7 @@ import {
   gmailDisconnect,
   gmailSendTestEmail,
   isConnected,
+  getWhatsAppDestination,
 } from "@/lib/integrationsService";
 import { findIntegration, INTEGRATIONS } from "@/Pages/Admin/components/integrationsCatalog";
 import { ConnectIntegrationDialog } from "@/Pages/Admin/components/ConnectIntegrationDialog";
