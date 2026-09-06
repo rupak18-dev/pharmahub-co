@@ -496,8 +496,6 @@ export default function IntegrationsPage() {
               </div>
             </section>
           </div>
-        ) : connected.length === 0 ? (
-          <EmptyState onClick={() => setAddOpen(true)} disabled={!canEdit} />
         ) : (
           <div className="space-y-8">
             {connected.length > 0 && (
