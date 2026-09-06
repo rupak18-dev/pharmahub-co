@@ -226,3 +226,13 @@
   -moz-appearance: textfield;
 }
 
+/* Shiny wave sweep for skeleton loaders */
+@keyframes ph-shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+

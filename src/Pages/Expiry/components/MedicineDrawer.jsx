@@ -78,6 +78,8 @@ export function MedicineDrawer({
             <img
               src={medicine.imageUrl}
               alt={medicine.name}
+              loading="lazy"
+              decoding="async"
               className="h-20 w-20 shrink-0 rounded-xl border border-border object-cover"
             />
           ) : (

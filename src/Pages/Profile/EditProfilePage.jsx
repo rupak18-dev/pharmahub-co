@@ -180,7 +180,7 @@ export default function EditProfilePage() {
     <div className="w-full pb-20 pt-2">
       <div className="mx-auto w-full max-w-[900px] space-y-6 px-4 sm:px-6">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border/60 pb-5">
+        <div className="flex items-center gap-3 border-b border-border pb-4">
           <Button
             variant="ghost"
             size="icon"

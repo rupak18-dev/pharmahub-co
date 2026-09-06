@@ -382,6 +382,8 @@ export function PurchaseFormModal({
               <img
                 src={resolveAssetUrl(uploadedFile.path)}
                 alt="Purchase document"
+                loading="lazy"
+                decoding="async"
                 className="max-h-40 w-auto rounded-md border border-border object-contain"
               />
               <p className="mt-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">

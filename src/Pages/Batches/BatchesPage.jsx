@@ -39,6 +39,7 @@ import { computeBatchStatus } from "@/lib/stock";
 import { cn } from "@/lib/utils";
 import { exportBatchesCsv, exportBatchesPdf } from "@/lib/batch-export";
 import { EmptyState } from "@/Components/shared/EmptyState";
+import { PageHeader } from "@/Components/shared/PageHeader";
 import { StatusBadge } from "@/Components/shared/StatusBadge";
 import { KpiCard } from "@/Components/shared/KpiCard";
 import { AddBatchSheet } from "@/Components/shared/AddBatchSheet";
@@ -549,40 +550,42 @@ export default function BatchesPage() {
   };
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex justify-between items-center px-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Batches</h1>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 gap-2 text-muted-foreground">
-                <Download className="h-4 w-4" strokeWidth={1.5} />
-                Export
+      <PageHeader
+        title="Batches"
+        actions={
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-2 text-muted-foreground">
+                  <Download className="h-4 w-4" strokeWidth={1.5} />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                  Export {rows.length} batch{rows.length === 1 ? "" : "es"}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleExport(rows, "csv")}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" /> Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport(rows, "pdf")}>
+                  <Download className="mr-2 h-4 w-4" /> Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {has("batches", "create") && (
+              <Button
+                size="sm"
+                onClick={() => setSheetOpen(true)}
+                className="shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30"
+              >
+                <Plus className="mr-1 h-4 w-4" strokeWidth={1.5} /> Add batch
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>
-                Export {rows.length} batch{rows.length === 1 ? "" : "es"}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleExport(rows, "csv")}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> Export as CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport(rows, "pdf")}>
-                <Download className="mr-2 h-4 w-4" /> Export as PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {has("batches", "create") && (
-            <Button
-              size="sm"
-              onClick={() => setSheetOpen(true)}
-              className="shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30"
-            >
-              <Plus className="mr-1 h-4 w-4" strokeWidth={1.5} /> Add batch
-            </Button>
-          )}
-        </div>
-      </div>
+            )}
+          </>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <KpiCard

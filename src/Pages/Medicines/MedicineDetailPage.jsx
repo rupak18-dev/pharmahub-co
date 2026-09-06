@@ -284,6 +284,8 @@ export default function MedicineDetailsPage() {
                       <img
                         src={getImageForMedicine(alt.id, alt.dosageForm)}
                         alt={alt.name}
+                        loading="lazy"
+                        decoding="async"
                         className="w-full h-full object-contain group-hover:scale-110 transition-transform duration-500"
                       />
                     </div>

@@ -926,94 +926,94 @@ export default function MedicinesCatalogPage() {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Title section outside white container */}
-      <div className="flex justify-between items-center px-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
-          {showWishlist ? "Your Wishlist" : "Medicines"}
-        </h1>
-        <div className="flex items-center gap-2">
-          {showWishlist && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-lg gap-1 flex items-center shrink-0 text-xs font-semibold"
-              onClick={() => setShowWishlist(false)}
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to All
-            </Button>
-          )}
-
-          <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
-            <PopoverTrigger asChild>
+      <PageHeader
+        title={showWishlist ? "Your Wishlist" : "Medicines"}
+        actions={
+          <>
+            {showWishlist && (
               <Button
                 size="sm"
                 variant="outline"
-                className="h-9 w-9 p-0 rounded-lg flex items-center justify-center border-border/80 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-sm"
-                title="Store Settings & Quick Actions"
+                className="rounded-lg gap-1 flex items-center shrink-0 text-xs font-semibold"
+                onClick={() => setShowWishlist(false)}
               >
-                <Settings className="h-4 w-4 text-slate-700 hover:rotate-45 transition-transform duration-200" />
+                <ArrowLeft className="h-4 w-4" /> Back to All
               </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              align="end"
-              className="w-56 p-2 rounded-xl shadow-xl border-border/60 bg-white space-y-1 z-50"
-            >
-              <div className="px-2 py-1.5 border-b border-border/40 mb-1">
-                <h4 className="text-xs font-bold text-slate-900">Store Quick Actions</h4>
-                <p className="text-[10px] text-muted-foreground">Manage views & batch actions</p>
-              </div>
+            )}
 
-              {/* Wishlist option */}
-              <button
-                type="button"
-                onClick={() => {
-                  setShowWishlist((prev) => !prev);
-                  setSettingsOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                  showWishlist
-                    ? "bg-red-50 text-red-600 font-bold"
-                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                }`}
+            <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 w-9 p-0 rounded-lg flex items-center justify-center border-border/80 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-sm"
+                  title="Store Settings & Quick Actions"
+                >
+                  <Settings className="h-4 w-4 text-slate-700 hover:rotate-45 transition-transform duration-200" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="w-56 p-2 rounded-xl shadow-xl border-border/60 bg-white space-y-1 z-50"
               >
-                <div className="flex items-center gap-2">
-                  <Heart
-                    className={`h-4 w-4 ${wishlist.length > 0 ? "text-red-500 fill-red-500" : "text-muted-foreground"}`}
-                  />
-                  <span>Wishlist</span>
+                <div className="px-2 py-1.5 border-b border-border/40 mb-1">
+                  <h4 className="text-xs font-bold text-slate-900">Store Quick Actions</h4>
+                  <p className="text-[10px] text-muted-foreground">Manage views & batch actions</p>
                 </div>
-                {wishlist.length > 0 && (
-                  <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-red-100 text-red-600 font-bold">
-                    {wishlist.length}
+
+                {/* Wishlist option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowWishlist((prev) => !prev);
+                    setSettingsOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                    showWishlist
+                      ? "bg-red-50 text-red-600 font-bold"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Heart
+                      className={`h-4 w-4 ${wishlist.length > 0 ? "text-red-500 fill-red-500" : "text-muted-foreground"}`}
+                    />
+                    <span>Wishlist</span>
+                  </div>
+                  {wishlist.length > 0 && (
+                    <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-red-100 text-red-600 font-bold">
+                      {wishlist.length}
+                    </span>
+                  )}
+                </button>
+
+                {/* Select All / Selection Mode option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectionMode(true);
+                    setSelectedMedIds([]);
+                    setSettingsOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                    selectionMode
+                      ? "bg-[#007A87]/10 text-[#007A87] font-bold"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <CheckSquare className="h-4 w-4 text-[#007A87]" />
+                    <span>Select All</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium">
+                    {selectionMode ? "Active" : "Enable"}
                   </span>
-                )}
-              </button>
-
-              {/* Select All / Selection Mode option */}
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectionMode(true);
-                  setSelectedMedIds([]);
-                  setSettingsOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                  selectionMode
-                    ? "bg-[#007A87]/10 text-[#007A87] font-bold"
-                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <CheckSquare className="h-4 w-4 text-[#007A87]" />
-                  <span>Select All</span>
-                </div>
-                <span className="text-[10px] text-muted-foreground font-medium">
-                  {selectionMode ? "Active" : "Enable"}
-                </span>
-              </button>
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
+                </button>
+              </PopoverContent>
+            </Popover>
+          </>
+        }
+      />
 
       {/* Main white container */}
       <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-border/40 flex flex-col flex-1 overflow-hidden">
@@ -1451,6 +1451,8 @@ export default function MedicinesCatalogPage() {
                                     <img
                                       src={getImageForMedicine(m.id, m.dosageForm)}
                                       alt={`${m.name} packaging`}
+                                      loading="lazy"
+                                      decoding="async"
                                       className="w-full h-full object-cover"
                                     />
                                   </div>
@@ -1769,6 +1771,8 @@ export default function MedicinesCatalogPage() {
                             <img
                               src={getImageForMedicine(m.id, m.dosageForm)}
                               alt={`${m.name} packaging`}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                           </div>

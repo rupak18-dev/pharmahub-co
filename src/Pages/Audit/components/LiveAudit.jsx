@@ -480,7 +480,13 @@ export function LiveAudit({
                 >
                   {photo ? (
                     <span className="flex items-center gap-2">
-                      <img src={photo} alt="" className="h-7 w-7 rounded object-cover" />
+                      <img
+                        src={photo}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="h-7 w-7 rounded object-cover"
+                      />
                       <span className="text-success font-medium">Photo added</span>
                     </span>
                   ) : (

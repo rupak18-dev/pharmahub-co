@@ -23,6 +23,7 @@ import { useAuth } from "@/lib/auth";
 import { usePermission } from "@/hooks/usePermission";
 import { applyStockMovement } from "@/lib/stock";
 import { Button } from "@/Components/ui/button";
+import { PageHeader } from "@/Components/shared/PageHeader";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import {
@@ -503,6 +504,14 @@ export default function PurchasesPage() {
   }, [suppliers]);
   return (
     <div className="flex flex-col min-h-[calc(100vh-4rem)] bg-background text-foreground">
+      {/* Page Title */}
+      <div className="px-4 pt-2">
+        <PageHeader
+          title="Purchases"
+          description="Create purchase entries and track goods received bills."
+        />
+      </div>
+
       {/* Top Action Header (No outer container box or outline) */}
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3 px-4 pt-2">
         {/* Left: Tabs */}

@@ -50,6 +50,7 @@ export const constants = {
     "inventory",
     "purchases",
     "sales",
+    "shortbook",
     "expiry",
     "audit",
     "users",

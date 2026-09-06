@@ -341,6 +341,8 @@ export function UploadBillModal({ open, onOpenChange, currency = "₹", onSaved,
                 <img
                   src={previewUrl}
                   alt="Document preview"
+                  loading="lazy"
+                  decoding="async"
                   className="max-h-44 rounded-md object-contain border border-border"
                 />
               ) : (
