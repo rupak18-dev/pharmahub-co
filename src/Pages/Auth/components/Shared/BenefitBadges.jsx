@@ -11,12 +11,12 @@ const badges = [
 
 export function BenefitBadges() {
   return (
-    <div className="mt-auto pt-10 pb-8 z-10 w-full max-w-lg mx-auto">
+    <div className="mt-auto pt-[clamp(0.5rem,1.5dvh,2.5rem)] pb-[clamp(0.25rem,1dvh,2rem)] z-10 w-full max-w-lg mx-auto">
       <motion.p
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.6 }}
-        className="text-sm font-semibold text-center text-primary/80 uppercase tracking-widest mb-6"
+        className="text-sm font-semibold text-center text-primary/80 uppercase tracking-widest mb-[clamp(0.75rem,1.5dvh,1.5rem)]"
       >
         Trusted By
       </motion.p>

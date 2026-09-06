@@ -17,6 +17,7 @@ export function CapsuleLoader({
   stages = [],
   error = null,
   onDone,
+  variant = "bar",
 }) {
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
@@ -141,18 +142,24 @@ export function CapsuleLoader({
           </ul>
         )}
 
-        <div
-          className="h-2.5 w-full overflow-hidden rounded-full bg-muted"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={progress}
-        >
+        {variant === "circular" ? (
+          <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+            <Loader2 className="h-14 w-14 animate-spin text-primary" />
+          </div>
+        ) : (
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-700 to-emerald-500 transition-[width] duration-100 ease-linear"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
+            className="h-2.5 w-full overflow-hidden rounded-full bg-muted"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress}
+          >
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-700 to-emerald-500 transition-[width] duration-100 ease-linear"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
         <div className="text-2xl font-bold tabular-nums text-primary">{progress}%</div>
         {error && <p className="text-sm font-medium text-destructive">{error}</p>}
       </div>

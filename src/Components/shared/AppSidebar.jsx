@@ -71,7 +71,7 @@ const groups = [
       {
         key: "admin",
         title: "Profile",
-        url: "/admin",
+        url: "/profile",
         icon: TbSettings,
         children: [
           {

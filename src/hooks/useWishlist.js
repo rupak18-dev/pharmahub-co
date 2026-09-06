@@ -4,19 +4,27 @@ export function useWishlist() {
     if (typeof window === "undefined") return [];
     try {
       const stored = localStorage.getItem("medicine_wishlist_v2");
-      return stored ? JSON.parse(stored) : [];
+      if (!stored) return [];
+      // Deduplicate on load to fix any stale/corrupt data
+      const parsed = JSON.parse(stored);
+      const deduped = [...new Set(parsed)];
+      if (deduped.length !== parsed.length) {
+        localStorage.setItem("medicine_wishlist_v2", JSON.stringify(deduped));
+      }
+      return deduped;
     } catch {
       return [];
     }
   });
   const toggleWishlist = useCallback((id) => {
     try {
-      const stored = localStorage.getItem("medicine_wishlist_v2");
-      const current = stored ? JSON.parse(stored) : [];
-      const isWishlisted = current.includes(id);
-      const next = isWishlisted ? current.filter((x) => x !== id) : [...current, id];
-      localStorage.setItem("medicine_wishlist_v2", JSON.stringify(next));
-      window.dispatchEvent(new Event("wishlist_updated"));
+      setWishlist((current) => {
+        const isWishlisted = current.includes(id);
+        const next = isWishlisted ? current.filter((x) => x !== id) : [...current, id];
+        localStorage.setItem("medicine_wishlist_v2", JSON.stringify(next));
+        window.dispatchEvent(new Event("wishlist_updated"));
+        return next;
+      });
     } catch (e) {
       console.error("Failed to update wishlist", e);
     }

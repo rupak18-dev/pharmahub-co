@@ -1,5 +1,7 @@
 import { Suspense, useEffect } from "react";
-import { Outlet, isRouteErrorResponse, useMatches, useRouteError } from "react-router";
+import { Outlet, isRouteErrorResponse, useLocation, useMatches, useRouteError } from "react-router";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Toaster } from "@/Components/ui/sonner";
 import { AuthProvider } from "@/lib/auth";
 import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
@@ -16,6 +18,7 @@ function resolveTitle(matches) {
 
 export function AppRoot() {
   const matches = useMatches();
+  const { pathname } = useLocation();
   useEffect(() => {
     document.title = resolveTitle(matches);
   }, [matches]);
@@ -25,6 +28,8 @@ export function AppRoot() {
         <Outlet />
       </Suspense>
       <Toaster richColors position="top-right" />
+      <Analytics />
+      <SpeedInsights route={pathname} />
     </AuthProvider>
   );
 }
@@ -65,7 +70,7 @@ export function AppRootErrorBoundary(props) {
           below.
         </p>
         {error ? (
-          <pre className="mt-4 max-h-48 overflow-auto rounded-md border border-border bg-muted p-3 text-left font-mono text-[11px] text-destructive leading-relaxed whitespace-pre-wrap break-all">
+          <pre className="mt-4 max-h-48 overflow-auto rounded-md border border-border bg-muted p-3 text-left text-[11px] text-destructive leading-relaxed whitespace-pre-wrap break-all">
             {String(error?.stack || error?.message || error)}
           </pre>
         ) : null}
@@ -91,7 +96,7 @@ export function AppRootErrorBoundary(props) {
               } catch {
                 // ignore
               }
-              window.location.href = "/sales";
+              window.location.href = "/dashboard";
             }}
             className="inline-flex items-center justify-center rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20"
           >

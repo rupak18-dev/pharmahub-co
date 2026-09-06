@@ -13,6 +13,7 @@ import {
 import { Button } from "@/Components/ui/button";
 import { Switch } from "@/Components/ui/switch";
 import { Label } from "@/Components/ui/label";
+import { Input } from "@/Components/ui/input";
 import {
   Select,
   SelectContent,
@@ -31,7 +32,7 @@ import {
 import { LOSS_RATIO } from "@/lib/expiry";
 export function ExpiryReports({ rows, currency, onExport, onSaveSchedule }) {
   const [frequency, setFrequency] = useState("weekly");
-  const [email, setEmail] = useState("owner@pharmahub.demo");
+  const [email, setEmail] = useState("");
   const [whatsapp, setWhatsapp] = useState(true);
   const [prefs, setPrefs] = useState({
     near: true,
@@ -183,16 +184,13 @@ export function ExpiryReports({ rows, currency, onExport, onSaveSchedule }) {
             </div>
             <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
               <p className="text-xs font-medium text-muted-foreground">Send to</p>
-              <Select value={email} onValueChange={setEmail}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="owner@pharmahub.demo">owner@pharmahub.demo</SelectItem>
-                  <SelectItem value="manager@pharmahub.demo">manager@pharmahub.demo</SelectItem>
-                  <SelectItem value="inventory@pharmahub.demo">inventory@pharmahub.demo</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input
+                type="email"
+                placeholder="owner@yourpharmacy.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="h-9 bg-background"
+              />
             </div>
             <div className="space-y-2 rounded-lg border border-border bg-muted/30 p-3">
               <p className="text-xs font-medium text-muted-foreground">WhatsApp alerts</p>

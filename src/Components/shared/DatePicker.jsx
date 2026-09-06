@@ -22,7 +22,7 @@ export function DatePicker({
           type="button"
           className="flex h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         >
-          <span className={cn(selected ? "font-mono text-foreground" : "text-muted-foreground")}>
+          <span className={cn(selected ? "text-foreground" : "text-muted-foreground")}>
             {selected ? format(selected, "dd MMM yyyy") : placeholder}
           </span>
           <CalendarDays className="h-4 w-4 shrink-0 text-muted-foreground" />
