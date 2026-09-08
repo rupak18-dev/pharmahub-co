@@ -34,11 +34,7 @@ import {
   MoreHorizontal,
 } from "lucide-react";
 import { Checkbox } from "@/Components/ui/checkbox";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/Components/ui/popover";
+import { Popover, PopoverTrigger, PopoverContent } from "@/Components/ui/popover";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -527,23 +523,42 @@ export default function MedicinesCatalogPage() {
   };
 
   const TEMPLATE_HEADERS = [
-    "Medicine Name", "Brand", "Generic Name", "Salt / Composition",
-    "Strength", "Form", "Pack Size", "Barcode", "GTIN",
-    "HSN Code", "GST Rate", "Drug Schedule", "Rack Location",
-    "Reorder Threshold", "PTR",
+    "Medicine Name",
+    "Brand",
+    "Generic Name",
+    "Salt / Composition",
+    "Strength",
+    "Form",
+    "Pack Size",
+    "Barcode",
+    "GTIN",
+    "HSN Code",
+    "GST Rate",
+    "Drug Schedule",
+    "Rack Location",
+    "Reorder Threshold",
+    "PTR",
   ];
 
   const downloadTemplate = () => {
     const exampleRow = [
-      "Paracetamol 500mg", "Crocin", "Paracetamol", "Paracetamol IP 500mg",
-      "500 mg", "Tablet", "10 Tablets", "PH-ABCD1234", "08901234567890",
-      "3004", "12", "Schedule H", "A-12",
-      "100", "15.50",
+      "Paracetamol 500mg",
+      "Crocin",
+      "Paracetamol",
+      "Paracetamol IP 500mg",
+      "500 mg",
+      "Tablet",
+      "10 Tablets",
+      "PH-ABCD1234",
+      "08901234567890",
+      "3004",
+      "12",
+      "Schedule H",
+      "A-12",
+      "100",
+      "15.50",
     ];
-    const csv = [
-      TEMPLATE_HEADERS.join(","),
-      exampleRow.map((v) => `"${v}"`).join(","),
-    ].join("\n");
+    const csv = [TEMPLATE_HEADERS.join(","), exampleRow.map((v) => `"${v}"`).join(",")].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -564,8 +579,12 @@ export default function MedicinesCatalogPage() {
       let inQuotes = false;
       for (let i = 0; i < line.length; i++) {
         if (line[i] === '"') {
-          if (inQuotes && line[i + 1] === '"') { current += '"'; i++; }
-          else { inQuotes = !inQuotes; }
+          if (inQuotes && line[i + 1] === '"') {
+            current += '"';
+            i++;
+          } else {
+            inQuotes = !inQuotes;
+          }
         } else if (line[i] === "," && !inQuotes) {
           result.push(current.trim());
           current = "";
@@ -633,10 +652,14 @@ export default function MedicinesCatalogPage() {
             }
           }
         });
-        if (!medicine.name || medicine.name.length < 2) { skipped++; return; }
+        if (!medicine.name || medicine.name.length < 2) {
+          skipped++;
+          return;
+        }
         const id = db.uid();
         medicine.id = id;
-        medicine.barcode = medicine.barcode || `PH-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
+        medicine.barcode =
+          medicine.barcode || `PH-${Math.random().toString(36).slice(2, 10).toUpperCase()}`;
         d.medicines.push(medicine);
         if (user) {
           logActivity({
@@ -655,16 +678,19 @@ export default function MedicinesCatalogPage() {
     setImportFile(null);
     setImportPreview(null);
     if (imported > 0)
-      toast.success(`Successfully imported ${imported} medicine${imported > 1 ? "s" : ""}${skipped > 0 ? ` · ${skipped} skipped (missing name)` : ""}.`);
+      toast.success(
+        `Successfully imported ${imported} medicine${imported > 1 ? "s" : ""}${skipped > 0 ? ` · ${skipped} skipped (missing name)` : ""}.`,
+      );
     else
-      toast.error(`No medicines imported. ${skipped} row(s) skipped — "Medicine Name" column was empty or missing.`);
+      toast.error(
+        `No medicines imported. ${skipped} row(s) skipped — "Medicine Name" column was empty or missing.`,
+      );
   };
   const handleExport = async (format) => {
     const columnsToExport = CUSTOMIZABLE_FILTERS.filter((f) => isFieldVisible(f.id));
     const headerRow = columnsToExport.map((c) => c.label);
-    const targetMedicines = selectedMedIds.length > 0
-      ? filtered.filter((m) => selectedMedIds.includes(m.id))
-      : filtered;
+    const targetMedicines =
+      selectedMedIds.length > 0 ? filtered.filter((m) => selectedMedIds.includes(m.id)) : filtered;
     const rows = targetMedicines.map((m) => {
       const meta = stockByMed.get(m.id);
       return columnsToExport.map((col) => {
@@ -735,7 +761,11 @@ export default function MedicinesCatalogPage() {
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      toast.success(selectedMedIds.length > 0 ? `Exported ${targetMedicines.length} selected medicine(s) to CSV!` : "Exported to CSV successfully!");
+      toast.success(
+        selectedMedIds.length > 0
+          ? `Exported ${targetMedicines.length} selected medicine(s) to CSV!`
+          : "Exported to CSV successfully!",
+      );
     } else {
       try {
         const { default: jsPDF } = await import("jspdf");
@@ -754,7 +784,11 @@ export default function MedicinesCatalogPage() {
           headStyles: { fillColor: [0, 122, 135] },
         });
         doc.save(`${fileName}.pdf`);
-        toast.success(selectedMedIds.length > 0 ? `Exported ${targetMedicines.length} selected medicine(s) to PDF!` : "Exported to PDF successfully!");
+        toast.success(
+          selectedMedIds.length > 0
+            ? `Exported ${targetMedicines.length} selected medicine(s) to PDF!`
+            : "Exported to PDF successfully!",
+        );
       } catch (err) {
         console.error("PDF generation failed:", err);
         toast.error("Failed to generate PDF. Please ensure jspdf is installed.");
@@ -892,89 +926,94 @@ export default function MedicinesCatalogPage() {
   return (
     <div className="flex flex-col h-full gap-4">
       {/* Title section outside white container */}
-      <div className="flex justify-between items-center px-1">
-        <h1 className="text-2xl font-bold text-[#007A87]">
-          {showWishlist ? "Your Wishlist" : "Medicines"}
-        </h1>
-        <div className="flex items-center gap-2">
-          {showWishlist && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="rounded-lg gap-1 flex items-center shrink-0 text-xs font-semibold"
-              onClick={() => setShowWishlist(false)}
-            >
-              <ArrowLeft className="h-4 w-4" /> Back to All
-            </Button>
-          )}
-
-          <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
-            <PopoverTrigger asChild>
+      <PageHeader
+        title={showWishlist ? "Your Wishlist" : "Medicines"}
+        actions={
+          <>
+            {showWishlist && (
               <Button
                 size="sm"
                 variant="outline"
-                className="h-9 w-9 p-0 rounded-lg flex items-center justify-center border-border/80 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-sm"
-                title="Store Settings & Quick Actions"
+                className="rounded-lg gap-1 flex items-center shrink-0 text-xs font-semibold"
+                onClick={() => setShowWishlist(false)}
               >
-                <Settings className="h-4 w-4 text-slate-700 hover:rotate-45 transition-transform duration-200" />
+                <ArrowLeft className="h-4 w-4" /> Back to All
               </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-56 p-2 rounded-xl shadow-xl border-border/60 bg-white space-y-1 z-50">
-              <div className="px-2 py-1.5 border-b border-border/40 mb-1">
-                <h4 className="text-xs font-bold text-slate-900">Store Quick Actions</h4>
-                <p className="text-[10px] text-muted-foreground">Manage views & batch actions</p>
-              </div>
+            )}
 
-              {/* Wishlist option */}
-              <button
-                type="button"
-                onClick={() => {
-                  setShowWishlist((prev) => !prev);
-                  setSettingsOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                  showWishlist
-                    ? "bg-red-50 text-red-600 font-bold"
-                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                }`}
+            <Popover open={settingsOpen} onOpenChange={setSettingsOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-9 w-9 p-0 rounded-lg flex items-center justify-center border-border/80 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-sm"
+                  title="Store Settings & Quick Actions"
+                >
+                  <Settings className="h-4 w-4 text-slate-700 hover:rotate-45 transition-transform duration-200" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent
+                align="end"
+                className="w-56 p-2 rounded-xl shadow-xl border-border/60 bg-white space-y-1 z-50"
               >
-                <div className="flex items-center gap-2">
-                  <Heart className={`h-4 w-4 ${wishlist.length > 0 ? "text-red-500 fill-red-500" : "text-muted-foreground"}`} />
-                  <span>Wishlist</span>
+                <div className="px-2 py-1.5 border-b border-border/40 mb-1">
+                  <h4 className="text-xs font-bold text-slate-900">Store Quick Actions</h4>
+                  <p className="text-[10px] text-muted-foreground">Manage views & batch actions</p>
                 </div>
-                {wishlist.length > 0 && (
-                  <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-red-100 text-red-600 font-bold">
-                    {wishlist.length}
+
+                {/* Wishlist option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowWishlist((prev) => !prev);
+                    setSettingsOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                    showWishlist
+                      ? "bg-red-50 text-red-600 font-bold"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <Heart
+                      className={`h-4 w-4 ${wishlist.length > 0 ? "text-red-500 fill-red-500" : "text-muted-foreground"}`}
+                    />
+                    <span>Wishlist</span>
+                  </div>
+                  {wishlist.length > 0 && (
+                    <span className="px-1.5 py-0.5 text-[10px] rounded-full bg-red-100 text-red-600 font-bold">
+                      {wishlist.length}
+                    </span>
+                  )}
+                </button>
+
+                {/* Select All / Selection Mode option */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectionMode(true);
+                    setSelectedMedIds([]);
+                    setSettingsOpen(false);
+                  }}
+                  className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
+                    selectionMode
+                      ? "bg-[#007A87]/10 text-[#007A87] font-bold"
+                      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-2">
+                    <CheckSquare className="h-4 w-4 text-[#007A87]" />
+                    <span>Select All</span>
+                  </div>
+                  <span className="text-[10px] text-muted-foreground font-medium">
+                    {selectionMode ? "Active" : "Enable"}
                   </span>
-                )}
-              </button>
-
-              {/* Select All / Selection Mode option */}
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectionMode(true);
-                  setSelectedMedIds([]);
-                  setSettingsOpen(false);
-                }}
-                className={`w-full flex items-center justify-between px-2.5 py-2 text-xs font-semibold rounded-lg transition-colors cursor-pointer ${
-                  selectionMode
-                    ? "bg-[#007A87]/10 text-[#007A87] font-bold"
-                    : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <CheckSquare className="h-4 w-4 text-[#007A87]" />
-                  <span>Select All</span>
-                </div>
-                <span className="text-[10px] text-muted-foreground font-medium">
-                  {selectionMode ? "Active" : "Enable"}
-                </span>
-              </button>
-            </PopoverContent>
-          </Popover>
-        </div>
-      </div>
+                </button>
+              </PopoverContent>
+            </Popover>
+          </>
+        }
+      />
 
       {/* Main white container */}
       <div className="bg-white rounded-xl shadow-[0_2px_10px_rgba(0,0,0,0.05)] border border-border/40 flex flex-col flex-1 overflow-hidden">
@@ -1114,7 +1153,7 @@ export default function MedicinesCatalogPage() {
                       <Filter className="w-3.5 h-3.5 text-muted-foreground" />
                       Manage Filters
                       {visibleFields.length > 0 && (
-                        <span className="rounded-full bg-[#007A87]/10 px-1.5 py-0.5 font-mono text-[10px] text-[#007A87] font-bold">
+                        <span className="rounded-full bg-[#007A87]/10 px-1.5 py-0.5 text-[10px] text-[#007A87] font-bold">
                           {visibleFields.length}
                         </span>
                       )}
@@ -1159,7 +1198,11 @@ export default function MedicinesCatalogPage() {
                   <Button
                     variant="outline"
                     className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2 w-full sm:w-auto flex-1 sm:flex-initial justify-center"
-                    onClick={() => { setImportFile(null); setImportPreview(null); setIsImportModalOpen(true); }}
+                    onClick={() => {
+                      setImportFile(null);
+                      setImportPreview(null);
+                      setIsImportModalOpen(true);
+                    }}
                   >
                     <Upload className="w-3.5 h-3.5 text-muted-foreground" />
                     Import
@@ -1269,9 +1312,13 @@ export default function MedicinesCatalogPage() {
                                 onCheckedChange={(checked) => {
                                   const pageIds = paginatedData.map((m) => m.id);
                                   if (checked) {
-                                    setSelectedMedIds((prev) => Array.from(new Set([...prev, ...pageIds])));
+                                    setSelectedMedIds((prev) =>
+                                      Array.from(new Set([...prev, ...pageIds])),
+                                    );
                                   } else {
-                                    setSelectedMedIds((prev) => prev.filter((id) => !pageIds.includes(id)));
+                                    setSelectedMedIds((prev) =>
+                                      prev.filter((id) => !pageIds.includes(id)),
+                                    );
                                   }
                                 }}
                                 aria-label="Select all on current page"
@@ -1378,14 +1425,19 @@ export default function MedicinesCatalogPage() {
                               }`}
                             >
                               {selectionMode && (
-                                <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                <td
+                                  className="px-4 py-3 text-center"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
                                   <Checkbox
                                     checked={selectedMedIds.includes(m.id)}
                                     onCheckedChange={(checked) => {
                                       if (checked) {
                                         setSelectedMedIds((prev) => [...prev, m.id]);
                                       } else {
-                                        setSelectedMedIds((prev) => prev.filter((id) => id !== m.id));
+                                        setSelectedMedIds((prev) =>
+                                          prev.filter((id) => id !== m.id),
+                                        );
                                       }
                                     }}
                                     aria-label={`Select ${m.name}`}
@@ -1399,6 +1451,8 @@ export default function MedicinesCatalogPage() {
                                     <img
                                       src={getImageForMedicine(m.id, m.dosageForm)}
                                       alt={`${m.name} packaging`}
+                                      loading="lazy"
+                                      decoding="async"
                                       className="w-full h-full object-cover"
                                     />
                                   </div>
@@ -1409,7 +1463,7 @@ export default function MedicinesCatalogPage() {
                                     >
                                       {m.name}
                                     </Link>
-                                    <span className="text-[10px] font-mono text-muted-foreground block">
+                                    <span className="text-[10px] text-muted-foreground block">
                                       {m.id.slice(0, 8).toUpperCase()}
                                     </span>
                                   </div>
@@ -1472,7 +1526,7 @@ export default function MedicinesCatalogPage() {
 
                               {/* GTIN / Barcode */}
                               {isFieldVisible("barcode") && (
-                                <td className="px-4 py-3 font-mono text-[11px] text-muted-foreground">
+                                <td className="px-4 py-3 text-[11px] text-muted-foreground">
                                   <div>G: {m.gtin || "—"}</div>
                                   <div>B: {m.barcode || "—"}</div>
                                 </td>
@@ -1480,14 +1534,12 @@ export default function MedicinesCatalogPage() {
 
                               {/* Active Batch */}
                               {isFieldVisible("batch") && (
-                                <td className="px-4 py-3 font-mono text-xs">
-                                  {meta?.batchNo || "—"}
-                                </td>
+                                <td className="px-4 py-3 text-xs">{meta?.batchNo || "—"}</td>
                               )}
 
                               {/* MRP */}
                               {isFieldVisible("mrp") && (
-                                <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
+                                <td className="px-4 py-3 text-right font-semibold text-foreground">
                                   {currency}
                                   {meta?.mrp?.toFixed(2) || "0.00"}
                                 </td>
@@ -1495,7 +1547,7 @@ export default function MedicinesCatalogPage() {
 
                               {/* PTR */}
                               {isFieldVisible("ptr") && (
-                                <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                                <td className="px-4 py-3 text-right text-muted-foreground">
                                   {currency}
                                   {m.ptr?.toFixed(2) || "0.00"}
                                 </td>
@@ -1503,7 +1555,7 @@ export default function MedicinesCatalogPage() {
 
                               {/* Purchase */}
                               {isFieldVisible("purchasePrice") && (
-                                <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                                <td className="px-4 py-3 text-right text-muted-foreground">
                                   {currency}
                                   {meta?.pur?.toFixed(2) || "0.00"}
                                 </td>
@@ -1511,7 +1563,7 @@ export default function MedicinesCatalogPage() {
 
                               {/* Selling */}
                               {isFieldVisible("sellingPrice") && (
-                                <td className="px-4 py-3 text-right font-mono font-semibold text-emerald-600">
+                                <td className="px-4 py-3 text-right font-semibold text-emerald-600">
                                   {currency}
                                   {meta?.sell?.toFixed(2) || "0.00"}
                                 </td>
@@ -1519,14 +1571,14 @@ export default function MedicinesCatalogPage() {
 
                               {/* Stock */}
                               {isFieldVisible("currentStock") && (
-                                <td className="px-4 py-3 text-right font-mono font-semibold text-foreground">
+                                <td className="px-4 py-3 text-right font-semibold text-foreground">
                                   {meta?.current} units
                                 </td>
                               )}
 
                               {/* Min Stock */}
                               {isFieldVisible("minStock") && (
-                                <td className="px-4 py-3 text-right font-mono text-muted-foreground">
+                                <td className="px-4 py-3 text-right text-muted-foreground">
                                   {m.reorderThreshold} units
                                 </td>
                               )}
@@ -1555,7 +1607,7 @@ export default function MedicinesCatalogPage() {
 
                               {/* Rack */}
                               {isFieldVisible("rack") && (
-                                <td className="px-4 py-3 text-muted-foreground font-mono">
+                                <td className="px-4 py-3 text-muted-foreground">
                                   {m.rackLocation || "—"}
                                 </td>
                               )}
@@ -1624,7 +1676,10 @@ export default function MedicinesCatalogPage() {
                                       </Link>
                                     </DropdownMenuItem>
                                     {has("medicines", "update") && (
-                                      <DropdownMenuItem onClick={() => openEdit(m)} className="cursor-pointer">
+                                      <DropdownMenuItem
+                                        onClick={() => openEdit(m)}
+                                        className="cursor-pointer"
+                                      >
                                         <Pencil className="mr-2 h-4 w-4 text-slate-500" />
                                         <span>Edit</span>
                                       </DropdownMenuItem>
@@ -1650,8 +1705,6 @@ export default function MedicinesCatalogPage() {
                       </tbody>
                     </table>
                   </div>
-
-
                 </>
               ) : (
                 /* Grid View */
@@ -1690,7 +1743,7 @@ export default function MedicinesCatalogPage() {
                                   aria-label={`Select ${m.name}`}
                                 />
                               )}
-                              <span className="text-[10px] text-muted-foreground font-mono">
+                              <span className="text-[10px] text-muted-foreground">
                                 {m.id.slice(0, 8).toUpperCase()}
                               </span>
                             </div>
@@ -1718,6 +1771,8 @@ export default function MedicinesCatalogPage() {
                             <img
                               src={getImageForMedicine(m.id, m.dosageForm)}
                               alt={`${m.name} packaging`}
+                              loading="lazy"
+                              decoding="async"
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                             />
                           </div>
@@ -1802,7 +1857,10 @@ export default function MedicinesCatalogPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-40 z-50">
                                 {has("medicines", "update") && (
-                                  <DropdownMenuItem onClick={() => openEdit(m)} className="cursor-pointer">
+                                  <DropdownMenuItem
+                                    onClick={() => openEdit(m)}
+                                    className="cursor-pointer"
+                                  >
                                     <Pencil className="mr-2 h-4 w-4 text-slate-500" />
                                     <span>Edit</span>
                                   </DropdownMenuItem>
@@ -1928,13 +1986,19 @@ export default function MedicinesCatalogPage() {
       <AlertDialog open={bulkDeleteDialogOpen} onOpenChange={setBulkDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {selectedMedIds.length} Medicine{selectedMedIds.length > 1 ? "s" : ""}?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete {selectedMedIds.length} Medicine{selectedMedIds.length > 1 ? "s" : ""}?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the {selectedMedIds.length} selected medicine{selectedMedIds.length > 1 ? "s" : ""} from the catalog? This action will permanently remove them and cannot be undone.
+              Are you sure you want to delete the {selectedMedIds.length} selected medicine
+              {selectedMedIds.length > 1 ? "s" : ""} from the catalog? This action will permanently
+              remove them and cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setBulkDeleteDialogOpen(false)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setBulkDeleteDialogOpen(false)}>
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleBulkDelete}
               className="bg-red-600 hover:bg-red-700 text-white"
@@ -1986,14 +2050,24 @@ export default function MedicinesCatalogPage() {
       </Dialog>
 
       {/* IMPORT MODAL */}
-      <Dialog open={isImportModalOpen} onOpenChange={(o) => { setIsImportModalOpen(o); if (!o) { setImportFile(null); setImportPreview(null); } }}>
+      <Dialog
+        open={isImportModalOpen}
+        onOpenChange={(o) => {
+          setIsImportModalOpen(o);
+          if (!o) {
+            setImportFile(null);
+            setImportPreview(null);
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Upload className="h-5 w-5 text-[#007A87]" /> Import Medicines via CSV
             </DialogTitle>
             <DialogDescription>
-              Upload a CSV file with a <strong>Medicine Name</strong> column to bulk-import medicines.
+              Upload a CSV file with a <strong>Medicine Name</strong> column to bulk-import
+              medicines.
             </DialogDescription>
           </DialogHeader>
 
@@ -2002,7 +2076,9 @@ export default function MedicinesCatalogPage() {
             <label
               htmlFor="import-csv-input"
               className={`flex flex-col items-center justify-center w-full h-24 border-2 border-dashed rounded-xl cursor-pointer transition-colors ${
-                importFile ? "border-[#007A87] bg-[#007A87]/5" : "border-border/60 bg-muted/20 hover:border-[#007A87]/60 hover:bg-muted/40"
+                importFile
+                  ? "border-[#007A87] bg-[#007A87]/5"
+                  : "border-border/60 bg-muted/20 hover:border-[#007A87]/60 hover:bg-muted/40"
               }`}
             >
               {importFile ? (
@@ -2010,11 +2086,18 @@ export default function MedicinesCatalogPage() {
                   <FileSpreadsheet className="h-6 w-6 shrink-0" />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm font-semibold truncate">{importFile.name}</p>
-                    <p className="text-xs text-muted-foreground">{(importFile.size / 1024).toFixed(1)} KB</p>
+                    <p className="text-xs text-muted-foreground">
+                      {(importFile.size / 1024).toFixed(1)} KB
+                    </p>
                   </div>
                   <button
                     type="button"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setImportFile(null); setImportPreview(null); }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setImportFile(null);
+                      setImportPreview(null);
+                    }}
                     className="text-muted-foreground hover:text-destructive shrink-0"
                   >
                     <X className="h-4 w-4" />
@@ -2036,82 +2119,97 @@ export default function MedicinesCatalogPage() {
             </label>
 
             {/* Column mapping result */}
-            {importPreview && (() => {
-              const matched = importPreview.mapped.filter((c) => c.field);
-              const unmatched = importPreview.mapped.filter((c) => !c.field);
-              return (
-                <div className="space-y-3">
-                  <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
-                    {importPreview.rows.length} rows detected · {matched.length} columns matched
-                  </div>
-
-                  {/* Matched columns as chips */}
-                  <div className="space-y-1.5">
-                    <p className="text-xs text-muted-foreground font-medium">Will import:</p>
-                    <div className="flex flex-wrap gap-1.5">
-                      {matched.map((col, i) => (
-                        <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-medium">
-                          <CheckCircle2 className="h-3 w-3" /> {col.original}
-                        </span>
-                      ))}
+            {importPreview &&
+              (() => {
+                const matched = importPreview.mapped.filter((c) => c.field);
+                const unmatched = importPreview.mapped.filter((c) => !c.field);
+                return (
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                      {importPreview.rows.length} rows detected · {matched.length} columns matched
                     </div>
-                  </div>
 
-                  {unmatched.length > 0 && (
+                    {/* Matched columns as chips */}
                     <div className="space-y-1.5">
-                      <p className="text-xs text-muted-foreground font-medium">Unrecognized (will be skipped):</p>
+                      <p className="text-xs text-muted-foreground font-medium">Will import:</p>
                       <div className="flex flex-wrap gap-1.5">
-                        {unmatched.map((col, i) => (
-                          <span key={i} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px]">
-                            <AlertCircle className="h-3 w-3" /> {col.original}
+                        {matched.map((col, i) => (
+                          <span
+                            key={i}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-[11px] font-medium"
+                          >
+                            <CheckCircle2 className="h-3 w-3" /> {col.original}
                           </span>
                         ))}
                       </div>
                     </div>
-                  )}
 
-                  {/* Sample data preview — only 5 matched cols, 2 rows */}
-                  {(() => {
-                    const previewCols = importPreview.mapped
-                      .map((m, i) => ({ ...m, idx: i }))
-                      .filter((m) => m.field)
-                      .slice(0, 5);
-                    return importPreview.rows.length > 0 && previewCols.length > 0 ? (
-                      <div className="border border-border/60 rounded-lg overflow-hidden">
-                        <table className="w-full text-xs table-fixed">
-                          <thead className="bg-muted/40 border-b border-border/60">
-                            <tr>
-                              {previewCols.map((col) => (
-                                <th key={col.idx} className="px-2 py-1.5 text-left font-medium text-muted-foreground truncate overflow-hidden">
-                                  {col.original}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-border/40">
-                            {importPreview.rows.slice(0, 2).map((row, ri) => (
-                              <tr key={ri}>
+                    {unmatched.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs text-muted-foreground font-medium">
+                          Unrecognized (will be skipped):
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {unmatched.map((col, i) => (
+                            <span
+                              key={i}
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 text-amber-700 text-[11px]"
+                            >
+                              <AlertCircle className="h-3 w-3" /> {col.original}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sample data preview — only 5 matched cols, 2 rows */}
+                    {(() => {
+                      const previewCols = importPreview.mapped
+                        .map((m, i) => ({ ...m, idx: i }))
+                        .filter((m) => m.field)
+                        .slice(0, 5);
+                      return importPreview.rows.length > 0 && previewCols.length > 0 ? (
+                        <div className="border border-border/60 rounded-lg overflow-hidden">
+                          <table className="w-full text-xs table-fixed">
+                            <thead className="bg-muted/40 border-b border-border/60">
+                              <tr>
                                 {previewCols.map((col) => (
-                                  <td key={col.idx} className="px-2 py-1.5 truncate overflow-hidden text-foreground">
-                                    {row[col.idx] || "—"}
-                                  </td>
+                                  <th
+                                    key={col.idx}
+                                    className="px-2 py-1.5 text-left font-medium text-muted-foreground truncate overflow-hidden"
+                                  >
+                                    {col.original}
+                                  </th>
                                 ))}
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                        {importPreview.rows.length > 2 && (
-                          <div className="px-3 py-1 text-[11px] text-muted-foreground bg-muted/20 border-t border-border/40">
-                            +{importPreview.rows.length - 2} more rows
-                          </div>
-                        )}
-                      </div>
-                    ) : null;
-                  })()}
-                </div>
-              );
-            })()}
+                            </thead>
+                            <tbody className="divide-y divide-border/40">
+                              {importPreview.rows.slice(0, 2).map((row, ri) => (
+                                <tr key={ri}>
+                                  {previewCols.map((col) => (
+                                    <td
+                                      key={col.idx}
+                                      className="px-2 py-1.5 truncate overflow-hidden text-foreground"
+                                    >
+                                      {row[col.idx] || "—"}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                          {importPreview.rows.length > 2 && (
+                            <div className="px-3 py-1 text-[11px] text-muted-foreground bg-muted/20 border-t border-border/40">
+                              +{importPreview.rows.length - 2} more rows
+                            </div>
+                          )}
+                        </div>
+                      ) : null;
+                    })()}
+                  </div>
+                );
+              })()}
           </div>
 
           <DialogFooter className="gap-2">
@@ -2125,9 +2223,17 @@ export default function MedicinesCatalogPage() {
               onClick={handleImportConfirm}
             >
               {isImporting ? (
-                <><span className="animate-spin inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full" /> Importing...</>
+                <>
+                  <span className="animate-spin inline-block w-4 h-4 border-2 border-white/30 border-t-white rounded-full" />{" "}
+                  Importing...
+                </>
               ) : (
-                <><Upload className="h-4 w-4" /> Import {importPreview ? `${importPreview.rows.length} Medicine${importPreview.rows.length !== 1 ? "s" : ""}` : ""}</>
+                <>
+                  <Upload className="h-4 w-4" /> Import{" "}
+                  {importPreview
+                    ? `${importPreview.rows.length} Medicine${importPreview.rows.length !== 1 ? "s" : ""}`
+                    : ""}
+                </>
               )}
             </Button>
           </DialogFooter>
@@ -2267,17 +2373,23 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
               </h4>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="name" className="text-xs font-bold text-slate-700">Medicine Trade Name *</Label>
+              <Label htmlFor="name" className="text-xs font-bold text-slate-700">
+                Medicine Trade Name *
+              </Label>
               <Input id="name" {...register("name")} placeholder="e.g. Crocin 500mg" />
               {errors.name && <p className="text-xs text-destructive">{errors.name.message}</p>}
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="brandName" className="text-xs font-bold text-slate-700">Brand name</Label>
+                <Label htmlFor="brandName" className="text-xs font-bold text-slate-700">
+                  Brand name
+                </Label>
                 <Input id="brandName" {...register("brandName")} placeholder="e.g. Crocin" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="genericName" className="text-xs font-bold text-slate-700">Generic / Salt Name</Label>
+                <Label htmlFor="genericName" className="text-xs font-bold text-slate-700">
+                  Generic / Salt Name
+                </Label>
                 <Input
                   id="genericName"
                   {...register("genericName")}
@@ -2286,7 +2398,9 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="saltComposition" className="text-xs font-bold text-slate-700">Full Salt Composition Details</Label>
+              <Label htmlFor="saltComposition" className="text-xs font-bold text-slate-700">
+                Full Salt Composition Details
+              </Label>
               <Input
                 id="saltComposition"
                 {...register("saltComposition")}
@@ -2305,11 +2419,15 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
             </div>
             <div className="grid gap-4 sm:grid-cols-3">
               <div className="space-y-2">
-                <Label htmlFor="strength" className="text-xs font-bold text-slate-700">Strength</Label>
+                <Label htmlFor="strength" className="text-xs font-bold text-slate-700">
+                  Strength
+                </Label>
                 <Input id="strength" {...register("strength")} placeholder="e.g. 500 mg" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="dosageForm" className="text-xs font-bold text-slate-700">Dosage Form</Label>
+                <Label htmlFor="dosageForm" className="text-xs font-bold text-slate-700">
+                  Dosage Form
+                </Label>
                 <Input
                   id="dosageForm"
                   {...register("dosageForm")}
@@ -2317,7 +2435,9 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="packSize" className="text-xs font-bold text-slate-700">Pack Size</Label>
+                <Label htmlFor="packSize" className="text-xs font-bold text-slate-700">
+                  Pack Size
+                </Label>
                 <Input id="packSize" {...register("packSize")} placeholder="e.g. 10 Tablets" />
               </div>
             </div>
@@ -2389,41 +2509,57 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="ptr" className="text-xs font-bold text-slate-700">PTR ({settings.currency})</Label>
+                <Label htmlFor="ptr" className="text-xs font-bold text-slate-700">
+                  PTR ({settings.currency})
+                </Label>
                 <Input id="ptr" type="number" step="0.01" {...register("ptr")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="rackLocation" className="text-xs font-bold text-slate-700">Rack Location</Label>
+                <Label htmlFor="rackLocation" className="text-xs font-bold text-slate-700">
+                  Rack Location
+                </Label>
                 <Input id="rackLocation" {...register("rackLocation")} placeholder="e.g. A-12" />
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-4">
               <div className="space-y-2">
-                <Label htmlFor="hsnCode" className="text-xs font-bold text-slate-700">HSN Code</Label>
+                <Label htmlFor="hsnCode" className="text-xs font-bold text-slate-700">
+                  HSN Code
+                </Label>
                 <Input id="hsnCode" {...register("hsnCode")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="gstRate" className="text-xs font-bold text-slate-700">GST %</Label>
+                <Label htmlFor="gstRate" className="text-xs font-bold text-slate-700">
+                  GST %
+                </Label>
                 <Input id="gstRate" type="number" step="0.5" {...register("gstRate")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="reorderThreshold" className="text-xs font-bold text-slate-700">Reorder Min</Label>
+                <Label htmlFor="reorderThreshold" className="text-xs font-bold text-slate-700">
+                  Reorder Min
+                </Label>
                 <Input id="reorderThreshold" type="number" {...register("reorderThreshold")} />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="maxStockLevel" className="text-xs font-bold text-slate-700">Max Stock</Label>
+                <Label htmlFor="maxStockLevel" className="text-xs font-bold text-slate-700">
+                  Max Stock
+                </Label>
                 <Input id="maxStockLevel" type="number" {...register("maxStockLevel")} />
               </div>
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="gtin" className="text-xs font-bold text-slate-700">GTIN (Global Trade Number)</Label>
+                <Label htmlFor="gtin" className="text-xs font-bold text-slate-700">
+                  GTIN (Global Trade Number)
+                </Label>
                 <Input id="gtin" {...register("gtin")} placeholder="e.g. 08901234567890" />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="barcode" className="text-xs font-bold text-slate-700">Barcode / SKU</Label>
+                <Label htmlFor="barcode" className="text-xs font-bold text-slate-700">
+                  Barcode / SKU
+                </Label>
                 <Input
                   id="barcode"
                   placeholder="Leave empty for auto-generate"
@@ -2433,7 +2569,9 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="storageRequirements" className="text-xs font-bold text-slate-700">Storage requirements</Label>
+              <Label htmlFor="storageRequirements" className="text-xs font-bold text-slate-700">
+                Storage requirements
+              </Label>
               <Textarea
                 id="storageRequirements"
                 rows={2}
@@ -2452,7 +2590,9 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
               </h4>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="dosageInfo" className="text-xs font-bold text-slate-700">Standard Dosage Information</Label>
+              <Label htmlFor="dosageInfo" className="text-xs font-bold text-slate-700">
+                Standard Dosage Information
+              </Label>
               <Textarea
                 id="dosageInfo"
                 rows={2}
@@ -2461,7 +2601,9 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="usageInstructions" className="text-xs font-bold text-slate-700">Usage Instructions</Label>
+              <Label htmlFor="usageInstructions" className="text-xs font-bold text-slate-700">
+                Usage Instructions
+              </Label>
               <Textarea
                 id="usageInstructions"
                 rows={2}
@@ -2470,7 +2612,9 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contraindications" className="text-xs font-bold text-slate-700">Contraindications</Label>
+              <Label htmlFor="contraindications" className="text-xs font-bold text-slate-700">
+                Contraindications
+              </Label>
               <Textarea
                 id="contraindications"
                 rows={2}
@@ -2479,7 +2623,9 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sideEffects" className="text-xs font-bold text-slate-700">Side Effects</Label>
+              <Label htmlFor="sideEffects" className="text-xs font-bold text-slate-700">
+                Side Effects
+              </Label>
               <Textarea
                 id="sideEffects"
                 rows={2}

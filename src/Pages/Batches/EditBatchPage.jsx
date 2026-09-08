@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { apiRequest } from "@/lib/api";
 import { BATCH_LOCATIONS } from "@/lib/batch-schema";
 import { PageHeader } from "@/Components/shared/PageHeader";
+import { DetailSkeleton } from "@/Components/shared/PageSkeleton";
 import { EmptyState } from "@/Components/shared/EmptyState";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -105,11 +106,7 @@ export default function EditBatchPage() {
   }, [batchId, reset]);
 
   if (loading && !batch) {
-    return (
-      <div className="space-y-6">
-        <PageHeader title="Loading batch…" />
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!batch) {
@@ -186,7 +183,7 @@ export default function EditBatchPage() {
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                 Batch number
               </div>
-              <div className="mt-1 font-mono text-sm text-foreground">{batch.batchNumber}</div>
+              <div className="mt-1 text-sm text-foreground">{batch.batchNumber}</div>
             </div>
           </div>
         </div>
@@ -313,7 +310,7 @@ export default function EditBatchPage() {
                 type="number"
                 min={0}
                 step={1}
-                className="font-mono h-11 text-base sm:text-sm"
+                className="h-11 text-base sm:text-sm"
                 {...register("quantityOnHand")}
               />
               <FieldError error={errors.quantityOnHand} />

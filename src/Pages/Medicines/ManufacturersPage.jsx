@@ -136,7 +136,7 @@ export default function ManufacturersPage() {
                 <tr key={m.id} className="hover:bg-muted/30">
                   <td className="px-4 py-3 font-medium">{m.name}</td>
                   <td className="px-4 py-3 text-muted-foreground">{m.contactInfo || "—"}</td>
-                  <td className="px-4 py-3 text-right font-mono">
+                  <td className="px-4 py-3 text-right">
                     {meds.filter((x) => x.manufacturerId === m.id).length}
                   </td>
                   <td className="px-4 py-3 text-right">

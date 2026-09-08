@@ -145,13 +145,11 @@ export function RoleDetailModal({ role, open, onClose, onSaved }) {
                             </Avatar>
                             <div>
                               <div className="font-semibold text-foreground">{u.name}</div>
-                              <div className="font-mono text-muted-foreground text-[11px]">
-                                {u.email}
-                              </div>
+                              <div className="text-muted-foreground text-[11px]">{u.email}</div>
                             </div>
                           </div>
                           <div className="flex items-center gap-4 text-muted-foreground">
-                            <span className="font-mono text-[11px]">
+                            <span className="text-[11px]">
                               {u.createdAt && dayjs(u.createdAt).isValid()
                                 ? `Joined ${dayjs(u.createdAt).format("DD MMM YYYY")}`
                                 : ""}

@@ -8,6 +8,7 @@ import { ArrowLeft, RotateCcw, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api";
 import { PageHeader } from "@/Components/shared/PageHeader";
+import { DetailSkeleton } from "@/Components/shared/PageSkeleton";
 import { EmptyState } from "@/Components/shared/EmptyState";
 import { StatusBadge } from "@/Components/shared/StatusBadge";
 import { computeBatchStatus } from "@/lib/stock";
@@ -79,11 +80,7 @@ export default function QuarantineBatchPage() {
   }, [batchId]);
 
   if (loading && !batch) {
-    return (
-      <div className="space-y-6">
-        <PageHeader title="Loading batch…" />
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!batch) {

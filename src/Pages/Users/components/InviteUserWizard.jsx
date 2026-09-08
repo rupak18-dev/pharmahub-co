@@ -180,7 +180,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
                 Provision a new user account, assign security roles, and customize access policies.
               </DialogDescription>
             </div>
-            <span className="text-xs font-mono font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
+            <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
               Step {step} of 5
             </span>
           </div>
@@ -325,7 +325,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
               <span className="text-muted-foreground">
                 Click module cards to enable or disable navigation access for this user.
               </span>
-              <span className="font-mono font-medium text-foreground">
+              <span className="font-medium text-foreground">
                 {selectedModules.length} of 13 Selected
               </span>
             </div>
@@ -388,7 +388,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
                       <h4 className="font-semibold text-xs text-foreground">
                         {mod.label} Permissions
                       </h4>
-                      <span className="text-[11px] font-mono text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         Module Key: {mod.key}
                       </span>
                     </div>
@@ -444,7 +444,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Email Address:</span>
-                  <div className="font-mono text-foreground">{email}</div>
+                  <div className="text-foreground">{email}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Assigned Role:</span>
@@ -457,7 +457,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
                 {phone && (
                   <div>
                     <span className="text-muted-foreground">Phone:</span>
-                    <div className="font-mono text-foreground">{phone}</div>
+                    <div className="text-foreground">{phone}</div>
                   </div>
                 )}
               </div>
@@ -467,7 +467,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
             <div className="rounded-xl border border-border bg-card p-4 space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <h4 className="font-semibold text-sm text-foreground">Configured Access Scope</h4>
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {selectedModules.length} Active Modules
                 </span>
               </div>

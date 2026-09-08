@@ -229,7 +229,7 @@ export function AccessPolicyBuilder({ role, matrix, onMatrixChange, onSaved }) {
                     <div className="flex items-center gap-1.5 shrink-0 ml-2">
                       {hasView ? (
                         <span
-                          className={`rounded-full px-2 py-0.5 text-[10px] font-mono font-semibold ${
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                             isSelected
                               ? "bg-primary/10 text-primary"
                               : "bg-muted text-muted-foreground"
@@ -239,7 +239,7 @@ export function AccessPolicyBuilder({ role, matrix, onMatrixChange, onSaved }) {
                         </span>
                       ) : (
                         <span
-                          className={`rounded-full px-1.5 py-0.5 text-[10px] font-mono ${
+                          className={`rounded-full px-1.5 py-0.5 text-[10px] ${
                             isSelected
                               ? "bg-primary/10 text-primary/70"
                               : "bg-muted text-muted-foreground"
@@ -356,7 +356,7 @@ export function AccessPolicyBuilder({ role, matrix, onMatrixChange, onSaved }) {
                 <strong className="text-muted-foreground font-medium">Hidden from User</strong>
               )}
             </span>
-            <span className="font-mono text-[11px] text-muted-foreground">
+            <span className="text-[11px] text-muted-foreground">
               {getModuleActiveCount(activeModuleKey)} of 6 actions active
             </span>
           </div>

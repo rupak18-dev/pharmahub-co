@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useDb } from "@/hooks/useDb";
 import { apiRequest } from "@/lib/api";
 import { PageHeader } from "@/Components/shared/PageHeader";
+import { DetailSkeleton } from "@/Components/shared/PageSkeleton";
 import { StatusBadge } from "@/Components/shared/StatusBadge";
 import { EmptyState } from "@/Components/shared/EmptyState";
 import { computeBatchStatus } from "@/lib/stock";
@@ -29,7 +30,7 @@ function InfoTile({ label, value }) {
   return (
     <div className="rounded-lg border border-border bg-card p-3">
       <div className="text-[11px] uppercase tracking-wide text-muted-foreground">{label}</div>
-      <div className="mt-1 font-mono text-sm tabular-nums text-foreground">{value}</div>
+      <div className="mt-1 text-sm tabular-nums text-foreground">{value}</div>
     </div>
   );
 }
@@ -72,11 +73,7 @@ export default function BatchDetailPage() {
   }, [batchId]);
 
   if (loading && !batch) {
-    return (
-      <div className="space-y-6">
-        <PageHeader title="Loading batch…" />
-      </div>
-    );
+    return <DetailSkeleton />;
   }
 
   if (!batch) {

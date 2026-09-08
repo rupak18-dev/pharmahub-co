@@ -100,7 +100,7 @@ export function ExpiryLedgers({ writeOffs, creditNotes, currency, onMarkReceived
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <p className="text-xs text-muted-foreground">Total written off</p>
-          <p className="mt-1 font-mono text-xl font-semibold">
+          <p className="mt-1 text-xl font-semibold">
             {currency}
             {totals.wo.costValue.toLocaleString()}
           </p>
@@ -108,7 +108,7 @@ export function ExpiryLedgers({ writeOffs, creditNotes, currency, onMarkReceived
         </div>
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <p className="text-xs text-muted-foreground">GST adjustment</p>
-          <p className="mt-1 font-mono text-xl font-semibold">
+          <p className="mt-1 text-xl font-semibold">
             {currency}
             {totals.wo.gstAmount.toLocaleString()}
           </p>
@@ -116,7 +116,7 @@ export function ExpiryLedgers({ writeOffs, creditNotes, currency, onMarkReceived
         </div>
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <p className="text-xs text-muted-foreground">Credit notes expected</p>
-          <p className="mt-1 font-mono text-xl font-semibold text-warning-foreground">
+          <p className="mt-1 text-xl font-semibold text-warning-foreground">
             {currency}
             {totals.pending.toLocaleString()}
           </p>
@@ -124,7 +124,7 @@ export function ExpiryLedgers({ writeOffs, creditNotes, currency, onMarkReceived
         </div>
         <div className="rounded-xl border border-border bg-card p-4 shadow-sm">
           <p className="text-xs text-muted-foreground">Recovered</p>
-          <p className="mt-1 font-mono text-xl font-semibold text-success">
+          <p className="mt-1 text-xl font-semibold text-success">
             {currency}
             {(totals.received + totals.reconciled).toLocaleString()}
           </p>
@@ -183,19 +183,17 @@ export function ExpiryLedgers({ writeOffs, creditNotes, currency, onMarkReceived
                       {format(new Date(w.createdAt), "d MMM, HH:mm")}
                     </TableCell>
                     <TableCell className="font-medium">{w.medicineName}</TableCell>
-                    <TableCell className="hidden font-mono text-xs md:table-cell">
-                      {w.batchNumber}
-                    </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">{w.units}</TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
+                    <TableCell className="hidden text-xs md:table-cell">{w.batchNumber}</TableCell>
+                    <TableCell className="text-right tabular-nums">{w.units}</TableCell>
+                    <TableCell className="text-right tabular-nums">
                       {currency}
                       {w.costValue.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums text-destructive">
+                    <TableCell className="text-right tabular-nums text-destructive">
                       {currency}
                       {w.gstAmount.toLocaleString()} ({w.gstRate}%)
                     </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums font-semibold">
+                    <TableCell className="text-right tabular-nums font-semibold">
                       {currency}
                       {w.total.toLocaleString()}
                     </TableCell>
@@ -262,11 +260,9 @@ export function ExpiryLedgers({ writeOffs, creditNotes, currency, onMarkReceived
                     <TableCell className="hidden md:table-cell">{c.supplierName}</TableCell>
                     <TableCell className="font-medium">
                       {c.medicineName}
-                      <span className="ml-1 font-mono text-xs text-muted-foreground">
-                        {c.batchNumber}
-                      </span>
+                      <span className="ml-1 text-xs text-muted-foreground">{c.batchNumber}</span>
                     </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
+                    <TableCell className="text-right tabular-nums">
                       {currency}
                       {c.value.toLocaleString()}
                     </TableCell>
@@ -278,7 +274,7 @@ export function ExpiryLedgers({ writeOffs, creditNotes, currency, onMarkReceived
                         className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${CN_STYLES[c.status]}`}
                       >
                         {c.status}
-                        {c.creditNoteNo && <span className="font-mono">· {c.creditNoteNo}</span>}
+                        {c.creditNoteNo && <span>· {c.creditNoteNo}</span>}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">

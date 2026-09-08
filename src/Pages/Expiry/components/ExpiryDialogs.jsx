@@ -43,7 +43,7 @@ export function ReturnDialog({ row, open, onOpenChange, onConfirm, currency, sup
             <RotateCcw className="h-4 w-4 text-info" /> Return to supplier
           </DialogTitle>
           <DialogDescription>
-            {row.medicineName} · Batch <span className="font-mono">{row.batchNumber}</span>
+            {row.medicineName} · Batch <span>{row.batchNumber}</span>
           </DialogDescription>
         </DialogHeader>
 
@@ -254,7 +254,7 @@ export function TransferDialog({ row, open, onOpenChange, onConfirm, currency })
             <ArrowRightLeft className="h-4 w-4 text-primary" /> Transfer to branch
           </DialogTitle>
           <DialogDescription>
-            {row.medicineName} · Batch <span className="font-mono">{row.batchNumber}</span>
+            {row.medicineName} · Batch <span>{row.batchNumber}</span>
           </DialogDescription>
         </DialogHeader>
 

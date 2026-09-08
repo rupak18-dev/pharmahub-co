@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Download, Loader2, Layers, Printer } from "lucide-react";
+import { Download, Layers, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { batchGroupQrDataUrl, batchQrDataUrl } from "@/lib/batch-export";
 import { printHtml } from "@/lib/print";
@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/Components/ui/dialog";
 import { Button } from "@/Components/ui/button";
+import { Skeleton } from "@/Components/ui/skeleton";
 
 const labelStyle = {
   border: "1px solid #e2e8f0",
@@ -187,8 +188,16 @@ export default function BatchQrSheet({ open, onOpenChange, items }) {
         </DialogHeader>
 
         {generating ? (
-          <div className="grid place-items-center py-16">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+          <div className="grid grid-cols-1 gap-3 py-4 sm:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="flex items-center gap-3 rounded-lg border border-border p-3">
+                <Skeleton className="h-16 w-16 rounded-md" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3 w-24" />
+                  <Skeleton className="h-3 w-16" />
+                </div>
+              </div>
+            ))}
           </div>
         ) : (
           <div className="max-h-[58vh] space-y-4 overflow-y-auto pr-1">
@@ -210,7 +219,7 @@ export default function BatchQrSheet({ open, onOpenChange, items }) {
                     {normalized.map(({ batch }) => (
                       <span
                         key={batch.id}
-                        className="rounded bg-card px-1.5 py-0.5 font-mono text-[10px] text-foreground"
+                        className="rounded bg-card px-1.5 py-0.5 text-[10px] text-foreground"
                       >
                         {batch.batchNumber}
                       </span>
@@ -240,7 +249,7 @@ export default function BatchQrSheet({ open, onOpenChange, items }) {
                       </div>
                     )}
                     <div className="min-w-0">
-                      <div className="font-mono text-sm font-bold text-foreground">
+                      <div className="text-sm font-bold text-foreground">
                         {item.batch.batchNumber}
                       </div>
                       <div className="mt-0.5 truncate text-xs text-foreground">

@@ -10,6 +10,7 @@ import { downloadXls } from "@/lib/xls";
 import { printHtml } from "@/lib/print";
 import { Button } from "@/Components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/Components/ui/tabs";
+import { PageHeader } from "@/Components/shared/PageHeader";
 import { TimeFilter } from "@/Pages/Expiry/components/TimeFilter";
 import { NotificationsPopover } from "@/Pages/Expiry/components/NotificationsPopover";
 import { ExpiryOverview } from "@/Pages/Expiry/components/ExpiryOverview";
@@ -83,15 +84,18 @@ export default function ExpiryPage() {
   const [focusTableToken, setFocusTableToken] = useState(0);
 
   // ── MongoDB API (used when MONGODB_URI is configured) ────────────────────
-  const apiFilters = useMemo(() => ({
-    window: window.kind === "preset" ? window.preset : undefined,
-    from: window.kind === "custom" ? window.from : undefined,
-    to: window.kind === "custom" ? window.to : undefined,
-    status,
-    category,
-    manufacturer,
-    search: query,
-  }), [window, status, category, manufacturer, query]);
+  const apiFilters = useMemo(
+    () => ({
+      window: window.kind === "preset" ? window.preset : undefined,
+      from: window.kind === "custom" ? window.from : undefined,
+      to: window.kind === "custom" ? window.to : undefined,
+      status,
+      category,
+      manufacturer,
+      search: query,
+    }),
+    [window, status, category, manufacturer, query],
+  );
 
   const {
     rows: apiRows,
@@ -147,10 +151,17 @@ export default function ExpiryPage() {
           } else {
             l = l.filter((r) => matchesStatusFilter(r, status));
           }
-          if (category !== "all") l = l.filter((r) => medById.get(r.batch.medicineId)?.categoryId === category);
-          if (manufacturer !== "all") l = l.filter((r) => medById.get(r.batch.medicineId)?.manufacturerId === manufacturer);
+          if (category !== "all")
+            l = l.filter((r) => medById.get(r.batch.medicineId)?.categoryId === category);
+          if (manufacturer !== "all")
+            l = l.filter((r) => medById.get(r.batch.medicineId)?.manufacturerId === manufacturer);
           const q = query.trim().toLowerCase();
-          if (q) l = l.filter((r) => [r.medicineName, r.salt, r.batchNumber, r.manufacturer, r.supplier].some((s) => s && s.toLowerCase().includes(q)));
+          if (q)
+            l = l.filter((r) =>
+              [r.medicineName, r.salt, r.batchNumber, r.manufacturer, r.supplier].some(
+                (s) => s && s.toLowerCase().includes(q),
+              ),
+            );
           return l;
         })();
 
@@ -168,7 +179,21 @@ export default function ExpiryPage() {
       });
     }
     return list;
-  }, [usingApi, apiRows, mockRows, status, window, category, manufacturer, branch, shelf, query, sort, medById, now]);
+  }, [
+    usingApi,
+    apiRows,
+    mockRows,
+    status,
+    window,
+    category,
+    manufacturer,
+    branch,
+    shelf,
+    query,
+    sort,
+    medById,
+    now,
+  ]);
   const shelves = useMemo(
     () =>
       Array.from(new Set(rows.map((r) => r.shelf).filter(Boolean))).sort((a, b) =>
@@ -260,9 +285,20 @@ export default function ExpiryPage() {
       });
     });
     // Also persist to MongoDB
-    returnExpiredBatch({ batchId: row.batch.id, qty, reason: "Returned to supplier (expiry management)", creditNoteNo, userId: u.id })
-      .then(() => { console.log("[ExpiryPage] MongoDB return saved ✓"); refreshApi(); })
-      .catch((e) => console.warn("[ExpiryPage] MongoDB return failed (mock-db still updated):", e.message));
+    returnExpiredBatch({
+      batchId: row.batch.id,
+      qty,
+      reason: "Returned to supplier (expiry management)",
+      creditNoteNo,
+      userId: u.id,
+    })
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB return saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB return failed (mock-db still updated):", e.message),
+      );
     setSelected((s) => {
       const n = new Set(s);
       n.delete(row.batch.id);
@@ -289,8 +325,13 @@ export default function ExpiryPage() {
     });
     // Persist to MongoDB
     applyExpiryDiscount({ batchId: row.batch.id, discountPct: pct, userId: u.id })
-      .then(() => { console.log("[ExpiryPage] MongoDB discount saved ✓"); refreshApi(); })
-      .catch((e) => console.warn("[ExpiryPage] MongoDB discount failed (mock-db still updated):", e.message));
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB discount saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB discount failed (mock-db still updated):", e.message),
+      );
     toast.success(`${pct}% discount will auto-apply at POS for ${row.medicineName}`);
   };
   const clearDiscount = (row) => {
@@ -397,8 +438,13 @@ export default function ExpiryPage() {
     });
     // Persist to MongoDB
     transferExpiredBatch({ batchId: row.batch.id, qty, targetBranch: branch, userId: u.id })
-      .then(() => { console.log("[ExpiryPage] MongoDB transfer saved ✓"); refreshApi(); })
-      .catch((e) => console.warn("[ExpiryPage] MongoDB transfer failed (mock-db still updated):", e.message));
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB transfer saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB transfer failed (mock-db still updated):", e.message),
+      );
     toast.success(`${qty} units transferred to ${branch}`);
   };
   const writeOff = (u, row) => {
@@ -443,9 +489,19 @@ export default function ExpiryPage() {
     });
     writeOff(u, row);
     // Persist to MongoDB
-    disposeExpiredBatch({ batchId: row.batch.id, qty: row.quantity, reason: "Expired — disposed via expiry management", userId: u.id })
-      .then(() => { console.log("[ExpiryPage] MongoDB dispose saved ✓"); refreshApi(); })
-      .catch((e) => console.warn("[ExpiryPage] MongoDB dispose failed (mock-db still updated):", e.message));
+    disposeExpiredBatch({
+      batchId: row.batch.id,
+      qty: row.quantity,
+      reason: "Expired — disposed via expiry management",
+      userId: u.id,
+    })
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB dispose saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB dispose failed (mock-db still updated):", e.message),
+      );
     setSelected((s) => {
       const n = new Set(s);
       n.delete(row.batch.id);
@@ -717,55 +773,48 @@ export default function ExpiryPage() {
   };
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-6 overflow-x-hidden">
-      <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-xs md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl xl:text-4xl">
-              Medicine Expiry
-            </h1>
-            <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
+      <PageHeader
+        title={
+          <>
+            Medicine Expiry{" "}
+            <span className="inline-flex translate-y-[-2px] items-center rounded-full bg-destructive/10 px-2.5 py-0.5 align-middle text-xs font-semibold text-destructive">
               {rows.filter((r) => r.days <= 7).length} medicines require attention
             </span>
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Track medicines nearing expiry, reduce losses, and recover eligible stock.
-          </p>
-        </div>
-
-        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
-          <Button
-            size="sm"
-            onClick={() => {
-              setView("inventory");
-              setStatus("return");
-            }}
-            className="h-8 min-h-[44px] flex-1 cursor-pointer text-xs font-semibold shadow-xs sm:min-h-[36px] sm:flex-none"
-          >
-            Start Recovery
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setView("overview");
-              setFocusTableToken((t) => t + 1);
-            }}
-            className="h-8 min-h-[44px] flex-1 cursor-pointer text-xs font-semibold shadow-xs sm:min-h-[36px] sm:flex-none"
-          >
-            Review Medicines
-          </Button>
-
-          <NotificationsPopover
-            notifications={notifications}
-            readIds={readIds}
-            onMarkRead={markRead}
-            onMarkAllRead={markAllRead}
-            onJump={jumpToBatch}
-          />
-          <TimeFilter value={window} onChange={setWindow} />
-        </div>
-      </div>
+          </>
+        }
+        description="Track medicines nearing expiry, reduce losses, and recover eligible stock."
+        actions={
+          <>
+            <Button
+              size="sm"
+              onClick={() => {
+                setView("inventory");
+                setStatus("return");
+              }}
+            >
+              Start Recovery
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setView("overview");
+                setFocusTableToken((t) => t + 1);
+              }}
+            >
+              Review Medicines
+            </Button>
+            <NotificationsPopover
+              notifications={notifications}
+              readIds={readIds}
+              onMarkRead={markRead}
+              onMarkAllRead={markAllRead}
+              onJump={jumpToBatch}
+            />
+            <TimeFilter value={window} onChange={setWindow} />
+          </>
+        }
+      />
 
       <Tabs value={view} onValueChange={(v) => setView(v)}>
         <TabsList className="grid w-full grid-cols-4 sm:inline-flex sm:w-auto">

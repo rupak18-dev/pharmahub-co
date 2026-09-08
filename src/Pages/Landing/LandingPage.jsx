@@ -187,7 +187,7 @@ export default function LandingPage() {
               </ul>
             </div>
             <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
-              <div className="space-y-3 font-mono text-xs">
+              <div className="space-y-3 text-xs">
                 {[
                   { t: "GRN #2041 received", s: "Amoxicillin 250mg · +200 units" },
                   { t: "Batch B1004A activated", s: "Exp 2027-04-12 · MRP ₹85" },

@@ -39,11 +39,13 @@ import { computeBatchStatus } from "@/lib/stock";
 import { cn } from "@/lib/utils";
 import { exportBatchesCsv, exportBatchesPdf } from "@/lib/batch-export";
 import { EmptyState } from "@/Components/shared/EmptyState";
+import { PageHeader } from "@/Components/shared/PageHeader";
 import { StatusBadge } from "@/Components/shared/StatusBadge";
 import { KpiCard } from "@/Components/shared/KpiCard";
 import { AddBatchSheet } from "@/Components/shared/AddBatchSheet";
 import BatchQrSheet from "@/Components/shared/BatchQrSheet";
 import { Button } from "@/Components/ui/button";
+import { Skeleton } from "@/Components/ui/skeleton";
 import { Input } from "@/Components/ui/input";
 import { Checkbox } from "@/Components/ui/checkbox";
 import {
@@ -78,7 +80,7 @@ const safeFormat = (dateStr, fmt) => {
   return format(d, fmt);
 };
 const chipCls =
-  "inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 font-mono text-xs font-semibold text-primary";
+  "inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2 py-1 text-xs font-semibold text-primary";
 const ACTIVE_REF_DAYS = 365;
 const DEFAULT_SETTINGS = { currency: "₹", nearExpiryDays: 90 };
 
@@ -104,16 +106,12 @@ function BatchChip({ batchId, batchNumber }) {
 }
 function MfgCell({ mfgDate }) {
   return (
-    <span className="font-mono text-xs font-medium text-foreground">
-      {safeFormat(mfgDate, "MM/yyyy")}
-    </span>
+    <span className="text-xs font-medium text-foreground">{safeFormat(mfgDate, "MM/yyyy")}</span>
   );
 }
 function ExpiryCell({ expiryDate }) {
   return (
-    <span className="font-mono text-xs font-medium text-foreground">
-      {safeFormat(expiryDate, "MM/yyyy")}
-    </span>
+    <span className="text-xs font-medium text-foreground">{safeFormat(expiryDate, "MM/yyyy")}</span>
   );
 }
 function LocationPill({ locations }) {
@@ -133,9 +131,7 @@ function LocationPill({ locations }) {
   );
 }
 function StockLevel({ stock }) {
-  return (
-    <span className="block text-center font-mono text-sm font-semibold tabular-nums">{stock}</span>
-  );
+  return <span className="block text-center text-sm font-semibold tabular-nums">{stock}</span>;
 }
 function BatchActions({ row, onQr, onExport }) {
   const navigate = useNavigate();
@@ -261,7 +257,7 @@ function ColumnView({ rows, selected, onToggle, onQr, onExport }) {
               <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
                 {col.title}
               </span>
-              <span className="rounded-full bg-muted px-2 py-0.5 font-mono text-xs tabular-nums text-foreground">
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs tabular-nums text-foreground">
                 {items.length}
               </span>
             </div>
@@ -554,40 +550,42 @@ export default function BatchesPage() {
   };
   return (
     <div className="flex flex-col h-full gap-4">
-      <div className="flex justify-between items-center px-1">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Batches</h1>
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 gap-2 text-muted-foreground">
-                <Download className="h-4 w-4" strokeWidth={1.5} />
-                Export
+      <PageHeader
+        title="Batches"
+        actions={
+          <>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="h-9 gap-2 text-muted-foreground">
+                  <Download className="h-4 w-4" strokeWidth={1.5} />
+                  Export
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel>
+                  Export {rows.length} batch{rows.length === 1 ? "" : "es"}
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => handleExport(rows, "csv")}>
+                  <FileSpreadsheet className="mr-2 h-4 w-4" /> Export as CSV
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => handleExport(rows, "pdf")}>
+                  <Download className="mr-2 h-4 w-4" /> Export as PDF
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            {has("batches", "create") && (
+              <Button
+                size="sm"
+                onClick={() => setSheetOpen(true)}
+                className="shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30"
+              >
+                <Plus className="mr-1 h-4 w-4" strokeWidth={1.5} /> Add batch
               </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel>
-                Export {rows.length} batch{rows.length === 1 ? "" : "es"}
-              </DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => handleExport(rows, "csv")}>
-                <FileSpreadsheet className="mr-2 h-4 w-4" /> Export as CSV
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => handleExport(rows, "pdf")}>
-                <Download className="mr-2 h-4 w-4" /> Export as PDF
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          {has("batches", "create") && (
-            <Button
-              size="sm"
-              onClick={() => setSheetOpen(true)}
-              className="shadow-md shadow-primary/20 transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-primary/30"
-            >
-              <Plus className="mr-1 h-4 w-4" strokeWidth={1.5} /> Add batch
-            </Button>
-          )}
-        </div>
-      </div>
+            )}
+          </>
+        }
+      />
 
       <div className="grid gap-4 sm:grid-cols-3">
         <KpiCard
@@ -818,8 +816,10 @@ export default function BatchesPage() {
 
         <div className="flex-1 overflow-y-auto p-0">
           {loading && batches.length === 0 ? (
-            <div className="grid place-items-center py-16 text-sm text-muted-foreground">
-              Loading batches…
+            <div className="space-y-2 p-4">
+              {Array.from({ length: 8 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
             </div>
           ) : error ? (
             <div className="py-16">

@@ -26,6 +26,7 @@ import { reportService } from "@/lib/reportService";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Badge } from "@/Components/ui/badge";
+import { Skeleton } from "@/Components/ui/skeleton";
 import { PageHeader } from "@/Components/shared/PageHeader";
 import { EmptyState } from "@/Components/shared/EmptyState";
 import dayjs from "dayjs";
@@ -687,10 +688,15 @@ export default function ReportDataPage() {
               {totalCount.toLocaleString("en-IN")} record{totalCount === 1 ? "" : "s"}
             </Badge>
           </div>
-          {loading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
         </div>
 
-        {bills.items.length === 0 && !loading ? (
+        {bills.items.length === 0 && loading ? (
+          <div className="space-y-2 p-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-11 w-full" />
+            ))}
+          </div>
+        ) : bills.items.length === 0 ? (
           <div className="p-6">
             <EmptyState
               icon={Receipt}
@@ -792,7 +798,7 @@ export default function ReportDataPage() {
                       {bill.customerName || bill.supplierName || "Walk-in Customer"}
                     </p>
                     {(bill.customerPhone || bill.supplierGstin || bill.customerGstin) && (
-                      <p className="mt-0.5 text-[10px] text-muted-foreground font-mono whitespace-nowrap">
+                      <p className="mt-0.5 text-[10px] text-muted-foreground whitespace-nowrap">
                         {bill.customerPhone || bill.supplierGstin || bill.customerGstin}
                       </p>
                     )}
@@ -828,7 +834,7 @@ export default function ReportDataPage() {
                     <WhatsAppStatusBadge bill={bill} />
                   </TableCell>
                   <TableCell className="py-1.5 min-w-[85px] text-right whitespace-nowrap">
-                    <span className="text-xs font-mono text-muted-foreground tabular-nums">
+                    <span className="text-xs text-muted-foreground tabular-nums">
                       {formatMoney(bill.gstTotal, currency)}
                     </span>
                   </TableCell>

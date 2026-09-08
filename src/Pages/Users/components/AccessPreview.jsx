@@ -78,7 +78,7 @@ export function AccessPreview({ roleName, permissions }) {
             Real-time preview of navigation & access permissions after sign-in.
           </p>
         </div>
-        <div className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs font-mono text-foreground">
+        <div className="flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs text-foreground">
           <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
           <span>
             {visibleCount} / {ALL_MODULES.length} Modules Visible

@@ -242,21 +242,18 @@ export function ImportCsvModal({ open, onOpenChange, onImported, type = "auto" }
                 ))}
               </div>
               <p className="text-[11px] text-muted-foreground mt-3 leading-relaxed">
-                Date should be in <span className="font-mono">YYYY-MM-DD</span> format. Recognised
-                header aliases (e.g. <span className="font-mono">invoice no</span>,{" "}
-                <span className="font-mono">date</span>,{" "}
+                Date should be in <span>YYYY-MM-DD</span> format. Recognised header aliases (e.g.{" "}
+                <span>invoice no</span>, <span>date</span>,{" "}
                 {isPurchase ? (
                   <>
-                    <span className="font-mono">supplier</span>,{" "}
-                    <span className="font-mono">rate</span>,
+                    <span>supplier</span>, <span>rate</span>,
                   </>
                 ) : (
                   <>
-                    <span className="font-mono">customer name</span>,
+                    <span>customer name</span>,
                   </>
                 )}{" "}
-                <span className="font-mono">qty</span>, <span className="font-mono">gst %</span>)
-                are mapped automatically.
+                <span>qty</span>, <span>gst %</span>) are mapped automatically.
               </p>
             </div>
           </div>

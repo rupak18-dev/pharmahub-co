@@ -4,6 +4,7 @@ import { usePermission } from "@/hooks/usePermission";
 import { useActiveSection } from "@/hooks/useActiveSection";
 import { PROFILE_SECTION_IDS } from "@/lib/profileSections";
 import { Button } from "@/Components/ui/button";
+import { PageHeader } from "@/Components/shared/PageHeader";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Edit3, KeyRound, Eye, EyeOff, Loader2 } from "lucide-react";
@@ -288,29 +289,21 @@ export default function ProfilePage() {
     >
       <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 sm:px-6">
         {/* Page Header */}
-        <div
-          data-profile-header
-          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-5"
-        >
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Pharma Profile
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Manage your pharma identity, plan and settings
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 self-start sm:self-auto">
-            <Button
-              size="sm"
-              onClick={() => navigate({ to: "/profile/edit" })}
-              className="font-medium gap-2 rounded-lg shadow-xs px-4 py-2 text-xs sm:text-sm h-9 bg-primary text-primary-foreground hover:bg-primary/90"
-            >
-              <Edit3 className="h-4 w-4" />
-              Edit Profile
-            </Button>
-          </div>
+        <div data-profile-header>
+          <PageHeader
+            title="Pharma Profile"
+            description="Manage your pharma identity, plan and settings"
+            actions={
+              <Button
+                size="sm"
+                onClick={() => navigate({ to: "/profile/edit" })}
+                className="font-medium gap-2 rounded-lg shadow-xs px-4 py-2 text-xs sm:text-sm h-9 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <Edit3 className="h-4 w-4" />
+                Edit Profile
+              </Button>
+            }
+          />
         </div>
 
         {/* Profile Completion Reference Card */}
