@@ -211,7 +211,7 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      {ALL_ROLES.map((r) => (
+                      {ALL_ROLES.filter((r) => r !== "Owner" && r !== "Admin").map((r) => (
                         <SelectItem key={r} value={r} className="text-xs">
                           {r}
                         </SelectItem>

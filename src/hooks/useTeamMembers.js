@@ -128,7 +128,7 @@ export function useTeamMembers() {
         phone: inv.phone || "",
         role: inv.role || "",
         orgName: inv.orgName || "",
-        designation: null,
+        designation: inv.designation ?? null,
         department: inv.department ?? null,
         accessIds: Array.isArray(inv.accessIds) ? inv.accessIds : [],
         permissions: inv.permissions ?? {},

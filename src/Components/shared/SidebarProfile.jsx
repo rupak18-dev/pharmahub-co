@@ -67,40 +67,42 @@ export function SidebarProfile() {
           type="button"
           title={user.name}
           className={cn(
-            "flex w-full items-center gap-3 rounded-xl border border-sidebar-border bg-sidebar-accent/40 text-left transition-colors hover:bg-sidebar-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-            collapsed ? "justify-center p-0" : "justify-between p-2",
+            "flex w-full items-center gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-accent/40 p-2 text-left transition-colors hover:bg-sidebar-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            collapsed && "justify-center p-1.5",
           )}
         >
-          <div className={cn("min-w-0 flex-col", collapsed ? "hidden" : "flex")}>
-            <span className="truncate text-sm font-medium text-sidebar-foreground">
-              {user.name}
-            </span>
-            <span className="truncate text-xs text-sidebar-foreground/60">{user.email}</span>
-          </div>
-          <div className="flex min-w-0 items-center gap-2">
-            <div
-              className={cn(
-                "shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/40 p-0.5",
-                collapsed ? "h-8 w-8" : "h-9 w-9",
-              )}
-            >
-              <Avatar className="h-full w-full">
-                {logo ? (
-                  <AvatarImage
-                    src={logo}
-                    alt="Business logo"
-                    className="bg-white object-contain p-0.5"
-                  />
-                ) : null}
-                <AvatarFallback className="bg-white text-xs font-semibold text-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
-                  {initials}
-                </AvatarFallback>
-              </Avatar>
-            </div>
-            {!collapsed && (
-              <ChevronsUpDown className="h-3.5 w-3.5 shrink-0 text-sidebar-foreground/50" />
+          <div
+            className={cn(
+              "shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/40 p-0.5",
+              collapsed ? "h-8 w-8" : "h-9 w-9",
             )}
+          >
+            <Avatar className="h-full w-full">
+              {logo ? (
+                <AvatarImage
+                  src={logo}
+                  alt="Business logo"
+                  className="bg-white object-contain p-0.5"
+                />
+              ) : null}
+              <AvatarFallback className="bg-white text-xs font-semibold text-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
           </div>
+
+          {!collapsed && (
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-sm font-medium text-sidebar-foreground">
+                {user.name}
+              </span>
+              <span className="truncate text-xs text-sidebar-foreground/60">{user.email}</span>
+            </div>
+          )}
+
+          {!collapsed && (
+            <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 text-sidebar-foreground/50" />
+          )}
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="start" side="top" sideOffset={8} className="w-60">
