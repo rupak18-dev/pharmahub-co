@@ -305,7 +305,6 @@ export default function ProfilePage() {
               </Button>
             }
           />
-
         </div>
 
         {/* Profile Completion Reference Card */}

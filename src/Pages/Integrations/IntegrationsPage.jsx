@@ -89,13 +89,6 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
               variant="secondary"
               className="h-5 gap-1 border-emerald-500/20 bg-emerald-500/10 px-1.5 text-[10px] font-semibold text-emerald-700"
             >
-<<<<<<< HEAD
-=======
-              <span
-                className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600"
-                aria-hidden="true"
-              />
->>>>>>> team/Test
               <span
                 className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600"
                 aria-hidden="true"
