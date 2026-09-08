@@ -30,7 +30,7 @@ export default function ReceiptPage() {
             <p className="text-xs text-muted-foreground">Tax invoice</p>
           </div>
           <div className="text-right">
-            <p className="font-mono text-sm font-semibold">{sale.invoiceNo}</p>
+            <p className="text-sm font-semibold">{sale.invoiceNo}</p>
             <p className="text-xs text-muted-foreground">
               {format(new Date(sale.createdAt), "PPp")}
             </p>
@@ -73,14 +73,14 @@ export default function ReceiptPage() {
               {sale.items.map((it, i) => (
                 <tr key={i}>
                   <td className="py-2">{it.medicineName}</td>
-                  <td className="py-2 font-mono text-xs text-muted-foreground">{it.batchNumber}</td>
-                  <td className="py-2 text-right font-mono">{it.quantity}</td>
-                  <td className="py-2 text-right font-mono">
+                  <td className="py-2 text-xs text-muted-foreground">{it.batchNumber}</td>
+                  <td className="py-2 text-right">{it.quantity}</td>
+                  <td className="py-2 text-right">
                     {currency}
                     {it.unitPrice.toFixed(2)}
                   </td>
-                  <td className="py-2 text-right font-mono">{it.gstRate}%</td>
-                  <td className="py-2 text-right font-mono font-semibold">
+                  <td className="py-2 text-right">{it.gstRate}%</td>
+                  <td className="py-2 text-right font-semibold">
                     {currency}
                     {it.lineTotal.toFixed(2)}
                   </td>
@@ -93,49 +93,49 @@ export default function ReceiptPage() {
         <dl className="mt-4 space-y-1 text-sm">
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Subtotal</dt>
-            <dd className="font-mono">
+            <dd>
               {currency}
               {sale.subtotal.toFixed(2)}
             </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Discount</dt>
-            <dd className="font-mono">
+            <dd>
               -{currency}
               {sale.discountTotal.toFixed(2)}
             </dd>
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">GST</dt>
-            <dd className="font-mono">
+            <dd>
               {currency}
               {sale.gstTotal.toFixed(2)}
             </dd>
           </div>
           <div className="flex justify-between text-xs">
             <dt className="text-muted-foreground">Round off</dt>
-            <dd className="font-mono">
+            <dd>
               {currency}
               {sale.roundOff.toFixed(2)}
             </dd>
           </div>
           <div className="mt-2 flex justify-between border-t border-border pt-2 text-base font-semibold">
             <dt>Grand total</dt>
-            <dd className="font-mono">
+            <dd>
               {currency}
               {sale.grandTotal.toFixed(2)}
             </dd>
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <dt>Tendered</dt>
-            <dd className="font-mono">
+            <dd>
               {currency}
               {sale.tender.toFixed(2)}
             </dd>
           </div>
           <div className="flex justify-between text-xs text-muted-foreground">
             <dt>Change</dt>
-            <dd className="font-mono">
+            <dd>
               {currency}
               {sale.change.toFixed(2)}
             </dd>

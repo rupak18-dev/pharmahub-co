@@ -6,11 +6,11 @@ import {
   ChevronLeft,
   ChevronRight,
   FileBarChart2,
-  Loader2,
   AlertCircle,
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
+import { Skeleton } from "@/Components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 const PAGE_SIZE = 15;
@@ -94,13 +94,16 @@ export default function ReportPreviewTable({
   /* ── Loading state ── */
   if (loading) {
     return (
-      <div className="flex flex-1 flex-col items-center justify-center gap-3 p-12 text-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        <div className="space-y-1">
-          <p className="text-sm font-medium text-foreground">Generating report…</p>
-          <p className="text-xs text-muted-foreground">
-            Querying your pharmacy data. This may take a moment.
-          </p>
+      <div className="flex-1 space-y-4 p-6">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-48" />
+          <Skeleton className="h-3 w-64 max-w-full" />
+        </div>
+        <div className="space-y-2">
+          <Skeleton className="h-9 w-full" />
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} className="h-11 w-full" />
+          ))}
         </div>
       </div>
     );
@@ -172,9 +175,7 @@ export default function ReportPreviewTable({
       <div className="flex items-center justify-between border-b border-border bg-muted/20 px-4 py-2.5 shrink-0">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-foreground truncate">{moduleTitle}</p>
-          {periodLabel && (
-            <p className="text-[11px] text-muted-foreground font-mono">{periodLabel}</p>
-          )}
+          {periodLabel && <p className="text-[11px] text-muted-foreground">{periodLabel}</p>}
         </div>
         <div className="flex items-center gap-2 shrink-0">
           <span className="text-[11px] font-medium text-muted-foreground tabular-nums">
@@ -236,9 +237,7 @@ export default function ReportPreviewTable({
                     key={col.key}
                     className={cn(
                       "border-b border-border/50 px-4 py-2.5",
-                      col.money
-                        ? "text-right font-mono tabular-nums text-foreground"
-                        : "text-foreground",
+                      col.money ? "text-right tabular-nums text-foreground" : "text-foreground",
                     )}
                   >
                     {fmt(col, row[col.key])}
@@ -255,7 +254,7 @@ export default function ReportPreviewTable({
                     key={col.key}
                     className={cn(
                       "px-4 py-2.5 text-xs font-semibold text-foreground",
-                      col.money ? "text-right font-mono tabular-nums" : "text-muted-foreground",
+                      col.money ? "text-right tabular-nums" : "text-muted-foreground",
                     )}
                   >
                     {col.money ? fmt(col, totals[col.key] ?? 0) : ci === 0 ? "Total" : ""}

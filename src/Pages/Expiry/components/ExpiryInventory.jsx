@@ -321,7 +321,7 @@ export function ExpiryInventory({
                       </div>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      <span className="font-mono text-xs">{row.batchNumber}</span>
+                      <span className="text-xs">{row.batchNumber}</span>
                     </TableCell>
                     <TableCell className="hidden text-muted-foreground lg:table-cell">
                       {row.manufacturer}
@@ -336,15 +336,15 @@ export function ExpiryInventory({
                     <TableCell className="hidden text-right lg:table-cell">
                       <DaysPill days={row.days} />
                     </TableCell>
-                    <TableCell className="hidden text-right font-mono tabular-nums lg:table-cell">
+                    <TableCell className="hidden text-right tabular-nums lg:table-cell">
                       {row.quantity}
                     </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
+                    <TableCell className="text-right tabular-nums">
                       {currency}
                       {row.stockValue.toLocaleString()}
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
-                      <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
                         {row.shelf}
                       </span>
                     </TableCell>
@@ -472,7 +472,7 @@ function DaysPill({ days }) {
         : days <= 30
           ? "text-warning-foreground/80"
           : "text-success";
-  return <span className={cn("font-mono text-xs tabular-nums", cls)}>{text}</span>;
+  return <span className={cn("text-xs tabular-nums", cls)}>{text}</span>;
 }
 function RowActions({
   row,

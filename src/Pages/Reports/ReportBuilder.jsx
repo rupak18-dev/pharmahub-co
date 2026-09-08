@@ -401,7 +401,7 @@ export default function ReportBuilder({
               >
                 <CalendarDays className="h-3 w-3 text-primary" />
                 <span className="hidden sm:inline">{activePresetLabel}</span>
-                <span className="font-mono text-[10px] text-muted-foreground/70 hidden sm:inline">
+                <span className="text-[10px] text-muted-foreground/70 hidden sm:inline">
                   ({periodLabel})
                 </span>
               </button>

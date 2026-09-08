@@ -56,7 +56,7 @@ export default function ReportResultTable({ groupBy = [], summarize = [], previe
           Table structure —{" "}
           <span className="font-medium text-foreground">awaiting pharmacy data</span>
         </span>
-        <span className="ml-auto font-mono text-[10px]">
+        <span className="ml-auto text-[10px]">
           {groupBy.map(getGroupByLabel).join(" + ")}
           {summarize.length > 0 && " · "}
           {summarize.map((k) => columns.find((c) => c.key === k)?.label ?? k).join(" + ")}
@@ -83,7 +83,7 @@ export default function ReportResultTable({ groupBy = [], summarize = [], previe
                       key={col.key}
                       className={cn(
                         "px-3.5 py-2 text-muted-foreground/60",
-                        col.money && "text-right font-mono tabular-nums",
+                        col.money && "text-right tabular-nums",
                       )}
                     >
                       —

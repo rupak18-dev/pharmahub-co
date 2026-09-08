@@ -16,6 +16,7 @@ import { useDb } from "@/hooks/useDb";
 import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { Button } from "@/Components/ui/button";
+import { PageHeader } from "@/Components/shared/PageHeader";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Switch } from "@/Components/ui/switch";
@@ -78,24 +79,19 @@ export default function SettingsPage() {
     <div className="w-full pb-16 pt-2">
       <div className="mx-auto w-full max-w-[1000px] space-y-8 px-4 sm:px-6">
         {/* Header */}
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border/60 pb-6">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
-              Manage Settings
-            </h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Configure system defaults, invoice formatting, tax rules, and operating hours.
-            </p>
-          </div>
-
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            className="self-start sm:self-auto bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-2 rounded-xl shadow-sm px-5 py-2.5"
-          >
-            <Save className="h-4 w-4" /> Save Settings
-          </Button>
-        </div>
+        <PageHeader
+          title="Manage Settings"
+          description="Configure system defaults, invoice formatting, tax rules, and operating hours."
+          actions={
+            <Button
+              onClick={handleSave}
+              disabled={saving}
+              className="bg-primary text-primary-foreground hover:bg-primary/90 font-semibold gap-2 rounded-xl shadow-sm px-5 py-2.5"
+            >
+              <Save className="h-4 w-4" /> Save Settings
+            </Button>
+          }
+        />
 
         <div className="grid grid-cols-1 gap-6">
           {/* Currency & Tax Defaults Card */}

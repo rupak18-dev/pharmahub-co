@@ -118,7 +118,7 @@ export default function CategoriesPage() {
               {cats.map((c) => (
                 <tr key={c.id} className="hover:bg-muted/30">
                   <td className="px-4 py-3 font-medium">{c.name}</td>
-                  <td className="px-4 py-3 text-right font-mono">
+                  <td className="px-4 py-3 text-right">
                     {meds.filter((m) => m.categoryId === c.id).length}
                   </td>
                   <td className="px-4 py-3 text-right">

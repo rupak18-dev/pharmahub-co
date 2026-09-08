@@ -39,6 +39,7 @@ import { ALL_ROLES } from "@/lib/permissions";
 import { PageHeader } from "@/Components/shared/PageHeader";
 import { EmptyState } from "@/Components/shared/EmptyState";
 import { Button } from "@/Components/ui/button";
+import { Skeleton } from "@/Components/ui/skeleton";
 import { Input } from "@/Components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/Components/ui/tabs";
 import {
@@ -602,8 +603,12 @@ function UsersTab() {
 
       {/* Loading state */}
       {loadingRemote && members.length === 0 && !offline && (
-        <div className="rounded-xl border border-border bg-white p-12 text-center text-sm text-muted-foreground shadow-sm">
-          Loading team…
+        <div className="rounded-xl border border-border bg-white p-4 shadow-sm">
+          <div className="space-y-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-12 w-full" />
+            ))}
+          </div>
         </div>
       )}
 
@@ -619,7 +624,7 @@ function UsersTab() {
               const status = resolveStatus(p);
               const isSelf = user?.id === p.id;
               const isOwner = p.role === "Owner";
-              const isProtectedOwner = isOwner || p.email === "demo@pharmahub.local";
+              const isProtectedOwner = isOwner;
               const canEditRow = canUpdate && !p.invitationId && !isSelf;
               const canChangeRole = canUpdate && !p.invitationId && !isSelf && !isOwner;
               const canManageStatus = canUpdate && !isSelf && !p.invitationId;
@@ -645,7 +650,9 @@ function UsersTab() {
                               </span>
                             )}
                           </h3>
-                          <p className="text-xs text-muted-foreground truncate mt-0.5">{p.role}</p>
+                          <p className="text-xs text-muted-foreground truncate mt-0.5">
+                            {p.designation || p.role}
+                          </p>
                         </div>
                       </div>
 

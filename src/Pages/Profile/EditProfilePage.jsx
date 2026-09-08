@@ -180,7 +180,7 @@ export default function EditProfilePage() {
     <div className="w-full pb-20 pt-2">
       <div className="mx-auto w-full max-w-[900px] space-y-6 px-4 sm:px-6">
         {/* Header */}
-        <div className="flex items-center gap-3 border-b border-border/60 pb-5">
+        <div className="flex items-center gap-3 border-b border-border pb-4">
           <Button
             variant="ghost"
             size="icon"
@@ -190,7 +190,7 @@ export default function EditProfilePage() {
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Edit Profile</h1>
+            <h1 className="text-2xl font-semibold tracking-tight text-foreground">Edit Profile</h1>
             <p className="text-xs sm:text-sm text-muted-foreground">
               Update your pharma information and settings
             </p>
@@ -381,7 +381,7 @@ export default function EditProfilePage() {
                   value={formData.gstin}
                   onChange={(e) => handleInputChange("gstin", e.target.value)}
                   placeholder="27ABCDE1234F1Z5"
-                  className="rounded-lg text-xs font-mono uppercase"
+                  className="rounded-lg text-xs uppercase"
                 />
               </div>
 

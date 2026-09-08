@@ -188,7 +188,7 @@ export default function ScheduleReportModal({ open, onOpenChange, reportConfig }
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="text-xs font-medium text-foreground truncate">{user.name}</p>
-                        <p className="text-[11px] text-muted-foreground font-mono truncate">
+                        <p className="text-[11px] text-muted-foreground truncate">
                           {user.email}
                           {user.role && (
                             <span className="ml-1.5 text-[10px] font-sans not-italic">

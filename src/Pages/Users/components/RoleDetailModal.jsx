@@ -11,7 +11,6 @@ import { AccessPolicyBuilder } from "./AccessPolicyBuilder";
 import { AccessPreview } from "./AccessPreview";
 import { StaffStatusBadge, resolveStatus } from "./StaffStatusBadge";
 import dayjs from "dayjs";
-import { format } from "date-fns";
 
 function getInitials(name) {
   const parts = (name ?? "U").trim().split(" ");
@@ -146,13 +145,11 @@ export function RoleDetailModal({ role, open, onClose, onSaved }) {
                             </Avatar>
                             <div>
                               <div className="font-semibold text-foreground">{u.name}</div>
-                              <div className="font-mono text-muted-foreground text-[11px]">
-                                {u.email}
-                              </div>
+                              <div className="text-muted-foreground text-[11px]">{u.email}</div>
                             </div>
                           </div>
                           <div className="flex items-center gap-4 text-muted-foreground">
-                            <span className="font-mono text-[11px]">
+                            <span className="text-[11px]">
                               {u.createdAt && dayjs(u.createdAt).isValid()
                                 ? `Joined ${dayjs(u.createdAt).format("DD MMM YYYY")}`
                                 : ""}

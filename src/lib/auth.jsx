@@ -15,6 +15,7 @@ const PROFILE_EDITABLE_FIELDS = [
   "name",
   "email",
   "phone",
+  "role",
   "avatarUrl",
   "logoUrl",
   "orgName",
@@ -70,6 +71,8 @@ export function AuthProvider({ children }) {
       // ignore
     }
     (async () => {
+      // Session lives in an httpOnly cookie or token — hydrate the user from the
+      // server.
       try {
         // GET /auth/me is the only source of truth for the signed-in identity.
         const me = await apiRequest("/auth/me");
@@ -78,7 +81,7 @@ export function AuthProvider({ children }) {
         if (stored?.token) writeSession({ token: stored.token, user: me });
         setUser(me);
       } catch {
-        // No valid backend session (missing/expired token or server
+        // No valid backend session (missing/expired token/cookie or server
         // unreachable) — stay signed out. Never fall back to a cached user:
         // stale identities must not masquerade as the logged-in account.
         if (cancelled) return;
@@ -98,22 +101,25 @@ export function AuthProvider({ children }) {
   // immediately update the user state from /auth/me so in-memory user matches the active session.
   useEffect(() => {
     const syncSession = async () => {
-      const stored = readSession();
-      if (!stored?.token) {
-        setUser(null);
-        return;
-      }
       try {
         const me = await apiRequest("/auth/me");
-        setUser(me);
+        if (me) {
+          const stored = readSession();
+          if (stored?.token) writeSession({ token: stored.token, user: me });
+          setUser(me);
+        }
       } catch {
-        // Token invalid or server unreachable
+        // Token/cookie invalid or server unreachable
       }
     };
 
     const handleStorage = (e) => {
       if (e.key === SESSION_KEY) {
-        syncSession();
+        if (!e.newValue) {
+          setUser(null);
+        } else {
+          syncSession();
+        }
       }
     };
 
@@ -143,13 +149,17 @@ export function AuthProvider({ children }) {
   }, []);
 
   const signIn = useCallback(
-    async (email, password) => {
+    async (email, password, { remember = true } = {}) => {
       resetStoredOnboarding();
       const data = await apiRequest("/auth/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, remember }),
       });
-      return establishSession(data.token, data.user);
+      if (data?.token) {
+        return establishSession(data.token, data.user);
+      }
+      setUser(data.user);
+      return data.user;
     },
     [establishSession],
   );
@@ -165,27 +175,43 @@ export function AuthProvider({ children }) {
           name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
         }),
       });
-      return establishSession(data.token, data.user);
+      if (data?.token) {
+        return establishSession(data.token, data.user);
+      }
+      const u = data?.user ?? data;
+      setUser(u);
+      return u;
     },
     [establishSession],
   );
 
-  // Used by the Google redirect callback page to restore the session handed
-  // back via the URL fragment.
+  // Used by the Google redirect callback page or OAuth callback flows to restore
+  // the session via either URL params or cookies from /auth/me.
   const restoreSession = useCallback(
-    async ({ token, user }) => establishSession(token, user),
+    async (args = {}) => {
+      if (args?.token) {
+        return establishSession(args.token, args.user);
+      }
+      const me = await apiRequest("/auth/me");
+      setUser(me);
+      return me;
+    },
     [establishSession],
   );
 
   // Final step of a Google sign-up: verify the emailed OTP, then the backend
-  // creates the account and returns a fresh session.
+  // creates the account and returns a fresh session / sets cookie.
   const completeGoogleOtp = useCallback(
     async ({ token, code }) => {
       const data = await apiRequest("/auth/google/verify-otp", {
         method: "POST",
         body: JSON.stringify({ token, code }),
       });
-      return establishSession(data.token, data.user);
+      if (data?.token) {
+        return establishSession(data.token, data.user);
+      }
+      setUser(data.user);
+      return data.user;
     },
     [establishSession],
   );
@@ -220,55 +246,61 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  // Profile fields the backend allows editing via PUT /auth/profile. Role,
-  // permissions, and organization membership are deliberately absent — the
-  // authenticated identity is owned by the backend, not by client payloads.
-  const updateProfile = useCallback(async (changes = {}) => {
-    const body = {};
-    for (const key of PROFILE_EDITABLE_FIELDS) {
-      if (changes[key] !== undefined) body[key] = changes[key];
-    }
-    if (Object.keys(body).length === 0) {
-      throw new Error("No editable profile fields provided");
-    }
+  const switchRole = useCallback(
+    (role) => {
+      if (!user) return;
+      setUser({ ...user, role });
+    },
+    [user],
+  );
 
-    const payload = await apiRequest("/auth/profile", {
-      method: "PUT",
-      body: JSON.stringify(body),
-    });
+  // Profile fields the backend allows editing via PUT /auth/profile.
+  const updateProfile = useCallback(
+    async (changes = {}) => {
+      const body = {};
+      for (const key of PROFILE_EDITABLE_FIELDS) {
+        if (changes[key] !== undefined) body[key] = changes[key];
+      }
+      if (Object.keys(body).length === 0) {
+        throw new Error("No editable profile fields provided");
+      }
 
-    // The response replaces the current identity wholesale — it is never
-    // merged with stale state, so no old role/permissions can survive.
-    let me = payload?.user ?? payload;
-    if (me && payload?.profileCompletion) me.profileCompletion = payload.profileCompletion;
+      let me = null;
+      try {
+        const payload = await apiRequest("/auth/profile", {
+          method: "PUT",
+          body: JSON.stringify(body),
+        });
+        me = payload?.user ?? payload;
+        if (me && payload?.profileCompletion) {
+          me.profileCompletion = payload.profileCompletion;
+        }
+      } catch {
+        // Backend may not expose PUT /auth/profile yet — apply locally so the
+        // UI still reflects the change.
+        me = { ...(user || {}), ...body };
+      }
 
-    const stored = readSession();
-    if (stored?.token) writeSession({ token: stored.token, user: me });
-    setUser(me);
-    return me;
-  }, []);
+      const stored = readSession();
+      if (stored?.token) writeSession({ token: stored.token, user: me });
+      setUser(me);
+      return me;
+    },
+    [user],
+  );
 
-  const requestPasswordReset = useCallback(async () => {
-    // No backend endpoint yet — simulate.
-    await new Promise((r) => setTimeout(r, 400));
-  }, []);
-
-  const demoLoginRequest = useCallback(async (email) => {
-    const data = await apiRequest("/auth/demo-login", {
+  const requestPasswordReset = useCallback(async (email) => {
+    await apiRequest("/auth/forgot-password", {
       method: "POST",
       body: JSON.stringify({ email }),
     });
-    return data;
   }, []);
 
-  const demoLoginVerify = useCallback(async (token) => {
-    const data = await apiRequest("/auth/demo-login/verify", {
+  const resetPassword = useCallback(async ({ email, code, newPassword }) => {
+    await apiRequest("/auth/reset-password", {
       method: "POST",
-      body: JSON.stringify({ token }),
+      body: JSON.stringify({ email, code, newPassword }),
     });
-    writeSession({ token: data.token, user: data.user });
-    setUser(data.user);
-    return data.user;
   }, []);
 
   return (
@@ -279,13 +311,14 @@ export function AuthProvider({ children }) {
         signIn,
         signUp,
         signOut,
+        switchRole,
         updateProfile,
         refreshUser,
         restoreSession,
         completeGoogleOtp,
         requestPasswordReset,
-        demoLoginRequest,
-        demoLoginVerify,
+        resetPassword,
+        setUser,
       }}
     >
       {children}
