@@ -2,13 +2,13 @@ import React from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/lib/auth";
 import { mapJobTitleToRole } from "@/lib/roles";
-import { saveOnboarding } from "@/lib/onboardingApi";
+import { saveOnboarding, markComplete } from "@/lib/onboardingApi";
 import { apiRequest } from "@/lib/api";
 import { CapsuleLoader } from "@/Components/shared/CapsuleLoader";
 
 export function Completion({ onboarding }) {
   const navigate = useNavigate();
-  const { updateProfile } = useAuth();
+  const { user, updateProfile, restoreSession } = useAuth();
 
   const personal = onboarding?.personal || {};
   const workspace = onboarding?.workspace || {};
@@ -52,15 +52,20 @@ export function Completion({ onboarding }) {
     {
       id: "dashboard",
       label: "Preparing your dashboard",
-      run: () => apiRequest("/auth/me").then(() => {}),
+      run: () => restoreSession().catch(() => {}),
     },
   ];
+
+  const handleDone = () => {
+    markComplete(user?.id);
+    navigate("/dashboard");
+  };
 
   return (
     <CapsuleLoader
       message={orgName ? `Creating ${orgName}…` : "Creating your workspace…"}
       stages={stages}
-      onDone={() => navigate("/dashboard")}
+      onDone={handleDone}
     />
   );
 }

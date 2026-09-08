@@ -12,13 +12,20 @@ import { AnimatePresence, motion } from "framer-motion";
 
 export const handle = { title: "Create account · PharmaHub" };
 
+const PASSWORD_RULES = [
+  { label: "at least 8 characters", test: (v) => v.length >= 8 },
+  { label: "a lowercase letter", test: (v) => /[a-z]/.test(v) },
+  { label: "a number", test: (v) => /[0-9]/.test(v) },
+  { label: "a special character", test: (v) => /[^A-Za-z0-9]/.test(v) },
+];
+
 const passwordSchema = z
   .string()
-  .min(8, "At least 8 characters")
-  .regex(/[A-Z]/, "Include an uppercase letter")
-  .regex(/[a-z]/, "Include a lowercase letter")
-  .regex(/[0-9]/, "Include a number")
-  .regex(/[^A-Za-z0-9]/, "Include a special character");
+  .min(1)
+  .refine((v) => PASSWORD_RULES.filter((r) => r.test(v)).length >= 3, {
+    message:
+      "Use at least 8 characters with a lowercase letter, a number, and a special character.",
+  });
 
 const schema = z
   .object({
@@ -51,9 +58,14 @@ export default function SignupPage() {
 
   const onSubmit = async (data) => {
     try {
-      const created = await signUp({ email: data.email, password: data.password });
+      await signUp({ email: data.email, password: data.password });
+      // Hold on the signup page so the button shows its "Signing up…" loading
+      // state for a beat before moving on to onboarding.
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       toast.success("Successfully signed up!");
-      navigate(created?.onboarded ? "/dashboard" : "/onboarding");
+      // A fresh registration always starts un-onboarded, so route straight to
+      // the onboarding form (never the dashboard).
+      navigate("/onboarding");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Account creation failed");
     }

@@ -196,6 +196,16 @@
   text-align: left;
 }
 
+/* Auth screen field labels — keeps labels properly aligned with their inputs */
+.auth-label {
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+  letter-spacing: -0.01em;
+  color: var(--color-foreground);
+}
+
 /* Hide minor (Y-axis) recharts tick labels on small screens */
 @media (max-width: 767px) {
   .recharts-yAxis .recharts-cartesian-axis-tick-value {

@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { apiRequest } from "./api";
+import { apiRequest, clearCachedResponse } from "./api";
 import { db } from "./db";
 
 const AuthContext = createContext(null);
@@ -12,9 +12,11 @@ export function AuthProvider({ children }) {
     let cancelled = false;
     (async () => {
       // Session lives in an httpOnly cookie — hydrate the user from the
-      // server. Nothing about auth is persisted client-side.
+      // server. Nothing about auth is persisted client-side. /auth/me is never
+      // cached: it is session-specific and must always hit the server so stale
+      // data from a previous user/demo account can never leak across sessions.
       try {
-        const me = await apiRequest("/auth/me");
+        const me = await apiRequest("/auth/me", { noCache: true });
         if (!cancelled) setUser(me);
       } catch {
         // No valid session (cookie missing/expired) — stay signed out.
@@ -39,25 +41,36 @@ export function AuthProvider({ children }) {
     return data.user;
   }, []);
 
-  const signUp = useCallback(async ({ email, password, name }) => {
-    const data = await apiRequest("/auth/register", {
-      method: "POST",
-      body: JSON.stringify({
-        email,
-        password,
-        name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
-      }),
-    });
-    return data;
-  }, []);
-
   // Used by flows where the server has already set the session cookie
-  // (e.g. OAuth callback pages): re-hydrate the user from /auth/me.
+  // (e.g. OAuth callback pages, register): re-hydrate the user from /auth/me.
   const restoreSession = useCallback(async () => {
-    const me = await apiRequest("/auth/me");
+    const me = await apiRequest("/auth/me", { noCache: true });
     setUser(me);
     return me;
   }, []);
+
+  const signUp = useCallback(
+    async ({ email, password, name }) => {
+      const data = await apiRequest("/auth/register", {
+        method: "POST",
+        body: JSON.stringify({
+          email,
+          password,
+          name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
+        }),
+      });
+      // If the server issued a session cookie, hydrate the user so the freshly
+      // created account can go straight into onboarding (otherwise the onboarding
+      // guard would bounce them back to /login).
+      try {
+        await restoreSession();
+      } catch {
+        // No session cookie set — user will sign in on their own.
+      }
+      return data;
+    },
+    [restoreSession],
+  );
 
   // Final step of a Google sign-up: verify the emailed OTP, then the backend
   // creates the account and sets a fresh session cookie.
@@ -76,6 +89,9 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore — session is cleared locally regardless
     } finally {
+      // Drop any cached /auth/me so a stale user never leaks into the next
+      // sign-in / sign-up in this tab.
+      clearCachedResponse("/auth/me");
       setUser(null);
     }
   }, []);
@@ -106,6 +122,13 @@ export function AuthProvider({ children }) {
         // Backend may not expose PUT /auth/profile yet — apply locally so the
         // UI still reflects the change.
         me = { ...(user || {}), ...body };
+      }
+
+      // The profile endpoint returns `{ user, profileCompletion }` — unwrap so
+      // the context always holds the flat user object (with permissions, etc.)
+      // and the sidebar/nav can read user.permissions immediately.
+      if (me && typeof me === "object" && me.user && typeof me.user === "object") {
+        me = me.user;
       }
 
       setUser(me);

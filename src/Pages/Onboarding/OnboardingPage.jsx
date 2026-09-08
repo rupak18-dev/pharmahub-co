@@ -17,7 +17,12 @@ import {
   AlertDialogTitle,
 } from "@/Components/ui/alert-dialog";
 import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
-import { getOnboarding, saveOnboarding } from "@/lib/onboardingApi";
+import {
+  getOnboarding,
+  saveOnboarding,
+  isOnboarded,
+  resetOnboardingStorage,
+} from "@/lib/onboardingApi";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router";
 
@@ -40,17 +45,29 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (loading) return;
     if (!user) navigate("/login");
-    else if (user.onboarded && onboarding.currentStep < ONBOARDING_STEPS.length - 1)
+    else if (isOnboarded(user) && onboarding.currentStep < ONBOARDING_STEPS.length - 1)
       navigate("/dashboard");
   }, [user, loading, navigate, onboarding.currentStep]);
 
-  // Hydrate from backend — the Mongo `onboardings` collection is the sole store.
+  // Hydrate saved progress — but only for an account that has NOT yet
+  // completed onboarding AND where this is genuinely its own in-progress data
+  // is impossible to know locally once a server is involved. To guarantee the
+  // onboarding form always shows for a fresh account (never inheriting a
+  // previous user's progress, which previously jumped straight to the
+  // dashboard), a non-onboarded user always starts clean at step 0.
   const hydratedRef = useRef(false);
   useEffect(() => {
     if (loading) return;
     let cancelled = false;
     (async () => {
       try {
+        if (!isOnboarded(user)) {
+          resetOnboardingStorage();
+          if (cancelled) return;
+          setOnboarding(INITIAL_STATE);
+          hydratedRef.current = true;
+          return;
+        }
         const remote = await getOnboarding();
         if (cancelled || !remote) return;
         setOnboarding({
@@ -70,7 +87,7 @@ export default function OnboardingPage() {
     return () => {
       cancelled = true;
     };
-  }, [loading]);
+  }, [loading, user]);
 
   // Auto-save to the backend after a debounce.
   useEffect(() => {

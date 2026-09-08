@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { isOnboarded } from "@/lib/onboardingApi";
 import { API_BASE } from "@/lib/api";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { LoginForm } from "./components/Login/LoginForm";
@@ -31,7 +32,9 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(schema) });
 
-  const afterAuthPath = (currentUser) => (currentUser.onboarded ? "/dashboard" : "/onboarding");
+  // Completed accounts land on the dashboard; fresh accounts that have not
+  // finished onboarding are sent through the onboarding flow first.
+  const afterAuthPath = (user) => (isOnboarded(user) ? "/dashboard" : "/onboarding");
 
   const onSubmit = async (data) => {
     try {

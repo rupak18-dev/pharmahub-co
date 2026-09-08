@@ -154,6 +154,17 @@ function setCachedResponse(path, data) {
   }
 }
 
+// Removes a single cached GET response (e.g. the session-specific /auth/me) so
+// a stale value can never be served after a sign-out / user switch.
+export function clearCachedResponse(path) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.removeItem(`${API_CACHE_PREFIX}${path}`);
+  } catch {
+    // ignore
+  }
+}
+
 // Fires GETs for the given paths once, warming the server and filling the
 // response cache so pages hydrate instantly on visit.
 export function prefetch(paths) {
@@ -183,7 +194,7 @@ export async function apiRequest(path, options = {}) {
   } else {
     data = json;
   }
-  if (method === "GET") {
+  if (method === "GET" && !options.noCache) {
     setCachedResponse(path, data);
   }
   return data;
