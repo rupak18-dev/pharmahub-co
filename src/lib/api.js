@@ -15,7 +15,7 @@ function resolveApiBase() {
     // meaningful when the app itself is opened from localhost. Browsing via a
     // LAN IP / tunnel would otherwise try to reach the wrong host.
     if (fromEnv && isLocal) return fromEnv;
-    if (isLocal) return "http://localhost:5050/api/v1";
+    if (isLocal) return "http://localhost:5000/api/v1";
     // Dev served over another hostname: go same-origin so the Vite proxy
     // routes the call (never wakes the sleeping production server).
     if (import.meta.env.DEV) return "/api/v1";
