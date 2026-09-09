@@ -43,12 +43,12 @@ export function PharmaCard() {
   const { user: authUser } = useAuth();
   const navigate = useNavigate();
 
-  // Read from live db so the panel reflects saves immediately
   const liveUser = useDb((d) => d.profiles.find((p) => p.id === authUser?.id));
-  const owner = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
+  const ownerFromDb = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
 
   // Prefer live db record; fall back to auth snapshot
   const user = liveUser ?? authUser;
+  const owner = ownerFromDb ?? (authUser?.role === "Owner" ? authUser : user);
 
   const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString(undefined, {

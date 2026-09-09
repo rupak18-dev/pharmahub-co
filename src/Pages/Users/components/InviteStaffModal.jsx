@@ -170,7 +170,7 @@ export function InviteStaffModal({ open, onOpenChange, onInvited }) {
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    {ALL_ROLES.map((r) => {
+                    {ALL_ROLES.filter((r) => r !== "Owner").map((r) => {
                       const rm = getRoleMeta(r);
                       const Icon = rm.icon;
                       return (

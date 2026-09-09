@@ -289,6 +289,7 @@ export default function ProfilePage() {
     >
       <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 sm:px-6">
         {/* Page Header */}
+
         <div data-profile-header>
           <PageHeader
             title="Pharma Profile"
