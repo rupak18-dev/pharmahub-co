@@ -422,3 +422,15 @@ export const integrationSchemas = {
     config: integrationConfigSchema.optional(),
   }),
 };
+
+export const ticketSchemas = {
+  create: z.object({
+    title: z.string().trim().min(1, "Title is required").max(250),
+    issueType: z.string().trim().min(1, "Issue type is required"),
+    description: z.string().trim().min(1, "Description is required"),
+    severity: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+    screenshot: z.string().nullable().optional(),
+    userName: z.string().trim().optional(),
+    userEmail: z.string().trim().optional(),
+  }),
+};

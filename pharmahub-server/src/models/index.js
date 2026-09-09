@@ -18,3 +18,4 @@ export { Invitation } from "./Invitation.js";
 export { PasswordResetToken } from "./PasswordResetToken.js";
 export { ReportBill } from "./ReportBill.js";
 export { Integration } from "./Integration.js";
+export { Ticket } from "./Ticket.js";
