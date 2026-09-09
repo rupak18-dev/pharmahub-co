@@ -117,7 +117,19 @@ export function StaffAccessPanel() {
   const [roleChange, setRoleChange] = useState(null);
   const [roleInfo, setRoleInfo] = useState(null);
 
-  const staff = useMemo(() => buildStaffAccess(members), [members]);
+  const staff = useMemo(() => {
+    const list = buildStaffAccess(members);
+    return list.filter((s) => {
+      // Exclude Owner accounts (Owner access cannot be changed)
+      if (s.roleName === "Owner") return false;
+      // Exclude Admin accounts (Admin access cannot be changed)
+      if (s.roleName === "Admin") return false;
+      // Exclude the logged-in administrator
+      if (user?.id && s.id === user.id) return false;
+      if (user?.email && s.email && user.email.toLowerCase() === s.email.toLowerCase()) return false;
+      return true;
+    });
+  }, [members, user]);
 
   const filtered = useMemo(() => {
     let list = staff;
@@ -174,6 +186,9 @@ export function StaffAccessPanel() {
         role: payload.role,
         name: payload.name,
         email: payload.email,
+        phone: payload.phone,
+        department: payload.department,
+        designation: payload.designation,
         accessIds: payload.accessIds ?? [],
         featureAccess: payload.features ?? {},
       });
@@ -292,7 +307,7 @@ export function StaffAccessPanel() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Roles</SelectItem>
-                  {ALL_ROLES.map((r) => (
+                  {ALL_ROLES.filter((r) => r !== "Owner" && r !== "Admin").map((r) => (
                     <SelectItem key={r} value={r}>
                       {r}
                     </SelectItem>
@@ -358,7 +373,7 @@ export function StaffAccessPanel() {
                       const department =
                         s.department ?? (validRole ? categoryLabel(role.category) : "—");
                       const canChangeRole =
-                        canUpdate && !isPending && (isSelf ? user?.role === "Owner" : !isOwner);
+                        canUpdate && (isSelf ? user?.role === "Owner" : !isOwner);
                       return (
                         <tr key={s.id} className="group transition-colors hover:bg-muted/20">
                           <td className="px-4 py-3">

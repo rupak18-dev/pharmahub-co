@@ -24,6 +24,8 @@ import {
   ClipboardCheck,
   CheckCircle2,
   Loader2,
+  RotateCcw,
+  Briefcase,
 } from "lucide-react";
 import { toast } from "sonner";
 import { invitationService } from "@/lib/invitationService";
@@ -58,6 +60,91 @@ const DEPARTMENTS = [
   "Administration & HR",
   "Accounts & Finance",
 ];
+
+export const ROLE_PRESETS = {
+  Pharmacist: {
+    department: "Pharmacy Operations",
+    designation: "Staff Pharmacist",
+    description: "Dispenses medications, verifies prescriptions, and manages drug batches and expiry tracking.",
+    coreModules: ["sales", "medicines", "batches", "expiry", "dashboard"],
+    coreFeatures: { processSales: true, stockAudit: true, notifications: true },
+  },
+  Cashier: {
+    department: "Sales & POS",
+    designation: "Cashier / Billing Counter",
+    description: "Processes POS checkout transactions, sales billing, customer invoices, and medicine lookups.",
+    coreModules: ["sales", "dashboard"],
+    coreFeatures: { processSales: true, notifications: false },
+  },
+  "Store Keeper": {
+    department: "Inventory & Stock",
+    designation: "Store Keeper",
+    description: "Receives supplier inward stock, monitors warehouse shelves, and manages batch expiry dates.",
+    coreModules: ["batches", "medicines", "expiry", "audit", "shortbook"],
+    coreFeatures: { stockAudit: true, notifications: true },
+  },
+  "Inventory Manager": {
+    department: "Inventory & Stock",
+    designation: "Inventory Manager",
+    description: "Oversees the entire inventory lifecycle: purchase orders, stock reconciliations, and reporting.",
+    coreModules: ["medicines", "batches", "expiry", "audit", "purchases", "dashboard", "reports"],
+    coreFeatures: { stockAudit: true, purchasing: true, dataExport: true, notifications: true },
+  },
+  Admin: {
+    department: "Administration & HR",
+    designation: "System Administrator",
+    description: "Administrative access to staff management, security settings, audit logs, and reports.",
+    coreModules: [
+      "dashboard",
+      "medicines",
+      "batches",
+      "expiry",
+      "audit",
+      "purchases",
+      "sales",
+      "shortbook",
+      "reports",
+      "users",
+      "admin",
+      "integrations",
+    ],
+    coreFeatures: {
+      processSales: true,
+      stockAudit: true,
+      purchasing: true,
+      dataExport: true,
+      notifications: true,
+      userAdmin: true,
+    },
+  },
+  Owner: {
+    department: "Administration & HR",
+    designation: "Store Owner",
+    description: "Full store ownership with unrestricted permissions across all modules, settings, and team access.",
+    coreModules: [
+      "dashboard",
+      "medicines",
+      "batches",
+      "expiry",
+      "audit",
+      "purchases",
+      "sales",
+      "shortbook",
+      "reports",
+      "users",
+      "admin",
+      "integrations",
+    ],
+    coreFeatures: {
+      processSales: true,
+      stockAudit: true,
+      purchasing: true,
+      dataExport: true,
+      notifications: true,
+      userAdmin: true,
+    },
+  },
+};
 
 const MODULE_ICONS = {
   dashboard: LayoutDashboard,
@@ -113,6 +200,7 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
   const [phoneNumber, setPhoneNumber] = useState("");
   const [role, setRole] = useState("Pharmacist");
   const [department, setDepartment] = useState("Pharmacy Operations");
+  const [designation, setDesignation] = useState("Staff Pharmacist");
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -165,6 +253,7 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
       setPhoneNumber("");
       setRole("Pharmacist");
       setDepartment("Pharmacy Operations");
+      setDesignation("Staff Pharmacist");
       setErrors({});
       setSubmitting(false);
       submittingRef.current = false;
@@ -209,15 +298,21 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
     setModuleAccess(moduleDefaultsFor(role));
   }, [roleConfigs, isOpen, moduleDefaultsFor, role]);
 
-  // When Role changes in Step 1, auto update default perms
+  // When Role changes in Step 1, auto update defaults
   const handleRoleChange = (newRole) => {
     setRole(newRole);
+    const preset = ROLE_PRESETS[newRole];
+    if (preset) {
+      setDepartment(preset.department);
+      setDesignation(preset.designation);
+    }
     moduleTouchedRef.current = false;
     setModuleAccess(moduleDefaultsFor(newRole));
 
     const isAdminRole = newRole === "Owner" || newRole === "Admin";
     setFeatures((prev) => ({
       ...prev,
+      ...(preset?.coreFeatures ?? {}),
       userAdmin: isAdminRole,
     }));
   };
@@ -291,6 +386,7 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
         email: workEmail.trim().toLowerCase(),
         phone: phoneNumber.trim() || undefined,
         department: department?.trim() || undefined,
+        designation: designation?.trim() || undefined,
         role,
         permissions: {},
         featureAccess: features,
@@ -411,12 +507,60 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
           {/* STEP 1: DETAILS */}
           {step === 1 && (
             <div className="space-y-4">
+              {/* Role Context & Guidance Banner */}
+              {ROLE_PRESETS[role] && (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="h-4 w-4 text-primary" />
+                      <span className="text-xs font-bold text-foreground">
+                        Configuring for: {role}
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
+                      Role Template
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground leading-relaxed">
+                    {ROLE_PRESETS[role].description}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-primary/10 text-[10px]">
+                    <span className="font-semibold text-foreground">Required:</span>
+                    <Badge variant="destructive" className="h-4 text-[9px] px-1.5 py-0">
+                      Full Name
+                    </Badge>
+                    <Badge variant="destructive" className="h-4 text-[9px] px-1.5 py-0">
+                      Work Email
+                    </Badge>
+                    <Badge variant="destructive" className="h-4 text-[9px] px-1.5 py-0">
+                      Role
+                    </Badge>
+                    <span className="font-semibold text-muted-foreground ml-1">Editable:</span>
+                    <Badge variant="secondary" className="h-4 text-[9px] px-1.5 py-0">
+                      Phone
+                    </Badge>
+                    <Badge variant="secondary" className="h-4 text-[9px] px-1.5 py-0">
+                      Department
+                    </Badge>
+                    <Badge variant="secondary" className="h-4 text-[9px] px-1.5 py-0">
+                      Designation
+                    </Badge>
+                  </div>
+                </div>
+              )}
+
               {/* Form Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Full Name (Required) */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="staff-name" className="text-xs font-semibold">
-                    Full Name *
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="staff-name" className="text-xs font-semibold">
+                      Full Name *
+                    </Label>
+                    <Badge variant="outline" className="text-[9px] h-4 px-1 text-destructive border-destructive/30">
+                      Required
+                    </Badge>
+                  </div>
                   <div className="relative">
                     <User className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -432,10 +576,16 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   )}
                 </div>
 
+                {/* Work Email (Required) */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="staff-email" className="text-xs font-semibold">
-                    Work Email *
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="staff-email" className="text-xs font-semibold">
+                      Work Email *
+                    </Label>
+                    <Badge variant="outline" className="text-[9px] h-4 px-1 text-destructive border-destructive/30">
+                      Required
+                    </Badge>
+                  </div>
                   <div className="relative">
                     <Mail className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -452,10 +602,39 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   )}
                 </div>
 
+                {/* Role (Required) */}
                 <div className="space-y-1.5">
-                  <Label htmlFor="staff-phone" className="text-xs font-semibold">
-                    Phone Number
-                  </Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Role *</Label>
+                    <Badge variant="outline" className="text-[9px] h-4 px-1 text-primary border-primary/30 font-medium">
+                      Required
+                    </Badge>
+                  </div>
+                  <Select value={role} onValueChange={handleRoleChange}>
+                    <SelectTrigger className="h-9 text-xs rounded-xl">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {ALL_ROLES.filter((r) => r !== "Owner").map((r) => (
+                        <SelectItem key={r} value={r} className="text-xs">
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.role && <p className="text-[11px] text-destructive">{errors.role}</p>}
+                </div>
+
+                {/* Phone Number (Optional / Editable) */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="staff-phone" className="text-xs font-semibold">
+                      Phone Number
+                    </Label>
+                    <Badge variant="secondary" className="text-[9px] h-4 px-1 text-muted-foreground font-normal">
+                      Optional & Editable
+                    </Badge>
+                  </div>
                   <div className="relative">
                     <Phone className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -468,25 +647,14 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   </div>
                 </div>
 
+                {/* Department (Editable / Preset) */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Role *</Label>
-                  <Select value={role} onValueChange={handleRoleChange}>
-                    <SelectTrigger className="h-9 text-xs rounded-xl">
-                      <SelectValue placeholder="Select role" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {ALL_ROLES.map((r) => (
-                        <SelectItem key={r} value={r} className="text-xs">
-                          {r}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.role && <p className="text-[11px] text-destructive">{errors.role}</p>}
-                </div>
-
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Department</Label>
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold">Department</Label>
+                    <Badge variant="secondary" className="text-[9px] h-4 px-1 text-muted-foreground font-normal">
+                      Editable
+                    </Badge>
+                  </div>
                   <Select value={department} onValueChange={setDepartment}>
                     <SelectTrigger className="h-9 text-xs rounded-xl">
                       <SelectValue placeholder="Select department" />
@@ -500,70 +668,200 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Designation / Title (Editable / Preset) */}
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="staff-designation" className="text-xs font-semibold">
+                      Designation
+                    </Label>
+                    <Badge variant="secondary" className="text-[9px] h-4 px-1 text-muted-foreground font-normal">
+                      Editable
+                    </Badge>
+                  </div>
+                  <div className="relative">
+                    <Briefcase className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="staff-designation"
+                      placeholder="e.g. Senior Pharmacist"
+                      value={designation}
+                      onChange={(e) => setDesignation(e.target.value)}
+                      className="pl-9 text-xs rounded-xl"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}
 
           {/* STEP 2: PERMISSIONS */}
-          {step === 2 && (
-            <div className="space-y-4">
-              {/* Information Box */}
-              <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
-                <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-foreground">
-                    Select pages this role will have access to.
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                    Toggle module access for <strong>{fullName || "this staff member"}</strong>{" "}
-                    (Role: {role}).
-                  </p>
-                </div>
-              </div>
+          {step === 2 && (() => {
+            const currentPreset = ROLE_PRESETS[role] || {
+              coreModules: ["dashboard", "sales"],
+              description: "Standard role permissions",
+            };
+            const coreSet = new Set(currentPreset.coreModules || []);
+            const coreModules = ALL_MODULES.filter((m) => coreSet.has(m.key));
+            const additionalModules = ALL_MODULES.filter((m) => !coreSet.has(m.key));
 
-              {/* Permission Cards List */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {ALL_MODULES.map((mod) => {
-                  const Icon = MODULE_ICONS[mod.key] || ShieldCheck;
-                  const isEnabled = moduleAccess[mod.key] ?? true;
-                  return (
-                    <div
-                      key={mod.key}
-                      className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
-                        isEnabled
-                          ? "border-primary/30 bg-card shadow-2xs"
-                          : "border-border/60 bg-muted/20 opacity-70"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0 pr-2">
-                        <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${
-                            isEnabled
-                              ? "border-primary/20 bg-primary/10 text-primary"
-                              : "border-border bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-foreground truncate">{mod.label}</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {isEnabled ? "Access Enabled" : "Access Disabled"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <Switch
-                        checked={isEnabled}
-                        onCheckedChange={() => toggleModule(mod.key)}
-                        className="data-[state=checked]:bg-primary"
-                      />
+            return (
+              <div className="space-y-5">
+                {/* Information & Reset Box */}
+                <div className="flex items-start justify-between gap-3 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
+                  <div className="flex items-start gap-2.5">
+                    <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        Module Permissions for {role}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+                        Required modules for <strong>{role}</strong> are pre-enabled below. You can freely edit other modules to customize access for <strong>{fullName || "this staff member"}</strong>.
+                      </p>
                     </div>
-                  );
-                })}
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      moduleTouchedRef.current = false;
+                      setModuleAccess(moduleDefaultsFor(role));
+                      toast.info(`Reset permissions to ${role} defaults`);
+                    }}
+                    className="h-7 px-2.5 text-[11px] rounded-lg shrink-0 gap-1 bg-background"
+                  >
+                    <RotateCcw className="h-3 w-3" /> Reset
+                  </Button>
+                </div>
+
+                {/* 1. Core Modules Required for Role */}
+                {coreModules.length > 0 && (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-foreground">
+                          Core Modules for {role}
+                        </span>
+                        <Badge className="text-[10px] bg-primary/15 text-primary border-primary/30">
+                          {coreModules.length} Required
+                        </Badge>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        Pre-enabled for role
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {coreModules.map((mod) => {
+                        const Icon = MODULE_ICONS[mod.key] || ShieldCheck;
+                        const isEnabled = moduleAccess[mod.key] ?? true;
+                        return (
+                          <div
+                            key={mod.key}
+                            className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                              isEnabled
+                                ? "border-primary/40 bg-primary/5 shadow-2xs"
+                                : "border-border/60 bg-muted/20 opacity-70"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                              <div
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                                  isEnabled
+                                    ? "border-primary/25 bg-primary/15 text-primary"
+                                    : "border-border bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-xs font-bold text-foreground truncate">{mod.label}</p>
+                                  <span className="text-[9px] font-medium text-primary bg-primary/10 px-1 rounded">
+                                    Core
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {isEnabled ? "Active" : "Disabled"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={() => toggleModule(mod.key)}
+                              className="data-[state=checked]:bg-primary scale-90"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Additional Modules (Optional & Editable) */}
+                {additionalModules.length > 0 && (
+                  <div className="space-y-2.5 pt-2 border-t border-border/60">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-foreground">
+                          Additional Modules
+                        </span>
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/60">
+                          {additionalModules.length} Optional & Editable
+                        </Badge>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        Customize access
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {additionalModules.map((mod) => {
+                        const Icon = MODULE_ICONS[mod.key] || ShieldCheck;
+                        const isEnabled = moduleAccess[mod.key] ?? false;
+                        return (
+                          <div
+                            key={mod.key}
+                            className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                              isEnabled
+                                ? "border-primary/30 bg-card shadow-2xs"
+                                : "border-border/60 bg-muted/10 opacity-75"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                              <div
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                                  isEnabled
+                                    ? "border-primary/20 bg-primary/10 text-primary"
+                                    : "border-border bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-foreground truncate">{mod.label}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {isEnabled ? "Access Granted" : "No Access"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={() => toggleModule(mod.key)}
+                              className="data-[state=checked]:bg-primary scale-90"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* STEP 3: FEATURES */}
           {step === 3 && (
@@ -615,13 +913,25 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   },
                 ].map((feat) => {
                   const isChecked = features[feat.key] ?? false;
+                  const isRoleDefault = ROLE_PRESETS[role]?.coreFeatures?.[feat.key] ?? false;
                   return (
                     <div
                       key={feat.key}
-                      className="flex items-start justify-between p-4 rounded-xl border border-border/80 bg-card gap-4"
+                      className="flex items-start justify-between p-3.5 rounded-xl border border-border/80 bg-card gap-4"
                     >
                       <div className="space-y-1 min-w-0 flex-1">
-                        <p className="text-xs font-bold text-foreground">{feat.title}</p>
+                        <div className="flex items-center gap-2">
+                          <p className="text-xs font-bold text-foreground">{feat.title}</p>
+                          {isRoleDefault ? (
+                            <Badge className="text-[9px] h-4 px-1.5 bg-primary/15 text-primary border-primary/25">
+                              Role Default
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[9px] h-4 px-1.5 text-muted-foreground border-border/60 font-normal">
+                              Optional
+                            </Badge>
+                          )}
+                        </div>
                         <p className="text-[11px] text-muted-foreground leading-relaxed">
                           {feat.desc}
                         </p>

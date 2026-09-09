@@ -1,24 +1,28 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/lib/auth";
-import { mapJobTitleToRole } from "@/lib/roles";
 import { saveOnboarding } from "@/lib/onboardingApi";
 import { apiRequest } from "@/lib/api";
 import { CapsuleLoader } from "@/Components/shared/CapsuleLoader";
 
 export function Completion({ onboarding }) {
   const navigate = useNavigate();
-  const { updateProfile } = useAuth();
+  const { user, updateProfile, refreshUser } = useAuth();
 
   const personal = onboarding?.personal || {};
   const workspace = onboarding?.workspace || {};
-  const name = [personal.firstName, personal.lastName].filter(Boolean).join(" ").trim();
   const orgName = workspace.organizationName?.trim();
 
+  // Never send `name` here: the wizard's personal fields may carry stale or
+  // cross-account data, and writing them would rename the authenticated
+  // account. Names are set at signup and edited on the Profile page only.
+  //
+  // Role is never sent either — a user's role is owned by the backend
+  // (Owner assignment or invitation), never by wizard input.
   const profileBody = { onboarded: true };
-  if (name) profileBody.name = name;
-  if (personal.jobTitle) profileBody.role = mapJobTitleToRole(personal.jobTitle);
-  if (orgName) profileBody.orgName = orgName;
+  // Only the Owner establishes an organization; invited staff must keep the
+  // organization they were invited into.
+  if (user?.role === "Owner" && orgName) profileBody.orgName = orgName;
 
   const onboardingPayload = {
     ...(onboarding.businessType ? { businessType: onboarding.businessType } : {}),
@@ -31,6 +35,9 @@ export function Completion({ onboarding }) {
       ? { quickStart: onboarding.quickStart }
       : {}),
     completedAt: new Date().toISOString(),
+    // Redundant completion signal: the backend flips User.onboarded when the
+    // onboarding payload carries this flag, even if the profile call fails.
+    onboarded: true,
   };
 
   const stages = [
@@ -52,7 +59,9 @@ export function Completion({ onboarding }) {
     {
       id: "dashboard",
       label: "Preparing your dashboard",
-      run: () => apiRequest("/auth/me").then(() => {}),
+      // Re-resolves the identity from GET /auth/me so the freshly assigned
+      // role and its effective permissions are live before the first render.
+      run: () => refreshUser(),
     },
   ];
 
