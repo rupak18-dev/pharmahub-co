@@ -259,24 +259,18 @@ export function BillFormModal({
         const created = await reportService.createReportBill(payload);
         const w = created?.whatsapp;
         if (w?.status === "sent") {
-          toast.success(`Bill ${payload.invoiceNo} saved and sent on WhatsApp.`);
+          toast.success(`Bill ${payload.invoiceNo} saved & sent to WhatsApp successfully!`);
         } else if (w?.status === "failed") {
-          toast.success(`Bill ${payload.invoiceNo} saved, but WhatsApp delivery failed.`);
+          toast.error(`Bill ${payload.invoiceNo} saved, but WhatsApp delivery failed.`);
         } else if (w?.reason === "not_connected") {
-          toast.success(
-            `Bill ${payload.invoiceNo} saved. WhatsApp delivery skipped — WhatsApp Business is not connected.`,
-          );
-        } else if (w?.reason === "server_not_configured") {
-          toast.success(
-            `Bill ${payload.invoiceNo} saved. WhatsApp Business is connected, but the server's WhatsApp credentials are not configured — delivery skipped.`,
+          toast.info(
+            `Bill ${payload.invoiceNo} generated successfully, but WhatsApp is not connected.`,
           );
         } else if (w?.reason === "no_number") {
-          toast.success(
-            `Bill ${payload.invoiceNo} saved. Add a customer phone number to deliver it on WhatsApp.`,
-          );
+          toast.success(`Bill ${payload.invoiceNo} saved.`);
         } else if (w?.reason === "invalid_number") {
-          toast.success(
-            `Bill ${payload.invoiceNo} saved. The customer phone number is not a valid Indian mobile number.`,
+          toast.warning(
+            `Bill ${payload.invoiceNo} saved, but customer phone number is invalid.`,
           );
         } else {
           toast.success(`Bill ${payload.invoiceNo} saved.`);
@@ -751,7 +745,15 @@ export function BillFormModal({
                   onClick={handleSubmit}
                 >
                   {saving && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                  {isEdit ? "Save Changes" : "Save Bill"}
+                  {saving
+                    ? customerPhone?.trim()
+                      ? "Sending..."
+                      : "Saving..."
+                    : isEdit
+                      ? "Save Changes"
+                      : customerPhone?.trim()
+                        ? "Send Bill"
+                        : "Save Bill"}
                 </Button>
               </>
             )}

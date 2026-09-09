@@ -17,16 +17,35 @@ export function LoginForm({
   onGoogleClick,
   remember,
   onRememberChange,
+  currentUser,
+  onSignOut,
 }) {
   return (
     <div className="w-full max-w-[420px] mx-auto flex flex-col justify-center min-h-[100dvh] py-8 px-4 sm:px-6">
-      <div className="mb-8 flex flex-col justify-center lg:justify-start">
+      <div className="mb-6 flex flex-col justify-center lg:justify-start">
         <Logo />
         <h1 className="auth-title mt-6 flex items-center gap-2.5">
           Welcome
           <WavingHand className="h-8 w-8 sm:h-9 sm:w-9" />
         </h1>
       </div>
+
+      {currentUser && (
+        <div className="mb-5 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between gap-2">
+          <div>
+            Currently signed in as <strong>{currentUser.name || currentUser.email}</strong> ({currentUser.role || "User"}).
+          </div>
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              className="text-amber-900 dark:text-amber-100 font-semibold underline text-[11px] shrink-0 hover:opacity-80"
+            >
+              Sign out
+            </button>
+          )}
+        </div>
+      )}
 
       <GoogleAuthButton onClick={onGoogleClick} disabled={isSubmitting} />
 

@@ -33,6 +33,7 @@ import { listRoles } from "@/lib/rolesService";
 import { ALL_ROLES, ALL_MODULES, DEFAULT_PERMISSIONS } from "@/lib/permissions";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
+import { PhoneInput } from "@/Components/ui/phone-input";
 import { Label } from "@/Components/ui/label";
 import { Switch } from "@/Components/ui/switch";
 import { Badge } from "@/Components/ui/badge";
@@ -635,16 +636,11 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                       Optional & Editable
                     </Badge>
                   </div>
-                  <div className="relative">
-                    <Phone className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="staff-phone"
-                      placeholder="+91 98765 43210"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="pl-9 text-xs rounded-xl"
-                    />
-                  </div>
+                  <PhoneInput
+                    id="staff-phone"
+                    value={phoneNumber}
+                    onChange={setPhoneNumber}
+                  />
                 </div>
 
                 {/* Department (Editable / Preset) */}
