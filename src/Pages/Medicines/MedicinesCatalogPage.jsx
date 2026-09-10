@@ -1,6 +1,6 @@
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Pencil, Power, PowerOff, Eye, Filter, FileSpreadsheet } from "lucide-react";
+import { Plus, Search, Pencil, Power, PowerOff, Eye, Filter, FileSpreadsheet, Info } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -579,7 +579,7 @@ export default function MedicinesCatalogPage() {
           {/* Desktop table view */}
           <div className="hidden md:block overflow-x-auto border border-border/80 rounded-2xl shadow-sm bg-white">
             <table className="w-full text-[13px] border-collapse min-w-[2000px]">
-              <thead className="border-b border-border/80 bg-muted/30 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <thead className="border-b border-[#A0D2CD] bg-[#E8F3F1] text-left text-[11px] font-bold uppercase tracking-wider text-[#005B60]">
                 <tr>
                   <th className="px-4 py-3">Medicine Info</th>
                   <th className="px-4 py-3">Brand</th>
@@ -601,7 +601,7 @@ export default function MedicinesCatalogPage() {
                   <th className="px-4 py-3">Rack</th>
                   <th className="px-4 py-3">Supplier</th>
                   <th className="px-4 py-3">Availability</th>
-                  <th className="px-4 py-3 text-center sticky right-0 bg-white shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.05)] border-l border-border/80">
+                  <th className="px-4 py-3 text-center sticky right-0 bg-[#E8F3F1] shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.05)] border-l border-[#A0D2CD] text-[#005B60]">
                     Actions
                   </th>
                 </tr>

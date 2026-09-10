@@ -214,6 +214,13 @@ export default function MedicinesCatalogPage() {
   const [sortBy, setSortBy] = useState("newest");
   const [visibleFields, setVisibleFields] = useState([]);
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
+  // Header column priority filters — selected value floats to top, rest shown below
+  const [headerBrandPriority, setHeaderBrandPriority] = useState(null);
+  const [headerGenericPriority, setHeaderGenericPriority] = useState(null);
+  const [headerExpiryPriority, setHeaderExpiryPriority] = useState(null);
+  const [brandPopoverOpen, setBrandPopoverOpen] = useState(false);
+  const [genericPopoverOpen, setGenericPopoverOpen] = useState(false);
+  const [expiryPopoverOpen, setExpiryPopoverOpen] = useState(false);
   const CUSTOMIZABLE_FILTERS = [
     { id: "name", label: "Medicine Name" },
     { id: "brand", label: "Brand" },
@@ -414,6 +421,50 @@ export default function MedicinesCatalogPage() {
     } else if (sortBy === "price-desc") {
       sorted.sort((a, b) => (stockByMed.get(b.id)?.mrp || 0) - (stockByMed.get(a.id)?.mrp || 0));
     }
+    // Apply header priority sorts (float selected to top, rest remain in order below)
+    // Priority order: Brand > Generic > Expiry (last applied wins / stacks)
+    if (headerExpiryPriority) {
+      sorted.sort((a, b) => {
+        const metaA = stockByMed.get(a.id);
+        const metaB = stockByMed.get(b.id);
+        const getExpiryGroup = (med, meta) => {
+          const stock = meta?.current || 0;
+          const min = meta?.min || 0;
+          if (!med.isActive) return "inactive";
+          // 'active' means the medicine is simply active (isActive=true)
+          if (headerExpiryPriority === "active") return "active";
+          if (stock === 0) return "out";
+          if (stock <= min) return "low";
+          if (stock <= min * 2) return "medium";
+          return "high";
+        };
+        const ga = getExpiryGroup(a, metaA);
+        const gb = getExpiryGroup(b, metaB);
+        const matchA = headerExpiryPriority === "active" ? a.isActive : ga === headerExpiryPriority;
+        const matchB = headerExpiryPriority === "active" ? b.isActive : gb === headerExpiryPriority;
+        if (matchA && !matchB) return -1;
+        if (!matchA && matchB) return 1;
+        return 0;
+      });
+    }
+    if (headerGenericPriority) {
+      sorted.sort((a, b) => {
+        const isA = a.genericName === headerGenericPriority;
+        const isB = b.genericName === headerGenericPriority;
+        if (isA && !isB) return -1;
+        if (!isA && isB) return 1;
+        return 0;
+      });
+    }
+    if (headerBrandPriority) {
+      sorted.sort((a, b) => {
+        const isA = a.brandName === headerBrandPriority;
+        const isB = b.brandName === headerBrandPriority;
+        if (isA && !isB) return -1;
+        if (!isA && isB) return 1;
+        return 0;
+      });
+    }
     return sorted;
   }, [
     medicines,
@@ -429,6 +480,9 @@ export default function MedicinesCatalogPage() {
     categories,
     showWishlist,
     wishlist,
+    headerBrandPriority,
+    headerGenericPriority,
+    headerExpiryPriority,
   ]);
   useEffect(() => {
     setCurrentPage(1);
@@ -442,6 +496,9 @@ export default function MedicinesCatalogPage() {
     dateRangeFilter,
     sortBy,
     showWishlist,
+    headerBrandPriority,
+    headerGenericPriority,
+    headerExpiryPriority,
   ]);
   const paginatedData = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -1347,10 +1404,41 @@ export default function MedicinesCatalogPage() {
             <>
               {viewMode === "list" ? (
                 <>
+                  {/* Active header priority filter indicator */}
+                  {(headerBrandPriority || headerGenericPriority || headerExpiryPriority) && (
+                    <div className="flex flex-wrap items-center gap-2 px-4 py-2 bg-teal-50 border-b border-teal-200/60">
+                      <span className="text-[10px] font-bold text-[#005B60] uppercase tracking-wider">Prioritized:</span>
+                      {headerBrandPriority && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#007A87]/15 text-[#007A87] text-[11px] font-semibold">
+                          Brand: {headerBrandPriority}
+                          <button type="button" onClick={() => setHeaderBrandPriority(null)} className="hover:text-red-500 cursor-pointer ml-0.5">
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </span>
+                      )}
+                      {headerGenericPriority && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#007A87]/15 text-[#007A87] text-[11px] font-semibold">
+                          Generic: {headerGenericPriority}
+                          <button type="button" onClick={() => setHeaderGenericPriority(null)} className="hover:text-red-500 cursor-pointer ml-0.5">
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </span>
+                      )}
+                      {headerExpiryPriority && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#007A87]/15 text-[#007A87] text-[11px] font-semibold">
+                          Status: {headerExpiryPriority === "active" ? "Active" : headerExpiryPriority === "high" ? "High Stock" : headerExpiryPriority === "medium" ? "Medium Stock" : "Low Stock"}
+                          <button type="button" onClick={() => setHeaderExpiryPriority(null)} className="hover:text-red-500 cursor-pointer ml-0.5">
+                            <X className="w-2.5 h-2.5" />
+                          </button>
+                        </span>
+                      )}
+                      <span className="text-[10px] text-muted-foreground ml-1">(matched rows highlighted below)</span>
+                    </div>
+                  )}
                   {/* Responsive table view */}
                   <div className="overflow-x-auto border border-border/80 rounded-2xl shadow-sm bg-white">
                     <table className="w-full text-[13px] border-collapse whitespace-nowrap">
-                      <thead className="border-b border-border/40 bg-white text-left text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <thead className="border-b border-[#A0D2CD] bg-[#E8F3F1] text-left text-[11px] font-bold uppercase tracking-wider text-[#005B60]">
                         <tr>
                           {selectionMode && (
                             <th className="px-4 py-3 w-10 text-center">
@@ -1381,34 +1469,150 @@ export default function MedicinesCatalogPage() {
                           )}
                           <th className="px-4 py-3">
                             <div className="flex items-center gap-1">
-                              Medicine Name <ArrowDownUp className="w-3 h-3 opacity-50" />
+                              Medicine Name <ArrowDownUp className="w-3 h-3 opacity-60" />
                             </div>
                           </th>
                           {isFieldVisible("brand") && (
                             <th className="px-4 py-3">
                               <div className="flex items-center gap-1">
-                                Brand <ArrowDownUp className="w-3 h-3 opacity-50" />
+                                Brand
+                                <Popover open={brandPopoverOpen} onOpenChange={setBrandPopoverOpen}>
+                                  <PopoverTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                        headerBrandPriority
+                                          ? "text-[#007A87] opacity-100"
+                                          : "opacity-60 hover:opacity-100 hover:text-[#007A87]"
+                                      }`}
+                                      title="Filter by Brand"
+                                    >
+                                      <ArrowDownUp className="w-3 h-3" />
+                                    </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent
+                                    align="start"
+                                    className="w-56 p-0 rounded-xl shadow-xl border border-border/60 bg-white z-50 overflow-hidden"
+                                  >
+                                    <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between bg-[#E8F3F1]">
+                                      <span className="text-[11px] font-bold text-[#005B60] uppercase tracking-wider">Filter by Brand</span>
+                                      {headerBrandPriority && (
+                                        <button
+                                          type="button"
+                                          onClick={() => { setHeaderBrandPriority(null); setBrandPopoverOpen(false); }}
+                                          className="text-[10px] text-[#007A87] hover:underline font-semibold cursor-pointer"
+                                        >
+                                          Clear
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div className="max-h-56 overflow-y-auto py-1">
+                                      {uniqueBrands.length === 0 ? (
+                                        <p className="text-[11px] text-muted-foreground px-3 py-2">No brands found</p>
+                                      ) : (
+                                        uniqueBrands.map((brand, idx) => (
+                                          <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => {
+                                              setHeaderBrandPriority(headerBrandPriority === brand ? null : brand);
+                                              setBrandPopoverOpen(false);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 text-xs transition-colors cursor-pointer flex items-center justify-between gap-2 ${
+                                              headerBrandPriority === brand
+                                                ? "bg-[#007A87]/10 text-[#007A87] font-semibold"
+                                                : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                            }`}
+                                          >
+                                            <span className="truncate">{brand}</span>
+                                            {headerBrandPriority === brand && (
+                                              <CheckCircle2 className="w-3.5 h-3.5 text-[#007A87] shrink-0" />
+                                            )}
+                                          </button>
+                                        ))
+                                      )}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
                               </div>
                             </th>
                           )}
                           {isFieldVisible("genericName") && (
                             <th className="px-4 py-3">
                               <div className="flex items-center gap-1">
-                                Generic Name <ArrowDownUp className="w-3 h-3 opacity-50" />
+                                Generic Name
+                                <Popover open={genericPopoverOpen} onOpenChange={setGenericPopoverOpen}>
+                                  <PopoverTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                        headerGenericPriority
+                                          ? "text-[#007A87] opacity-100"
+                                          : "opacity-60 hover:opacity-100 hover:text-[#007A87]"
+                                      }`}
+                                      title="Filter by Generic Name"
+                                    >
+                                      <ArrowDownUp className="w-3 h-3" />
+                                    </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent
+                                    align="start"
+                                    className="w-56 p-0 rounded-xl shadow-xl border border-border/60 bg-white z-50 overflow-hidden"
+                                  >
+                                    <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between bg-[#E8F3F1]">
+                                      <span className="text-[11px] font-bold text-[#005B60] uppercase tracking-wider">Filter by Generic</span>
+                                      {headerGenericPriority && (
+                                        <button
+                                          type="button"
+                                          onClick={() => { setHeaderGenericPriority(null); setGenericPopoverOpen(false); }}
+                                          className="text-[10px] text-[#007A87] hover:underline font-semibold cursor-pointer"
+                                        >
+                                          Clear
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div className="max-h-56 overflow-y-auto py-1">
+                                      {uniqueGenerics.length === 0 ? (
+                                        <p className="text-[11px] text-muted-foreground px-3 py-2">No generic names found</p>
+                                      ) : (
+                                        uniqueGenerics.map((generic, idx) => (
+                                          <button
+                                            key={idx}
+                                            type="button"
+                                            onClick={() => {
+                                              setHeaderGenericPriority(headerGenericPriority === generic ? null : generic);
+                                              setGenericPopoverOpen(false);
+                                            }}
+                                            className={`w-full text-left px-3 py-2 text-xs transition-colors cursor-pointer flex items-center justify-between gap-2 ${
+                                              headerGenericPriority === generic
+                                                ? "bg-[#007A87]/10 text-[#007A87] font-semibold"
+                                                : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                            }`}
+                                          >
+                                            <span className="truncate">{generic}</span>
+                                            {headerGenericPriority === generic && (
+                                              <CheckCircle2 className="w-3.5 h-3.5 text-[#007A87] shrink-0" />
+                                            )}
+                                          </button>
+                                        ))
+                                      )}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
                               </div>
                             </th>
                           )}
                           {isFieldVisible("saltComposition") && (
                             <th className="px-4 py-3">
                               <div className="flex items-center gap-1">
-                                Salt / Composition <ArrowDownUp className="w-3 h-3 opacity-50" />
+                                Salt / Composition <ArrowDownUp className="w-3 h-3 opacity-60" />
                               </div>
                             </th>
                           )}
                           {isFieldVisible("category") && (
                             <th className="px-4 py-3">
                               <div className="flex items-center gap-1">
-                                Category <Filter className="w-3 h-3 opacity-50" />
+                                Category <Filter className="w-3 h-3 opacity-60" />
                               </div>
                             </th>
                           )}
@@ -1422,7 +1626,7 @@ export default function MedicinesCatalogPage() {
                           {isFieldVisible("mrp") && (
                             <th className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end gap-1">
-                                MRP <ArrowDownUp className="w-3 h-3 opacity-50" />
+                                MRP <ArrowDownUp className="w-3 h-3 opacity-60" />
                               </div>
                             </th>
                           )}
@@ -1442,7 +1646,69 @@ export default function MedicinesCatalogPage() {
                           {isFieldVisible("expiryDate") && (
                             <th className="px-4 py-3">
                               <div className="flex items-center gap-1">
-                                Expiry Date <ArrowDownUp className="w-3 h-3 opacity-50" />
+                                Expiry Date
+                                <Popover open={expiryPopoverOpen} onOpenChange={setExpiryPopoverOpen}>
+                                  <PopoverTrigger asChild>
+                                    <button
+                                      type="button"
+                                      className={`p-0.5 rounded transition-colors cursor-pointer ${
+                                        headerExpiryPriority
+                                          ? "text-[#007A87] opacity-100"
+                                          : "opacity-60 hover:opacity-100 hover:text-[#007A87]"
+                                      }`}
+                                      title="Filter by Stock Status"
+                                    >
+                                      <ArrowDownUp className="w-3 h-3" />
+                                    </button>
+                                  </PopoverTrigger>
+                                  <PopoverContent
+                                    align="start"
+                                    className="w-52 p-0 rounded-xl shadow-xl border border-border/60 bg-white z-50 overflow-hidden"
+                                  >
+                                    <div className="px-3 py-2 border-b border-border/40 flex items-center justify-between bg-[#E8F3F1]">
+                                      <span className="text-[11px] font-bold text-[#005B60] uppercase tracking-wider">Stock Priority</span>
+                                      {headerExpiryPriority && (
+                                        <button
+                                          type="button"
+                                          onClick={() => { setHeaderExpiryPriority(null); setExpiryPopoverOpen(false); }}
+                                          className="text-[10px] text-[#007A87] hover:underline font-semibold cursor-pointer"
+                                        >
+                                          Clear
+                                        </button>
+                                      )}
+                                    </div>
+                                    <div className="py-1">
+                                      {[
+                                        { value: "active", label: "Active", dot: "bg-emerald-500" },
+                                        { value: "high", label: "High Stock", dot: "bg-teal-500" },
+                                        { value: "medium", label: "Medium Stock", dot: "bg-amber-400" },
+                                        { value: "low", label: "Low Stock", dot: "bg-orange-500" },
+                                      ].map((opt) => (
+                                        <button
+                                          key={opt.value}
+                                          type="button"
+                                          onClick={() => {
+                                            setHeaderExpiryPriority(headerExpiryPriority === opt.value ? null : opt.value);
+                                            setExpiryPopoverOpen(false);
+                                          }}
+                                          className={`w-full text-left px-3 py-2 text-xs transition-colors cursor-pointer flex items-center justify-between gap-2 ${
+                                            headerExpiryPriority === opt.value
+                                              ? "bg-[#007A87]/10 text-[#007A87] font-semibold"
+                                              : "text-slate-700 hover:bg-slate-50 hover:text-slate-900"
+                                          }`}
+                                        >
+                                          <div className="flex items-center gap-2">
+                                            <span className={`w-2 h-2 rounded-full shrink-0 ${opt.dot}`} />
+                                            <span>{opt.label}</span>
+                                          </div>
+                                          {headerExpiryPriority === opt.value && (
+                                            <CheckCircle2 className="w-3.5 h-3.5 text-[#007A87] shrink-0" />
+                                          )}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
                               </div>
                             </th>
                           )}
@@ -1451,13 +1717,13 @@ export default function MedicinesCatalogPage() {
                           {isFieldVisible("availability") && (
                             <th className="px-4 py-3">
                               <div className="flex items-center gap-1">
-                                Status <Filter className="w-3 h-3 opacity-50" />
+                                Status <Filter className="w-3 h-3 opacity-60" />
                               </div>
                             </th>
                           )}
-                          <th className="px-4 py-3 text-center sticky right-0 bg-white border-l border-border/40">
+                          <th className="px-4 py-3 text-center sticky right-0 bg-[#E8F3F1] border-l border-[#A0D2CD] text-[#005B60]">
                             <div className="flex items-center justify-center gap-1">
-                              Actions <Activity className="w-3 h-3 opacity-50" />
+                              Actions <Activity className="w-3 h-3 opacity-60" />
                             </div>
                           </th>
                         </tr>
@@ -1471,11 +1737,32 @@ export default function MedicinesCatalogPage() {
                               : (meta?.current || 0) <= (meta?.min || 0)
                                 ? "low"
                                 : "healthy";
+                          const isPriorityMatch = (() => {
+                            if (headerBrandPriority && m.brandName === headerBrandPriority) return true;
+                            if (headerGenericPriority && m.genericName === headerGenericPriority) return true;
+                            if (headerExpiryPriority) {
+                              if (headerExpiryPriority === "active" && m.isActive) return true;
+                              if (headerExpiryPriority !== "active") {
+                                const stock = meta?.current || 0;
+                                const min = meta?.min || 0;
+                                const group = stock === 0 ? "out" : stock <= min ? "low" : stock <= min * 2 ? "medium" : "high";
+                                if (group === headerExpiryPriority) return true;
+                              }
+                            }
+                            return false;
+                          })();
+                          const hasPriorityFilter = !!(headerBrandPriority || headerGenericPriority || headerExpiryPriority);
                           return (
                             <tr
                               key={m.id}
-                              className={`group hover:bg-muted/10 transition-colors duration-200 bg-white border-b border-border/40 last:border-b-0 ${
-                                selectedMedIds.includes(m.id) ? "bg-[#007A87]/5" : ""
+                              className={`group hover:bg-slate-50 transition-colors duration-200 border-b border-border/40 last:border-b-0 ${
+                                selectedMedIds.includes(m.id)
+                                  ? "bg-[#007A87]/5"
+                                  : hasPriorityFilter && isPriorityMatch
+                                    ? "bg-teal-50/80 border-l-2 border-l-[#007A87]"
+                                    : hasPriorityFilter && !isPriorityMatch
+                                      ? "opacity-60"
+                                      : "bg-white"
                               }`}
                             >
                               {selectionMode && (
