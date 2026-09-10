@@ -928,8 +928,18 @@ export default function MedicinesCatalogPage() {
       {/* Title section outside white container */}
       <PageHeader
         title={showWishlist ? "Your Wishlist" : "Medicines"}
+        description={showWishlist ? undefined : "Stock your shelves in seconds"}
         actions={
           <>
+            {has("medicines", "create") && !showWishlist && (
+              <Button
+                onClick={openCreate}
+                className="min-h-[44px] h-11 px-4 text-xs bg-[#007A87] hover:bg-[#007A87]/90 text-white rounded-md gap-1 font-semibold touch-manipulation"
+              >
+                <Plus className="h-4 w-4" /> Create Catalog Model
+              </Button>
+            )}
+
             {showWishlist && (
               <Button
                 size="sm"
@@ -946,10 +956,10 @@ export default function MedicinesCatalogPage() {
                 <Button
                   size="sm"
                   variant="outline"
-                  className="h-9 w-9 p-0 rounded-lg flex items-center justify-center border-border/80 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-sm"
+                  className="min-h-[44px] min-w-[44px] h-11 w-11 p-0 rounded-lg flex items-center justify-center border-border/80 hover:bg-slate-100 hover:text-slate-900 transition-colors shadow-sm touch-manipulation"
                   title="Store Settings & Quick Actions"
                 >
-                  <Settings className="h-4 w-4 text-slate-700 hover:rotate-45 transition-transform duration-200" />
+                  <Settings className="h-5 w-5 text-slate-700 hover:rotate-45 transition-transform duration-200" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent
@@ -1104,39 +1114,47 @@ export default function MedicinesCatalogPage() {
             <div className="flex flex-wrap items-center justify-between gap-4">
               {/* Left side filters */}
               <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                <Select value={catFilter} onValueChange={setCatFilter}>
-                  <SelectTrigger className="w-full sm:w-[140px] flex-1 sm:flex-initial h-9 text-xs bg-white text-slate-700 hover:text-slate-900 rounded-md border-border/80">
-                    <SelectValue placeholder="Category" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Categories</SelectItem>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className={`transition-opacity duration-200 ${statusFilter === "draft" ? "opacity-40 pointer-events-none" : ""}`}>
+                  <Select value={catFilter} onValueChange={setCatFilter} disabled={statusFilter === "draft"}>
+                    <SelectTrigger className="w-full sm:w-[140px] flex-1 sm:flex-initial h-9 text-xs bg-white text-slate-700 hover:text-slate-900 rounded-md border-border/80">
+                      <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Categories</SelectItem>
+                      {categories.map((c) => (
+                        <SelectItem key={c.id} value={c.id}>
+                          {c.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-full sm:w-[140px] flex-1 sm:flex-initial h-9 text-xs bg-white text-slate-700 hover:text-slate-900 rounded-md border-border/80">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="active">Active Only</SelectItem>
-                    <SelectItem value="low">Low Stock</SelectItem>
-                    <SelectItem value="out">Out of Stock</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className={`transition-opacity duration-200 ${statusFilter === "draft" ? "opacity-40 pointer-events-none" : ""}`}>
+                  <Select value={statusFilter} onValueChange={setStatusFilter} disabled={statusFilter === "draft"}>
+                    <SelectTrigger className="w-full sm:w-[140px] flex-1 sm:flex-initial h-9 text-xs bg-white text-slate-700 hover:text-slate-900 rounded-md border-border/80">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="active">Active Only</SelectItem>
+                      <SelectItem value="low">Low Stock</SelectItem>
+                      <SelectItem value="out">Out of Stock</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 <Button
                   variant={statusFilter === "draft" ? "default" : "outline"}
-                  className={`h-9 px-3 text-xs rounded-md gap-2 w-full sm:w-auto flex-1 sm:flex-initial justify-center ${statusFilter === "draft" ? "bg-[#007A87] text-white hover:bg-[#007A87]/90" : "bg-white text-slate-700 border-border/80"}`}
+                  className={`h-9 px-3 text-xs rounded-md gap-2 transition-all duration-200 ${
+                    statusFilter === "draft"
+                      ? "bg-[#007A87] text-white hover:bg-[#007A87]/90 shadow-sm shadow-[#007A87]/20"
+                      : "bg-white text-slate-700 border-border/80 hover:bg-slate-50"
+                  }`}
                   onClick={() => setStatusFilter(statusFilter === "draft" ? "all" : "draft")}
                 >
                   <FileText
-                    className={`w-3.5 h-3.5 ${statusFilter === "draft" ? "text-white" : "text-muted-foreground"}`}
+                    className={`w-3.5 h-3.5 transition-colors duration-200 ${statusFilter === "draft" ? "text-white" : "text-muted-foreground"}`}
                   />
                   Draft Medicine
                 </Button>
@@ -1148,7 +1166,7 @@ export default function MedicinesCatalogPage() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="outline"
-                      className="h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2 w-full sm:w-auto flex-1 sm:flex-initial justify-center cursor-pointer"
+                      className="hidden sm:flex h-9 px-3 text-xs bg-white text-slate-700 border-border/80 rounded-md gap-2 cursor-pointer"
                     >
                       <Filter className="w-3.5 h-3.5 text-muted-foreground" />
                       Manage Filters
@@ -1217,15 +1235,6 @@ export default function MedicinesCatalogPage() {
                   <Download className="w-3.5 h-3.5 text-muted-foreground" />
                   Export
                 </Button>
-
-                {has("medicines", "create") && (
-                  <Button
-                    onClick={openCreate}
-                    className="h-9 px-4 text-xs bg-[#007A87] hover:bg-[#007A87]/90 text-white rounded-md gap-1 font-semibold w-full sm:w-auto flex-1 sm:flex-initial justify-center"
-                  >
-                    <Plus className="h-4 w-4" /> Create Catalog Model
-                  </Button>
-                )}
 
                 <div className="flex items-center gap-3 border-t sm:border-t-0 sm:border-l border-border/60 pt-2 sm:pt-0 pl-0 sm:pl-3 w-full sm:w-auto justify-between sm:justify-start">
                   <span className="text-xs font-medium text-muted-foreground">
@@ -1708,7 +1717,7 @@ export default function MedicinesCatalogPage() {
                 </>
               ) : (
                 /* Grid View */
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
                   {paginatedData.map((m) => {
                     const meta = stockByMed.get(m.id);
                     const stockTone =
@@ -1720,16 +1729,16 @@ export default function MedicinesCatalogPage() {
                     return (
                       <div
                         key={m.id}
-                        className={`bg-white border rounded-2xl p-5 shadow-sm space-y-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative flex flex-col justify-between overflow-hidden group ${
+                        className={`bg-white border rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 sm:space-y-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative flex flex-col justify-between overflow-hidden group ${
                           selectedMedIds.includes(m.id)
                             ? "border-[#007A87] ring-2 ring-[#007A87]/20"
                             : "border-border/80"
                         }`}
                       >
-                        <div>
+                        <div className="space-y-3 sm:space-y-4">
                           {/* Top Actions */}
-                          <div className="flex justify-between items-start">
-                            <div className="flex items-center gap-2">
+                          <div className="flex justify-between items-center">
+                            <div className="flex items-center gap-2 min-w-0">
                               {selectionMode && (
                                 <Checkbox
                                   checked={selectedMedIds.includes(m.id)}
@@ -1743,14 +1752,14 @@ export default function MedicinesCatalogPage() {
                                   aria-label={`Select ${m.name}`}
                                 />
                               )}
-                              <span className="text-[10px] text-muted-foreground">
+                              <span className="text-[10px] text-muted-foreground truncate">
                                 {m.id.slice(0, 8).toUpperCase()}
                               </span>
                             </div>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className={`h-8 w-8 rounded-full ${wishlist.includes(m.id) ? "text-red-500" : "text-muted-foreground hover:text-red-500"}`}
+                              className={`h-8 w-8 rounded-full shrink-0 ${wishlist.includes(m.id) ? "text-red-500" : "text-muted-foreground hover:text-red-500"}`}
                               onClick={(e) => {
                                 e.preventDefault();
                                 e.stopPropagation();
@@ -1767,7 +1776,7 @@ export default function MedicinesCatalogPage() {
                           </div>
 
                           {/* Medicine Visual Representation */}
-                          <div className="w-full h-32 bg-slate-50 rounded-xl flex items-center justify-center mb-4 border border-border/40 relative overflow-hidden">
+                          <div className="w-full h-28 sm:h-32 bg-slate-50 rounded-xl flex items-center justify-center border border-border/40 relative overflow-hidden">
                             <img
                               src={getImageForMedicine(m.id, m.dosageForm)}
                               alt={`${m.name} packaging`}
@@ -1778,10 +1787,10 @@ export default function MedicinesCatalogPage() {
                           </div>
 
                           {/* Details */}
-                          <div className="space-y-1">
+                          <div className="space-y-1.5">
                             <Link
                               to={`/medicines/${m.id}`}
-                              className="font-medium text-slate-950 hover:underline text-sm truncate block"
+                              className="font-medium text-slate-950 hover:underline text-sm block truncate"
                             >
                               {m.name}
                             </Link>
@@ -1790,22 +1799,22 @@ export default function MedicinesCatalogPage() {
                             </p>
 
                             {/* Category badge */}
-                            <div className="pt-1.5 flex flex-wrap gap-1">
+                            <div className="flex flex-wrap gap-1">
                               <span className="rounded-md bg-[#007A87]/10 text-[#007A87] px-2 py-0.5 text-[10px] font-semibold">
                                 {categories.find((c) => c.id === m.categoryId)?.name ??
                                   "Uncategorized"}
                               </span>
                             </div>
 
-                            <p className="text-xs text-muted-foreground pt-1.5 font-medium">
+                            <p className="text-xs text-muted-foreground font-medium">
                               {m.strength || "—"} | {m.packSize || "—"}
                             </p>
                           </div>
                         </div>
 
-                        <div>
+                        <div className="space-y-3">
                           {/* Prices & Stocks */}
-                          <div className="flex justify-between items-end border-t border-border/40 pt-3 mt-3">
+                          <div className="flex justify-between items-end border-t border-border/40 pt-3">
                             <div>
                               <span className="text-[10px] text-muted-foreground block font-medium">
                                 Price (MRP)
@@ -1834,7 +1843,7 @@ export default function MedicinesCatalogPage() {
                           </div>
 
                           {/* Card Actions */}
-                          <div className="flex gap-2 mt-4 pt-1">
+                          <div className="flex gap-2">
                             <Button
                               asChild
                               size="sm"
@@ -1850,7 +1859,7 @@ export default function MedicinesCatalogPage() {
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  className="h-9 w-9 p-0 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground cursor-pointer"
+                                  className="h-9 w-9 p-0 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
@@ -1888,91 +1897,97 @@ export default function MedicinesCatalogPage() {
               )}
             </>
           )}
-        </div>
-      </div>
 
-      {totalPages > 0 && (
-        <div className="relative z-10 flex flex-col sm:flex-row items-center justify-between gap-4 mt-auto py-4 border-t border-border/20">
-          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
-            <span className="text-[13px] text-slate-500 font-bold">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
-              {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} medicines
-            </span>
-            <Select
-              value={String(itemsPerPage)}
-              onValueChange={(val) => {
-                setItemsPerPage(Number(val));
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="h-8 w-auto min-w-[120px] gap-2 bg-white border border-border/60 rounded-md px-2.5 py-1.5 text-[13px] font-bold text-slate-700 shadow-none hover:bg-slate-50 focus:ring-0 focus:outline-none cursor-pointer">
-                <SelectValue placeholder={`${itemsPerPage} per page`} />
-              </SelectTrigger>
-              <SelectContent align="start">
-                {[10, 15, 20, 25, 30].map((count) => (
-                  <SelectItem
-                    key={count}
-                    value={String(count)}
-                    className="text-[13px] font-semibold cursor-pointer"
+          {/* Pagination */}
+          {totalPages > 0 && (
+            <div className="border-t border-border/20 px-4 py-3 sm:py-4">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-3 sm:gap-4">
+                <div className="flex items-center justify-center sm:justify-start gap-3">
+                  <span className="hidden sm:inline text-[13px] text-slate-500 font-bold">
+                    Showing {(currentPage - 1) * itemsPerPage + 1} to{" "}
+                    {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} medicines
+                  </span>
+                  <span className="sm:hidden text-xs text-slate-500 font-bold">
+                    {(currentPage - 1) * itemsPerPage + 1}-{Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length}
+                  </span>
+                  <Select
+                    value={String(itemsPerPage)}
+                    onValueChange={(val) => {
+                      setItemsPerPage(Number(val));
+                      setCurrentPage(1);
+                    }}
                   >
-                    {count} per page
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                    <SelectTrigger className="h-8 w-auto min-w-[100px] sm:min-w-[120px] gap-2 bg-white border border-border/60 rounded-md px-2.5 py-1.5 text-[13px] font-bold text-slate-700 shadow-none hover:bg-slate-50 focus:ring-0 focus:outline-none cursor-pointer">
+                      <SelectValue placeholder={`${itemsPerPage} / page`} />
+                    </SelectTrigger>
+                    <SelectContent align="start">
+                      {[10, 15, 20, 25, 30].map((count) => (
+                        <SelectItem
+                          key={count}
+                          value={String(count)}
+                          className="text-[13px] font-semibold cursor-pointer"
+                        >
+                          {count} / page
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                setCurrentPage((p) => Math.max(1, p - 1));
-              }}
-              disabled={currentPage === 1}
-              className="px-3 py-1.5 text-[13px] font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:text-slate-950 hover:bg-slate-100 rounded-md transition-colors"
-            >
-              Previous
-            </button>
-
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
-              .map((p, i, arr) => (
-                <Fragment key={p}>
-                  {i > 0 && arr[i - 1] !== p - 1 && (
-                    <span className="px-2 text-slate-400 font-bold">...</span>
-                  )}
+                <div className="flex items-center justify-center gap-1.5 sm:gap-2">
                   <button
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
-                      setCurrentPage(p);
+                      setCurrentPage((p) => Math.max(1, p - 1));
                     }}
-                    className={`w-8 h-8 flex items-center justify-center rounded-full text-[13px] font-extrabold transition-colors ${
-                      currentPage === p
-                        ? "bg-[#007A87] text-white shadow-sm"
-                        : "text-slate-700 hover:bg-slate-100"
-                    }`}
+                    disabled={currentPage === 1}
+                    className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-[13px] font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:text-slate-950 hover:bg-slate-100 rounded-md transition-colors"
                   >
-                    {p}
+                    Prev
                   </button>
-                </Fragment>
-              ))}
 
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                setCurrentPage((p) => Math.min(totalPages, p + 1));
-              }}
-              disabled={currentPage === totalPages}
-              className="px-3 py-1.5 text-[13px] font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:text-slate-950 hover:bg-slate-100 rounded-md transition-colors"
-            >
-              Next
-            </button>
-          </div>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+                    .map((p, i, arr) => (
+                      <Fragment key={p}>
+                        {i > 0 && arr[i - 1] !== p - 1 && (
+                          <span className="px-1 sm:px-2 text-slate-400 font-bold text-xs sm:text-[13px]">...</span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            setCurrentPage(p);
+                          }}
+                          className={`w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center rounded-full text-xs sm:text-[13px] font-extrabold transition-colors ${
+                            currentPage === p
+                              ? "bg-[#007A87] text-white shadow-sm"
+                              : "text-slate-700 hover:bg-slate-100"
+                          }`}
+                        >
+                          {p}
+                        </button>
+                      </Fragment>
+                    ))}
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentPage((p) => Math.min(totalPages, p + 1));
+                    }}
+                    disabled={currentPage === totalPages}
+                    className="px-2.5 sm:px-3 py-1.5 text-xs sm:text-[13px] font-bold text-slate-700 disabled:opacity-40 disabled:cursor-not-allowed hover:text-slate-950 hover:bg-slate-100 rounded-md transition-colors"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
 
       {/* RENDER SHEET DRAWER FORM */}
       <MedicineFormSheet
@@ -2242,22 +2257,30 @@ export default function MedicinesCatalogPage() {
 
       {/* CONFIRMATION POPUP */}
       <AlertDialog open={!!confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete medicine?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this medicine? This action cannot be undone.
+        <AlertDialogContent className="sm:max-w-md gap-0 p-0 overflow-hidden">
+          <div className="flex flex-col items-center justify-center pt-6 pb-2 px-6">
+            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-red-50 mb-3">
+              <AlertCircle className="h-6 w-6 text-red-500" />
+            </div>
+            <AlertDialogTitle className="text-lg font-bold text-center">
+              Delete "{confirmDelete?.name}"?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-sm text-muted-foreground text-center mt-1.5 leading-relaxed">
+              This action is permanent and cannot be undone. All associated data including stock records and batch history will be removed from the catalog.
             </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+          </div>
+          <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 p-4 bg-slate-50 border-t border-border/40">
+            <AlertDialogCancel className="mt-0 sm:mt-0 h-10 px-5 text-sm font-semibold rounded-lg border-border/60">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
-              className="bg-destructive hover:bg-destructive/90 text-white"
+              className="h-10 px-5 text-sm font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white gap-1.5"
               onClick={() => confirmDelete && deleteMedicine(confirmDelete)}
             >
-              Delete
+              <Trash2 className="h-4 w-4" />
+              Delete Medicine
             </AlertDialogAction>
-          </AlertDialogFooter>
+          </div>
         </AlertDialogContent>
       </AlertDialog>
     </div>
@@ -2340,7 +2363,7 @@ function MedicineFormSheet({ open, onOpenChange, editing, onSubmit }) {
       <SheetContent className="w-full sm:max-w-2xl flex flex-col h-full bg-white">
         <SheetHeader className="border-b border-border/60 pb-3">
           <SheetTitle className="text-lg font-bold text-foreground">
-            {editing ? "Modify Catalog Model" : "Create Catalog Model"}
+            {editing ? "Modify Medicine Master Config" : "Create Catalog Model"}
           </SheetTitle>
           <SheetDescription>
             Input detailed composition data, drug schedules, and layout placement values.
