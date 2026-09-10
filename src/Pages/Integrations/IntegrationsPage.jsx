@@ -29,6 +29,7 @@ import {
 } from "@/lib/integrationsService";
 import { findIntegration, INTEGRATIONS } from "@/Pages/Admin/components/integrationsCatalog";
 import { ConnectIntegrationDialog } from "@/Pages/Admin/components/ConnectIntegrationDialog";
+import { WhatsAppConnectDialog } from "@/Pages/Admin/components/WhatsAppConnectDialog";
 
 function CapabilityList({ items }) {
   if (!items?.length) return null;
@@ -308,6 +309,7 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [connectItem, setConnectItem] = useState(null);
   const [configureItem, setConfigureItem] = useState(null);
+  const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
   const [gmailConnecting, setGmailConnecting] = useState(false);
   const [gmailTesting, setGmailTesting] = useState(false);
 
@@ -397,10 +399,18 @@ export default function IntegrationsPage() {
       handleConnectGmail();
       return;
     }
+    if (item.key === "whatsapp") {
+      setWhatsappModalOpen(true);
+      return;
+    }
     setConnectItem(item);
   };
 
   const handleConfigure = (integration) => {
+    if (integration.key === "whatsapp") {
+      setWhatsappModalOpen(true);
+      return;
+    }
     setConfigureItem(integration);
   };
 
@@ -627,6 +637,12 @@ export default function IntegrationsPage() {
         mode="configure"
         disabled={!canEdit}
         onDone={refresh}
+      />
+
+      <WhatsAppConnectDialog
+        open={whatsappModalOpen}
+        onOpenChange={setWhatsappModalOpen}
+        onConnectedChange={() => refresh()}
       />
     </div>
   );

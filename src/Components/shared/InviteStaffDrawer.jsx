@@ -25,7 +25,6 @@ import {
   CheckCircle2,
   Loader2,
   RotateCcw,
-  Briefcase,
 } from "lucide-react";
 import { toast } from "sonner";
 import { invitationService } from "@/lib/invitationService";
@@ -33,6 +32,7 @@ import { listRoles } from "@/lib/rolesService";
 import { ALL_ROLES, ALL_MODULES, DEFAULT_PERMISSIONS } from "@/lib/permissions";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
+import { PhoneInput } from "@/Components/ui/phone-input";
 import { Label } from "@/Components/ui/label";
 import { Switch } from "@/Components/ui/switch";
 import { Badge } from "@/Components/ui/badge";
@@ -51,15 +51,6 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/Components/ui/sheet";
-
-const DEPARTMENTS = [
-  "Pharmacy Operations",
-  "Sales & POS",
-  "Inventory & Stock",
-  "Purchasing & Supply Chain",
-  "Administration & HR",
-  "Accounts & Finance",
-];
 
 export const ROLE_PRESETS = {
   Pharmacist: {
@@ -199,8 +190,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
   const [workEmail, setWorkEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [role, setRole] = useState("Pharmacist");
-  const [department, setDepartment] = useState("Pharmacy Operations");
-  const [designation, setDesignation] = useState("Staff Pharmacist");
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -252,8 +241,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
       setWorkEmail("");
       setPhoneNumber("");
       setRole("Pharmacist");
-      setDepartment("Pharmacy Operations");
-      setDesignation("Staff Pharmacist");
       setErrors({});
       setSubmitting(false);
       submittingRef.current = false;
@@ -302,10 +289,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
   const handleRoleChange = (newRole) => {
     setRole(newRole);
     const preset = ROLE_PRESETS[newRole];
-    if (preset) {
-      setDepartment(preset.department);
-      setDesignation(preset.designation);
-    }
     moduleTouchedRef.current = false;
     setModuleAccess(moduleDefaultsFor(newRole));
 
@@ -385,8 +368,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
         name: fullName.trim(),
         email: workEmail.trim().toLowerCase(),
         phone: phoneNumber.trim() || undefined,
-        department: department?.trim() || undefined,
-        designation: designation?.trim() || undefined,
         role,
         permissions: {},
         featureAccess: features,
@@ -507,67 +488,25 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
           {/* STEP 1: DETAILS */}
           {step === 1 && (
             <div className="space-y-4">
-              {/* Role Context & Guidance Banner */}
-              {ROLE_PRESETS[role] && (
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-primary" />
-                      <span className="text-xs font-bold text-foreground">
-                        Configuring for: {role}
-                      </span>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
-                      Role Template
-                    </Badge>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    {ROLE_PRESETS[role].description}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-primary/10 text-[10px]">
-                    <span className="font-semibold text-foreground">Required:</span>
-                    <Badge variant="destructive" className="h-4 text-[9px] px-1.5 py-0">
-                      Full Name
-                    </Badge>
-                    <Badge variant="destructive" className="h-4 text-[9px] px-1.5 py-0">
-                      Work Email
-                    </Badge>
-                    <Badge variant="destructive" className="h-4 text-[9px] px-1.5 py-0">
-                      Role
-                    </Badge>
-                    <span className="font-semibold text-muted-foreground ml-1">Editable:</span>
-                    <Badge variant="secondary" className="h-4 text-[9px] px-1.5 py-0">
-                      Phone
-                    </Badge>
-                    <Badge variant="secondary" className="h-4 text-[9px] px-1.5 py-0">
-                      Department
-                    </Badge>
-                    <Badge variant="secondary" className="h-4 text-[9px] px-1.5 py-0">
-                      Designation
-                    </Badge>
-                  </div>
-                </div>
-              )}
-
               {/* Form Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Full Name (Required) */}
+                {/* Full Name */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="staff-name" className="text-xs font-semibold">
-                      Full Name *
-                    </Label>
-                    <Badge variant="outline" className="text-[9px] h-4 px-1 text-destructive border-destructive/30">
-                      Required
-                    </Badge>
-                  </div>
+                  <Label htmlFor="staff-name" className="text-xs font-semibold">
+                    Full Name *
+                  </Label>
                   <div className="relative">
                     <User className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="staff-name"
                       placeholder="e.g. Dr. Ananya Sharma"
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        if (errors.fullName) {
+                          setErrors((prev) => ({ ...prev, fullName: undefined }));
+                        }
+                      }}
                       className={`pl-9 text-xs rounded-xl ${errors.fullName ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
                     />
                   </div>
@@ -576,16 +515,11 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   )}
                 </div>
 
-                {/* Work Email (Required) */}
+                {/* Work Email */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="staff-email" className="text-xs font-semibold">
-                      Work Email *
-                    </Label>
-                    <Badge variant="outline" className="text-[9px] h-4 px-1 text-destructive border-destructive/30">
-                      Required
-                    </Badge>
-                  </div>
+                  <Label htmlFor="staff-email" className="text-xs font-semibold">
+                    Work Email *
+                  </Label>
                   <div className="relative">
                     <Mail className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -593,7 +527,12 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                       type="email"
                       placeholder="ananya@pharmahub.com"
                       value={workEmail}
-                      onChange={(e) => setWorkEmail(e.target.value)}
+                      onChange={(e) => {
+                        setWorkEmail(e.target.value);
+                        if (errors.workEmail) {
+                          setErrors((prev) => ({ ...prev, workEmail: undefined }));
+                        }
+                      }}
                       className={`pl-9 text-xs rounded-xl ${errors.workEmail ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
                     />
                   </div>
@@ -602,15 +541,18 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   )}
                 </div>
 
-                {/* Role (Required) */}
+                {/* Role */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold">Role *</Label>
-                    <Badge variant="outline" className="text-[9px] h-4 px-1 text-primary border-primary/30 font-medium">
-                      Required
-                    </Badge>
-                  </div>
-                  <Select value={role} onValueChange={handleRoleChange}>
+                  <Label className="text-xs font-semibold">Role *</Label>
+                  <Select
+                    value={role}
+                    onValueChange={(val) => {
+                      handleRoleChange(val);
+                      if (errors.role) {
+                        setErrors((prev) => ({ ...prev, role: undefined }));
+                      }
+                    }}
+                  >
                     <SelectTrigger className="h-9 text-xs rounded-xl">
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
@@ -625,70 +567,16 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   {errors.role && <p className="text-[11px] text-destructive">{errors.role}</p>}
                 </div>
 
-                {/* Phone Number (Optional / Editable) */}
+                {/* Phone Number */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="staff-phone" className="text-xs font-semibold">
-                      Phone Number
-                    </Label>
-                    <Badge variant="secondary" className="text-[9px] h-4 px-1 text-muted-foreground font-normal">
-                      Optional & Editable
-                    </Badge>
-                  </div>
-                  <div className="relative">
-                    <Phone className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="staff-phone"
-                      placeholder="+91 98765 43210"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="pl-9 text-xs rounded-xl"
-                    />
-                  </div>
-                </div>
-
-                {/* Department (Editable / Preset) */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold">Department</Label>
-                    <Badge variant="secondary" className="text-[9px] h-4 px-1 text-muted-foreground font-normal">
-                      Editable
-                    </Badge>
-                  </div>
-                  <Select value={department} onValueChange={setDepartment}>
-                    <SelectTrigger className="h-9 text-xs rounded-xl">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {DEPARTMENTS.map((d) => (
-                        <SelectItem key={d} value={d} className="text-xs">
-                          {d}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Designation / Title (Editable / Preset) */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="staff-designation" className="text-xs font-semibold">
-                      Designation
-                    </Label>
-                    <Badge variant="secondary" className="text-[9px] h-4 px-1 text-muted-foreground font-normal">
-                      Editable
-                    </Badge>
-                  </div>
-                  <div className="relative">
-                    <Briefcase className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="staff-designation"
-                      placeholder="e.g. Senior Pharmacist"
-                      value={designation}
-                      onChange={(e) => setDesignation(e.target.value)}
-                      className="pl-9 text-xs rounded-xl"
-                    />
-                  </div>
+                  <Label htmlFor="staff-phone" className="text-xs font-semibold">
+                    Phone Number
+                  </Label>
+                  <PhoneInput
+                    id="staff-phone"
+                    value={phoneNumber}
+                    onChange={setPhoneNumber}
+                  />
                 </div>
               </div>
             </div>

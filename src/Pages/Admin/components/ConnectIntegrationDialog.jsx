@@ -3,6 +3,7 @@ import { Loader2, PlugZap } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
+import { PhoneInput } from "@/Components/ui/phone-input";
 import { Label } from "@/Components/ui/label";
 import {
   Dialog,
@@ -69,9 +70,11 @@ export function ConnectIntegrationDialog({
       );
       onOpenChange(false);
       onDone?.(record);
-    } catch {
+    } catch (err) {
       toast.error(
-        `Unable to ${isConfigure ? "update" : "connect"} ${item.name}. The integrations backend is not available yet.`,
+        err?.response?.data?.message ||
+          err?.message ||
+          `Unable to ${isConfigure ? "update" : "connect"} ${item.name}.`,
       );
       setSubmitting(false);
     }
@@ -107,14 +110,25 @@ export function ConnectIntegrationDialog({
                   {field.label}
                   {field.required && <span className="text-destructive"> *</span>}
                 </Label>
-                <Input
-                  id={`${item.key}-${field.key}`}
-                  value={effectiveValue(field)}
-                  onChange={(e) => setValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
-                  placeholder={field.placeholder}
-                  className="h-9 rounded-lg text-xs"
-                  autoFocus
-                />
+                {field.key === "phone" ? (
+                  <PhoneInput
+                    id={`${item.key}-${field.key}`}
+                    value={effectiveValue(field)}
+                    onChange={(val) => setValues((prev) => ({ ...prev, [field.key]: val }))}
+                    placeholder={field.placeholder}
+                    className="h-9 text-xs"
+                    disabled={submitting}
+                  />
+                ) : (
+                  <Input
+                    id={`${item.key}-${field.key}`}
+                    value={effectiveValue(field)}
+                    onChange={(e) => setValues((prev) => ({ ...prev, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder}
+                    className="h-9 rounded-lg text-xs"
+                    autoFocus
+                  />
+                )}
                 {field.hint && (
                   <p className="text-[11px] leading-relaxed text-muted-foreground">{field.hint}</p>
                 )}

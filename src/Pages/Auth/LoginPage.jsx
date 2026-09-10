@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -19,8 +19,11 @@ const schema = z.object({
 });
 
 export default function LoginPage() {
-  const { signIn } = useAuth();
+  const { user, signIn, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const emailParam = searchParams.get("email") || "";
+
   const [showLoader, setShowLoader] = useState(false);
   const [signedInUser, setSignedInUser] = useState(null);
   const [remember, setRemember] = useState(true);
@@ -28,8 +31,21 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
-  } = useForm({ resolver: zodResolver(schema) });
+  } = useForm({
+    resolver: zodResolver(schema),
+    defaultValues: {
+      email: emailParam,
+      password: "",
+    },
+  });
+
+  useEffect(() => {
+    if (emailParam) {
+      setValue("email", emailParam);
+    }
+  }, [emailParam, setValue]);
 
   const afterAuthPath = (currentUser) => (currentUser.onboarded ? "/dashboard" : "/onboarding");
 

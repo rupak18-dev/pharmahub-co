@@ -138,3 +138,21 @@ export function getWhatsAppDestination(integration) {
 export function isConnected(integration) {
   return Boolean(integration && (integration.status === "connected" || integration.connected));
 }
+
+export async function getWhatsAppSession() {
+  return apiRequest("/integrations/whatsapp/session");
+}
+
+export async function startWhatsAppSession(forceNew = false) {
+  return apiRequest("/integrations/whatsapp/start", {
+    method: "POST",
+    body: JSON.stringify({ forceNew }),
+  });
+}
+
+export async function logoutWhatsAppSession() {
+  return apiRequest("/integrations/whatsapp/logout", {
+    method: "POST",
+  });
+}
+
