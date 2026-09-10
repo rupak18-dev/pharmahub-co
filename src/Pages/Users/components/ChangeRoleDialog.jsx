@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ShieldCheck,
   X,
@@ -33,24 +33,17 @@ import { getRoleMeta } from "./staffRoles";
 import { getAccessModule } from "./accessModules";
 import { AddAccessPopover } from "./AddAccessPopover";
 
-const DEPARTMENTS = [
-  "Pharmacy Operations",
-  "Sales & POS",
-  "Inventory & Stock",
-  "Purchasing & Supply Chain",
-  "Administration & HR",
-  "Accounts & Finance",
-];
-
 export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState(profile?.role ?? "");
-  const [department, setDepartment] = useState(profile?.department ?? "Pharmacy Operations");
-  const [designation, setDesignation] = useState(profile?.designation ?? "");
   const [access, setAccess] = useState(profile?.accessIds ?? []);
+
+  // Track the ID of the staff member currently being edited so background refetches
+  // do not reset step back to 1 or overwrite unsaved changes while the dialog is open.
+  const initializedIdRef = useRef(null);
 
   // Features state
   const [features, setFeatures] = useState({
@@ -63,14 +56,19 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
   });
 
   useEffect(() => {
-    if (open && profile) {
+    if (!open) {
+      initializedIdRef.current = null;
+      return;
+    }
+
+    // Only initialize form fields and reset step when newly opened or switching to a different user
+    if (profile && initializedIdRef.current !== profile.id) {
+      initializedIdRef.current = profile.id;
       setStep(1);
       setName(profile.name ?? "");
       setEmail(profile.email ?? "");
       setPhone(profile.phone ?? "");
       setRole(profile.role ?? "");
-      setDepartment(profile.department ?? "Pharmacy Operations");
-      setDesignation(profile.designation ?? "");
       setAccess(profile.accessIds ?? []);
 
       const isAdmin = profile.role === "Store Administrator" || profile.role === "Pharmacy Manager";
@@ -84,7 +82,8 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
         userAdmin: storedFeatures.userAdmin ?? isAdmin,
       });
     }
-  }, [open, profile]);
+  }, [open, profile?.id]);
+
 
   const meta = getRoleMeta(role);
   const addAccess = (ids) => setAccess((prev) => [...new Set([...prev, ...ids])]);
@@ -95,8 +94,6 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
       role,
       accessIds: access,
       name,
-      department,
-      designation,
       phone,
       features,
     });
@@ -218,29 +215,6 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Department</Label>
-                  <Select value={department} onValueChange={setDepartment}>
-                    <SelectTrigger className="h-9 text-xs rounded-xl">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {DEPARTMENTS.map((d) => (
-                        <SelectItem key={d} value={d} className="text-xs">
-                          {d}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Designation</Label>
-                  <Input
-                    value={designation}
-                    onChange={(e) => setDesignation(e.target.value)}
-                    className="text-xs rounded-xl"
-                  />
                 </div>
               </div>
 

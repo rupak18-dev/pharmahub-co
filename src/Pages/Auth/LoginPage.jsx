@@ -84,11 +84,6 @@ export default function LoginPage() {
               onGoogleClick={handleGoogleClick}
               remember={remember}
               onRememberChange={setRemember}
-              currentUser={user}
-              onSignOut={async () => {
-                await signOut();
-                toast.info("Signed out successfully.");
-              }}
             />
           </motion.div>
         </AnimatePresence>

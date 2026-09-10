@@ -124,8 +124,8 @@ export function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          onClick={() => {
-            signOut();
+          onClick={async () => {
+            await signOut();
             navigate("/login");
           }}
           className="cursor-pointer text-destructive focus:text-destructive"

@@ -56,8 +56,8 @@ export function SidebarProfile() {
     const branchName = BRANCHES.find((b) => b.id === branchId)?.name;
     toast.success(`Switched branch to ${branchName}`);
   };
-  const handleSignOut = () => {
-    signOut();
+  const handleSignOut = async () => {
+    await signOut();
     navigate("/login");
   };
   return (
