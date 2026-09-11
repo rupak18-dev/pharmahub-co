@@ -20,7 +20,7 @@ export function LoginForm({
 }) {
   return (
     <div className="w-full max-w-[420px] mx-auto flex flex-col justify-center min-h-[100dvh] py-8 px-4 sm:px-6">
-      <div className="mb-8 flex flex-col justify-center lg:justify-start">
+      <div className="mb-6 flex flex-col justify-center lg:justify-start">
         <Logo />
         <h1 className="auth-title mt-6 flex items-center gap-2.5">
           Welcome

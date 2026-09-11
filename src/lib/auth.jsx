@@ -49,8 +49,12 @@ function readSession() {
 function writeSession(payload) {
   if (typeof window === "undefined") return;
   try {
-    if (payload) window.localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
-    else window.localStorage.removeItem(SESSION_KEY);
+    if (payload) {
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+    } else {
+      window.localStorage.removeItem(SESSION_KEY);
+      window.sessionStorage.removeItem(SESSION_KEY);
+    }
   } catch {
     // ignore
   }

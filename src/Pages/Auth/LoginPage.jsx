@@ -20,7 +20,7 @@ const schema = z.object({
 });
 
 export default function LoginPage() {
-  const { signIn } = useAuth();
+  const { user, signIn, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [showLoader, setShowLoader] = useState(false);
@@ -30,6 +30,7 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
