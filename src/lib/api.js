@@ -55,6 +55,24 @@ function withLimit(url) {
 // cookie session.
 const CLIENT_HEADER = { "X-PharmaHub-Client": "web" };
 
+const SESSION_KEY = "PharmaHub_session_v2";
+
+export function getAuthToken() {
+  return getSessionToken();
+}
+
+function getSessionToken() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw =
+      window.localStorage.getItem(SESSION_KEY) ?? window.sessionStorage.getItem(SESSION_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed?.token || null;
+  } catch {
+    return null;
+  }
+}
+
 const DEFAULT_TIMEOUT_MS = 30000;
 
 async function request(path, options = {}) {
@@ -64,6 +82,11 @@ async function request(path, options = {}) {
     ...CLIENT_HEADER,
     ...(options.headers ?? {}),
   };
+
+  const token = getSessionToken();
+  if (token && !headers["Authorization"]) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   // Never set Content-Type header when sending FormData, Blob, or ArrayBuffer.
   // The browser fetch API must automatically generate the multipart boundary.
@@ -154,12 +177,20 @@ function setCachedResponse(path, data) {
   }
 }
 
-// Removes a single cached GET response (e.g. the session-specific /auth/me) so
-// a stale value can never be served after a sign-out / user switch.
-export function clearCachedResponse(path) {
+export function clearApiCache(prefix = "") {
   if (typeof window === "undefined") return;
   try {
-    window.sessionStorage.removeItem(`${API_CACHE_PREFIX}${path}`);
+    const p = `${API_CACHE_PREFIX}${prefix}`;
+    const toRemove = [];
+    for (let i = 0; i < window.sessionStorage.length; i++) {
+      const key = window.sessionStorage.key(i);
+      if (key && key.startsWith(p)) {
+        toRemove.push(key);
+      }
+    }
+    for (const k of toRemove) {
+      window.sessionStorage.removeItem(k);
+    }
   } catch {
     // ignore
   }
@@ -196,6 +227,8 @@ export async function apiRequest(path, options = {}) {
   }
   if (method === "GET" && !options.noCache) {
     setCachedResponse(path, data);
+  } else {
+    clearApiCache();
   }
   return data;
 }

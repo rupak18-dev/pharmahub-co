@@ -126,9 +126,6 @@ export function buildPermissionOverrides({ role, accessIds = [], features = {} }
       if (overrides[mod.key]) overrides[mod.key].export = false;
     }
   }
-  if (features.notifications === false) {
-    overrides.notifications = { ...(overrides.notifications ?? {}), view: false };
-  }
   if (features.userAdmin === false) {
     overrides.users = {
       ...(overrides.users ?? {}),

@@ -281,7 +281,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {ALL_ROLES.map((role) => {
+              {ALL_ROLES.filter((role) => role !== "Owner").map((role) => {
                 const RoleIcon = getRoleIcon(role);
                 const desc = getRoleDescription(role);
                 const isSelected = selectedRole === role;

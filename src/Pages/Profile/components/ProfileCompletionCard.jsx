@@ -1,14 +1,11 @@
 import { useNavigate } from "react-router";
 import { Info, CheckCircle2 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
-import { useDb } from "@/hooks/useDb";
 import { calculateProfileCompletion } from "@/lib/profileCompletion";
 
 export function ProfileCompletionCard({ profile, onSelectField }) {
   const navigate = useNavigate();
-  const liveProfile = useDb((d) => d.profiles.find((p) => p.id === profile?.id)) ?? profile;
-  const owner = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
-  const completion = calculateProfileCompletion(liveProfile, owner);
+  const completion = calculateProfileCompletion(profile, profile);
   const { percentage, missingFields, missingSpecs, isComplete } = completion;
 
   const maxPills = 5;
@@ -16,14 +13,14 @@ export function ProfileCompletionCard({ profile, onSelectField }) {
   const remainingCount = missingSpecs.length - maxPills;
 
   const handleCompleteProfileClick = () => {
-    navigate({ to: "/profile/edit" });
+    navigate("/profile/edit");
   };
 
   const handlePillClick = (section) => {
     if (onSelectField) {
       onSelectField(section);
     } else {
-      navigate({ to: "/profile/edit", hash: section });
+      navigate(`/profile/edit#${section}`);
     }
   };
 
@@ -75,7 +72,7 @@ export function ProfileCompletionCard({ profile, onSelectField }) {
               {remainingCount > 0 && (
                 <button
                   type="button"
-                  onClick={() => navigate({ to: "/profile/edit" })}
+                  onClick={() => navigate("/profile/edit")}
                   className="inline-flex items-center rounded-full border border-border bg-muted/60 px-2 py-0.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
                 >
                   +{remainingCount} more

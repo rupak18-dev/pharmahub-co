@@ -103,7 +103,9 @@ export function useTeamMembers() {
         name: u.name || "—",
         email: u.email || "",
         phone: u.phone || "",
-        role: u.role || "Pharmacist",
+        // Never invent a role here — show exactly what the backend stores
+        // (empty when the account genuinely has none).
+        role: u.role || "",
         orgName: u.orgName || "",
         designation: u.designation ?? null,
         department: u.department ?? null,
@@ -124,9 +126,9 @@ export function useTeamMembers() {
         name: inv.name || inv.email.split("@")[0],
         email: inv.email || "",
         phone: inv.phone || "",
-        role: inv.role || "Pharmacist",
+        role: inv.role || "",
         orgName: inv.orgName || "",
-        designation: null,
+        designation: inv.designation ?? null,
         department: inv.department ?? null,
         accessIds: Array.isArray(inv.accessIds) ? inv.accessIds : [],
         permissions: inv.permissions ?? {},

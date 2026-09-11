@@ -58,14 +58,14 @@ export default function SignupPage() {
 
   const onSubmit = async (data) => {
     try {
-      await signUp({ email: data.email, password: data.password });
-      // Hold on the signup page so the button shows its "Signing up…" loading
-      // state for a beat before moving on to onboarding.
+      const { devCode } = await signUp({ email: data.email, password: data.password });
+      // Keep the button in its "Signing up…" state for a beat before moving on.
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success("Successfully signed up!");
-      // A fresh registration always starts un-onboarded, so route straight to
-      // the onboarding form (never the dashboard).
-      navigate("/onboarding");
+      // New self-registered accounts MUST verify their email before first
+      // login (the backend issues no session until verified). Route to the
+      // verify-email step — never straight to onboarding.
+      if (devCode) toast.info(`Dev code (no email configured): ${devCode}`);
+      navigate("/verify-email", { state: { email: data.email, devCode } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Account creation failed");
     }

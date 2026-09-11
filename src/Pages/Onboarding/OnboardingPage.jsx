@@ -55,9 +55,18 @@ export default function OnboardingPage() {
   // onboarding form always shows for a fresh account (never inheriting a
   // previous user's progress, which previously jumped straight to the
   // dashboard), a non-onboarded user always starts clean at step 0.
+  //
+  // `lastUserIdRef` prevents background user syncs (e.g. window focus →
+  // /auth/me → setUser) from re-running the full hydration and resetting
+  // an in-progress wizard back to step 0. Only initial mount and actual
+  // user-ID changes trigger hydration.
   const hydratedRef = useRef(false);
+  const lastUserIdRef = useRef(null);
   useEffect(() => {
     if (loading) return;
+    // Skip if we've already hydrated for this exact user — the user object
+    // reference changes on every background sync but the ID stays the same.
+    if (hydratedRef.current && lastUserIdRef.current === user?.id) return;
     let cancelled = false;
     (async () => {
       try {
@@ -66,6 +75,7 @@ export default function OnboardingPage() {
           if (cancelled) return;
           setOnboarding(INITIAL_STATE);
           hydratedRef.current = true;
+          lastUserIdRef.current = user?.id ?? null;
           return;
         }
         const remote = await getOnboarding();
@@ -82,6 +92,7 @@ export default function OnboardingPage() {
         // Backend unreachable — stay on defaults.
       } finally {
         hydratedRef.current = true;
+        lastUserIdRef.current = user?.id ?? null;
       }
     })();
     return () => {

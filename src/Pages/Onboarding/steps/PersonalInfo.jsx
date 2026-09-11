@@ -5,14 +5,6 @@ import { InputField } from "@/Pages/Auth/components/Shared/InputField";
 import { BUSINESS_CONFIG } from "../config/businessConfig";
 import { Popover, PopoverContent, PopoverTrigger } from "@/Components/ui/popover";
 import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/Components/ui/command";
-import {
   Check,
   ChevronDown,
   User,
@@ -175,42 +167,31 @@ export function PersonalInfo({ onboarding, updateData, nextStep, prevStep }) {
               sideOffset={8}
               avoidCollisions={false}
             >
-              <Command className="bg-transparent">
-                <CommandInput
-                  placeholder="Search roles..."
-                  className="text-[14px] border-none focus:ring-0"
-                />
-                <CommandList className="max-h-[220px] overflow-y-auto mt-1 p-1">
-                  <CommandEmpty className="py-6 text-center text-sm text-muted-foreground">
-                    No role found.
-                  </CommandEmpty>
-                  <CommandGroup>
-                    {config.jobTitles.map((role) => {
-                      const Icon = ICON_MAP[role.icon] || User;
-                      const isSelected = personal.jobTitle === role.label;
+              <div className="max-h-[220px] overflow-y-auto p-1">
+                {config.jobTitles.map((role) => {
+                  const Icon = ICON_MAP[role.icon] || User;
+                  const isSelected = personal.jobTitle === role.label;
 
-                      return (
-                        <CommandItem
-                          key={role.label}
-                          value={role.label}
-                          onSelect={() => handleRoleSelect(role.label)}
-                          className={`flex items-center px-3 py-2.5 rounded-xl cursor-pointer text-[14px] transition-all duration-200 ${
-                            isSelected
-                              ? "bg-[#ECFDF5] text-primary font-medium data-[selected=true]:bg-[#ECFDF5] data-[selected=true]:text-primary"
-                              : "text-foreground data-[selected=true]:bg-[#F8FAFC] data-[selected=true]:text-foreground"
-                          }`}
-                        >
-                          <Icon
-                            className={`w-4 h-4 mr-3 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
-                          />
-                          {role.label}
-                          {isSelected && <Check className="w-4 h-4 ml-auto text-primary" />}
-                        </CommandItem>
-                      );
-                    })}
-                  </CommandGroup>
-                </CommandList>
-              </Command>
+                  return (
+                    <button
+                      key={role.label}
+                      type="button"
+                      onClick={() => handleRoleSelect(role.label)}
+                      className={`flex w-full items-center px-3 py-2.5 rounded-xl cursor-pointer text-[14px] transition-all duration-200 ${
+                        isSelected
+                          ? "bg-[#ECFDF5] text-primary font-medium"
+                          : "text-foreground hover:bg-[#F8FAFC]"
+                      }`}
+                    >
+                      <Icon
+                        className={`w-4 h-4 mr-3 ${isSelected ? "text-primary" : "text-muted-foreground"}`}
+                      />
+                      {role.label}
+                      {isSelected && <Check className="w-4 h-4 ml-auto text-primary" />}
+                    </button>
+                  );
+                })}
+              </div>
             </PopoverContent>
           </Popover>
           <p className="text-[11px] text-muted-foreground/80 font-medium pl-1 mt-1.5">

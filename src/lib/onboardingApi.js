@@ -54,11 +54,25 @@ function writeCompleted(marker) {
 // an `onboarded` field for the current user, so once the completion step runs
 // we persist a per-user marker locally. Returns true for server-onboarded users
 // as well so a future backend fix keeps working without client changes.
+//
+// Established accounts are also treated as onboarded: any account that already
+// carries a set-up profile (organization, business type, GSTIN, licence) has
+// been through setup — demo/seed accounts and accounts created before onboarding
+// existed never get a local marker, so without this they would be bounced back
+// through the wizard on a fresh browser/device. Brand-new self-registered
+// signups have exactly none of these fields until the wizard completes, so they
+// remain the only accounts routed through onboarding.
+const ESTABLISHED_PROFILE_FIELDS = ["orgName", "businessType", "gstin", "licenseNo"];
+
 export function isOnboarded(user) {
   if (!user) return false;
   if (user.onboarded === true) return true;
   const marker = readCompleted();
-  return marker[user.id] === true;
+  if (marker[user.id] === true) return true;
+  return ESTABLISHED_PROFILE_FIELDS.some((field) => {
+    const value = user[field];
+    return typeof value === "string" ? value.trim().length > 0 : false;
+  });
 }
 
 export function markComplete(userId) {
@@ -76,6 +90,17 @@ export function resetOnboardingStorage() {
 // unreachable — a fresh account must always start from step 0, never inherit a
 // previous user's progress (which previously jumped straight to the dashboard).
 export const getStoredOnboarding = () => readLocal();
+
+// Clears the local cache so one account's wizard data can never leak into
+// another account's onboarding (called on sign-in / sign-out).
+export const resetStoredOnboarding = () => {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+};
 
 export const getOnboarding = async () => {
   try {

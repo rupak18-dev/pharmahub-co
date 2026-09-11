@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -22,6 +22,7 @@ const schema = z.object({
 export default function LoginPage() {
   const { signIn } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showLoader, setShowLoader] = useState(false);
   const [signedInUser, setSignedInUser] = useState(null);
   const [remember, setRemember] = useState(true);
@@ -30,7 +31,12 @@ export default function LoginPage() {
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm({ resolver: zodResolver(schema) });
+  } = useForm({
+    resolver: zodResolver(schema),
+    // Prefill the email the user just verified (or the one that failed with
+    // email_not_verified) so they don't re-type it.
+    defaultValues: location.state?.email ? { email: location.state.email } : undefined,
+  });
 
   // Completed accounts land on the dashboard; fresh accounts that have not
   // finished onboarding are sent through the onboarding flow first.
@@ -43,6 +49,14 @@ export default function LoginPage() {
       toast.success("Successfully logged in!");
       setShowLoader(true);
     } catch (e) {
+      // The backend blocks unverified self-registered accounts with a
+      // machine-readable code — send them to the verify step instead of
+      // showing a generic credentials failure.
+      if (e?.data?.error?.details?.code === "email_not_verified") {
+        toast.error("Please verify your email before signing in");
+        navigate("/verify-email", { state: { email: data.email } });
+        return;
+      }
       toast.error(e instanceof Error ? e.message : "Sign in failed");
     }
   };
@@ -78,9 +92,9 @@ export default function LoginPage() {
 
       {showLoader && (
         <CapsuleLoader
-          minimumMs={1200}
-          variant="circular"
-          message="Signing you in…"
+          minimumMs={isOnboarded(signedInUser) ? 1600 : 1200}
+          variant={isOnboarded(signedInUser) ? "capsule" : "circular"}
+          message={isOnboarded(signedInUser) ? "Preparing your dashboard…" : "Signing you in…"}
           onDone={() => navigate(signedInUser ? afterAuthPath(signedInUser) : "/dashboard")}
         />
       )}

@@ -1,40 +1,26 @@
 import { CheckCircle2, Circle } from "lucide-react";
 import { useAuth } from "@/lib/auth";
-import { useDb } from "@/hooks/useDb";
 import { Progress } from "@/Components/ui/progress";
 import { ProfileSectionCard } from "./ProfileSectionCard";
 import { EditProfileButton } from "./EditProfileButton";
 import { cn } from "@/lib/utils";
 
 const CHECKLIST = [
-  { key: "name", label: "Display name", test: (user, owner) => Boolean(user?.name) },
+  { key: "name", label: "Display name", test: (user) => Boolean(user?.name) },
   { key: "email", label: "Email address", test: (user) => Boolean(user?.email) },
-  {
-    key: "phone",
-    label: "Phone number",
-    test: (user, owner) => Boolean(user?.phone || owner?.phone),
-  },
-  { key: "orgName", label: "Organization name", test: (_u, owner) => Boolean(owner?.orgName) },
-  {
-    key: "businessType",
-    label: "Business type",
-    test: (_u, owner) => Boolean(owner?.businessType),
-  },
-  {
-    key: "businessEmail",
-    label: "Business email",
-    test: (_u, owner) => Boolean(owner?.businessEmail),
-  },
-  { key: "gstin", label: "GSTIN", test: (_u, owner) => Boolean(owner?.gstin) },
-  { key: "licenseNo", label: "Pharmacy license", test: (_u, owner) => Boolean(owner?.licenseNo) },
-  { key: "address", label: "Registered address", test: (_u, owner) => Boolean(owner?.address) },
+  { key: "phone", label: "Phone number", test: (user) => Boolean(user?.phone) },
+  { key: "orgName", label: "Organization name", test: (user) => Boolean(user?.orgName) },
+  { key: "businessType", label: "Business type", test: (user) => Boolean(user?.businessType) },
+  { key: "businessEmail", label: "Business email", test: (user) => Boolean(user?.businessEmail) },
+  { key: "gstin", label: "GSTIN", test: (user) => Boolean(user?.gstin) },
+  { key: "licenseNo", label: "Pharmacy license", test: (user) => Boolean(user?.licenseNo) },
+  { key: "address", label: "Registered address", test: (user) => Boolean(user?.address) },
 ];
 
 export function ProfileOverview() {
   const { user } = useAuth();
-  const owner = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
-  const done = CHECKLIST.filter((item) => item.test(user, owner));
-  const pending = CHECKLIST.filter((item) => !item.test(user, owner));
+  const done = CHECKLIST.filter((item) => item.test(user));
+  const pending = CHECKLIST.filter((item) => !item.test(user));
   const percent = Math.round((done.length / CHECKLIST.length) * 100);
 
   return (

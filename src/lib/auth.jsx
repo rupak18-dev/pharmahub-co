@@ -1,8 +1,60 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { apiRequest, clearCachedResponse } from "./api";
-import { db } from "./db";
+import { apiRequest } from "./api";
+import { resetStoredOnboarding } from "./onboardingApi";
 
+const SESSION_KEY = "PharmaHub_session_v2";
+// Keys written by older builds. They are swept on boot so they can never
+// influence the authenticated session.
+const LEGACY_STORAGE_KEYS = ["PharmaHub_db_v2", "PharmaHub_db_v3", "PharmaHub_session_v1"];
 const AuthContext = createContext(null);
+
+// Profile fields the backend allows editing via PUT /auth/profile. Role,
+// permissions, and organization membership are deliberately absent — the
+// authenticated identity is owned by the backend, not by client payloads.
+const PROFILE_EDITABLE_FIELDS = [
+  "name",
+  "email",
+  "phone",
+  "avatarUrl",
+  "logoUrl",
+  "orgName",
+  "tagline",
+  "description",
+  "businessEmail",
+  "website",
+  "address",
+  "city",
+  "state",
+  "pincode",
+  "gstin",
+  "licenseNo",
+  "businessType",
+  "services",
+  "businessHours",
+  "metaPixelId",
+  "branches",
+  "onboarded",
+];
+
+function readSession() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeSession(payload) {
+  if (typeof window === "undefined") return;
+  try {
+    if (payload) window.localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+    else window.localStorage.removeItem(SESSION_KEY);
+  } catch {
+    // ignore
+  }
+}
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -10,17 +62,30 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let cancelled = false;
+    try {
+      for (const key of LEGACY_STORAGE_KEYS) {
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      // ignore
+    }
     (async () => {
-      // Session lives in an httpOnly cookie — hydrate the user from the
-      // server. Nothing about auth is persisted client-side. /auth/me is never
-      // cached: it is session-specific and must always hit the server so stale
-      // data from a previous user/demo account can never leak across sessions.
+      // Session lives in an httpOnly cookie or token — hydrate the user from the
+      // server.
       try {
+        // GET /auth/me is the only source of truth for the signed-in identity.
         const me = await apiRequest("/auth/me", { noCache: true });
-        if (!cancelled) setUser(me);
+        if (cancelled) return;
+        const stored = readSession();
+        if (stored?.token) writeSession({ token: stored.token, user: me });
+        setUser(me);
       } catch {
-        // No valid session (cookie missing/expired) — stay signed out.
-        if (!cancelled) setUser(null);
+        // No valid backend session (missing/expired token/cookie or server
+        // unreachable) — stay signed out. Never fall back to a cached user:
+        // stale identities must not masquerade as the logged-in account.
+        if (cancelled) return;
+        writeSession(null);
+        setUser(null);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -30,57 +95,141 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const signIn = useCallback(async (email, password, { remember = true } = {}) => {
-    const data = await apiRequest("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password, remember }),
-    });
-    // The server decides the cookie lifetime from `remember` (browser-session
-    // vs persistent). Nothing about auth is stored client-side.
-    setUser(data.user);
-    return data.user;
-  }, []);
-
-  // Used by flows where the server has already set the session cookie
-  // (e.g. OAuth callback pages, register): re-hydrate the user from /auth/me.
-  const restoreSession = useCallback(async () => {
-    const me = await apiRequest("/auth/me", { noCache: true });
-    setUser(me);
-    return me;
-  }, []);
-
-  const signUp = useCallback(
-    async ({ email, password, name }) => {
-      const data = await apiRequest("/auth/register", {
-        method: "POST",
-        body: JSON.stringify({
-          email,
-          password,
-          name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
-        }),
-      });
-      // If the server issued a session cookie, hydrate the user so the freshly
-      // created account can go straight into onboarding (otherwise the onboarding
-      // guard would bounce them back to /login).
+  // Cross-tab and window-focus session synchronization.
+  // When another tab logs in, logs out, or changes tokens (e.g. accepting an invitation),
+  // immediately update the user state from /auth/me so in-memory user matches the active session.
+  useEffect(() => {
+    const syncSession = async () => {
       try {
-        await restoreSession();
+        const me = await apiRequest("/auth/me", { noCache: true });
+        if (me) {
+          const stored = readSession();
+          if (stored?.token) writeSession({ token: stored.token, user: me });
+          setUser(me);
+        }
       } catch {
-        // No session cookie set — user will sign in on their own.
+        // Token/cookie invalid or server unreachable
       }
-      return data;
+    };
+
+    const handleStorage = (e) => {
+      if (e.key === SESSION_KEY) {
+        if (!e.newValue) {
+          setUser(null);
+        } else {
+          syncSession();
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("focus", syncSession);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("focus", syncSession);
+    };
+  }, []);
+
+  // Establishes a session from a freshly issued credential, then resolves the
+  // authoritative identity from GET /auth/me so role/permissions always come
+  // from the database rather than from whatever an individual endpoint echoed.
+  const establishSession = useCallback(async (token, fallbackUser) => {
+    writeSession({ token, user: fallbackUser ?? null });
+    let resolved = fallbackUser ?? null;
+    try {
+      const me = await apiRequest("/auth/me");
+      if (me) resolved = me;
+    } catch {
+      // Keep the just-issued payload; never merge with any older cached user.
+    }
+    writeSession({ token, user: resolved });
+    setUser(resolved);
+    return resolved;
+  }, []);
+
+  const signIn = useCallback(
+    async (email, password, { remember = true } = {}) => {
+      resetStoredOnboarding();
+      const data = await apiRequest("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password, remember }),
+      });
+      if (data?.token) {
+        return establishSession(data.token, data.user);
+      }
+      setUser(data.user);
+      return data.user;
     },
-    [restoreSession],
+    [establishSession],
   );
 
-  // Final step of a Google sign-up: verify the emailed OTP, then the backend
-  // creates the account and sets a fresh session cookie.
-  const completeGoogleOtp = useCallback(async ({ token, code }) => {
-    const data = await apiRequest("/auth/google/verify-otp", {
+  const signUp = useCallback(async ({ email, password, name }) => {
+    resetStoredOnboarding();
+    // Self-registered accounts must verify their email before they can sign
+    // in — register issues NO session (see backend registerUser/loginUser
+    // gate). Return the payload (user + optional devCode) and let the caller
+    // route the new user to the verify-email step.
+    const data = await apiRequest("/auth/register", {
       method: "POST",
-      body: JSON.stringify({ token, code }),
+      body: JSON.stringify({
+        email,
+        password,
+        name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
+      }),
     });
-    setUser(data.user);
-    return data.user;
+    return { user: data?.user ?? data ?? null, devCode: data?.devCode ?? null };
+  }, []);
+
+  // Handles the token-less case for OAuth/callback flows (no establishSession
+  // since the caller has no JWT to persist).
+  const restoreSession = useCallback(
+    async (args = {}) => {
+      if (args?.token) {
+        return establishSession(args.token, args.user);
+      }
+      const me = await apiRequest("/auth/me", { noCache: true });
+      setUser(me);
+      return me;
+    },
+    [establishSession],
+  );
+
+  // Completes email verification for a freshly self-registered account. The
+  // backend consumes the 6-digit code, flips emailVerified=true, and the user
+  // then signs in normally — no session is issued by this call.
+  const verifyEmail = useCallback(async ({ email, code }) => {
+    const data = await apiRequest("/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ email, code }),
+    });
+    return data ?? null;
+  }, []);
+
+  // Resends the 6-digit verification code to an unverified account (public,
+  // pre-login endpoint). Backend enforces a 60s cooldown.
+  const resendVerification = useCallback(async (email) => {
+    return apiRequest("/auth/resend-verification", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }, []);
+
+  // Re-resolves the authoritative identity from GET /auth/me and replaces the
+  // current session user. Used after flows that change role/permissions
+  // server-side (e.g. onboarding completion) so the UI never renders from a
+  // stale identity.
+  const refreshUser = useCallback(async () => {
+    try {
+      const me = await apiRequest("/auth/me", { noCache: true });
+      if (!me) return null;
+      const stored = readSession();
+      if (stored?.token) writeSession({ token: stored.token, user: me });
+      setUser(me);
+      return me;
+    } catch {
+      // Server unreachable or token expired — keep the current identity.
+      return null;
+    }
   }, []);
 
   const signOut = useCallback(async () => {
@@ -89,9 +238,8 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore — session is cleared locally regardless
     } finally {
-      // Drop any cached /auth/me so a stale user never leaks into the next
-      // sign-in / sign-up in this tab.
-      clearCachedResponse("/auth/me");
+      writeSession(null);
+      resetStoredOnboarding();
       setUser(null);
     }
   }, []);
@@ -104,33 +252,33 @@ export function AuthProvider({ children }) {
     [user],
   );
 
+  // Profile fields the backend allows editing via PUT /auth/profile.
   const updateProfile = useCallback(
-    async ({ name, role, orgName, onboarded } = {}) => {
+    async (changes = {}) => {
       const body = {};
-      if (name !== undefined) body.name = name;
-      if (role !== undefined) body.role = role;
-      if (orgName !== undefined) body.orgName = orgName;
-      if (onboarded !== undefined) body.onboarded = onboarded;
+      for (const key of PROFILE_EDITABLE_FIELDS) {
+        if (changes[key] !== undefined) body[key] = changes[key];
+      }
+      if (Object.keys(body).length === 0) {
+        throw new Error("No editable profile fields provided");
+      }
 
       let me = null;
       try {
-        me = await apiRequest("/auth/profile", {
+        const payload = await apiRequest("/auth/profile", {
           method: "PUT",
           body: JSON.stringify(body),
         });
-      } catch {
-        // Backend may not expose PUT /auth/profile yet — apply locally so the
-        // UI still reflects the change.
-        me = { ...(user || {}), ...body };
+        me = payload?.user ?? payload;
+        if (me && payload?.profileCompletion) {
+          me.profileCompletion = payload.profileCompletion;
+        }
+      } catch (err) {
+        throw err;
       }
 
-      // The profile endpoint returns `{ user, profileCompletion }` — unwrap so
-      // the context always holds the flat user object (with permissions, etc.)
-      // and the sidebar/nav can read user.permissions immediately.
-      if (me && typeof me === "object" && me.user && typeof me.user === "object") {
-        me = me.user;
-      }
-
+      const stored = readSession();
+      if (stored?.token) writeSession({ token: stored.token, user: me });
       setUser(me);
       return me;
     },
@@ -151,6 +299,13 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    await apiRequest("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -161,10 +316,13 @@ export function AuthProvider({ children }) {
         signOut,
         switchRole,
         updateProfile,
+        refreshUser,
         restoreSession,
-        completeGoogleOtp,
+        verifyEmail,
+        resendVerification,
         requestPasswordReset,
         resetPassword,
+        changePassword,
         setUser,
       }}
     >

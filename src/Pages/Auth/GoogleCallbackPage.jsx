@@ -49,9 +49,9 @@ export default function GoogleCallbackPage() {
 
   return (
     <CapsuleLoader
-      minimumMs={1200}
-      variant="circular"
-      message="Signing you in…"
+      minimumMs={isOnboarded(user) ? 1600 : 1200}
+      variant={isOnboarded(user) ? "capsule" : "circular"}
+      message={isOnboarded(user) ? "Preparing your dashboard…" : "Signing you in…"}
       onDone={() => navigate(isOnboarded(user) ? "/dashboard" : "/onboarding")}
     />
   );

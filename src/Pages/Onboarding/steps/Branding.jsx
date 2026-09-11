@@ -42,9 +42,20 @@ export function Branding({ onboarding, updateData, nextStep, prevStep }) {
   const logoInputRef = useRef(null);
   const brochureInputRef = useRef(null);
 
+  // Restore the previously uploaded logo preview when returning to this step
+  // (back navigation), so the uploaded state persists instead of resetting.
+  useEffect(() => {
+    const savedLogo = onboarding.branding?.logo;
+    if (savedLogo && !logoPreview && !logoFile) {
+      setLogoPreview(savedLogo);
+      setLogoFile({ name: "Uploaded logo" });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [onboarding.branding?.logo]);
+
   useEffect(() => {
     return () => {
-      if (logoPreview) {
+      if (logoPreview && logoPreview.startsWith("blob:")) {
         URL.revokeObjectURL(logoPreview);
       }
     };
@@ -158,7 +169,9 @@ export function Branding({ onboarding, updateData, nextStep, prevStep }) {
                 <div className="w-12 h-12 rounded-full bg-primary/5 flex items-center justify-center text-primary mb-4 transition-colors group-hover:bg-primary/10">
                   <ImageIcon className="w-6 h-6" />
                 </div>
-                <h3 className="auth-card-title mb-1">Business Logo</h3>
+                <h3 className="auth-card-title mb-1">
+                  Business Logo <span className="text-red-500">*</span>
+                </h3>
                 <div className="text-[13px] text-muted-foreground">
                   {errors.logo ? (
                     <span className="text-red-500 font-medium">{errors.logo}</span>
