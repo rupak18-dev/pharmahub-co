@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/lib/auth";
-import { useDb } from "@/hooks/useDb";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
 import { Separator } from "@/Components/ui/separator";
 
@@ -40,15 +39,8 @@ function SectionHeading({ children }) {
 }
 
 export function PharmaCard() {
-  const { user: authUser } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
-
-  const liveUser = useDb((d) => d.profiles.find((p) => p.id === authUser?.id));
-  const ownerFromDb = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
-
-  // Prefer live db record; fall back to auth snapshot
-  const user = liveUser ?? authUser;
-  const owner = ownerFromDb ?? (authUser?.role === "Owner" ? authUser : user);
 
   const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString(undefined, {
@@ -74,7 +66,7 @@ export function PharmaCard() {
           </span>
           <div>
             <CardTitle className="text-base font-semibold text-foreground">Profile</CardTitle>
-            <p className="text-xs text-muted-foreground">{owner?.orgName || "Not configured"}</p>
+            <p className="text-xs text-muted-foreground">{user?.orgName || "Not configured"}</p>
           </div>
         </div>
       </CardHeader>
@@ -114,12 +106,12 @@ export function PharmaCard() {
         <div className="space-y-3">
           <SectionHeading>Pharmacy Details</SectionHeading>
           <div className="space-y-3">
-            <InfoRow icon={Building2} label="Organization" value={owner?.orgName} />
-            <InfoRow icon={Building2} label="Business Type" value={owner?.businessType} />
-            <InfoRow icon={Phone} label="Phone" value={owner?.phone} />
-            <InfoRow icon={Mail} label="Business Email" value={owner?.businessEmail} />
-            <InfoRow icon={Landmark} label="GSTIN" value={owner?.gstin} />
-            {owner?.address && <InfoRow icon={MapPin} label="Address" value={owner.address} />}
+            <InfoRow icon={Building2} label="Organization" value={user?.orgName} />
+            <InfoRow icon={Building2} label="Business Type" value={user?.businessType} />
+            <InfoRow icon={Phone} label="Phone" value={user?.phone} />
+            <InfoRow icon={Mail} label="Business Email" value={user?.businessEmail} />
+            <InfoRow icon={Landmark} label="GSTIN" value={user?.gstin} />
+            {user?.address && <InfoRow icon={MapPin} label="Address" value={user.address} />}
           </div>
         </div>
       </CardContent>

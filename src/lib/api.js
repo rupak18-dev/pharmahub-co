@@ -225,7 +225,7 @@ export async function apiRequest(path, options = {}) {
   } else {
     data = json;
   }
-  if (method === "GET") {
+  if (method === "GET" && !options.noCache) {
     setCachedResponse(path, data);
   } else {
     clearApiCache();

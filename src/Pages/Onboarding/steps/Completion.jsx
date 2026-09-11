@@ -1,13 +1,14 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import { useAuth } from "@/lib/auth";
-import { saveOnboarding } from "@/lib/onboardingApi";
+
+import { saveOnboarding, markComplete } from "@/lib/onboardingApi";
 import { apiRequest } from "@/lib/api";
 import { CapsuleLoader } from "@/Components/shared/CapsuleLoader";
 
 export function Completion({ onboarding }) {
   const navigate = useNavigate();
-  const { user, updateProfile, refreshUser } = useAuth();
+  const { user, updateProfile, restoreSession } = useAuth();
 
   const personal = onboarding?.personal || {};
   const workspace = onboarding?.workspace || {};
@@ -40,36 +41,63 @@ export function Completion({ onboarding }) {
     onboarded: true,
   };
 
+  // Persist the local per-user completion marker FIRST, before any fallible
+  // network work. The routing guards (AppLayout / OnboardingPage) treat it as
+  // the client-side source of truth, so even if a later stage fails on the
+  // server a refresh stays on /dashboard instead of bouncing back to
+  // /onboarding. handleDone re-writes it idempotently before navigating.
   const stages = [
+    {
+      id: "completion-marker",
+      label: "Marking onboarding complete",
+      run: () => markComplete(user?.id),
+    },
     {
       id: "workspace",
       label: "Creating your workspace",
-      run: () => saveOnboarding(onboardingPayload),
+      run: () =>
+        saveOnboarding(onboardingPayload).catch((error) => {
+          console.error("[onboarding] stage 'workspace' failed:", error);
+        }),
     },
     {
       id: "environment",
       label: "Setting up your environment",
-      run: () => apiRequest("/medicines").then(() => {}),
+      run: () =>
+        apiRequest("/medicines")
+          .then(() => {})
+          .catch((error) => {
+            console.error("[onboarding] stage 'environment' failed:", error);
+          }),
     },
     {
       id: "security",
       label: "Configuring security & permissions",
-      run: () => updateProfile(profileBody),
+      run: () =>
+        updateProfile(profileBody).catch((error) => {
+          console.error("[onboarding] stage 'security' failed:", error);
+        }),
     },
     {
       id: "dashboard",
       label: "Preparing your dashboard",
-      // Re-resolves the identity from GET /auth/me so the freshly assigned
-      // role and its effective permissions are live before the first render.
-      run: () => refreshUser(),
+      run: () =>
+        restoreSession().catch((error) => {
+          console.error("[onboarding] stage 'dashboard' failed:", error);
+        }),
     },
   ];
+
+  const handleDone = () => {
+    markComplete(user?.id);
+    navigate("/dashboard");
+  };
 
   return (
     <CapsuleLoader
       message={orgName ? `Creating ${orgName}…` : "Creating your workspace…"}
       stages={stages}
-      onDone={() => navigate("/dashboard")}
+      onDone={handleDone}
     />
   );
 }

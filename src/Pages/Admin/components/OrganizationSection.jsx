@@ -10,7 +10,6 @@ import {
   Settings2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useDb } from "@/hooks/useDb";
 import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { usePermission } from "@/hooks/usePermission";
@@ -61,16 +60,14 @@ function SummaryRow({ icon: Icon, label, value }) {
 function OrganizationManageDialog({ open, onOpenChange }) {
   const { user, updateProfile } = useAuth();
   const has = usePermission();
-  const ownerFromDb = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
-  const owner = ownerFromDb ?? (user?.role === "Owner" ? user : user);
   const canEdit = has("admin", "update");
   const [form, setForm] = useState({
-    orgName: owner?.orgName ?? "",
-    businessType: owner?.businessType ?? BUSINESS_TYPES[0],
-    phone: owner?.phone ?? "",
-    businessEmail: owner?.businessEmail ?? "",
-    gstin: owner?.gstin ?? "",
-    address: owner?.address ?? "",
+    orgName: user?.orgName ?? "",
+    businessType: user?.businessType ?? BUSINESS_TYPES[0],
+    phone: user?.phone ?? "",
+    businessEmail: user?.businessEmail ?? "",
+    gstin: user?.gstin ?? "",
+    address: user?.address ?? "",
   });
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));
@@ -228,8 +225,6 @@ function OrganizationManageDialog({ open, onOpenChange }) {
 
 export function OrganizationSection() {
   const { user } = useAuth();
-  const ownerFromDb = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
-  const owner = ownerFromDb ?? (user?.role === "Owner" ? user : user);
   const [open, setOpen] = useState(false);
 
   return (
@@ -242,12 +237,12 @@ export function OrganizationSection() {
       footer={<span className="text-xs text-muted-foreground">Applies organization-wide.</span>}
     >
       <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
-        <SummaryRow icon={Building2} label="Organization Name" value={owner?.orgName} />
-        <SummaryRow icon={BadgeCheck} label="Business Type" value={owner?.businessType} />
-        <SummaryRow icon={Phone} label="Phone" value={owner?.phone} />
-        <SummaryRow icon={Mail} label="Email" value={owner?.businessEmail} />
-        <SummaryRow icon={Landmark} label="GSTIN" value={owner?.gstin} />
-        <SummaryRow icon={MapPin} label="Pharmacy Address" value={owner?.address} />
+        <SummaryRow icon={Building2} label="Organization Name" value={user?.orgName} />
+        <SummaryRow icon={BadgeCheck} label="Business Type" value={user?.businessType} />
+        <SummaryRow icon={Phone} label="Phone" value={user?.phone} />
+        <SummaryRow icon={Mail} label="Email" value={user?.businessEmail} />
+        <SummaryRow icon={Landmark} label="GSTIN" value={user?.gstin} />
+        <SummaryRow icon={MapPin} label="Pharmacy Address" value={user?.address} />
       </div>
 
       <OrganizationManageDialog open={open} onOpenChange={setOpen} />

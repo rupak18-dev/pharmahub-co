@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { IdCard, Landmark, Mail, MapPin, Phone, Save } from "lucide-react";
 import { toast } from "sonner";
-import { useDb } from "@/hooks/useDb";
 import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { usePermission } from "@/hooks/usePermission";
@@ -21,15 +20,13 @@ import { Textarea } from "@/Components/ui/textarea";
 export function BusinessProfileSection() {
   const { user, updateProfile } = useAuth();
   const has = usePermission();
-  const ownerFromDb = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
-  const owner = ownerFromDb ?? (user?.role === "Owner" ? user : user);
   const canEdit = has("admin", "update");
   const [form, setForm] = useState({
-    gstin: owner?.gstin ?? "",
-    licenseNo: owner?.licenseNo ?? "",
-    phone: owner?.phone ?? "",
-    businessEmail: owner?.businessEmail ?? "",
-    address: owner?.address ?? "",
+    gstin: user?.gstin ?? "",
+    licenseNo: user?.licenseNo ?? "",
+    phone: user?.phone ?? "",
+    businessEmail: user?.businessEmail ?? "",
+    address: user?.address ?? "",
   });
 
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }));

@@ -189,8 +189,8 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
                   <Label className="text-xs font-semibold">Work Email</Label>
                   <Input
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="text-xs rounded-xl"
+                    readOnly
+                    className="text-xs rounded-xl bg-muted/50 cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1.5">

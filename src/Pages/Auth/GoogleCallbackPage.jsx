@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { isOnboarded } from "@/lib/onboardingApi";
 import { CapsuleLoader } from "@/Components/shared/CapsuleLoader";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 
@@ -48,10 +49,10 @@ export default function GoogleCallbackPage() {
 
   return (
     <CapsuleLoader
-      minimumMs={1200}
-      variant="circular"
-      message="Signing you in…"
-      onDone={() => navigate(user?.onboarded ? "/dashboard" : "/onboarding")}
+      minimumMs={isOnboarded(user) ? 1600 : 1200}
+      variant={isOnboarded(user) ? "capsule" : "circular"}
+      message={isOnboarded(user) ? "Preparing your dashboard…" : "Signing you in…"}
+      onDone={() => navigate(isOnboarded(user) ? "/dashboard" : "/onboarding")}
     />
   );
 }

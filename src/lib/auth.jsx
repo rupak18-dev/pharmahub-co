@@ -15,7 +15,6 @@ const PROFILE_EDITABLE_FIELDS = [
   "name",
   "email",
   "phone",
-  "role",
   "avatarUrl",
   "logoUrl",
   "orgName",
@@ -79,7 +78,7 @@ export function AuthProvider({ children }) {
       // server.
       try {
         // GET /auth/me is the only source of truth for the signed-in identity.
-        const me = await apiRequest("/auth/me");
+        const me = await apiRequest("/auth/me", { noCache: true });
         if (cancelled) return;
         const stored = readSession();
         if (stored?.token) writeSession({ token: stored.token, user: me });
@@ -106,7 +105,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const syncSession = async () => {
       try {
-        const me = await apiRequest("/auth/me");
+        const me = await apiRequest("/auth/me", { noCache: true });
         if (me) {
           const stored = readSession();
           if (stored?.token) writeSession({ token: stored.token, user: me });
@@ -168,57 +167,56 @@ export function AuthProvider({ children }) {
     [establishSession],
   );
 
-  const signUp = useCallback(
-    async ({ email, password, name }) => {
-      resetStoredOnboarding();
-      const data = await apiRequest("/auth/register", {
-        method: "POST",
-        body: JSON.stringify({
-          email,
-          password,
-          name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
-        }),
-      });
-      if (data?.token) {
-        return establishSession(data.token, data.user);
-      }
-      const u = data?.user ?? data;
-      setUser(u);
-      return u;
-    },
-    [establishSession],
-  );
+  const signUp = useCallback(async ({ email, password, name }) => {
+    resetStoredOnboarding();
+    // Self-registered accounts must verify their email before they can sign
+    // in — register issues NO session (see backend registerUser/loginUser
+    // gate). Return the payload (user + optional devCode) and let the caller
+    // route the new user to the verify-email step.
+    const data = await apiRequest("/auth/register", {
+      method: "POST",
+      body: JSON.stringify({
+        email,
+        password,
+        name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
+      }),
+    });
+    return { user: data?.user ?? data ?? null, devCode: data?.devCode ?? null };
+  }, []);
 
-  // Used by the Google redirect callback page or OAuth callback flows to restore
-  // the session via either URL params or cookies from /auth/me.
+  // Handles the token-less case for OAuth/callback flows (no establishSession
+  // since the caller has no JWT to persist).
   const restoreSession = useCallback(
     async (args = {}) => {
       if (args?.token) {
         return establishSession(args.token, args.user);
       }
-      const me = await apiRequest("/auth/me");
+      const me = await apiRequest("/auth/me", { noCache: true });
       setUser(me);
       return me;
     },
     [establishSession],
   );
 
-  // Final step of a Google sign-up: verify the emailed OTP, then the backend
-  // creates the account and returns a fresh session / sets cookie.
-  const completeGoogleOtp = useCallback(
-    async ({ token, code }) => {
-      const data = await apiRequest("/auth/google/verify-otp", {
-        method: "POST",
-        body: JSON.stringify({ token, code }),
-      });
-      if (data?.token) {
-        return establishSession(data.token, data.user);
-      }
-      setUser(data.user);
-      return data.user;
-    },
-    [establishSession],
-  );
+  // Completes email verification for a freshly self-registered account. The
+  // backend consumes the 6-digit code, flips emailVerified=true, and the user
+  // then signs in normally — no session is issued by this call.
+  const verifyEmail = useCallback(async ({ email, code }) => {
+    const data = await apiRequest("/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ email, code }),
+    });
+    return data ?? null;
+  }, []);
+
+  // Resends the 6-digit verification code to an unverified account (public,
+  // pre-login endpoint). Backend enforces a 60s cooldown.
+  const resendVerification = useCallback(async (email) => {
+    return apiRequest("/auth/resend-verification", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+  }, []);
 
   // Re-resolves the authoritative identity from GET /auth/me and replaces the
   // current session user. Used after flows that change role/permissions
@@ -226,7 +224,7 @@ export function AuthProvider({ children }) {
   // stale identity.
   const refreshUser = useCallback(async () => {
     try {
-      const me = await apiRequest("/auth/me");
+      const me = await apiRequest("/auth/me", { noCache: true });
       if (!me) return null;
       const stored = readSession();
       if (stored?.token) writeSession({ token: stored.token, user: me });
@@ -279,10 +277,8 @@ export function AuthProvider({ children }) {
         if (me && payload?.profileCompletion) {
           me.profileCompletion = payload.profileCompletion;
         }
-      } catch {
-        // Backend may not expose PUT /auth/profile yet — apply locally so the
-        // UI still reflects the change.
-        me = { ...(user || {}), ...body };
+      } catch (err) {
+        throw err;
       }
 
       const stored = readSession();
@@ -307,6 +303,13 @@ export function AuthProvider({ children }) {
     });
   }, []);
 
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    await apiRequest("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+  }, []);
+
   return (
     <AuthContext.Provider
       value={{
@@ -319,9 +322,11 @@ export function AuthProvider({ children }) {
         updateProfile,
         refreshUser,
         restoreSession,
-        completeGoogleOtp,
+        verifyEmail,
+        resendVerification,
         requestPasswordReset,
         resetPassword,
+        changePassword,
         setUser,
       }}
     >

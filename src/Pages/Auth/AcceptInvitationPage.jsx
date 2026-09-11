@@ -44,7 +44,7 @@ export default function AcceptInvitationPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
-  const { user, setUser, restoreSession, signOut } = useAuth();
+  const { setUser, restoreSession } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [invitation, setInvitation] = useState(null);
@@ -112,12 +112,9 @@ export default function AcceptInvitationPage() {
         password: formData.password,
       });
 
-      if (data?.token) {
-        await restoreSession({ token: data.token, user: data.user });
-      } else if (data?.user) {
-        setUser(data.user);
-      }
-      clearApiCache();
+      // The server sets the session as an httpOnly cookie — rehydrate the
+      // user from /auth/me so the identity is always backend-verified.
+      await restoreSession();
 
       toast.success("Account activated successfully! Welcome to PharmaHub.");
       navigate("/dashboard");

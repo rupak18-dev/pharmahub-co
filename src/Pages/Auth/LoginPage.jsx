@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import React, { useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { isOnboarded } from "@/lib/onboardingApi";
 import { API_BASE } from "@/lib/api";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { LoginForm } from "./components/Login/LoginForm";
@@ -21,9 +22,7 @@ const schema = z.object({
 export default function LoginPage() {
   const { user, signIn, signOut } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const emailParam = searchParams.get("email") || "";
-
+  const location = useLocation();
   const [showLoader, setShowLoader] = useState(false);
   const [signedInUser, setSignedInUser] = useState(null);
   const [remember, setRemember] = useState(true);
@@ -35,19 +34,14 @@ export default function LoginPage() {
     formState: { errors, isSubmitting },
   } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: {
-      email: emailParam,
-      password: "",
-    },
+    // Prefill the email the user just verified (or the one that failed with
+    // email_not_verified) so they don't re-type it.
+    defaultValues: location.state?.email ? { email: location.state.email } : undefined,
   });
 
-  useEffect(() => {
-    if (emailParam) {
-      setValue("email", emailParam);
-    }
-  }, [emailParam, setValue]);
-
-  const afterAuthPath = (currentUser) => (currentUser.onboarded ? "/dashboard" : "/onboarding");
+  // Completed accounts land on the dashboard; fresh accounts that have not
+  // finished onboarding are sent through the onboarding flow first.
+  const afterAuthPath = (user) => (isOnboarded(user) ? "/dashboard" : "/onboarding");
 
   const onSubmit = async (data) => {
     try {
@@ -56,6 +50,14 @@ export default function LoginPage() {
       toast.success("Successfully logged in!");
       setShowLoader(true);
     } catch (e) {
+      // The backend blocks unverified self-registered accounts with a
+      // machine-readable code — send them to the verify step instead of
+      // showing a generic credentials failure.
+      if (e?.data?.error?.details?.code === "email_not_verified") {
+        toast.error("Please verify your email before signing in");
+        navigate("/verify-email", { state: { email: data.email } });
+        return;
+      }
       toast.error(e instanceof Error ? e.message : "Sign in failed");
     }
   };
@@ -91,9 +93,9 @@ export default function LoginPage() {
 
       {showLoader && (
         <CapsuleLoader
-          minimumMs={1200}
-          variant="circular"
-          message="Signing you in…"
+          minimumMs={isOnboarded(signedInUser) ? 1600 : 1200}
+          variant={isOnboarded(signedInUser) ? "capsule" : "circular"}
+          message={isOnboarded(signedInUser) ? "Preparing your dashboard…" : "Signing you in…"}
           onDone={() => navigate(signedInUser ? afterAuthPath(signedInUser) : "/dashboard")}
         />
       )}

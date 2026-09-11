@@ -2,9 +2,10 @@ import React, { useState } from "react";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
 import { Eye, EyeOff } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export const PasswordField = React.forwardRef(
-  ({ id, label, error, labelClassName, ...props }, ref) => {
+  ({ id, label, error, labelClassName, className, ...props }, ref) => {
     const [showPassword, setShowPassword] = useState(false);
 
     return (
@@ -17,9 +18,11 @@ export const PasswordField = React.forwardRef(
             id={id}
             ref={ref}
             type={showPassword ? "text" : "password"}
-            className={`h-11 bg-background border-input focus-visible:ring-primary focus-visible:border-primary pr-10 transition-all duration-200 shadow-sm ${
-              error ? "border-destructive focus-visible:ring-destructive" : ""
-            }`}
+            className={cn(
+              "h-11 bg-background border-input focus-visible:ring-primary focus-visible:border-primary pr-10 transition-all duration-200 shadow-sm",
+              error ? "border-destructive focus-visible:ring-destructive" : "",
+              className,
+            )}
             {...props}
           />
           <button
