@@ -13,6 +13,7 @@ import {
   TbStack2,
   TbListDetails,
   TbPlugConnected,
+  TbHeadset,
 } from "react-icons/tb";
 import { ChevronRight } from "lucide-react";
 import {
@@ -82,6 +83,12 @@ const groups = [
           },
         ],
       },
+    ],
+  },
+  {
+    label: "Support",
+    items: [
+      { key: "support", title: "Support", url: "/support", icon: TbHeadset },
     ],
   },
 ];

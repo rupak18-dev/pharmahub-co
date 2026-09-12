@@ -100,6 +100,10 @@ export const router = createBrowserRouter([
             path: "/integrations",
             lazy: lazyPage(() => import("@/Pages/Integrations/IntegrationsPage")),
           },
+          {
+            path: "/support",
+            lazy: lazyPage(() => import("@/Pages/Support/SupportPage")),
+          },
         ],
       },
     ],

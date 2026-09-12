@@ -15,6 +15,7 @@ export function usePermission() {
   const { user } = useAuth();
   return (module, action = "view") => {
     if (!user) return false;
+    if (module === "support") return true;
     const role = normalizeRole(user.role);
     if (role === "Owner") return true;
     // Role defaults are the base matrix; per-user overrides (user.permissions —
