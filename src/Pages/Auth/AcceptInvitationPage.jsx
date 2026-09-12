@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { invitationService } from "@/lib/invitationService";
+import { clearApiCache } from "@/lib/api";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { Logo } from "./components/Shared/Logo";
 import { Button } from "@/Components/ui/button";
@@ -43,7 +44,7 @@ export default function AcceptInvitationPage() {
   const [searchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
-  const { setUser } = useAuth();
+  const { setUser, restoreSession } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [invitation, setInvitation] = useState(null);
@@ -72,12 +73,17 @@ export default function AcceptInvitationPage() {
         setError(null);
         const data = await invitationService.getInvitation(token);
         if (!isMounted) return;
-        if (!data || data.valid === false) {
+        if (!data) {
+          setError("No invitation details found. Please check the link in your email.");
+        } else if (data.status === "accepted" || data.status === "used") {
+          setInvitation(data);
+          setError(null);
+        } else if (data.status === "expired") {
           setError(
-            data?.status === "expired"
-              ? "This invitation has expired. Please request a new invitation from your administrator."
-              : "This invitation link is invalid or has already been used.",
+            "This invitation has expired. Please request a new invitation from your administrator.",
           );
+        } else if (data.valid === false) {
+          setError("This invitation link is invalid or has already been used.");
         } else {
           setInvitation(data);
           if (data.name) {
@@ -106,11 +112,9 @@ export default function AcceptInvitationPage() {
         password: formData.password,
       });
 
-      // The server sets the session as an httpOnly cookie — the response
-      // carries only the user profile.
-      if (data?.user) {
-        setUser(data.user);
-      }
+      // The server sets the session as an httpOnly cookie — rehydrate the
+      // user from /auth/me so the identity is always backend-verified.
+      await restoreSession();
 
       toast.success("Account activated successfully! Welcome to PharmaHub.");
       navigate("/dashboard");
@@ -158,6 +162,74 @@ export default function AcceptInvitationPage() {
               </Button>
             </div>
           </div>
+        ) : invitation && (invitation.status === "accepted" || invitation.status === "used") ? (
+          <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-6 space-y-5">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
+              <CheckCircle2 className="h-6 w-6" />
+            </div>
+            <div className="text-center">
+              <p className="text-base font-bold text-foreground">Account Already Set Up</p>
+              <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+                This invitation for <strong>{invitation.email}</strong> ({invitation.role}) has already been accepted and activated.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-border bg-card p-3 space-y-1.5 text-xs text-muted-foreground">
+              {invitation.orgName && (
+                <div className="flex items-center gap-2">
+                  <Building2 className="h-3.5 w-3.5 text-foreground shrink-0" />
+                  <span>
+                    Organization: <strong className="text-foreground">{invitation.orgName}</strong>
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span>
+                  Role: <strong className="text-foreground">{invitation.role}</strong>
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="h-3.5 w-3.5 text-foreground shrink-0" />
+                <span>
+                  Email: <strong className="text-foreground">{invitation.email}</strong>
+                </span>
+              </div>
+            </div>
+
+            {user && user.email?.toLowerCase() !== invitation.email?.toLowerCase() ? (
+              <div className="space-y-3 pt-2">
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200 leading-relaxed">
+                  You are currently logged into the browser as <strong>{user.name || user.email}</strong> ({user.role}). To switch to your staff account, sign out and log in with your staff password.
+                </div>
+                <Button
+                  className="w-full rounded-xl text-xs font-semibold bg-primary text-primary-foreground h-11 shadow-sm"
+                  onClick={async () => {
+                    await signOut();
+                    navigate(`/login?email=${encodeURIComponent(invitation.email)}`);
+                  }}
+                >
+                  Sign Out & Log In as {invitation.email}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full rounded-xl text-xs h-10"
+                  onClick={() => navigate("/dashboard")}
+                >
+                  Continue as {user.name || user.email}
+                </Button>
+              </div>
+            ) : (
+              <div className="pt-2">
+                <Button
+                  className="w-full rounded-xl text-xs font-semibold bg-primary text-primary-foreground h-11 shadow-sm gap-2"
+                  onClick={() => navigate(`/login?email=${encodeURIComponent(invitation.email)}`)}
+                >
+                  Sign In to Staff Account <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            )}
+          </div>
         ) : (
           <AnimatePresence mode="wait">
             <motion.div
@@ -187,6 +259,28 @@ export default function AcceptInvitationPage() {
                   <span className="text-[11px]">{invitation.email}</span>
                 </div>
               </div>
+
+              {/* Notice if another account is active on the same device */}
+              {user && user.email?.toLowerCase() !== invitation.email?.toLowerCase() && (
+                <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-800 dark:text-amber-200 flex items-center justify-between gap-2">
+                  <div>
+                    <span className="font-semibold">Notice:</span> Logged in as{" "}
+                    <strong>{user.name || user.email}</strong> ({user.role}). Activating will switch your active session to <strong>{invitation.email}</strong>.
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 text-[11px] px-2 text-amber-800 dark:text-amber-200 hover:bg-amber-500/20 shrink-0"
+                    onClick={async () => {
+                      await signOut();
+                      toast.info("Signed out of current account.");
+                    }}
+                  >
+                    Sign out
+                  </Button>
+                </div>
+              )}
 
               <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <div className="space-y-1.5">

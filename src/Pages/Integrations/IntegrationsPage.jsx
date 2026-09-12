@@ -29,6 +29,7 @@ import {
 } from "@/lib/integrationsService";
 import { findIntegration, INTEGRATIONS } from "@/Pages/Admin/components/integrationsCatalog";
 import { ConnectIntegrationDialog } from "@/Pages/Admin/components/ConnectIntegrationDialog";
+import { WhatsAppConnectDialog } from "@/Pages/Admin/components/WhatsAppConnectDialog";
 
 function CapabilityList({ items }) {
   if (!items?.length) return null;
@@ -57,9 +58,6 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
   // WhatsApp shows the verified business number instead of a primary action.
   const isWhatsApp = integration.key === "whatsapp";
   const whatsappPhone = isWhatsApp ? (integration.config?.phone ?? null) : null;
-
-  // WhatsApp destination comes from real backend configuration only.
-  const whatsappDestination = getWhatsAppDestination(integration);
   const dashboardUrl = integration.config?.dashboardUrl ?? integration.config?.url ?? null;
 
   const handlePrimary = () => {
@@ -92,10 +90,6 @@ function ConnectedIntegrationCard({ integration, canEdit, onConfigure, onDisconn
               variant="secondary"
               className="h-5 gap-1 border-emerald-500/20 bg-emerald-500/10 px-1.5 text-[10px] font-semibold text-emerald-700"
             >
-              <span
-                className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600"
-                aria-hidden="true"
-              />
               <span
                 className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-600"
                 aria-hidden="true"
@@ -315,6 +309,7 @@ export default function IntegrationsPage() {
   const [loading, setLoading] = useState(true);
   const [connectItem, setConnectItem] = useState(null);
   const [configureItem, setConfigureItem] = useState(null);
+  const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
   const [gmailConnecting, setGmailConnecting] = useState(false);
   const [gmailTesting, setGmailTesting] = useState(false);
 
@@ -404,10 +399,18 @@ export default function IntegrationsPage() {
       handleConnectGmail();
       return;
     }
+    if (item.key === "whatsapp") {
+      setWhatsappModalOpen(true);
+      return;
+    }
     setConnectItem(item);
   };
 
   const handleConfigure = (integration) => {
+    if (integration.key === "whatsapp") {
+      setWhatsappModalOpen(true);
+      return;
+    }
     setConfigureItem(integration);
   };
 
@@ -634,6 +637,12 @@ export default function IntegrationsPage() {
         mode="configure"
         disabled={!canEdit}
         onDone={refresh}
+      />
+
+      <WhatsAppConnectDialog
+        open={whatsappModalOpen}
+        onOpenChange={setWhatsappModalOpen}
+        onConnectedChange={() => refresh()}
       />
     </div>
   );

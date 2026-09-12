@@ -289,6 +289,7 @@ export default function ProfilePage() {
     >
       <div className="mx-auto w-full max-w-[1280px] space-y-6 px-4 sm:px-6">
         {/* Page Header */}
+
         <div data-profile-header>
           <PageHeader
             title="Pharma Profile"
@@ -296,7 +297,7 @@ export default function ProfilePage() {
             actions={
               <Button
                 size="sm"
-                onClick={() => navigate({ to: "/profile/edit" })}
+                onClick={() => navigate("/profile/edit")}
                 className="font-medium gap-2 rounded-lg shadow-xs px-4 py-2 text-xs sm:text-sm h-9 bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 <Edit3 className="h-4 w-4" />

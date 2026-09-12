@@ -3,7 +3,6 @@ import { Outlet, isRouteErrorResponse, useLocation, useMatches, useRouteError } 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Toaster } from "@/Components/ui/sonner";
-import { AuthProvider } from "@/lib/auth";
 import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
 
 const DEFAULT_TITLE = "PharmaHub — Modern Pharmacy Management System";
@@ -23,14 +22,14 @@ export function AppRoot() {
     document.title = resolveTitle(matches);
   }, [matches]);
   return (
-    <AuthProvider>
+    <>
       <Suspense fallback={<FullScreenSkeleton />}>
         <Outlet />
       </Suspense>
       <Toaster richColors position="top-right" />
       <Analytics />
       <SpeedInsights route={pathname} />
-    </AuthProvider>
+    </>
   );
 }
 

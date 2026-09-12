@@ -736,7 +736,7 @@ function load() {
       // Strip any legacy dummy profiles ending in @pharmahub.demo or placeholder names
       const cleanProfiles = (loaded.profiles ?? []).filter(
         (p) =>
-          !p.email.endsWith("@pharmahub.demo") &&
+          !p.email.toLowerCase().endsWith("@pharmahub.demo") &&
           !["Alex Morgan", "Priya Shah", "Sam Chen", "Diego Ruiz"].includes(p.name),
       );
       

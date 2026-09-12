@@ -19,16 +19,20 @@ export function useTeamMembers() {
   const [offline, setOffline] = useState(false);
   const [loadError, setLoadError] = useState(null);
 
-  const loadRemote = useCallback(async () => {
-    setLoadingRemote(true);
+  const loadRemote = useCallback(async (silent = false) => {
+    if (!silent) setLoadingRemote(true);
     setLoadError(null);
     try {
       const [users, invitations] = await Promise.all([
         usersService.list(),
         invitationService.list(),
       ]);
-      setRemoteUsers(Array.isArray(users) ? users : []);
-      setRemoteInvitations(Array.isArray(invitations) ? invitations : []);
+      const newUsers = Array.isArray(users) ? users : [];
+      const newInvitations = Array.isArray(invitations) ? invitations : [];
+      setRemoteUsers((prev) => (JSON.stringify(prev) === JSON.stringify(newUsers) ? prev : newUsers));
+      setRemoteInvitations((prev) =>
+        JSON.stringify(prev) === JSON.stringify(newInvitations) ? prev : newInvitations,
+      );
       setOffline(false);
     } catch (error) {
       if (isNetworkError(error)) {
@@ -52,7 +56,7 @@ export function useTeamMembers() {
         }
       }
     } finally {
-      setLoadingRemote(false);
+      if (!silent) setLoadingRemote(false);
     }
   }, []);
 
@@ -74,7 +78,7 @@ export function useTeamMembers() {
   // waiting for a remount or manual reload.
   useEffect(() => {
     const handler = () => {
-      if (document.visibilityState === "visible") loadRemote();
+      if (document.visibilityState === "visible") loadRemote(true);
     };
     window.addEventListener("focus", handler);
     document.addEventListener("visibilitychange", handler);
@@ -82,6 +86,17 @@ export function useTeamMembers() {
       window.removeEventListener("focus", handler);
       document.removeEventListener("visibilitychange", handler);
     };
+  }, [loadRemote]);
+
+  // Periodic polling so when an invitee accepts their invitation in another tab/device,
+  // the Owner's screen automatically updates staff status to "active" without manual reload.
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") {
+        loadRemote(true);
+      }
+    }, 12000);
+    return () => clearInterval(interval);
   }, [loadRemote]);
 
   // Merge backend users + invitations into one row list. Only PENDING
@@ -103,7 +118,9 @@ export function useTeamMembers() {
         name: u.name || "—",
         email: u.email || "",
         phone: u.phone || "",
-        role: u.role || "Pharmacist",
+        // Never invent a role here — show exactly what the backend stores
+        // (empty when the account genuinely has none).
+        role: u.role || "",
         orgName: u.orgName || "",
         designation: u.designation ?? null,
         department: u.department ?? null,
@@ -119,14 +136,16 @@ export function useTeamMembers() {
     }
     for (const inv of remoteInvitations) {
       if (inv.status !== "pending") continue;
+      // Do not show pending invitation if a real user account already exists for this email
+      if (userEmails.has((inv.email || "").toLowerCase())) continue;
       list.push({
         id: inv.id,
         name: inv.name || inv.email.split("@")[0],
         email: inv.email || "",
         phone: inv.phone || "",
-        role: inv.role || "Pharmacist",
+        role: inv.role || "",
         orgName: inv.orgName || "",
-        designation: null,
+        designation: inv.designation ?? null,
         department: inv.department ?? null,
         accessIds: Array.isArray(inv.accessIds) ? inv.accessIds : [],
         permissions: inv.permissions ?? {},

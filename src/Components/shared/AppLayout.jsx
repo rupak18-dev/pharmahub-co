@@ -4,6 +4,7 @@ import { SidebarProvider, SidebarTrigger } from "@/Components/ui/sidebar";
 import { AppSidebar } from "@/Components/shared/AppSidebar";
 import { AppShellSkeleton, RouteSkeleton } from "@/Components/shared/PageSkeleton";
 import { useAuth } from "@/lib/auth";
+import { isOnboarded } from "@/lib/onboardingApi";
 import { useDb } from "@/hooks/useDb";
 import { buildNotifications } from "@/lib/expiry";
 import { prefetch } from "@/lib/api";
@@ -56,7 +57,7 @@ export default function AppLayout() {
   useEffect(() => {
     if (loading) return;
     if (!user) navigate("/login");
-    else if (!user.onboarded) navigate("/onboarding");
+    else if (!isOnboarded(user)) navigate("/onboarding");
   }, [user, loading, navigate]);
   const prefetchedRef = useRef(false);
   useEffect(() => {
