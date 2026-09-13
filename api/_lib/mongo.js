@@ -1,15 +1,33 @@
 import dns from "node:dns";
 import { MongoClient } from "mongodb";
 
-// Shared Mongo client used by the serverless API handlers (and scripts).
-// On Vercel, env vars are injected; locally we fall back to .env.local.
-function loadEnv() {
+function configureDns() {
   try {
-    if (typeof process.loadEnvFile === "function") {
-      process.loadEnvFile(".env.local");
-    }
+    dns.setServers(["8.8.8.8", "1.1.1.1", "8.8.4.4"]);
   } catch {
-    // .env.local missing or empty is fine.
+    // harmless if restricted or unsupported in environment
+  }
+}
+
+// Pre-configure DNS to avoid ECONNREFUSED with Node's c-ares DNS resolver on SRV queries
+configureDns();
+
+// Shared Mongo client used by the serverless API handlers (and scripts).
+// On Vercel, env vars are injected; locally we fall back to .env.local / .env.
+function loadEnv() {
+  const candidateFiles = [
+    ".env.local",
+    ".env",
+    "../pharmahub-server/.env",
+  ];
+  for (const file of candidateFiles) {
+    try {
+      if (typeof process.loadEnvFile === "function") {
+        process.loadEnvFile(file);
+      }
+    } catch {
+      // .env missing or empty is fine.
+    }
   }
 }
 
@@ -23,7 +41,8 @@ const lookup = (hostname, options, callback) => dns.lookup(hostname, options, ca
 
 export async function getClient() {
   loadEnv();
-  const uri = process.env.MONGODB_URI;
+  configureDns();
+  const uri = process.env.MONGODB_URI || process.env.MONGO_URI;
   if (!uri) {
     throw new Error(
       "MONGODB_URI is not set. Add it to .env.local (local dev) or the Vercel project env.",
@@ -31,12 +50,21 @@ export async function getClient() {
   }
   if (!cachedClient) {
     cachedClient = new MongoClient(uri, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 8000,
       lookup,
     });
   }
   if (!cachedClient.topology?.isConnected?.()) {
-    await cachedClient.connect();
+    try {
+      await cachedClient.connect();
+    } catch (err) {
+      if (err.message?.includes("ECONNREFUSED") || err.code === "ECONNREFUSED") {
+        configureDns();
+        await cachedClient.connect();
+      } else {
+        throw err;
+      }
+    }
   }
   return cachedClient;
 }

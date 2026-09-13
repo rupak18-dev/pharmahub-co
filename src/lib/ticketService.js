@@ -37,7 +37,7 @@ export const ticketService = {
     };
 
     try {
-      const result = await apiRequest("http://localhost:5000/api/v1/tickets", {
+      const result = await apiRequest("/tickets", {
         method: "POST",
         body: JSON.stringify(payload),
       });
@@ -85,9 +85,18 @@ export const ticketService = {
     return localTicket;
   },
 
-  async listTickets() {
+  async listTickets(filters = {}) {
     try {
-      const data = await apiRequest("/tickets");
+      const params = new URLSearchParams();
+      if (filters.userEmail) params.set("userEmail", filters.userEmail);
+      if (filters.status && filters.status !== "all") params.set("status", filters.status);
+      if (filters.severity && filters.severity !== "all") params.set("severity", filters.severity);
+      if (filters.issueType && filters.issueType !== "all") params.set("issueType", filters.issueType);
+      if (filters.search) params.set("search", filters.search);
+
+      const qs = params.toString();
+      const path = qs ? `/tickets?${qs}` : "/tickets";
+      const data = await apiRequest(path);
       if (Array.isArray(data)) {
         // Sync local
         db.set((d) => {
@@ -96,8 +105,8 @@ export const ticketService = {
         return data;
       }
     } catch (err) {
-      if (!isNetworkError(err)) {
-        console.error("[ticketService] Error fetching tickets:", err);
+      if (err.status !== 401 && !isNetworkError(err)) {
+        console.warn("[ticketService] Could not fetch tickets from backend, using local store:", err.message);
       }
     }
 
@@ -107,8 +116,22 @@ export const ticketService = {
 
   async getTicket(ticketId) {
     try {
-      const data = await apiRequest(`/tickets/${ticketId}`);
-      if (data) return data;
+      const data = await apiRequest(`/tickets/${ticketId}`, { noCache: true });
+      if (data) {
+        // Sync into client db reactive store
+        db.set((d) => {
+          const list = Array.isArray(d.tickets) ? d.tickets : [];
+          const idx = list.findIndex(
+            (t) => t.ticketId === data.ticketId || t._id === data._id || t.id === data.id,
+          );
+          if (idx >= 0) {
+            list[idx] = { ...list[idx], ...data };
+          } else {
+            d.tickets = [data, ...list];
+          }
+        });
+        return data;
+      }
     } catch {
       // ignore
     }

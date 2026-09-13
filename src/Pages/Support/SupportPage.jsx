@@ -24,12 +24,14 @@ import {
   Flame,
   AlertCircle,
   Info,
+  Activity,
 } from "lucide-react";
 import { TbTicket, TbHeadset } from "react-icons/tb";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { useDb } from "@/hooks/useDb";
 import { PageHeader } from "@/Components/shared/PageHeader";
+import { TicketTrackingView } from "./components/TicketTrackingView";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Textarea } from "@/Components/ui/textarea";
@@ -181,6 +183,7 @@ export default function SupportPage() {
   const dbTickets = useDb((d) => d.tickets || []);
 
   const [activeTab, setActiveTab] = useState("raise");
+  const [selectedTicketId, setSelectedTicketId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [latestRaisedTicket, setLatestRaisedTicket] = useState(null);
@@ -212,9 +215,23 @@ export default function SupportPage() {
     if (user?.email && !reporterEmail) setReporterEmail(user.email);
   }, [user]);
 
-  // Load latest tickets on mount
+  // Load latest tickets on mount and when user identity is ready
   useEffect(() => {
-    ticketService.listTickets().catch(() => {});
+    ticketService.listTickets({ userEmail: user?.email }).catch(() => {});
+  }, [user?.email]);
+
+  // Support direct deep-linking or query params: ?ticketId=PH-TKT-2026-XXXXX or ?track=...
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const targetTicket = params.get("ticketId") || params.get("track");
+      if (targetTicket) {
+        setSelectedTicketId(targetTicket);
+        setActiveTab("tickets");
+      }
+    } catch {
+      // Ignore if URLSearchParams is unavailable
+    }
   }, []);
 
   // Handle clipboard paste of screenshots (Ctrl+V) anywhere on form
@@ -580,15 +597,29 @@ export default function SupportPage() {
 
               <CardFooter className="flex flex-col sm:flex-row items-center justify-center gap-3 border-t border-border pt-6">
                 <Button
-                  onClick={resetForm}
+                  onClick={() => {
+                    setSelectedTicketId(latestRaisedTicket.ticketId);
+                    setActiveTab("tickets");
+                  }}
                   className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white gap-2 font-medium"
                 >
-                  <LifeBuoy className="h-4 w-4" />
+                  <Activity className="h-4 w-4" />
+                  Track Ticket Status
+                </Button>
+                <Button
+                  onClick={resetForm}
+                  variant="outline"
+                  className="w-full sm:w-auto gap-2"
+                >
+                  <LifeBuoy className="h-4 w-4 text-emerald-600" />
                   Raise Another Ticket
                 </Button>
                 <Button
-                  variant="outline"
-                  onClick={() => setActiveTab("tickets")}
+                  variant="ghost"
+                  onClick={() => {
+                    setSelectedTicketId(null);
+                    setActiveTab("tickets");
+                  }}
                   className="w-full sm:w-auto gap-2"
                 >
                   <TbTicket className="h-4 w-4 text-emerald-600" />
@@ -867,7 +898,14 @@ export default function SupportPage() {
 
         {/* Tab 2: My Raised Tickets */}
         <TabsContent value="tickets" className="space-y-4">
-          <Card className="border-border shadow-sm">
+          {selectedTicketId ? (
+            <TicketTrackingView
+              ticketId={selectedTicketId}
+              onBack={() => setSelectedTicketId(null)}
+              onOpenScreenshot={(img) => setPreviewImage(img)}
+            />
+          ) : (
+            <Card className="border-border shadow-sm">
             <CardHeader className="pb-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
@@ -933,7 +971,8 @@ export default function SupportPage() {
                     return (
                       <div
                         key={ticket.ticketId || ticket.id}
-                        className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-muted/20 px-2 rounded-lg transition-colors"
+                        onClick={() => setSelectedTicketId(ticket.ticketId)}
+                        className="py-4 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 px-3 rounded-xl transition-all cursor-pointer border border-transparent hover:border-emerald-200 dark:hover:border-emerald-900/60 group"
                       >
                         <div className="space-y-1.5 min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
@@ -980,6 +1019,18 @@ export default function SupportPage() {
                             <Copy className="h-3.5 w-3.5" />
                             <span>Copy ID</span>
                           </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 gap-1.5 text-xs font-semibold border-emerald-300 text-emerald-800 dark:border-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 bg-emerald-50/50 dark:bg-emerald-950/30"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedTicketId(ticket.ticketId);
+                            }}
+                          >
+                            <Activity className="h-3.5 w-3.5 text-emerald-600" />
+                            <span>Track</span>
+                          </Button>
                           <Badge
                             className={
                               ticket.status === "resolved"
@@ -999,6 +1050,7 @@ export default function SupportPage() {
               )}
             </CardContent>
           </Card>
+          )}
         </TabsContent>
 
         {/* Tab 3: FAQ & Troubleshooting */}
