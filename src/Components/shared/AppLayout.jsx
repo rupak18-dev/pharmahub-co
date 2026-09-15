@@ -27,6 +27,7 @@ const ROUTE_PERMISSIONS = {
   "/notifications": ["notifications", "view"],
   "/integrations": ["integrations", "view"],
   "/profile": ["admin", "view"],
+  "/support": ["support", "view"],
 };
 
 export default function AppLayout() {

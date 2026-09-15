@@ -662,6 +662,7 @@ function seed() {
       racks: [],
     },
     permissions: DEFAULT_PERMISSIONS,
+    tickets: [],
   };
 }
 const listeners = new Set();
@@ -859,6 +860,7 @@ function load() {
         shortbook:
           loaded.shortbook && loaded.shortbook.length > 0 ? loaded.shortbook : seed().shortbook,
         notificationsRead: loaded.notificationsRead ?? [],
+        tickets: loaded.tickets ?? [],
       };
       return cache;
     }
