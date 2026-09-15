@@ -41,10 +41,18 @@ const schema = z
   });
 
 export default function AcceptInvitationPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const token = searchParams.get("token");
   const navigate = useNavigate();
   const { setUser, restoreSession } = useAuth();
+
+  // Strip the one-time invitation token from the URL after reading it so it
+  // does not linger in browser history, Referer headers, or screenshots.
+  useEffect(() => {
+    if (token) {
+      window.history.replaceState({}, "", "/auth/accept");
+    }
+  }, [token]);
 
   const [loading, setLoading] = useState(true);
   const [invitation, setInvitation] = useState(null);
@@ -112,8 +120,8 @@ export default function AcceptInvitationPage() {
         password: formData.password,
       });
 
-      // The server sets the session as an httpOnly cookie — rehydrate the
-      // user from /auth/me so the identity is always backend-verified.
+      // The session is established via JWT (sent as Bearer header).
+      // Re-resolve the user from /auth/me so the identity is backend-verified.
       await restoreSession();
 
       toast.success("Account activated successfully! Welcome to PharmaHub.");

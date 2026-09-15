@@ -1,8 +1,11 @@
 // Fetch wrapper for the pharmahub-server Express API (`/api/v1`).
-// Auth is session-cookie based: the server sets an httpOnly cookie at login
-// and the browser sends it automatically via `credentials: "include"`.
-// No token is ever exposed to JavaScript — nothing is stored in
-// localStorage/sessionStorage or visible in DevTools storage panes.
+// Auth uses a JWT bearer token stored in localStorage (PharmaHub_session_v2),
+// sent as `Authorization: Bearer <token>` on every request. The cookie
+// `credentials: "include"` is also sent for cross-origin requests where the
+// server may use httpOnly cookies (e.g. Google OAuth callback).
+//
+// CSRF protection: mutating requests include a custom `X-PharmaHub-Client`
+// header that cross-site form posts cannot add without a preflight.
 //
 // Backend envelope: `{ success, message, data, meta }` on success and
 // `{ success: false, error: { message, details } }` on failure.
