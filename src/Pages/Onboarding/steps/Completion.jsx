@@ -19,10 +19,15 @@ export function Completion({ onboarding }) {
   //
   // Role is never sent either — a user's role is owned by the backend
   // (Owner assignment or invitation), never by wizard input.
+  const logo = onboarding?.branding?.logo;
   const profileBody = { onboarded: true };
   // Only the Owner establishes an organization; invited staff must keep the
   // organization they were invited into.
   if (user?.role === "Owner" && orgName) profileBody.orgName = orgName;
+  if (logo) {
+    profileBody.logoUrl = logo;
+    if (!user?.avatarUrl) profileBody.avatarUrl = logo;
+  }
 
   const onboardingPayload = {
     ...(onboarding.businessType ? { businessType: onboarding.businessType } : {}),
