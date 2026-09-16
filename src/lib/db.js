@@ -481,58 +481,58 @@ function seed() {
   const nearExpiryDaysPool = [0, 2, 5, 12, 25, 45, 80];
   const batches = DEMO_BATCHES
     ? medicines.flatMap((m, i) => {
-        const suppliers = [sup1.id, sup2.id];
-        const seq = i + 1;
-        // Batch A - healthy
-        const a = {
+      const suppliers = [sup1.id, sup2.id];
+      const seq = i + 1;
+      // Batch A - healthy
+      const a = {
+        id: uid(),
+        medicineId: m.id,
+        batchNumber: batchCode(m.prefix, 24, ((i * 2) % 12) + 1, seq),
+        mfgDate: daysFromNow(-180),
+        expiryDate: daysFromNow(365 + i * 20),
+        mrp: 40 + i * 15,
+        purchasePrice: 25 + i * 10,
+        sellingPrice: 38 + i * 14,
+        supplierId: suppliers[i % 2],
+        currentStock: 0,
+        status: "active",
+        createdAt: now,
+      };
+      // Batch B - near expiry (spread across the warning windows)
+      const b = {
+        id: uid(),
+        medicineId: m.id,
+        batchNumber: batchCode(m.prefix, 24, ((i * 2 + 4) % 12) + 1, seq),
+        mfgDate: daysFromNow(-300),
+        expiryDate: daysFromNow(nearExpiryDaysPool[i % nearExpiryDaysPool.length]),
+        mrp: 40 + i * 15,
+        purchasePrice: 25 + i * 10,
+        sellingPrice: 38 + i * 14,
+        supplierId: suppliers[(i + 1) % 2],
+        currentStock: 0,
+        status: "near_expiry",
+        createdAt: now,
+      };
+      // Batch C - expired (only some)
+      if (i % 3 === 0) {
+        const c = {
           id: uid(),
           medicineId: m.id,
-          batchNumber: batchCode(m.prefix, 24, ((i * 2) % 12) + 1, seq),
-          mfgDate: daysFromNow(-180),
-          expiryDate: daysFromNow(365 + i * 20),
+          batchNumber: batchCode(m.prefix, 23, ((i * 3 + 9) % 12) + 1, seq),
+          mfgDate: daysFromNow(-500),
+          expiryDate: daysFromNow(-10 - i),
           mrp: 40 + i * 15,
           purchasePrice: 25 + i * 10,
           sellingPrice: 38 + i * 14,
           supplierId: suppliers[i % 2],
           currentStock: 0,
-          status: "active",
+          status: "expired",
           createdAt: now,
         };
-        // Batch B - near expiry (spread across the warning windows)
-        const b = {
-          id: uid(),
-          medicineId: m.id,
-          batchNumber: batchCode(m.prefix, 24, ((i * 2 + 4) % 12) + 1, seq),
-          mfgDate: daysFromNow(-300),
-          expiryDate: daysFromNow(nearExpiryDaysPool[i % nearExpiryDaysPool.length]),
-          mrp: 40 + i * 15,
-          purchasePrice: 25 + i * 10,
-          sellingPrice: 38 + i * 14,
-          supplierId: suppliers[(i + 1) % 2],
-          currentStock: 0,
-          status: "near_expiry",
-          createdAt: now,
-        };
-        // Batch C - expired (only some)
-        if (i % 3 === 0) {
-          const c = {
-            id: uid(),
-            medicineId: m.id,
-            batchNumber: batchCode(m.prefix, 23, ((i * 3 + 9) % 12) + 1, seq),
-            mfgDate: daysFromNow(-500),
-            expiryDate: daysFromNow(-10 - i),
-            mrp: 40 + i * 15,
-            purchasePrice: 25 + i * 10,
-            sellingPrice: 38 + i * 14,
-            supplierId: suppliers[i % 2],
-            currentStock: 0,
-            status: "expired",
-            createdAt: now,
-          };
-          return [a, b, c];
-        }
-        return [a, b];
-      })
+        return [a, b, c];
+      }
+      return [a, b];
+    })
     : [];
   const stockQty = [180, 96, 42, 210, 75, 160, 110];
   const locPool = [
@@ -738,20 +738,20 @@ function load() {
           !p.email.endsWith("@pharmahub.demo") &&
           !["Alex Morgan", "Priya Shah", "Sam Chen", "Diego Ruiz"].includes(p.name),
       );
-      
+
       const seeded = seed();
       const activeMedicines = loaded.medicines && loaded.medicines.length > 0 ? loaded.medicines : seeded.medicines;
-      
+
       let generatedBatches = [];
       let generatedStock = [];
       let generatedLedger = [];
       let generatedMovements = [];
-      
+
       if (DEMO_BATCHES && (!loaded.batches || loaded.batches.length === 0)) {
         const batchCode = (prefix, year, month, seq) => `${prefix}-${String(year).slice(-2)}${String(month).padStart(2, "0")}-${String(seq).padStart(2, "0")}`;
         const nearExpiryDaysPool = [0, 2, 5, 12, 25, 45, 80];
         const suppliers = [seeded.suppliers[0].id, seeded.suppliers[1].id];
-        
+
         generatedBatches = activeMedicines.flatMap((m, i) => {
           const seq = i + 1;
           const a = {
