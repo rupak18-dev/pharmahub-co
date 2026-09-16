@@ -17,8 +17,9 @@ export default function GoogleCallbackPage() {
     if (ranRef.current) return;
     ranRef.current = true;
 
-    // The backend sets the session as an httpOnly cookie before redirecting
-    // here. No token ever appears in the URL — hydrate the user via /auth/me.
+    // For Google OAuth the server sets the session cookie before redirecting
+    // here. For non-OAuth flows the JWT is returned in the response body.
+    // Hydrate the authoritative identity via /auth/me in all cases.
     restoreSession()
       .then(() => {
         toast.success("Successfully logged in!");

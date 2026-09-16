@@ -40,7 +40,10 @@ function readSession() {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.token !== "string" || !parsed.token) return null;
+    return parsed;
   } catch {
     return null;
   }
@@ -74,8 +77,10 @@ export function AuthProvider({ children }) {
       // ignore
     }
     (async () => {
-      // Session lives in an httpOnly cookie or token — hydrate the user from the
-      // server.
+      // Hydrate the user from the server via GET /auth/me.
+      // Note: the JWT token is stored in localStorage (sent as Bearer header).
+      // This is not httpOnly-cookie protected — any XSS can exfiltrate the
+      // token. The backend remains the authority for all real authorization.
       try {
         // GET /auth/me is the only source of truth for the signed-in identity.
         const me = await apiRequest("/auth/me", { noCache: true });
@@ -248,14 +253,6 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
-  const switchRole = useCallback(
-    (role) => {
-      if (!user) return;
-      setUser({ ...user, role });
-    },
-    [user],
-  );
-
   // Profile fields the backend allows editing via PUT /auth/profile.
   const updateProfile = useCallback(
     async (changes = {}) => {
@@ -318,7 +315,6 @@ export function AuthProvider({ children }) {
         signIn,
         signUp,
         signOut,
-        switchRole,
         updateProfile,
         refreshUser,
         restoreSession,
