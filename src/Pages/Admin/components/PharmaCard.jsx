@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router";
 import { useAuth } from "@/lib/auth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/Components/ui/card";
+import { Avatar, AvatarImage, AvatarFallback } from "@/Components/ui/avatar";
 import { Separator } from "@/Components/ui/separator";
 
 function InfoRow({ icon: Icon, label, value }) {
@@ -74,9 +75,18 @@ export function PharmaCard() {
       <CardContent className="space-y-5 px-5 py-4">
         {/* Avatar + name row */}
         <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-primary/10 text-sm font-semibold text-primary">
-            {initials}
-          </span>
+          <Avatar className="h-10 w-10 border border-border shrink-0">
+            {(user?.avatarUrl || user?.logoUrl || user?.picture) && (
+              <AvatarImage
+                src={user?.avatarUrl || user?.logoUrl || user?.picture}
+                alt={user?.name || "Profile"}
+                className="object-cover"
+              />
+            )}
+            <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
+              {initials}
+            </AvatarFallback>
+          </Avatar>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-foreground">
               {user?.name || (

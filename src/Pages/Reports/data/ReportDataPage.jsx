@@ -18,6 +18,7 @@ import {
   MessageCircle,
   Check,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
@@ -228,6 +229,20 @@ export default function ReportDataPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [sendingWhatsAppId, setSendingWhatsAppId] = useState(null);
+  const [seeding, setSeeding] = useState(false);
+
+  const handleSeedDemo = async () => {
+    setSeeding(true);
+    try {
+      const res = await reportService.seedDemoBills();
+      toast.success(res?.message || "Demo bills generated in database!");
+      await Promise.all([loadBills(), loadSummary()]);
+    } catch (err) {
+      toast.error(err?.message || "Failed to load demo data.");
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const loadBills = useCallback(async () => {
     setLoading(true);
@@ -462,6 +477,20 @@ export default function ReportDataPage() {
         description="Add, upload or import bills and report records that feed your Reports."
         actions={
           <>
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-9 text-xs font-medium gap-1.5 border-dashed text-primary hover:text-primary hover:bg-primary/5"
+              disabled={seeding}
+              onClick={handleSeedDemo}
+            >
+              {seeding ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+              )}
+              {seeding ? "Loading Demo..." : "Load Demo Data"}
+            </Button>
             <Button
               size="sm"
               variant="outline"
@@ -720,6 +749,20 @@ export default function ReportDataPage() {
                     </Button>
                   ) : (
                     <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs gap-1.5"
+                        disabled={seeding}
+                        onClick={handleSeedDemo}
+                      >
+                        {seeding ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        )}
+                        Load Demo Data
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"

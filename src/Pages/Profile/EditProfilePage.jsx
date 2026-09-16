@@ -208,61 +208,128 @@ export default function EditProfilePage() {
               <UserRound className="h-4 w-4 text-primary" /> Basic Information
             </h2>
 
-            {/* Profile Photo Upload Control */}
-            <div className="space-y-3">
-              <Label className="text-xs font-semibold">Profile Photo</Label>
-              <div className="flex items-center gap-4 p-4 rounded-lg border border-border bg-muted/20">
-                <div className="relative group">
-                  <input
-                    id="avatar-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => handleInputChange("avatarUrl", ev.target?.result);
-                        reader.readAsDataURL(file);
-                      }
-                    }}
-                  />
-                  <label htmlFor="avatar-upload" className="cursor-pointer block relative">
-                    <Avatar className="h-16 w-16 border-2 border-border group-hover:border-primary transition-colors shadow-xs">
-                      {formData.avatarUrl && (
-                        <AvatarImage
-                          src={formData.avatarUrl}
-                          alt="Profile Photo"
-                          className="object-cover"
-                        />
-                      )}
-                      <AvatarFallback className="bg-primary text-primary-foreground text-base font-bold">
-                        {initials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
-                      <Camera className="h-5 w-5" />
-                    </div>
-                  </label>
-                </div>
-                <div className="flex flex-col gap-1">
-                  <span className="text-xs font-semibold text-foreground">Profile Photo</span>
-                  <div className="flex items-center gap-2">
-                    <label
-                      htmlFor="avatar-upload"
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md cursor-pointer transition-colors"
-                    >
-                      <Upload className="h-3 w-3" /> Upload Photo
+            {/* Profile Photo & Business Logo Upload Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Profile Photo */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Owner Profile Photo</Label>
+                <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-muted/20">
+                  <div className="relative group">
+                    <input
+                      id="avatar-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => handleInputChange("avatarUrl", ev.target?.result);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <label htmlFor="avatar-upload" className="cursor-pointer block relative">
+                      <Avatar className="h-14 w-14 border-2 border-border group-hover:border-primary transition-colors shadow-xs">
+                        {(formData.avatarUrl || formData.logoUrl) && (
+                          <AvatarImage
+                            src={formData.avatarUrl || formData.logoUrl}
+                            alt="Profile Photo"
+                            className="object-cover"
+                          />
+                        )}
+                        <AvatarFallback className="bg-primary text-primary-foreground text-base font-bold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="absolute inset-0 rounded-full bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                        <Camera className="h-4 w-4" />
+                      </div>
                     </label>
-                    {formData.avatarUrl && (
-                      <button
-                        type="button"
-                        onClick={() => handleInputChange("avatarUrl", "")}
-                        className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <span className="text-xs font-semibold text-foreground truncate">Personal Avatar</span>
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="avatar-upload"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md cursor-pointer transition-colors"
                       >
-                        Remove
-                      </button>
-                    )}
+                        <Upload className="h-3 w-3" /> Upload
+                      </label>
+                      {formData.avatarUrl && (
+                        <button
+                          type="button"
+                          onClick={() => handleInputChange("avatarUrl", "")}
+                          className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Business Logo */}
+              <div className="space-y-2">
+                <Label className="text-xs font-semibold">Pharmacy / Business Logo</Label>
+                <div className="flex items-center gap-4 p-4 rounded-xl border border-border bg-muted/20">
+                  <div className="relative group">
+                    <input
+                      id="logo-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            handleInputChange("logoUrl", ev.target?.result);
+                            if (!formData.avatarUrl) {
+                              handleInputChange("avatarUrl", ev.target?.result);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                    <label htmlFor="logo-upload" className="cursor-pointer block relative">
+                      <div className="h-14 w-14 rounded-xl border-2 border-border group-hover:border-primary transition-colors bg-background flex items-center justify-center overflow-hidden shadow-xs">
+                        {formData.logoUrl ? (
+                          <img
+                            src={formData.logoUrl}
+                            alt="Pharma Logo"
+                            className="h-full w-full object-contain"
+                          />
+                        ) : (
+                          <Store className="h-6 w-6 text-muted-foreground/60" />
+                        )}
+                      </div>
+                      <div className="absolute inset-0 rounded-xl bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white">
+                        <Camera className="h-4 w-4" />
+                      </div>
+                    </label>
+                  </div>
+                  <div className="flex flex-col gap-1 min-w-0">
+                    <span className="text-xs font-semibold text-foreground truncate">Invoice & Store Logo</span>
+                    <div className="flex items-center gap-2">
+                      <label
+                        htmlFor="logo-upload"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-md cursor-pointer transition-colors"
+                      >
+                        <Upload className="h-3 w-3" /> Upload Logo
+                      </label>
+                      {formData.logoUrl && (
+                        <button
+                          type="button"
+                          onClick={() => handleInputChange("logoUrl", "")}
+                          className="text-xs text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

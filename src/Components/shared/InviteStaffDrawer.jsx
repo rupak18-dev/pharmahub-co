@@ -25,6 +25,10 @@ import {
   CheckCircle2,
   Loader2,
   RotateCcw,
+  Truck,
+  Download,
+  Bell,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { invitationService } from "@/lib/invitationService";
@@ -51,6 +55,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/Components/ui/sheet";
+import { cn } from "@/lib/utils";
 
 export const ROLE_PRESETS = {
   Pharmacist: {
@@ -754,82 +759,106 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
           {/* STEP 3: FEATURES */}
           {step === 3 && (
             <div className="space-y-4">
-              {/* Information Box */}
-              <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
-                <Sparkles className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                <div>
-                  <p className="font-semibold text-foreground">Configure Feature Capabilities</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                    Enable or disable specific operational capabilities and special privileges for{" "}
-                    {fullName || "staff"}.
+              {/* Refined Information Panel */}
+              <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-xs">
+                <div className="h-8 w-8 rounded-lg bg-background border border-border/80 flex items-center justify-center text-muted-foreground shrink-0 shadow-2xs">
+                  <SlidersHorizontal className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground text-xs">Configure Operational Capabilities</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                    Toggle feature capabilities and special privileges for {fullName || "this staff member"}.
                   </p>
                 </div>
               </div>
 
               {/* Feature Cards Grid */}
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   {
                     key: "processSales",
-                    title: "Process Sales & Refunds",
-                    desc: "Allow checkout in POS billing, processing transactions, and issuing customer refunds.",
+                    icon: ShoppingBag,
+                    title: "Process Sales",
+                    desc: "Allow checkout in POS billing, processing customer transactions, and issuing refunds.",
                   },
                   {
                     key: "stockAudit",
-                    title: "Stock Audit & Adjustments",
+                    icon: ClipboardCheck,
+                    title: "Stock Audit",
                     desc: "Allow physical inventory audit logging, batch stock updates, and expiry write-offs.",
                   },
                   {
                     key: "purchasing",
-                    title: "Supplier Purchase Orders",
+                    icon: Truck,
+                    title: "Purchase Orders",
                     desc: "Allow creating purchase orders, logging supplier deliveries, and receiving stock.",
                   },
                   {
                     key: "dataExport",
-                    title: "Data Export & Reports",
-                    desc: "Allow downloading sales analytics, stock sheets, and financial reports as PDF or Excel.",
+                    icon: Download,
+                    title: "Data Export",
+                    desc: "Allow exporting sales analytics, inventory sheets, and financial reports to CSV and Excel.",
                   },
                   {
                     key: "notifications",
-                    title: "Automated Expiry & Stock Alerts",
-                    desc: "Receive real-time email and push notifications for critical stock levels & batch expiries.",
+                    icon: Bell,
+                    title: "Stock Alerts",
+                    desc: "Receive real-time notifications for critical stock levels, low supplies, and batch expiries.",
                   },
                   {
                     key: "userAdmin",
-                    title: "Staff & Security Administration",
+                    icon: ShieldCheck,
+                    title: "Administration",
                     desc: "Allow inviting new team members, changing roles, and configuring system security.",
                   },
                 ].map((feat) => {
+                  const Icon = feat.icon;
                   const isChecked = features[feat.key] ?? false;
                   const isRoleDefault = ROLE_PRESETS[role]?.coreFeatures?.[feat.key] ?? false;
+
                   return (
                     <div
                       key={feat.key}
-                      className="flex items-start justify-between p-3.5 rounded-xl border border-border/80 bg-card gap-4"
+                      onClick={() => toggleFeature(feat.key)}
+                      className={cn(
+                        "flex flex-col p-4 rounded-xl border transition-all duration-200 gap-3 relative cursor-pointer group",
+                        isChecked
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border/60 bg-card hover:border-primary/40 hover:bg-muted/20",
+                      )}
                     >
-                      <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-start justify-between">
+                        <div
+                          className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+                            isChecked
+                              ? "border-primary/30 bg-primary/10 text-primary"
+                              : "border-border bg-muted text-muted-foreground group-hover:text-primary/70",
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <Switch
+                          checked={isChecked}
+                          onCheckedChange={() => toggleFeature(feat.key)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex items-center gap-2">
-                          <p className="text-xs font-bold text-foreground">{feat.title}</p>
-                          {isRoleDefault ? (
-                            <Badge className="text-[9px] h-4 px-1.5 bg-primary/15 text-primary border-primary/25">
-                              Role Default
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[9px] h-4 px-1.5 text-muted-foreground border-border/60 font-normal">
-                              Optional
-                            </Badge>
+                          <span className="text-sm font-semibold text-foreground">{feat.title}</span>
+                          {isRoleDefault && (
+                            <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-primary/10 text-primary">
+                              Default
+                            </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
                           {feat.desc}
                         </p>
                       </div>
-
-                      <Switch
-                        checked={isChecked}
-                        onCheckedChange={() => toggleFeature(feat.key)}
-                        className="mt-0.5 data-[state=checked]:bg-primary"
-                      />
                     </div>
                   );
                 })}
