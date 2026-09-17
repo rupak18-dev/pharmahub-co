@@ -53,7 +53,13 @@ export function UserMenu() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="h-9 gap-2 px-2 rounded-xl">
           <Avatar className="h-7 w-7">
-            {user.avatarUrl && <AvatarImage src={user.avatarUrl} alt={user.name} />}
+            {(user.avatarUrl || user.logoUrl || user.picture) && (
+              <AvatarImage
+                src={user.avatarUrl || user.logoUrl || user.picture}
+                alt={user.name}
+                className="object-cover"
+              />
+            )}
             <AvatarFallback className="bg-primary text-primary-foreground text-xs font-semibold">
               {initials}
             </AvatarFallback>
@@ -124,8 +130,8 @@ export function UserMenu() {
         <DropdownMenuSeparator />
 
         <DropdownMenuItem
-          onClick={() => {
-            signOut();
+          onClick={async () => {
+            await signOut();
             navigate("/login");
           }}
           className="cursor-pointer text-destructive focus:text-destructive"

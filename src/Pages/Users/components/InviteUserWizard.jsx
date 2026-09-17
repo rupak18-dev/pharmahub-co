@@ -8,6 +8,7 @@ import {
 } from "@/Components/ui/dialog";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
+import { PhoneInput } from "@/Components/ui/phone-input";
 import { Label } from "@/Components/ui/label";
 import {
   UserPlus,
@@ -258,16 +259,11 @@ export function InviteUserWizard({ isOpen, onClose }) {
                 <Label htmlFor="wiz-phone" className="text-xs font-semibold">
                   Phone Number
                 </Label>
-                <div className="relative">
-                  <Phone className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="wiz-phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1 (555) 019-2834"
-                    className="pl-9 text-xs"
-                  />
-                </div>
+                <PhoneInput
+                  id="wiz-phone"
+                  value={phone}
+                  onChange={setPhone}
+                />
               </div>
             </div>
           </div>

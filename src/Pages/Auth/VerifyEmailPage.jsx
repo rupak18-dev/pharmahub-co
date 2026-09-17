@@ -1,8 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { apiRequest } from "@/lib/api";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { Input } from "@/Components/ui/input";
 import { Button } from "@/Components/ui/button";
@@ -11,18 +10,19 @@ import { motion } from "framer-motion";
 const RESEND_COOLDOWN_SECONDS = 60;
 
 export default function VerifyEmailPage() {
-  const [searchParams] = useSearchParams();
-  const token = searchParams.get("token");
-  const { completeGoogleOtp } = useAuth();
+  const { verifyEmail, resendVerification } = useAuth();
+  const location = useLocation();
   const navigate = useNavigate();
 
+  const initialEmail = location.state?.email ?? "";
+  const devCode = location.state?.devCode ?? null;
+
+  const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
-  const [sending, setSending] = useState(true);
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState(null);
   const [cooldown, setCooldown] = useState(0);
   const cooldownTimer = useRef(null);
-  const hasSentRef = useRef(false);
 
   const stopCooldown = useCallback(() => {
     if (cooldownTimer.current) {
@@ -45,47 +45,50 @@ export default function VerifyEmailPage() {
     }, 1000);
   }, [stopCooldown]);
 
-  const sendCode = useCallback(async () => {
-    if (!token) return;
-    setSending(true);
+  useEffect(() => {
+    return stopCooldown;
+  }, [stopCooldown]);
+
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const handleResend = useCallback(async () => {
+    if (!normalizedEmail) {
+      setError("Enter the email you signed up with");
+      return;
+    }
     setError(null);
     try {
-      const data = await apiRequest("/auth/otp/send", {
-        method: "POST",
-        body: JSON.stringify({ token }),
-      });
-      if (data?.devCode) toast.info(`Dev code: ${data.devCode}`);
-      toast.success("We sent a verification code to your email");
-      setSending(false);
+      await resendVerification(normalizedEmail);
+      toast.success("If that email needs verification, a new code is on its way");
       startCooldown();
     } catch (e) {
-      setSending(false);
       setError(e instanceof Error ? e.message : "Could not send the code");
     }
-  }, [token, startCooldown]);
+  }, [normalizedEmail, resendVerification, startCooldown]);
 
-  useEffect(() => {
-    // StrictMode double-invokes effects in dev; only send once.
-    if (hasSentRef.current) return;
-    hasSentRef.current = true;
-    sendCode();
-    return stopCooldown;
-  }, [sendCode, stopCooldown]);
-
-  const handleVerify = async (value) => {
-    if (!token || value.length !== 6) return;
-    setVerifying(true);
-    setError(null);
-    try {
-      await completeGoogleOtp({ token, code: value });
-      toast.success("Account verified — welcome to PharmaHub!");
-      navigate("/onboarding");
-    } catch (e) {
-      setVerifying(false);
-      setError(e instanceof Error ? e.message : "That code didn't work");
-      setCode("");
-    }
-  };
+  const handleVerify = useCallback(
+    async (value) => {
+      setError(null);
+      if (!normalizedEmail) {
+        setError("Enter the email you signed up with");
+        return;
+      }
+      if (value.length !== 6) return;
+      setVerifying(true);
+      try {
+        await verifyEmail({ email: normalizedEmail, code: value });
+        toast.success("Email verified — you can now sign in");
+        // Verification done → normal login. This account is a NEW self-registered
+        // user, so the login flow routes them into onboarding afterwards.
+        navigate("/login", { state: { email: normalizedEmail } });
+      } catch (e) {
+        setVerifying(false);
+        setError(e instanceof Error ? e.message : "That code didn't work");
+        setCode("");
+      }
+    },
+    [normalizedEmail, verifyEmail, navigate],
+  );
 
   const onCodeChange = (value) => {
     const digits = value.replace(/\D/g, "").slice(0, 6);
@@ -104,11 +107,27 @@ export default function VerifyEmailPage() {
         <div className="mb-10">
           <h1 className="auth-title">Verify your email</h1>
           <p className="auth-subtitle mt-4">
-            We sent a 6-digit code to your email. Enter it below to finish creating your account.
+            We sent a 6-digit code to your email. Enter it below to activate your account, then sign
+            in to continue.
           </p>
         </div>
 
         <div className="space-y-5">
+          <div className="space-y-2">
+            <label className="auth-label mb-1.5 block text-sm font-medium text-foreground">
+              Email
+            </label>
+            <Input
+              type="email"
+              inputMode="email"
+              autoComplete="email"
+              placeholder="you@example.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="h-12 rounded-xl"
+            />
+          </div>
+
           <div className="space-y-2">
             <label className="auth-label mb-1.5 block text-sm font-medium text-foreground">
               Verification code
@@ -129,17 +148,33 @@ export default function VerifyEmailPage() {
               maxLength={6}
             />
             {error && <p className="text-sm text-destructive mt-2">{error}</p>}
+            {devCode && !code && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Dev code (email delivery not configured):{" "}
+                <span className="font-semibold">{devCode}</span>
+              </p>
+            )}
           </div>
+
+          <Button
+            type="button"
+            size="lg"
+            className="w-full h-12 rounded-xl"
+            disabled={verifying || code.length !== 6}
+            onClick={() => handleVerify(code)}
+          >
+            {verifying ? "Verifying…" : "Verify email"}
+          </Button>
 
           <Button
             type="button"
             size="lg"
             variant="outline"
             className="w-full h-12 rounded-xl auth-button-text"
-            disabled={sending || verifying || cooldown > 0}
-            onClick={sendCode}
+            disabled={cooldown > 0}
+            onClick={handleResend}
           >
-            {cooldown > 0 ? `Resend code in ${cooldown}s` : sending ? "Sending…" : "Resend code"}
+            {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
           </Button>
 
           {verifying && (

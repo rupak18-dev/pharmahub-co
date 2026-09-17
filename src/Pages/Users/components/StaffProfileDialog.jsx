@@ -67,7 +67,7 @@ export function StaffProfileDialog({ profile, open, onOpenChange }) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <Detail label="Role" value={profile.role} />
-            <Detail label="Status" value="" />
+            <Detail label="Status" value={status} />
             <Detail label="Phone" value={profile.phone} />
             <Detail label="Department" value={profile.department} />
             <Detail label="Designation" value={profile.designation} />

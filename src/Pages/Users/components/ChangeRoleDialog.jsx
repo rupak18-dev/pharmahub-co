@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ShieldCheck,
   X,
@@ -8,7 +8,14 @@ import {
   Info,
   Sparkles,
   UserPlus,
+  ShoppingBag,
+  ClipboardCheck,
+  Truck,
+  Download,
+  Bell,
+  SlidersHorizontal,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -33,24 +40,17 @@ import { getRoleMeta } from "./staffRoles";
 import { getAccessModule } from "./accessModules";
 import { AddAccessPopover } from "./AddAccessPopover";
 
-const DEPARTMENTS = [
-  "Pharmacy Operations",
-  "Sales & POS",
-  "Inventory & Stock",
-  "Purchasing & Supply Chain",
-  "Administration & HR",
-  "Accounts & Finance",
-];
-
 export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [role, setRole] = useState(profile?.role ?? "");
-  const [department, setDepartment] = useState(profile?.department ?? "Pharmacy Operations");
-  const [designation, setDesignation] = useState(profile?.designation ?? "");
   const [access, setAccess] = useState(profile?.accessIds ?? []);
+
+  // Track the ID of the staff member currently being edited so background refetches
+  // do not reset step back to 1 or overwrite unsaved changes while the dialog is open.
+  const initializedIdRef = useRef(null);
 
   // Features state
   const [features, setFeatures] = useState({
@@ -63,14 +63,19 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
   });
 
   useEffect(() => {
-    if (open && profile) {
+    if (!open) {
+      initializedIdRef.current = null;
+      return;
+    }
+
+    // Only initialize form fields and reset step when newly opened or switching to a different user
+    if (profile && initializedIdRef.current !== profile.id) {
+      initializedIdRef.current = profile.id;
       setStep(1);
       setName(profile.name ?? "");
       setEmail(profile.email ?? "");
       setPhone(profile.phone ?? "");
       setRole(profile.role ?? "");
-      setDepartment(profile.department ?? "Pharmacy Operations");
-      setDesignation(profile.designation ?? "");
       setAccess(profile.accessIds ?? []);
 
       const isAdmin = profile.role === "Store Administrator" || profile.role === "Pharmacy Manager";
@@ -84,7 +89,8 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
         userAdmin: storedFeatures.userAdmin ?? isAdmin,
       });
     }
-  }, [open, profile]);
+  }, [open, profile?.id]);
+
 
   const meta = getRoleMeta(role);
   const addAccess = (ids) => setAccess((prev) => [...new Set([...prev, ...ids])]);
@@ -95,8 +101,6 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
       role,
       accessIds: access,
       name,
-      department,
-      designation,
       phone,
       features,
     });
@@ -192,8 +196,8 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
                   <Label className="text-xs font-semibold">Work Email</Label>
                   <Input
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="text-xs rounded-xl"
+                    readOnly
+                    className="text-xs rounded-xl bg-muted/50 cursor-not-allowed"
                   />
                 </div>
                 <div className="space-y-1.5">
@@ -218,29 +222,6 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
                       ))}
                     </SelectContent>
                   </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Department</Label>
-                  <Select value={department} onValueChange={setDepartment}>
-                    <SelectTrigger className="h-9 text-xs rounded-xl">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {DEPARTMENTS.map((d) => (
-                        <SelectItem key={d} value={d} className="text-xs">
-                          {d}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Designation</Label>
-                  <Input
-                    value={designation}
-                    onChange={(e) => setDesignation(e.target.value)}
-                    className="text-xs rounded-xl"
-                  />
                 </div>
               </div>
 
@@ -312,68 +293,99 @@ export function ChangeRoleDialog({ open, onOpenChange, profile, onSave }) {
 
           {step === 3 && (
             <div className="space-y-4">
-              <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
-                <Sparkles className="h-4 w-4 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-foreground">Configure Feature Capabilities</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    Enable or disable specific operational capabilities for {name || "staff"}.
+              <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-xs">
+                <div className="h-8 w-8 rounded-lg bg-background border border-border/80 flex items-center justify-center text-muted-foreground shrink-0 shadow-2xs">
+                  <SlidersHorizontal className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground text-xs">Configure Operational Capabilities</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                    Toggle feature capabilities and special privileges for {name || "this staff member"}.
                   </p>
                 </div>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {[
                   {
                     key: "processSales",
-                    title: "Process Sales & Refunds",
-                    desc: "Allow POS billing checkout and issuing refunds.",
+                    icon: ShoppingBag,
+                    title: "Process Sales & POS Checkout",
+                    desc: "Allow checkout in POS billing, processing transactions, and issuing refunds.",
                   },
                   {
                     key: "stockAudit",
+                    icon: ClipboardCheck,
                     title: "Stock Audit & Adjustments",
-                    desc: "Allow inventory count adjustments and batch write-offs.",
+                    desc: "Allow inventory count adjustments, batch stock updates, and expiry write-offs.",
                   },
                   {
                     key: "purchasing",
+                    icon: Truck,
                     title: "Supplier Purchase Orders",
-                    desc: "Allow creating supplier purchase orders and receiving stock.",
+                    desc: "Allow creating supplier purchase orders, logging deliveries, and receiving stock.",
                   },
                   {
                     key: "dataExport",
+                    icon: Download,
                     title: "Data Export & Reports",
-                    desc: "Allow downloading analytics and sales logs as Excel/PDF.",
+                    desc: "Allow downloading analytics, stock sheets, and financial reports as Excel or CSV.",
                   },
                   {
                     key: "notifications",
-                    title: "Automated Alerts",
-                    desc: "Receive alerts for low stock and expiring batches.",
+                    icon: Bell,
+                    title: "Automated Stock & Expiry Alerts",
+                    desc: "Receive real-time alerts for low stock levels and expiring batches.",
                   },
                   {
                     key: "userAdmin",
-                    title: "Staff Administration",
-                    desc: "Allow inviting new staff and changing system roles.",
+                    icon: ShieldCheck,
+                    title: "Staff & Security Administration",
+                    desc: "Allow inviting new team members, changing roles, and configuring system security.",
                   },
-                ].map((feat) => (
-                  <div
-                    key={feat.key}
-                    className="flex items-start justify-between p-4 rounded-xl border border-border/80 bg-card gap-4"
-                  >
-                    <div className="space-y-1 min-w-0 flex-1">
-                      <p className="text-xs font-bold text-foreground">{feat.title}</p>
-                      <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        {feat.desc}
-                      </p>
+                ].map((feat) => {
+                  const Icon = feat.icon;
+                  const isChecked = features[feat.key] ?? false;
+                  return (
+                    <div
+                      key={feat.key}
+                      className={cn(
+                        "flex items-start justify-between p-3 rounded-xl border transition-all duration-150 gap-3.5",
+                        isChecked
+                          ? "border-primary/30 bg-card shadow-2xs"
+                          : "border-border/60 bg-muted/10 opacity-75 hover:opacity-100",
+                      )}
+                    >
+                      <div className="flex items-start gap-3 min-w-0 flex-1">
+                        <div
+                          className={cn(
+                            "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border transition-colors mt-0.5",
+                            isChecked
+                              ? "border-primary/25 bg-primary/10 text-primary"
+                              : "border-border bg-muted/60 text-muted-foreground",
+                          )}
+                        >
+                          <Icon className="h-4 w-4" />
+                        </div>
+
+                        <div className="min-w-0 space-y-0.5">
+                          <p className="text-xs font-semibold text-foreground">{feat.title}</p>
+                          <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-2">
+                            {feat.desc}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Switch
+                        checked={isChecked}
+                        onCheckedChange={(val) =>
+                          setFeatures((prev) => ({ ...prev, [feat.key]: val }))
+                        }
+                        className="mt-1 data-[state=checked]:bg-primary scale-90"
+                      />
                     </div>
-                    <Switch
-                      checked={features[feat.key] ?? false}
-                      onCheckedChange={(val) =>
-                        setFeatures((prev) => ({ ...prev, [feat.key]: val }))
-                      }
-                      className="mt-0.5 data-[state=checked]:bg-primary"
-                    />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

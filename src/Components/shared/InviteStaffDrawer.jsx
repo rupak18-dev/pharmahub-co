@@ -25,7 +25,10 @@ import {
   CheckCircle2,
   Loader2,
   RotateCcw,
-  Briefcase,
+  Truck,
+  Download,
+  Bell,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { invitationService } from "@/lib/invitationService";
@@ -33,6 +36,7 @@ import { listRoles } from "@/lib/rolesService";
 import { ALL_ROLES, ALL_MODULES, DEFAULT_PERMISSIONS } from "@/lib/permissions";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
+import { PhoneInput } from "@/Components/ui/phone-input";
 import { Label } from "@/Components/ui/label";
 import { Switch } from "@/Components/ui/switch";
 import { Badge } from "@/Components/ui/badge";
@@ -51,15 +55,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/Components/ui/sheet";
-
-const DEPARTMENTS = [
-  "Pharmacy Operations",
-  "Sales & POS",
-  "Inventory & Stock",
-  "Purchasing & Supply Chain",
-  "Administration & HR",
-  "Accounts & Finance",
-];
+import { cn } from "@/lib/utils";
 
 export const ROLE_PRESETS = {
   Pharmacist: {
@@ -199,8 +195,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
   const [workEmail, setWorkEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [role, setRole] = useState("Pharmacist");
-  const [department, setDepartment] = useState("Pharmacy Operations");
-  const [designation, setDesignation] = useState("Staff Pharmacist");
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -252,8 +246,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
       setWorkEmail("");
       setPhoneNumber("");
       setRole("Pharmacist");
-      setDepartment("Pharmacy Operations");
-      setDesignation("Staff Pharmacist");
       setErrors({});
       setSubmitting(false);
       submittingRef.current = false;
@@ -302,10 +294,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
   const handleRoleChange = (newRole) => {
     setRole(newRole);
     const preset = ROLE_PRESETS[newRole];
-    if (preset) {
-      setDepartment(preset.department);
-      setDesignation(preset.designation);
-    }
     moduleTouchedRef.current = false;
     setModuleAccess(moduleDefaultsFor(newRole));
 
@@ -385,8 +373,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
         name: fullName.trim(),
         email: workEmail.trim().toLowerCase(),
         phone: phoneNumber.trim() || undefined,
-        department: department?.trim() || undefined,
-        designation: designation?.trim() || undefined,
         role,
         permissions: {},
         featureAccess: features,
@@ -507,67 +493,25 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
           {/* STEP 1: DETAILS */}
           {step === 1 && (
             <div className="space-y-4">
-              {/* Role Context & Guidance Banner */}
-              {ROLE_PRESETS[role] && (
-                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3.5 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <ShieldCheck className="h-4 w-4 text-primary" />
-                      <span className="text-xs font-bold text-foreground">
-                        Configuring for: {role}
-                      </span>
-                    </div>
-                    <Badge variant="outline" className="text-[10px] text-primary border-primary/30">
-                      Role Template
-                    </Badge>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    {ROLE_PRESETS[role].description}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-primary/10 text-[10px]">
-                    <span className="font-semibold text-foreground">Required:</span>
-                    <Badge variant="destructive" className="h-4 text-[9px] px-1.5 py-0">
-                      Full Name
-                    </Badge>
-                    <Badge variant="destructive" className="h-4 text-[9px] px-1.5 py-0">
-                      Work Email
-                    </Badge>
-                    <Badge variant="destructive" className="h-4 text-[9px] px-1.5 py-0">
-                      Role
-                    </Badge>
-                    <span className="font-semibold text-muted-foreground ml-1">Editable:</span>
-                    <Badge variant="secondary" className="h-4 text-[9px] px-1.5 py-0">
-                      Phone
-                    </Badge>
-                    <Badge variant="secondary" className="h-4 text-[9px] px-1.5 py-0">
-                      Department
-                    </Badge>
-                    <Badge variant="secondary" className="h-4 text-[9px] px-1.5 py-0">
-                      Designation
-                    </Badge>
-                  </div>
-                </div>
-              )}
-
               {/* Form Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* Full Name (Required) */}
+                {/* Full Name */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="staff-name" className="text-xs font-semibold">
-                      Full Name *
-                    </Label>
-                    <Badge variant="outline" className="text-[9px] h-4 px-1 text-destructive border-destructive/30">
-                      Required
-                    </Badge>
-                  </div>
+                  <Label htmlFor="staff-name" className="text-xs font-semibold">
+                    Full Name *
+                  </Label>
                   <div className="relative">
                     <User className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
                       id="staff-name"
                       placeholder="e.g. Dr. Ananya Sharma"
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        if (errors.fullName) {
+                          setErrors((prev) => ({ ...prev, fullName: undefined }));
+                        }
+                      }}
                       className={`pl-9 text-xs rounded-xl ${errors.fullName ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
                     />
                   </div>
@@ -576,16 +520,11 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   )}
                 </div>
 
-                {/* Work Email (Required) */}
+                {/* Work Email */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="staff-email" className="text-xs font-semibold">
-                      Work Email *
-                    </Label>
-                    <Badge variant="outline" className="text-[9px] h-4 px-1 text-destructive border-destructive/30">
-                      Required
-                    </Badge>
-                  </div>
+                  <Label htmlFor="staff-email" className="text-xs font-semibold">
+                    Work Email *
+                  </Label>
                   <div className="relative">
                     <Mail className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                     <Input
@@ -593,7 +532,12 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                       type="email"
                       placeholder="ananya@pharmahub.com"
                       value={workEmail}
-                      onChange={(e) => setWorkEmail(e.target.value)}
+                      onChange={(e) => {
+                        setWorkEmail(e.target.value);
+                        if (errors.workEmail) {
+                          setErrors((prev) => ({ ...prev, workEmail: undefined }));
+                        }
+                      }}
                       className={`pl-9 text-xs rounded-xl ${errors.workEmail ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
                     />
                   </div>
@@ -602,15 +546,18 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   )}
                 </div>
 
-                {/* Role (Required) */}
+                {/* Role */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold">Role *</Label>
-                    <Badge variant="outline" className="text-[9px] h-4 px-1 text-primary border-primary/30 font-medium">
-                      Required
-                    </Badge>
-                  </div>
-                  <Select value={role} onValueChange={handleRoleChange}>
+                  <Label className="text-xs font-semibold">Role *</Label>
+                  <Select
+                    value={role}
+                    onValueChange={(val) => {
+                      handleRoleChange(val);
+                      if (errors.role) {
+                        setErrors((prev) => ({ ...prev, role: undefined }));
+                      }
+                    }}
+                  >
                     <SelectTrigger className="h-9 text-xs rounded-xl">
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
@@ -625,70 +572,16 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   {errors.role && <p className="text-[11px] text-destructive">{errors.role}</p>}
                 </div>
 
-                {/* Phone Number (Optional / Editable) */}
+                {/* Phone Number */}
                 <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="staff-phone" className="text-xs font-semibold">
-                      Phone Number
-                    </Label>
-                    <Badge variant="secondary" className="text-[9px] h-4 px-1 text-muted-foreground font-normal">
-                      Optional & Editable
-                    </Badge>
-                  </div>
-                  <div className="relative">
-                    <Phone className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="staff-phone"
-                      placeholder="+91 98765 43210"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="pl-9 text-xs rounded-xl"
-                    />
-                  </div>
-                </div>
-
-                {/* Department (Editable / Preset) */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold">Department</Label>
-                    <Badge variant="secondary" className="text-[9px] h-4 px-1 text-muted-foreground font-normal">
-                      Editable
-                    </Badge>
-                  </div>
-                  <Select value={department} onValueChange={setDepartment}>
-                    <SelectTrigger className="h-9 text-xs rounded-xl">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {DEPARTMENTS.map((d) => (
-                        <SelectItem key={d} value={d} className="text-xs">
-                          {d}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Designation / Title (Editable / Preset) */}
-                <div className="space-y-1.5">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="staff-designation" className="text-xs font-semibold">
-                      Designation
-                    </Label>
-                    <Badge variant="secondary" className="text-[9px] h-4 px-1 text-muted-foreground font-normal">
-                      Editable
-                    </Badge>
-                  </div>
-                  <div className="relative">
-                    <Briefcase className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="staff-designation"
-                      placeholder="e.g. Senior Pharmacist"
-                      value={designation}
-                      onChange={(e) => setDesignation(e.target.value)}
-                      className="pl-9 text-xs rounded-xl"
-                    />
-                  </div>
+                  <Label htmlFor="staff-phone" className="text-xs font-semibold">
+                    Phone Number
+                  </Label>
+                  <PhoneInput
+                    id="staff-phone"
+                    value={phoneNumber}
+                    onChange={setPhoneNumber}
+                  />
                 </div>
               </div>
             </div>
@@ -866,82 +759,106 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
           {/* STEP 3: FEATURES */}
           {step === 3 && (
             <div className="space-y-4">
-              {/* Information Box */}
-              <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
-                <Sparkles className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                <div>
-                  <p className="font-semibold text-foreground">Configure Feature Capabilities</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                    Enable or disable specific operational capabilities and special privileges for{" "}
-                    {fullName || "staff"}.
+              {/* Refined Information Panel */}
+              <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-xs">
+                <div className="h-8 w-8 rounded-lg bg-background border border-border/80 flex items-center justify-center text-muted-foreground shrink-0 shadow-2xs">
+                  <SlidersHorizontal className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground text-xs">Configure Operational Capabilities</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                    Toggle feature capabilities and special privileges for {fullName || "this staff member"}.
                   </p>
                 </div>
               </div>
 
               {/* Feature Cards Grid */}
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   {
                     key: "processSales",
-                    title: "Process Sales & Refunds",
-                    desc: "Allow checkout in POS billing, processing transactions, and issuing customer refunds.",
+                    icon: ShoppingBag,
+                    title: "Process Sales",
+                    desc: "Allow checkout in POS billing, processing customer transactions, and issuing refunds.",
                   },
                   {
                     key: "stockAudit",
-                    title: "Stock Audit & Adjustments",
+                    icon: ClipboardCheck,
+                    title: "Stock Audit",
                     desc: "Allow physical inventory audit logging, batch stock updates, and expiry write-offs.",
                   },
                   {
                     key: "purchasing",
-                    title: "Supplier Purchase Orders",
+                    icon: Truck,
+                    title: "Purchase Orders",
                     desc: "Allow creating purchase orders, logging supplier deliveries, and receiving stock.",
                   },
                   {
                     key: "dataExport",
-                    title: "Data Export & Reports",
-                    desc: "Allow downloading sales analytics, stock sheets, and financial reports as PDF or Excel.",
+                    icon: Download,
+                    title: "Data Export",
+                    desc: "Allow exporting sales analytics, inventory sheets, and financial reports to CSV and Excel.",
                   },
                   {
                     key: "notifications",
-                    title: "Automated Expiry & Stock Alerts",
-                    desc: "Receive real-time email and push notifications for critical stock levels & batch expiries.",
+                    icon: Bell,
+                    title: "Stock Alerts",
+                    desc: "Receive real-time notifications for critical stock levels, low supplies, and batch expiries.",
                   },
                   {
                     key: "userAdmin",
-                    title: "Staff & Security Administration",
+                    icon: ShieldCheck,
+                    title: "Administration",
                     desc: "Allow inviting new team members, changing roles, and configuring system security.",
                   },
                 ].map((feat) => {
+                  const Icon = feat.icon;
                   const isChecked = features[feat.key] ?? false;
                   const isRoleDefault = ROLE_PRESETS[role]?.coreFeatures?.[feat.key] ?? false;
+
                   return (
                     <div
                       key={feat.key}
-                      className="flex items-start justify-between p-3.5 rounded-xl border border-border/80 bg-card gap-4"
+                      onClick={() => toggleFeature(feat.key)}
+                      className={cn(
+                        "flex flex-col p-4 rounded-xl border transition-all duration-200 gap-3 relative cursor-pointer group",
+                        isChecked
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border/60 bg-card hover:border-primary/40 hover:bg-muted/20",
+                      )}
                     >
-                      <div className="space-y-1 min-w-0 flex-1">
+                      <div className="flex items-start justify-between">
+                        <div
+                          className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+                            isChecked
+                              ? "border-primary/30 bg-primary/10 text-primary"
+                              : "border-border bg-muted text-muted-foreground group-hover:text-primary/70",
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <Switch
+                          checked={isChecked}
+                          onCheckedChange={() => toggleFeature(feat.key)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 flex-1 flex flex-col">
                         <div className="flex items-center gap-2">
-                          <p className="text-xs font-bold text-foreground">{feat.title}</p>
-                          {isRoleDefault ? (
-                            <Badge className="text-[9px] h-4 px-1.5 bg-primary/15 text-primary border-primary/25">
-                              Role Default
-                            </Badge>
-                          ) : (
-                            <Badge variant="outline" className="text-[9px] h-4 px-1.5 text-muted-foreground border-border/60 font-normal">
-                              Optional
-                            </Badge>
+                          <span className="text-sm font-semibold text-foreground">{feat.title}</span>
+                          {isRoleDefault && (
+                            <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-primary/10 text-primary">
+                              Default
+                            </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
                           {feat.desc}
                         </p>
                       </div>
-
-                      <Switch
-                        checked={isChecked}
-                        onCheckedChange={() => toggleFeature(feat.key)}
-                        className="mt-0.5 data-[state=checked]:bg-primary"
-                      />
                     </div>
                   );
                 })}

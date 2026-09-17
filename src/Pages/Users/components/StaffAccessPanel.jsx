@@ -373,7 +373,7 @@ export function StaffAccessPanel() {
                       const department =
                         s.department ?? (validRole ? categoryLabel(role.category) : "—");
                       const canChangeRole =
-                        canUpdate && (isSelf ? user?.role === "Owner" : !isOwner);
+                        canUpdate && !isPending && (isSelf ? user?.role === "Owner" : !isOwner);
                       return (
                         <tr key={s.id} className="group transition-colors hover:bg-muted/20">
                           <td className="px-4 py-3">

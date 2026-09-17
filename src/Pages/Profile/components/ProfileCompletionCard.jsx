@@ -1,15 +1,11 @@
 import { useNavigate } from "react-router";
 import { Info, CheckCircle2 } from "lucide-react";
 import { Button } from "@/Components/ui/button";
-import { useDb } from "@/hooks/useDb";
 import { calculateProfileCompletion } from "@/lib/profileCompletion";
 
 export function ProfileCompletionCard({ profile, onSelectField }) {
   const navigate = useNavigate();
-  const liveProfile = useDb((d) => d.profiles.find((p) => p.id === profile?.id)) ?? profile;
-  const ownerFromDb = useDb((d) => d.profiles.find((p) => p.role === "Owner"));
-  const owner = ownerFromDb ?? (profile?.role === "Owner" ? profile : profile);
-  const completion = calculateProfileCompletion(liveProfile, owner);
+  const completion = calculateProfileCompletion(profile, profile);
   const { percentage, missingFields, missingSpecs, isComplete } = completion;
 
   const maxPills = 5;

@@ -89,7 +89,7 @@ export function SignupForm({
             className="w-full auth-button-text h-12 mt-4 rounded-xl transition-all duration-200 hover:scale-[1.02] hover:shadow-md bg-primary hover:bg-primary/90 text-primary-foreground"
             disabled={isSubmitting}
           >
-            {isSubmitting ? "Creating Account..." : "Create Account"}
+            {isSubmitting ? "Signing up…" : "Create Account"}
           </Button>
         </form>
 
