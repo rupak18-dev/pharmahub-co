@@ -14,11 +14,11 @@ function resolveApiBase() {
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
     const isLocal = host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
-    // The absolute URL in VITE_API_URL targets this machine (:5000) — only
+    // The absolute URL in VITE_API_URL targets this machine (:5050) — only
     // meaningful when the app itself is opened from localhost. Browsing via a
     // LAN IP / tunnel would otherwise try to reach the wrong host.
     if (fromEnv && isLocal) return fromEnv;
-    if (isLocal) return "http://localhost:5000/api/v1";
+    if (isLocal) return "http://localhost:5050/api/v1";
     // Dev served over another hostname: go same-origin so the Vite proxy
     // routes the call (never wakes the sleeping production server).
     if (import.meta.env.DEV) return "/api/v1";
@@ -151,10 +151,17 @@ async function request(path, options = {}) {
 const API_CACHE_PREFIX = "PharmaHub_apicache_v1:";
 const API_CACHE_TTL_MS = 5 * 60 * 1000;
 
+function getCacheKey(path) {
+  const token = getSessionToken();
+  const scope = token ? token.slice(-24) : "anon";
+  return `${API_CACHE_PREFIX}${scope}:${path}`;
+}
+
 export function getCachedResponse(path) {
   if (typeof window === "undefined") return null;
+  if (path.startsWith("/auth/me") || path.startsWith("/users/me")) return null;
   try {
-    const raw = window.sessionStorage.getItem(`${API_CACHE_PREFIX}${path}`);
+    const raw = window.sessionStorage.getItem(getCacheKey(path));
     if (!raw) return null;
     const parsed = JSON.parse(raw);
     if (!parsed || typeof parsed.ts !== "number") return null;
@@ -170,9 +177,10 @@ export function getCachedResponse(path) {
 
 function setCachedResponse(path, data) {
   if (typeof window === "undefined") return;
+  if (path.startsWith("/auth/me") || path.startsWith("/users/me")) return;
   try {
     window.sessionStorage.setItem(
-      `${API_CACHE_PREFIX}${path}`,
+      getCacheKey(path),
       JSON.stringify({ ts: Date.now(), data }),
     );
   } catch {

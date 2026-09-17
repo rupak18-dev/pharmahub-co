@@ -4,13 +4,13 @@ import { apiRequest } from "./api";
 // the Users tab — the local database is only a fallback when the API is
 // unreachable (network error), never a place to fabricate success.
 export const usersService = {
-  list(params = {}) {
+  list(params = {}, options = {}) {
     const query = new URLSearchParams();
     for (const [k, v] of Object.entries(params)) {
       if (v !== undefined && v !== null && v !== "") query.set(k, v);
     }
     const qs = query.toString();
-    return apiRequest(`/users${qs ? `?${qs}` : ""}`);
+    return apiRequest(`/users${qs ? `?${qs}` : ""}`, { noCache: true, ...options });
   },
 
   get(id) {

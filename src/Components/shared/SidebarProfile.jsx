@@ -60,6 +60,8 @@ export function SidebarProfile() {
     await signOut();
     navigate("/login");
   };
+  const displayImage = user?.logoUrl || user?.avatarUrl || user?.picture || logo;
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -78,9 +80,9 @@ export function SidebarProfile() {
             )}
           >
             <Avatar className="h-full w-full">
-              {logo ? (
+              {displayImage ? (
                 <AvatarImage
-                  src={logo}
+                  src={displayImage}
                   alt="Business logo"
                   className="bg-white object-contain p-0.5"
                 />

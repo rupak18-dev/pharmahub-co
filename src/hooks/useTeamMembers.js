@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { isNetworkError } from "@/lib/api";
 import { usersService } from "@/lib/usersService";
 import { invitationService } from "@/lib/invitationService";
+import { useAuth } from "@/lib/auth";
 
 import { useDb } from "./useDb";
 
@@ -12,6 +13,7 @@ import { useDb } from "./useDb";
 // error). Both UsersTab and StaffAccessPanel consume this hook so they always
 // render the same members from the same persisted source.
 export function useTeamMembers() {
+  const { user } = useAuth();
   const profiles = useDb((d) => d.profiles);
   const [remoteUsers, setRemoteUsers] = useState([]);
   const [remoteInvitations, setRemoteInvitations] = useState([]);
@@ -62,7 +64,7 @@ export function useTeamMembers() {
 
   useEffect(() => {
     loadRemote();
-  }, [loadRemote]);
+  }, [loadRemote, user?.id]);
 
   // Refetch when the invite drawer reports a successful invitation.
   useEffect(() => {

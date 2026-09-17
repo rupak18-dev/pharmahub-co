@@ -15,7 +15,7 @@ export const reportService = {
    */
   async getReports() {
     try {
-      const data = await apiRequest(`${REPORTS}`);
+      const data = await apiRequest(`${REPORTS}`, { noCache: true });
       return Array.isArray(data) ? data : [];
     } catch {
       return [];
@@ -44,7 +44,7 @@ export const reportService = {
    */
   async getSavedReports() {
     try {
-      const data = await apiRequest(`${REPORTS}/saved`);
+      const data = await apiRequest(`${REPORTS}/saved`, { noCache: true });
       return Array.isArray(data) ? data : [];
     } catch {
       // Fallback to local store

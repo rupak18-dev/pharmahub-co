@@ -8,6 +8,7 @@ import {
   Phone,
   Save,
   Settings2,
+  Store,
 } from "lucide-react";
 import { toast } from "sonner";
 import { db } from "@/lib/db";
@@ -237,6 +238,21 @@ export function OrganizationSection() {
       footer={<span className="text-xs text-muted-foreground">Applies organization-wide.</span>}
     >
       <div className="grid gap-x-8 gap-y-5 sm:grid-cols-2 lg:grid-cols-3">
+        {user?.logoUrl ? (
+          <div className="flex items-start gap-3">
+            <Store className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            <div className="min-w-0">
+              <p className="text-xs text-muted-foreground">Pharmacy Logo</p>
+              <div className="mt-1 h-9 w-9 rounded-lg border border-border bg-background p-0.5 overflow-hidden flex items-center justify-center shadow-xs">
+                <img
+                  src={user.logoUrl}
+                  alt="Pharmacy Logo"
+                  className="h-full w-full object-contain"
+                />
+              </div>
+            </div>
+          </div>
+        ) : null}
         <SummaryRow icon={Building2} label="Organization Name" value={user?.orgName} />
         <SummaryRow icon={BadgeCheck} label="Business Type" value={user?.businessType} />
         <SummaryRow icon={Phone} label="Phone" value={user?.phone} />

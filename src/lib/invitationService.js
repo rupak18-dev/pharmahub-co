@@ -42,8 +42,8 @@ export const invitationService = {
     });
   },
 
-  list() {
-    return apiRequest("/users/invitations");
+  list(options = {}) {
+    return apiRequest("/users/invitations", { noCache: true, ...options });
   },
 
   resend(id) {
