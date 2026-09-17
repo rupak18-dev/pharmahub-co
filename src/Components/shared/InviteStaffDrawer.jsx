@@ -1,0 +1,922 @@
+import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  UserPlus,
+  X,
+  Check,
+  ChevronRight,
+  ChevronLeft,
+  Info,
+  ShieldCheck,
+  Sparkles,
+  User,
+  Mail,
+  Phone,
+  LayoutDashboard,
+  Pill,
+  Layers,
+  ListChecks,
+  Plug,
+  ShoppingBag,
+  Receipt,
+  Users as UsersIcon,
+  BarChart3,
+  AlertTriangle,
+  ClipboardCheck,
+  CheckCircle2,
+  Loader2,
+  RotateCcw,
+  Truck,
+  Download,
+  Bell,
+  SlidersHorizontal,
+} from "lucide-react";
+import { toast } from "sonner";
+import { invitationService } from "@/lib/invitationService";
+import { listRoles } from "@/lib/rolesService";
+import { ALL_ROLES, ALL_MODULES, DEFAULT_PERMISSIONS } from "@/lib/permissions";
+import { Button } from "@/Components/ui/button";
+import { Input } from "@/Components/ui/input";
+import { PhoneInput } from "@/Components/ui/phone-input";
+import { Label } from "@/Components/ui/label";
+import { Switch } from "@/Components/ui/switch";
+import { Badge } from "@/Components/ui/badge";
+
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/Components/ui/select";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/Components/ui/sheet";
+import { cn } from "@/lib/utils";
+
+export const ROLE_PRESETS = {
+  Pharmacist: {
+    department: "Pharmacy Operations",
+    designation: "Staff Pharmacist",
+    description: "Dispenses medications, verifies prescriptions, and manages drug batches and expiry tracking.",
+    coreModules: ["sales", "medicines", "batches", "expiry", "dashboard"],
+    coreFeatures: { processSales: true, stockAudit: true, notifications: true },
+  },
+  Cashier: {
+    department: "Sales & POS",
+    designation: "Cashier / Billing Counter",
+    description: "Processes POS checkout transactions, sales billing, customer invoices, and medicine lookups.",
+    coreModules: ["sales", "dashboard"],
+    coreFeatures: { processSales: true, notifications: false },
+  },
+  "Store Keeper": {
+    department: "Inventory & Stock",
+    designation: "Store Keeper",
+    description: "Receives supplier inward stock, monitors warehouse shelves, and manages batch expiry dates.",
+    coreModules: ["batches", "medicines", "expiry", "audit", "shortbook"],
+    coreFeatures: { stockAudit: true, notifications: true },
+  },
+  "Inventory Manager": {
+    department: "Inventory & Stock",
+    designation: "Inventory Manager",
+    description: "Oversees the entire inventory lifecycle: purchase orders, stock reconciliations, and reporting.",
+    coreModules: ["medicines", "batches", "expiry", "audit", "purchases", "dashboard", "reports"],
+    coreFeatures: { stockAudit: true, purchasing: true, dataExport: true, notifications: true },
+  },
+  Admin: {
+    department: "Administration & HR",
+    designation: "System Administrator",
+    description: "Administrative access to staff management, security settings, audit logs, and reports.",
+    coreModules: [
+      "dashboard",
+      "medicines",
+      "batches",
+      "expiry",
+      "audit",
+      "purchases",
+      "sales",
+      "shortbook",
+      "reports",
+      "users",
+      "admin",
+      "integrations",
+    ],
+    coreFeatures: {
+      processSales: true,
+      stockAudit: true,
+      purchasing: true,
+      dataExport: true,
+      notifications: true,
+      userAdmin: true,
+    },
+  },
+  Owner: {
+    department: "Administration & HR",
+    designation: "Store Owner",
+    description: "Full store ownership with unrestricted permissions across all modules, settings, and team access.",
+    coreModules: [
+      "dashboard",
+      "medicines",
+      "batches",
+      "expiry",
+      "audit",
+      "purchases",
+      "sales",
+      "shortbook",
+      "reports",
+      "users",
+      "admin",
+      "integrations",
+    ],
+    coreFeatures: {
+      processSales: true,
+      stockAudit: true,
+      purchasing: true,
+      dataExport: true,
+      notifications: true,
+      userAdmin: true,
+    },
+  },
+};
+
+const MODULE_ICONS = {
+  dashboard: LayoutDashboard,
+  medicines: Pill,
+  batches: Layers,
+  expiry: AlertTriangle,
+  audit: ClipboardCheck,
+  purchases: ShoppingBag,
+  sales: Receipt,
+  shortbook: ListChecks,
+  users: UsersIcon,
+  reports: BarChart3,
+  admin: ShieldCheck,
+  integrations: Plug,
+};
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function openInviteStaff() {
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("pharmahub:open-invite-staff"));
+  }
+}
+
+export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controlledOnOpenChange }) {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const isOpen = isControlled ? controlledOpen : internalOpen;
+
+  const handleOpenChange = useCallback(
+    (val) => {
+      if (isControlled) {
+        controlledOnOpenChange?.(val);
+      } else {
+        setInternalOpen(val);
+      }
+    },
+    [isControlled, controlledOnOpenChange],
+  );
+
+  useEffect(() => {
+    const handleOpenEvent = () => handleOpenChange(true);
+    window.addEventListener("pharmahub:open-invite-staff", handleOpenEvent);
+    return () => window.removeEventListener("pharmahub:open-invite-staff", handleOpenEvent);
+  }, [handleOpenChange]);
+
+  // Workflow Step State (1: Details, 2: Permissions, 3: Features)
+  const [step, setStep] = useState(1);
+
+  // Step 1 Form Fields
+  const [fullName, setFullName] = useState("");
+  const [workEmail, setWorkEmail] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [role, setRole] = useState("Pharmacist");
+
+  const [errors, setErrors] = useState({});
+  const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
+
+  // Step 2 Module Permissions Map
+  const [moduleAccess, setModuleAccess] = useState({});
+  // Role permission matrices fetched from the backend (GET /roles). The
+  // toggles initialize from the role's configured defaults in the database,
+  // falling back to the hardcoded defaults if the backend is unreachable.
+  const [roleConfigs, setRoleConfigs] = useState({});
+  const roleConfigsRef = useRef({});
+  const moduleTouchedRef = useRef(false);
+
+  // Step 3 Features Map
+  const [features, setFeatures] = useState({
+    processSales: true,
+    stockAudit: true,
+    purchasing: true,
+    dataExport: true,
+    notifications: true,
+    userAdmin: false,
+  });
+
+  // Default module toggles for a role: backend role configuration when
+  // available, otherwise the hardcoded role defaults. Reads configs through a
+  // ref so the function identity stays stable across renders.
+  const moduleDefaultsFor = useCallback((roleName) => {
+    const map = {};
+    const configured = roleConfigsRef.current[roleName];
+    if (configured) {
+      ALL_MODULES.forEach((m) => {
+        map[m.key] = Boolean(configured[m.key]?.view);
+      });
+      return map;
+    }
+    const fallback = DEFAULT_PERMISSIONS[roleName] || {};
+    ALL_MODULES.forEach((m) => {
+      map[m.key] = fallback[m.key]?.view ?? false;
+    });
+    return map;
+  }, []);
+
+  // Reset form when drawer opens
+  useEffect(() => {
+    if (isOpen) {
+      setStep(1);
+      setFullName("");
+      setWorkEmail("");
+      setPhoneNumber("");
+      setRole("Pharmacist");
+      setErrors({});
+      setSubmitting(false);
+      submittingRef.current = false;
+      moduleTouchedRef.current = false;
+
+      // Initialize default module permissions for Pharmacist
+      setModuleAccess(moduleDefaultsFor("Pharmacist"));
+
+      setFeatures({
+        processSales: true,
+        stockAudit: true,
+        purchasing: true,
+        dataExport: true,
+        notifications: true,
+        userAdmin: false,
+      });
+
+      // Fetch the configured role matrices so toggles reflect what the
+      // admin configured in Role Configuration (persisted in the database).
+      let cancelled = false;
+      listRoles()
+        .then((roles) => {
+          if (cancelled) return;
+          const map = {};
+          roles.forEach((r) => {
+            map[r.name] = r.permissions;
+          });
+          roleConfigsRef.current = map;
+          setRoleConfigs(map);
+        })
+        .catch(() => {});
+      return () => {
+        cancelled = true;
+      };
+    }
+  }, [isOpen, moduleDefaultsFor]);
+
+  // Re-sync toggles once backend role configs arrive (unless already edited)
+  useEffect(() => {
+    if (!isOpen) return;
+    if (moduleTouchedRef.current) return;
+    setModuleAccess(moduleDefaultsFor(role));
+  }, [roleConfigs, isOpen, moduleDefaultsFor, role]);
+
+  // When Role changes in Step 1, auto update defaults
+  const handleRoleChange = (newRole) => {
+    setRole(newRole);
+    const preset = ROLE_PRESETS[newRole];
+    moduleTouchedRef.current = false;
+    setModuleAccess(moduleDefaultsFor(newRole));
+
+    const isAdminRole = newRole === "Owner" || newRole === "Admin";
+    setFeatures((prev) => ({
+      ...prev,
+      ...(preset?.coreFeatures ?? {}),
+      userAdmin: isAdminRole,
+    }));
+  };
+
+  const validateDetails = () => {
+    const errs = {};
+    if (!fullName.trim()) errs.fullName = "Full Name is required.";
+    if (!workEmail.trim()) errs.workEmail = "Work Email is required.";
+    else if (!EMAIL_PATTERN.test(workEmail.trim()))
+      errs.workEmail = "Please enter a valid work email.";
+    if (!role) errs.role = "Role is required.";
+    return errs;
+  };
+
+  // Step 1 Validation & Next
+  const handleNextFromStep1 = () => {
+    const errs = validateDetails();
+    setErrors(errs);
+    if (Object.keys(errs).length > 0) return;
+
+    setStep(2);
+  };
+
+  // Generic Next handler — validates step 1, free-advances on step 2
+  const handleNext = () => {
+    if (step === 1) {
+      handleNextFromStep1();
+    } else if (step === 2) {
+      setStep(3);
+    }
+  };
+
+  // Toggle single module access in Step 2
+  const toggleModule = (modKey) => {
+    moduleTouchedRef.current = true;
+    setModuleAccess((prev) => ({
+      ...prev,
+      [modKey]: !prev[modKey],
+    }));
+  };
+
+  // Toggle single feature in Step 3
+  const toggleFeature = (featKey) => {
+    setFeatures((prev) => ({
+      ...prev,
+      [featKey]: !prev[featKey],
+    }));
+  };
+
+  // Step 3 Submission — call backend invitation API
+  const handleSubmit = async () => {
+    if (submittingRef.current) return;
+
+    const errs = validateDetails();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      setStep(1);
+      return;
+    }
+
+    submittingRef.current = true;
+    setSubmitting(true);
+
+    try {
+      const accessIds = Object.entries(moduleAccess)
+        .filter(([, enabled]) => enabled)
+        .map(([key]) => key);
+
+      const result = await invitationService.invite({
+        name: fullName.trim(),
+        email: workEmail.trim().toLowerCase(),
+        phone: phoneNumber.trim() || undefined,
+        role,
+        permissions: {},
+        featureAccess: features,
+        accessIds,
+      });
+
+      if (result?.emailSent) {
+        toast.success(`Invitation sent to ${workEmail.trim()}`);
+      } else if (result?.emailSkipped) {
+        toast.info(
+          `Invitation created for ${workEmail.trim()}. Email delivery skipped — SMTP is not configured.`,
+        );
+        if (result?.link) {
+          await navigator.clipboard.writeText(result.link).catch(() => {});
+          toast.info("Invitation link copied to clipboard for manual sharing.");
+        }
+      } else {
+        toast.success(`Invitation created for ${workEmail.trim()}`);
+      }
+
+      // Notify the users list to refresh
+      window.dispatchEvent(new Event("pharmahub:invitations-changed"));
+      handleOpenChange(false);
+    } catch (e) {
+      const message =
+        e instanceof Error ? e.message : "Failed to send invitation. Please try again.";
+      toast.error(message);
+    } finally {
+      submittingRef.current = false;
+      setSubmitting(false);
+    }
+  };
+
+  const initials = fullName.trim()
+    ? fullName
+        .trim()
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2)
+    : "ST";
+
+  return (
+    <Sheet open={isOpen} onOpenChange={handleOpenChange}>
+      <SheetContent
+        side="right"
+        className="w-full sm:max-w-md md:max-w-lg lg:max-w-xl p-0 flex flex-col h-full bg-background border-l border-border shadow-2xl z-50 overflow-hidden [&>button]:hidden"
+      >
+        {/* Drawer Header */}
+        <div className="border-b border-border/80 bg-card px-6 py-4 flex items-center justify-between shrink-0">
+          <div>
+            <div className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5 text-primary" />
+              <SheetTitle className="text-lg font-bold text-foreground">
+                Invite Staff Member
+              </SheetTitle>
+            </div>
+            <SheetDescription className="text-xs text-muted-foreground mt-0.5">
+              Add a staff member and configure their access.
+            </SheetDescription>
+          </div>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => handleOpenChange(false)}
+            className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted"
+            aria-label="Close panel"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
+
+        {/* Stepper Progress Bar */}
+        <div className="border-b border-border/60 bg-muted/30 px-6 py-3 shrink-0">
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { num: 1, label: "Details" },
+              { num: 2, label: "Permissions" },
+              { num: 3, label: "Features" },
+            ].map((s) => {
+              const isActive = step === s.num;
+              const isDone = step > s.num;
+              return (
+                <button
+                  key={s.num}
+                  type="button"
+                  onClick={() => setStep(s.num)}
+                  className={`flex items-center gap-2 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+                    isActive
+                      ? "bg-primary text-primary-foreground shadow-xs"
+                      : isDone
+                        ? "bg-primary/15 text-primary hover:bg-primary/25"
+                        : "bg-background text-muted-foreground hover:bg-muted hover:text-foreground border border-border/60"
+                  }`}
+                >
+                  <span
+                    className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] ${
+                      isActive
+                        ? "bg-white text-primary font-bold"
+                        : isDone
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted text-muted-foreground"
+                    }`}
+                  >
+                    {isDone ? <Check className="h-3 w-3" /> : s.num}
+                  </span>
+                  <span className="truncate">{s.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Scrollable Step Content Body */}
+        <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5">
+          {/* STEP 1: DETAILS */}
+          {step === 1 && (
+            <div className="space-y-4">
+              {/* Form Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Full Name */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="staff-name" className="text-xs font-semibold">
+                    Full Name *
+                  </Label>
+                  <div className="relative">
+                    <User className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="staff-name"
+                      placeholder="e.g. Dr. Ananya Sharma"
+                      value={fullName}
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        if (errors.fullName) {
+                          setErrors((prev) => ({ ...prev, fullName: undefined }));
+                        }
+                      }}
+                      className={`pl-9 text-xs rounded-xl ${errors.fullName ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
+                    />
+                  </div>
+                  {errors.fullName && (
+                    <p className="text-[11px] text-destructive">{errors.fullName}</p>
+                  )}
+                </div>
+
+                {/* Work Email */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="staff-email" className="text-xs font-semibold">
+                    Work Email *
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="staff-email"
+                      type="email"
+                      placeholder="ananya@pharmahub.com"
+                      value={workEmail}
+                      onChange={(e) => {
+                        setWorkEmail(e.target.value);
+                        if (errors.workEmail) {
+                          setErrors((prev) => ({ ...prev, workEmail: undefined }));
+                        }
+                      }}
+                      className={`pl-9 text-xs rounded-xl ${errors.workEmail ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
+                    />
+                  </div>
+                  {errors.workEmail && (
+                    <p className="text-[11px] text-destructive">{errors.workEmail}</p>
+                  )}
+                </div>
+
+                {/* Role */}
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">Role *</Label>
+                  <Select
+                    value={role}
+                    onValueChange={(val) => {
+                      handleRoleChange(val);
+                      if (errors.role) {
+                        setErrors((prev) => ({ ...prev, role: undefined }));
+                      }
+                    }}
+                  >
+                    <SelectTrigger className="h-9 text-xs rounded-xl">
+                      <SelectValue placeholder="Select role" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl">
+                      {ALL_ROLES.filter((r) => r !== "Owner").map((r) => (
+                        <SelectItem key={r} value={r} className="text-xs">
+                          {r}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {errors.role && <p className="text-[11px] text-destructive">{errors.role}</p>}
+                </div>
+
+                {/* Phone Number */}
+                <div className="space-y-1.5">
+                  <Label htmlFor="staff-phone" className="text-xs font-semibold">
+                    Phone Number
+                  </Label>
+                  <PhoneInput
+                    id="staff-phone"
+                    value={phoneNumber}
+                    onChange={setPhoneNumber}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2: PERMISSIONS */}
+          {step === 2 && (() => {
+            const currentPreset = ROLE_PRESETS[role] || {
+              coreModules: ["dashboard", "sales"],
+              description: "Standard role permissions",
+            };
+            const coreSet = new Set(currentPreset.coreModules || []);
+            const coreModules = ALL_MODULES.filter((m) => coreSet.has(m.key));
+            const additionalModules = ALL_MODULES.filter((m) => !coreSet.has(m.key));
+
+            return (
+              <div className="space-y-5">
+                {/* Information & Reset Box */}
+                <div className="flex items-start justify-between gap-3 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
+                  <div className="flex items-start gap-2.5">
+                    <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        Module Permissions for {role}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+                        Required modules for <strong>{role}</strong> are pre-enabled below. You can freely edit other modules to customize access for <strong>{fullName || "this staff member"}</strong>.
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      moduleTouchedRef.current = false;
+                      setModuleAccess(moduleDefaultsFor(role));
+                      toast.info(`Reset permissions to ${role} defaults`);
+                    }}
+                    className="h-7 px-2.5 text-[11px] rounded-lg shrink-0 gap-1 bg-background"
+                  >
+                    <RotateCcw className="h-3 w-3" /> Reset
+                  </Button>
+                </div>
+
+                {/* 1. Core Modules Required for Role */}
+                {coreModules.length > 0 && (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-foreground">
+                          Core Modules for {role}
+                        </span>
+                        <Badge className="text-[10px] bg-primary/15 text-primary border-primary/30">
+                          {coreModules.length} Required
+                        </Badge>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        Pre-enabled for role
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {coreModules.map((mod) => {
+                        const Icon = MODULE_ICONS[mod.key] || ShieldCheck;
+                        const isEnabled = moduleAccess[mod.key] ?? true;
+                        return (
+                          <div
+                            key={mod.key}
+                            className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                              isEnabled
+                                ? "border-primary/40 bg-primary/5 shadow-2xs"
+                                : "border-border/60 bg-muted/20 opacity-70"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                              <div
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                                  isEnabled
+                                    ? "border-primary/25 bg-primary/15 text-primary"
+                                    : "border-border bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-xs font-bold text-foreground truncate">{mod.label}</p>
+                                  <span className="text-[9px] font-medium text-primary bg-primary/10 px-1 rounded">
+                                    Core
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {isEnabled ? "Active" : "Disabled"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={() => toggleModule(mod.key)}
+                              className="data-[state=checked]:bg-primary scale-90"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Additional Modules (Optional & Editable) */}
+                {additionalModules.length > 0 && (
+                  <div className="space-y-2.5 pt-2 border-t border-border/60">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-foreground">
+                          Additional Modules
+                        </span>
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/60">
+                          {additionalModules.length} Optional & Editable
+                        </Badge>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        Customize access
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {additionalModules.map((mod) => {
+                        const Icon = MODULE_ICONS[mod.key] || ShieldCheck;
+                        const isEnabled = moduleAccess[mod.key] ?? false;
+                        return (
+                          <div
+                            key={mod.key}
+                            className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                              isEnabled
+                                ? "border-primary/30 bg-card shadow-2xs"
+                                : "border-border/60 bg-muted/10 opacity-75"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                              <div
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                                  isEnabled
+                                    ? "border-primary/20 bg-primary/10 text-primary"
+                                    : "border-border bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-foreground truncate">{mod.label}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {isEnabled ? "Access Granted" : "No Access"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={() => toggleModule(mod.key)}
+                              className="data-[state=checked]:bg-primary scale-90"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
+          {/* STEP 3: FEATURES */}
+          {step === 3 && (
+            <div className="space-y-4">
+              {/* Refined Information Panel */}
+              <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-xs">
+                <div className="h-8 w-8 rounded-lg bg-background border border-border/80 flex items-center justify-center text-muted-foreground shrink-0 shadow-2xs">
+                  <SlidersHorizontal className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground text-xs">Configure Operational Capabilities</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                    Toggle feature capabilities and special privileges for {fullName || "this staff member"}.
+                  </p>
+                </div>
+              </div>
+
+              {/* Feature Cards Grid */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {[
+                  {
+                    key: "processSales",
+                    icon: ShoppingBag,
+                    title: "Process Sales",
+                    desc: "Allow checkout in POS billing, processing customer transactions, and issuing refunds.",
+                  },
+                  {
+                    key: "stockAudit",
+                    icon: ClipboardCheck,
+                    title: "Stock Audit",
+                    desc: "Allow physical inventory audit logging, batch stock updates, and expiry write-offs.",
+                  },
+                  {
+                    key: "purchasing",
+                    icon: Truck,
+                    title: "Purchase Orders",
+                    desc: "Allow creating purchase orders, logging supplier deliveries, and receiving stock.",
+                  },
+                  {
+                    key: "dataExport",
+                    icon: Download,
+                    title: "Data Export",
+                    desc: "Allow exporting sales analytics, inventory sheets, and financial reports to CSV and Excel.",
+                  },
+                  {
+                    key: "notifications",
+                    icon: Bell,
+                    title: "Stock Alerts",
+                    desc: "Receive real-time notifications for critical stock levels, low supplies, and batch expiries.",
+                  },
+                  {
+                    key: "userAdmin",
+                    icon: ShieldCheck,
+                    title: "Administration",
+                    desc: "Allow inviting new team members, changing roles, and configuring system security.",
+                  },
+                ].map((feat) => {
+                  const Icon = feat.icon;
+                  const isChecked = features[feat.key] ?? false;
+                  const isRoleDefault = ROLE_PRESETS[role]?.coreFeatures?.[feat.key] ?? false;
+
+                  return (
+                    <div
+                      key={feat.key}
+                      onClick={() => toggleFeature(feat.key)}
+                      className={cn(
+                        "flex flex-col p-4 rounded-xl border transition-all duration-200 gap-3 relative cursor-pointer group",
+                        isChecked
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border/60 bg-card hover:border-primary/40 hover:bg-muted/20",
+                      )}
+                    >
+                      <div className="flex items-start justify-between">
+                        <div
+                          className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+                            isChecked
+                              ? "border-primary/30 bg-primary/10 text-primary"
+                              : "border-border bg-muted text-muted-foreground group-hover:text-primary/70",
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <Switch
+                          checked={isChecked}
+                          onCheckedChange={() => toggleFeature(feat.key)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 flex-1 flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-foreground">{feat.title}</span>
+                          {isRoleDefault && (
+                            <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-primary/10 text-primary">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
+                          {feat.desc}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Footer Actions */}
+        <div className="border-t border-border bg-card px-6 py-4 flex items-center justify-between shrink-0">
+          {step === 1 ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleOpenChange(false)}
+              className="h-9 text-xs rounded-xl"
+            >
+              Cancel
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setStep((s) => s - 1)}
+              className="h-9 text-xs rounded-xl gap-1"
+            >
+              <ChevronLeft className="h-4 w-4" /> Back
+            </Button>
+          )}
+
+          {step < 3 ? (
+            <Button
+              size="sm"
+              onClick={handleNext}
+              className="h-9 px-5 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 gap-1"
+            >
+              Next <ChevronRight className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="h-9 px-6 text-xs font-semibold rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5 shadow-sm"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Sending…
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4" /> Send Invitation
+                </>
+              )}
+            </Button>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}

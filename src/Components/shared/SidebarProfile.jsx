@@ -1,0 +1,152 @@
+import { useNavigate } from "react-router";
+import { ChevronsUpDown, LogOut, Settings, User as UserIcon, Store } from "lucide-react";
+import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import { Avatar, AvatarImage, AvatarFallback } from "@/Components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/Components/ui/dropdown-menu";
+import { useSidebar } from "@/Components/ui/sidebar";
+import { useAuth } from "@/lib/auth";
+import { getStoredOnboarding, getOnboarding } from "@/lib/onboardingApi";
+import { cn } from "@/lib/utils";
+const BRANCHES = [
+  { id: "main", name: "Main Branch (HQ)" },
+  { id: "downtown", name: "Downtown Pharmacy" },
+  { id: "westside", name: "Westside Clinic" },
+];
+
+export function SidebarProfile() {
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
+  const { state } = useSidebar();
+  const collapsed = state === "collapsed";
+  const [activeBranch, setActiveBranch] = useState(() => {
+    return localStorage.getItem("PharmaHub_branch") || "main";
+  });
+  // Fast first paint from the local copy, then Mongo (server) is authoritative.
+  const [logo, setLogo] = useState(getStoredOnboarding()?.branding?.logo || null);
+  useEffect(() => {
+    let cancelled = false;
+    getOnboarding().then((data) => {
+      if (!cancelled) setLogo(data?.branding?.logo || null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  if (!user) return null;
+  const initials = (user.name ?? "")
+    .split(" ")
+    .map((s) => s[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+  const handleBranchChange = (branchId) => {
+    setActiveBranch(branchId);
+    localStorage.setItem("PharmaHub_branch", branchId);
+    const branchName = BRANCHES.find((b) => b.id === branchId)?.name;
+    toast.success(`Switched branch to ${branchName}`);
+  };
+  const handleSignOut = async () => {
+    await signOut();
+    navigate("/login");
+  };
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          title={user.name}
+          className={cn(
+            "flex w-full items-center gap-2.5 rounded-xl border border-sidebar-border bg-sidebar-accent/40 p-2 text-left transition-colors hover:bg-sidebar-accent focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            collapsed && "justify-center p-1.5",
+          )}
+        >
+          <div
+            className={cn(
+              "shrink-0 rounded-full bg-gradient-to-br from-primary to-primary/40 p-0.5",
+              collapsed ? "h-8 w-8" : "h-9 w-9",
+            )}
+          >
+            <Avatar className="h-full w-full">
+              {logo ? (
+                <AvatarImage
+                  src={logo}
+                  alt="Business logo"
+                  className="bg-white object-contain p-0.5"
+                />
+              ) : null}
+              <AvatarFallback className="bg-white text-xs font-semibold text-zinc-800 dark:bg-zinc-900 dark:text-zinc-100">
+                {initials}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+
+          {!collapsed && (
+            <div className="flex min-w-0 flex-1 flex-col">
+              <span className="truncate text-sm font-medium text-sidebar-foreground">
+                {user.name}
+              </span>
+              <span className="truncate text-xs text-sidebar-foreground/60">{user.email}</span>
+            </div>
+          )}
+
+          {!collapsed && (
+            <ChevronsUpDown className="ml-auto h-4 w-4 shrink-0 text-sidebar-foreground/50" />
+          )}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="start" side="top" sideOffset={8} className="w-60">
+        <DropdownMenuLabel>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium">{user.name}</span>
+            <span className="text-xs text-muted-foreground">{user.email}</span>
+            {user.role ? (
+              <span className="mt-1.5 inline-flex w-fit items-center rounded-md border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+                {user.role}
+              </span>
+            ) : (
+              <span className="mt-1.5 inline-flex w-fit items-center rounded-md border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                No role assigned
+              </span>
+            )}
+          </div>
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuSub>
+          <DropdownMenuSubTrigger>
+            <Store className="mr-2 h-4 w-4" /> Switch branch
+          </DropdownMenuSubTrigger>
+          <DropdownMenuSubContent>
+            {BRANCHES.map((b) => (
+              <DropdownMenuItem key={b.id} onClick={() => handleBranchChange(b.id)}>
+                <Store className="mr-2 h-4 w-4" /> {b.name}
+                {b.id === activeBranch && <span className="ml-auto text-xs">✓</span>}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuSubContent>
+        </DropdownMenuSub>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
+          <UserIcon className="mr-2 h-4 w-4" /> Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => navigate("/profile")}>
+          <Settings className="mr-2 h-4 w-4" /> Settings
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem onClick={handleSignOut}>
+          <LogOut className="mr-2 h-4 w-4 text-destructive" /> Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
