@@ -7,6 +7,7 @@ import {
   MapPin,
   Phone,
   ShieldCheck,
+  Store,
   UserRound,
 } from "lucide-react";
 import { useNavigate } from "react-router";
@@ -62,9 +63,19 @@ export function PharmaCard() {
       {/* Header */}
       <CardHeader className="border-b border-border bg-muted/20 px-5 py-4">
         <div className="flex items-center gap-3">
-          <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-background text-primary shadow-xs">
-            <UserRound className="h-4 w-4" />
-          </span>
+          {user?.logoUrl ? (
+            <div className="h-9 w-9 shrink-0 rounded-lg border border-border bg-background p-0.5 shadow-xs overflow-hidden flex items-center justify-center">
+              <img
+                src={user.logoUrl}
+                alt={user?.orgName || "Logo"}
+                className="h-full w-full object-contain rounded-md"
+              />
+            </div>
+          ) : (
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg border border-border bg-background text-primary shadow-xs">
+              <UserRound className="h-4 w-4" />
+            </span>
+          )}
           <div>
             <CardTitle className="text-base font-semibold text-foreground">Profile</CardTitle>
             <p className="text-xs text-muted-foreground">{user?.orgName || "Not configured"}</p>
@@ -116,6 +127,21 @@ export function PharmaCard() {
         <div className="space-y-3">
           <SectionHeading>Pharmacy Details</SectionHeading>
           <div className="space-y-3">
+            {user?.logoUrl && (
+              <div className="flex items-start gap-2.5">
+                <Store className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" aria-hidden="true" />
+                <div className="min-w-0">
+                  <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Pharmacy Logo</p>
+                  <div className="mt-1 h-10 w-10 rounded-lg border border-border bg-background p-0.5 overflow-hidden flex items-center justify-center shadow-xs">
+                    <img
+                      src={user.logoUrl}
+                      alt="Pharmacy Logo"
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
             <InfoRow icon={Building2} label="Organization" value={user?.orgName} />
             <InfoRow icon={Building2} label="Business Type" value={user?.businessType} />
             <InfoRow icon={Phone} label="Phone" value={user?.phone} />
