@@ -159,12 +159,14 @@
   * {
     border-color: var(--color-border);
   }
+
   body {
     background-color: var(--color-background);
     color: var(--color-foreground);
     font-family: var(--font-sans);
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
   .font-mono,
   code,
   kbd,
@@ -172,6 +174,7 @@
   samp {
     font-family: var(--font-mono);
   }
+
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
@@ -239,6 +242,7 @@
 .scrollbar-none::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar,
 .scrollbar-hide,
 .scrollbar-none {
@@ -252,6 +256,7 @@
   -webkit-appearance: none;
   margin: 0;
 }
+
 .no-spin[type="number"] {
   -moz-appearance: textfield;
 }
@@ -261,6 +266,7 @@
   0% {
     transform: translateX(-100%);
   }
+
   100% {
     transform: translateX(100%);
   }
@@ -280,11 +286,9 @@
   width: 80px;
   height: 80px;
   border-radius: 9999px;
-  background: radial-gradient(
-    circle,
-    rgb(0 122 90 / 0.35) 0%,
-    rgb(0 122 90 / 0) 70%
-  );
+  background: radial-gradient(circle,
+      rgb(0 122 90 / 0.35) 0%,
+      rgb(0 122 90 / 0) 70%);
   animation: emeraldPulse 1.6s ease-in-out infinite;
 }
 
@@ -322,9 +326,11 @@
   0% {
     transform: rotate(0deg);
   }
+
   50% {
     transform: rotate(180deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
@@ -332,20 +338,24 @@
 
 /* Separate and snap back */
 @keyframes splitTop {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(-5px);
   }
 }
 
 @keyframes splitBottom {
+
   0%,
   100% {
     transform: translateY(0);
   }
+
   50% {
     transform: translateY(5px);
   }
@@ -353,11 +363,13 @@
 
 /* Clean emerald pulse */
 @keyframes emeraldPulse {
+
   0%,
   100% {
     transform: scale(1);
     opacity: 0.5;
   }
+
   50% {
     transform: scale(1.15);
     opacity: 1;
@@ -374,12 +386,13 @@
 }
 
 @keyframes pulseOpacity {
+
   0%,
   100% {
     opacity: 0.6;
   }
+
   50% {
     opacity: 1;
   }
 }
-
