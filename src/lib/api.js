@@ -129,13 +129,23 @@ async function request(path, options = {}) {
   }
 
   if (!res.ok) {
-    const message =
-      json?.error?.message ??
-      json?.error ??
-      (typeof json?.error === "string" ? json.error : null) ??
-      json?.message ??
-      (text && text.length < 200 && !text.includes("<!DOCTYPE") ? text : null) ??
-      `Request failed (${res.status})`;
+    let message = null;
+    const details = json?.error?.details || json?.details;
+    if (Array.isArray(details) && details.length > 0) {
+      message = details
+        .map((d) => (typeof d === "string" ? d : d.message || d.msg || `${d.field}: invalid`))
+        .filter(Boolean)
+        .join("; ");
+    }
+    if (!message) {
+      message =
+        json?.error?.message ??
+        json?.error ??
+        (typeof json?.error === "string" ? json.error : null) ??
+        json?.message ??
+        (text && text.length < 200 && !text.includes("<!DOCTYPE") ? text : null) ??
+        `Request failed (${res.status})`;
+    }
     const error = new Error(message);
     error.status = res.status;
     error.data = json;
