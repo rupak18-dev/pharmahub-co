@@ -49,8 +49,19 @@ export function isNetworkError(err) {
 }
 
 function withLimit(url) {
-  if (url.includes("?") || /\/([0-9a-fA-F]{24})$/.test(url)) return url;
-  return `${url}${url.includes("?") ? "&" : "?"}limit=100`;
+  const [pathname] = url.split("?");
+  if (
+    !pathname ||
+    pathname === "/" ||
+    pathname === "/docs" ||
+    pathname === "/health" ||
+    pathname.startsWith("/auth/") ||
+    url.includes("?") ||
+    /\/([0-9a-fA-F]{24})$/.test(pathname)
+  ) {
+    return url;
+  }
+  return `${url}?limit=100`;
 }
 
 // Custom header required by the server on mutating requests — cross-site
@@ -77,10 +88,18 @@ function getSessionToken() {
 }
 
 const DEFAULT_TIMEOUT_MS = 30000;
+const GET_RETRIES = 2;
+const RETRY_BACKOFF_MS = [2000, 6000];
+
+function markNetworkError(err) {
+  if (err && (typeof err === "object" || typeof err === "function")) err.kind = "network";
+  return err;
+}
 
 async function request(path, options = {}) {
   const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
-  const finalUrl = !options.method || options.method === "GET" ? withLimit(url) : url;
+  const isGet = !options.method || options.method === "GET";
+  const finalUrl = isGet ? withLimit(url) : url;
   const headers = {
     ...CLIENT_HEADER,
     ...(options.headers ?? {}),
@@ -102,50 +121,73 @@ async function request(path, options = {}) {
     headers["Content-Type"] = "application/json";
   }
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
-  let res;
-  try {
-    res = await fetch(finalUrl, {
-      ...options,
-      headers,
-      credentials: "include",
-      signal: options.signal ?? controller.signal,
-    });
-  } catch (err) {
-    if (controller.signal.aborted) {
-      throw new Error("Request timed out — the server is unreachable or waking up. Try again.");
-    }
-    throw err;
-  } finally {
-    clearTimeout(timer);
-  }
-
-  const text = await res.text();
-  let json = null;
-  if (text && (text.startsWith("{") || text.startsWith("["))) {
+  let lastError;
+  for (let attempt = 0; attempt < GET_RETRIES + 1; attempt++) {
+    const canRetry = isGet && !options.signal;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    let res;
     try {
-      json = JSON.parse(text);
-    } catch {
-      // not JSON
+      res = await fetch(finalUrl, {
+        ...options,
+        headers,
+        credentials: "include",
+        signal: options.signal ?? controller.signal,
+      });
+    } catch (err) {
+      clearTimeout(timer);
+      if (controller.signal.aborted && !options.signal) {
+        const timeoutErr = new Error(
+          "Request timed out — the server is unreachable or waking up. Try again.",
+        );
+        timeoutErr.kind = "network";
+        lastError = timeoutErr;
+      } else {
+        lastError = isNetworkError(err) ? markNetworkError(err) : err;
+      }
+      if (canRetry && attempt < GET_RETRIES) {
+        const delay = RETRY_BACKOFF_MS[attempt] ?? RETRY_BACKOFF_MS[GET_RETRIES - 1];
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+      throw lastError;
     }
-  }
+    clearTimeout(timer);
 
-  if (!res.ok) {
-    const message =
-      json?.error?.message ??
-      json?.error ??
-      (typeof json?.error === "string" ? json.error : null) ??
-      json?.message ??
-      (text && text.length < 200 && !text.includes("<!DOCTYPE") ? text : null) ??
-      `Request failed (${res.status})`;
-    const error = new Error(message);
-    error.status = res.status;
-    error.data = json;
-    throw error;
-  }
+    const text = await res.text();
+    let json = null;
+    if (text && (text.startsWith("{") || text.startsWith("["))) {
+      try {
+        json = JSON.parse(text);
+      } catch {
+        // not JSON
+      }
+    }
 
-  return { status: res.status, json, text };
+    if (!res.ok) {
+      const message =
+        json?.error?.message ??
+        json?.error ??
+        (typeof json?.error === "string" ? json.error : null) ??
+        json?.message ??
+        (text && text.length < 200 && !text.includes("<!DOCTYPE") ? text : null) ??
+        `Request failed (${res.status})`;
+      const error = new Error(message);
+      error.status = res.status;
+      error.data = json;
+      error.kind = res.status >= 500 && res.status < 600 ? "server" : "http";
+      const is5xx = error.kind === "server";
+      if (canRetry && is5xx && attempt < GET_RETRIES) {
+        const delay = RETRY_BACKOFF_MS[attempt] ?? RETRY_BACKOFF_MS[GET_RETRIES - 1];
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+      throw error;
+    }
+
+    return { status: res.status, json, text };
+  }
+  throw lastError;
 }
 
 const API_CACHE_PREFIX = "PharmaHub_apicache_v1:";
