@@ -47,6 +47,7 @@ import { logActivity } from "@/lib/stock";
 import { useAuth } from "@/lib/auth";
 import { PageHeader } from "@/Components/shared/PageHeader";
 import { EmptyState } from "@/Components/shared/EmptyState";
+import { NoMedicinesFound } from "@/Components/shared/NoMedicinesFound";
 import { StatusBadge } from "@/Components/shared/StatusBadge";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -1252,7 +1253,7 @@ export default function MedicinesCatalogPage() {
                 </Button>
 
                 {/* Clear Active Filters Pill (if any active) */}
-                {(catFilter !== "all" || (statusFilter !== "all" && statusFilter !== "draft") || q) && (
+                {(catFilter !== "all" || statusFilter !== "all" || q) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -1384,22 +1385,23 @@ export default function MedicinesCatalogPage() {
 
         <div className="flex-1 overflow-y-auto p-0">
           {filtered.length === 0 ? (
-            <EmptyState
-              title={
-                showWishlist
-                  ? "Your wishlist is empty"
-                  : statusFilter === "draft"
-                    ? "No medicine found"
-                    : "No medicines matched filters"
-              }
-              description={
-                showWishlist
-                  ? "You haven't added any medicines to your wishlist yet."
-                  : statusFilter === "draft"
-                    ? "No medicines were found that match the draft criteria (only name is stored)."
-                    : "Refine your criteria or add a new medicine configuration to the master catalog."
-              }
-            />
+            showWishlist ? (
+              <EmptyState
+                title="Your wishlist is empty"
+                description="You haven't added any medicines to your wishlist yet."
+              />
+            ) : (
+              <NoMedicinesFound
+                onClearSearch={() => {
+                  setCatFilter("all");
+                  setStatusFilter("all");
+                  handleSearchChange("");
+                  setHeaderBrandPriority(null);
+                  setHeaderGenericPriority(null);
+                  setHeaderExpiryPriority(null);
+                }}
+              />
+            )
           ) : (
             <>
               {viewMode === "list" ? (

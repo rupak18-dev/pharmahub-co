@@ -24,6 +24,7 @@ import { logActivity } from "@/lib/stock";
 import { useAuth } from "@/lib/auth";
 import { PageHeader } from "@/Components/shared/PageHeader";
 import { EmptyState } from "@/Components/shared/EmptyState";
+import { NoMedicinesFound } from "@/Components/shared/NoMedicinesFound";
 import { StatusBadge } from "@/Components/shared/StatusBadge";
 import { getCategoryBadgeClasses } from "@/lib/utils";
 import { Button } from "@/Components/ui/button";
@@ -574,16 +575,18 @@ export default function MedicinesCatalogPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          title="No medicines matched filters"
-          description="Refine your criteria or add a new medicine configuration to the master catalog."
-          action={
-            has("medicines", "create") && (
-              <Button onClick={openCreate} className="bg-[#2563EB] hover:bg-blue-700">
-                <Plus className="mr-1 h-4 w-4" /> Add medicine
-              </Button>
-            )
-          }
+        <NoMedicinesFound
+          onClearSearch={() => {
+            handleSearchChange("");
+            setCatFilter("all");
+            setBrandFilter("all");
+            setGenericFilter("all");
+            setSupplierFilter("all");
+            setRackFilter("all");
+            setStockStatusFilter("all");
+            setExpiryStatusFilter("all");
+            setActiveFilter("all");
+          }}
         />
       ) : (
         <>

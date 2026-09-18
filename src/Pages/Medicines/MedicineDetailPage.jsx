@@ -219,6 +219,23 @@ export default function MedicineDetailPage() {
     ].sort((a, b) => new Date(b._time) - new Date(a._time));
   }, [med, data.activityLogs, data.stockMovements, data.batches]);
 
+  const productImages = useMemo(() => {
+    const lower = (med.name || "").toLowerCase();
+    let mainImg = "/medicines/paracetamol_main.jpg";
+    if (lower.includes("dolo")) mainImg = "/medicines/dolo_500.jpg";
+    else if (lower.includes("crocin")) mainImg = "/medicines/crocin_500.jpg";
+    else if (lower.includes("calpol")) mainImg = "/medicines/calpol_500.jpg";
+    else if (lower.includes("650") || lower.includes("p-650")) mainImg = "/medicines/p650.jpg";
+    else if (lower.includes("paracip")) mainImg = "/medicines/paracip_500.jpg";
+
+    return [
+      { id: 0, title: "Main Pack & Blister", src: mainImg },
+      { id: 1, title: "Tablet Blister Strip", src: "/medicines/paracetamol_blister.jpg" },
+      { id: 2, title: "Back Packaging Specs", src: "/medicines/paracetamol_back.jpg" },
+      { id: 3, title: "Side View Details", src: "/medicines/paracetamol_side.jpg" },
+    ];
+  }, [med.name]);
+
   const handleAddToCart = () => {
     toast.success(`Added ${quantity} pack(s) of ${med.name} to cart!`, {
       description: `Pack Size: ${selectedPackSize} · ₹${(12.0 * quantity).toFixed(2)}`,
@@ -252,7 +269,7 @@ export default function MedicineDetailPage() {
           {/* History Button */}
           <button
             onClick={() => setHistoryOpen(true)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E5EDF7] bg-white hover:bg-[#EEF7FF] text-[#0D1835] text-xs font-semibold shadow-[0_1px_3px_rgba(13,24,53,0.04)] transition-all hover:border-[#006BFF]"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#E5EDF7] bg-white hover:bg-[#EEF7FF] text-[#0D1835] text-xs font-semibold shadow-[0_1px_3px_rgba(13,24,53,0.04)] transition-all hover:border-[#006BFF] cursor-pointer"
           >
             <History className="w-3.5 h-3.5 text-[#006BFF]" />
             <span className="hidden sm:inline">History</span>
@@ -271,17 +288,18 @@ export default function MedicineDetailPage() {
             {/* ════ LEFT COLUMN (≈42% -> 5 cols): Thumbnail Gallery + Showcase ════ */}
             <div className="lg:col-span-5 flex flex-col sm:flex-row gap-3.5 items-stretch">
               
-              {/* Vertical Image-Thumbnail Gallery */}
+              {/* Vertical Image-Thumbnail Gallery Toggles */}
               <div className="flex sm:flex-col gap-2.5 order-2 sm:order-1 shrink-0 overflow-x-auto sm:overflow-visible">
-                {PRODUCT_IMAGES.map((thumb) => (
+                {productImages.map((thumb) => (
                   <button
                     key={thumb.id}
                     onClick={() => setSelectedThumb(thumb.id)}
-                    className={`w-14 h-14 sm:w-[62px] sm:h-[62px] rounded-[14px] border p-0.5 transition-all overflow-hidden bg-[#F9FBFE] shrink-0 ${
+                    className={`w-14 h-14 sm:w-[62px] sm:h-[62px] rounded-[14px] border p-0.5 transition-all overflow-hidden bg-[#F9FBFE] shrink-0 cursor-pointer ${
                       selectedThumb === thumb.id
                         ? "border-[#006BFF] ring-2 ring-[#006BFF]/20 shadow-xs"
                         : "border-[#E5EDF7] hover:border-slate-300 opacity-80 hover:opacity-100"
                     }`}
+                    title={thumb.title}
                   >
                     <img
                       src={thumb.src}
@@ -298,7 +316,7 @@ export default function MedicineDetailPage() {
                 {/* Real High-Resolution Showcase Photo */}
                 <div className="absolute inset-0 z-0">
                   <img
-                    src={PRODUCT_IMAGES[selectedThumb].src}
+                    src={productImages[selectedThumb]?.src || productImages[0].src}
                     alt={med.name}
                     className="w-full h-full object-cover object-center transition-all duration-300"
                   />
