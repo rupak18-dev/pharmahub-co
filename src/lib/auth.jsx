@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { apiRequest } from "./api";
+import { apiRequest, clearApiCache } from "./api";
 import { resetStoredOnboarding } from "./onboardingApi";
 
 const SESSION_KEY = "PharmaHub_session_v2";
@@ -143,10 +143,11 @@ export function AuthProvider({ children }) {
   // authoritative identity from GET /auth/me so role/permissions always come
   // from the database rather than from whatever an individual endpoint echoed.
   const establishSession = useCallback(async (token, fallbackUser) => {
+    clearApiCache();
     writeSession({ token, user: fallbackUser ?? null });
     let resolved = fallbackUser ?? null;
     try {
-      const me = await apiRequest("/auth/me");
+      const me = await apiRequest("/auth/me", { noCache: true });
       if (me) resolved = me;
     } catch {
       // Keep the just-issued payload; never merge with any older cached user.
@@ -247,6 +248,7 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore — session is cleared locally regardless
     } finally {
+      clearApiCache();
       writeSession(null);
       resetStoredOnboarding();
       setUser(null);

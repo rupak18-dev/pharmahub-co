@@ -27,7 +27,7 @@ import { apiRequest, isNetworkError } from "./api";
  */
 export async function getIntegrations() {
   try {
-    const data = await apiRequest("/integrations");
+    const data = await apiRequest("/integrations", { noCache: true });
     return Array.isArray(data) ? data : [];
   } catch (error) {
     if (isNetworkError(error)) return [];

@@ -124,8 +124,6 @@ export const authSchemas = {
   login: z.object({
     email: emailSchema,
     password: z.string().min(1, "Password is required"),
-    // "Remember me" — controls the session cookie lifetime server-side.
-    remember: z.boolean().optional(),
   }),
   changePassword: z.object({
     currentPassword: z.string().min(1),
@@ -135,8 +133,7 @@ export const authSchemas = {
     email: emailSchema,
   }),
   resetPassword: z.object({
-    email: emailSchema,
-    code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
+    token: z.string().trim().min(1),
     newPassword: passwordSchema,
   }),
 };
@@ -177,6 +174,7 @@ export const userSchemas = {
     permissions: z.record(z.string(), z.record(z.string(), z.boolean())).optional(),
     featureAccess: z.record(z.string(), z.boolean()).optional(),
     accessIds: z.array(z.string().trim().min(1).max(80)).optional(),
+    department: z.string().trim().max(120).optional(),
   }),
   acceptInvitation: z.object({
     token: z.string().trim().min(1),
@@ -420,17 +418,5 @@ export const integrationSchemas = {
   }),
   configure: z.object({
     config: integrationConfigSchema.optional(),
-  }),
-};
-
-export const ticketSchemas = {
-  create: z.object({
-    title: z.string().trim().min(1, "Title is required").max(250),
-    issueType: z.string().trim().min(1, "Issue type is required"),
-    description: z.string().trim().min(1, "Description is required"),
-    severity: z.enum(["low", "medium", "high", "critical"]).default("medium"),
-    screenshot: z.string().nullable().optional(),
-    userName: z.string().trim().optional(),
-    userEmail: z.string().trim().optional(),
   }),
 };
