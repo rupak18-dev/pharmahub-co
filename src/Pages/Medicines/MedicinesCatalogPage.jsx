@@ -1,6 +1,17 @@
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Pencil, Power, PowerOff, Eye, Filter, FileSpreadsheet, Info } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Power,
+  PowerOff,
+  Eye,
+  Filter,
+  FileSpreadsheet,
+  Info,
+} from "lucide-react";
+import { getImageForMedicine } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -822,8 +833,14 @@ export default function MedicinesCatalogPage() {
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded bg-muted/60 flex items-center justify-center text-sm border shrink-0">
-                        {m.dosageForm?.charAt(0) || "💊"}
+                      <div className="w-9 h-9 rounded bg-slate-50 flex items-center justify-center border border-border/40 shrink-0 overflow-hidden">
+                        <img
+                          src={getImageForMedicine(m.id, m.dosageForm)}
+                          alt={m.name}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="min-w-0">
                         <Link
