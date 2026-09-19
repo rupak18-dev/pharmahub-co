@@ -2058,7 +2058,7 @@ export default function MedicinesCatalogPage() {
                 </>
               ) : (
                 /* Grid View */
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-6 p-2.5 sm:p-0">
                   {paginatedData.map((m) => {
                     const meta = stockByMed.get(m.id);
                     const stockTone =
@@ -2070,13 +2070,13 @@ export default function MedicinesCatalogPage() {
                     return (
                       <div
                         key={m.id}
-                        className={`bg-white border rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 sm:space-y-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative flex flex-col justify-between overflow-hidden group ${
+                        className={`bg-white border rounded-xl sm:rounded-2xl p-2.5 sm:p-5 shadow-sm space-y-2 sm:space-y-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative flex flex-col justify-between overflow-hidden group ${
                           selectedMedIds.includes(m.id)
                             ? "border-[#007A87] ring-2 ring-[#007A87]/20"
                             : "border-border/80"
                         }`}
                       >
-                        <div className="space-y-3 sm:space-y-4">
+                        <div className="space-y-2 sm:space-y-4">
                           {/* Top Actions */}
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2 min-w-0">
@@ -2117,7 +2117,7 @@ export default function MedicinesCatalogPage() {
                           </div>
 
                           {/* Medicine Visual Representation */}
-                          <div className="w-full h-28 sm:h-32 bg-slate-50 rounded-xl flex items-center justify-center border border-border/40 relative overflow-hidden">
+                          <div className="w-full h-20 sm:h-32 bg-slate-50 rounded-lg sm:rounded-xl flex items-center justify-center border border-border/40 relative overflow-hidden">
                             <img
                               src={getImageForMedicine(m.id, m.dosageForm)}
                               alt={`${m.name} packaging`}
@@ -2128,14 +2128,14 @@ export default function MedicinesCatalogPage() {
                           </div>
 
                           {/* Details */}
-                          <div className="space-y-1.5">
+                          <div className="space-y-1">
                             <Link
                               to={`/medicines/${m.id}`}
-                              className="font-medium text-slate-950 hover:underline text-sm block truncate"
+                              className="font-medium text-slate-950 hover:underline text-[11px] sm:text-sm block truncate leading-tight"
                             >
                               {m.name}
                             </Link>
-                            <p className="text-xs text-muted-foreground font-medium truncate">
+                            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate">
                               {m.brandName || "No Brand"}
                             </p>
 
@@ -2145,7 +2145,7 @@ export default function MedicinesCatalogPage() {
                                 const catName = categories.find((c) => c.id === m.categoryId)?.name;
                                 return (
                                   <span
-                                    className={`rounded-md px-2 py-0.5 text-[10px] font-semibold border ${getCategoryBadgeClasses(catName)}`}
+                                    className={`rounded-md px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold border ${getCategoryBadgeClasses(catName)}`}
                                   >
                                     {catName ?? "Uncategorized"}
                                   </span>
@@ -2153,30 +2153,30 @@ export default function MedicinesCatalogPage() {
                               })()}
                             </div>
 
-                            <p className="text-xs text-muted-foreground font-medium">
+                            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium hidden sm:block">
                               {m.strength || "—"} | {m.packSize || "—"}
                             </p>
                           </div>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-2 sm:space-y-3">
                           {/* Prices & Stocks */}
-                          <div className="flex justify-between items-end border-t border-border/40 pt-3">
+                          <div className="flex justify-between items-end border-t border-border/40 pt-2 sm:pt-3">
                             <div>
-                              <span className="text-[10px] text-muted-foreground block font-medium">
-                                Price (MRP)
+                              <span className="text-[9px] sm:text-[10px] text-muted-foreground block font-medium">
+                                MRP
                               </span>
-                              <span className="font-extrabold text-slate-800 text-sm">
+                              <span className="font-extrabold text-slate-800 text-[11px] sm:text-sm">
                                 {currency}
                                 {meta?.mrp?.toFixed(2) || "0.00"}
                               </span>
                             </div>
                             <div className="text-right">
-                              <span className="text-[10px] text-muted-foreground block font-medium">
-                                Stock Level
+                              <span className="text-[9px] sm:text-[10px] text-muted-foreground block font-medium">
+                                Stock
                               </span>
                               <span
-                                className={`text-xs font-black ${
+                                className={`text-[10px] sm:text-xs font-black ${
                                   stockTone === "out"
                                     ? "text-red-500"
                                     : stockTone === "low"
@@ -2190,15 +2190,17 @@ export default function MedicinesCatalogPage() {
                           </div>
 
                           {/* Card Actions */}
-                          <div className="flex gap-2">
+                          <div className="flex gap-1.5 sm:gap-2">
                             <Button
                               asChild
                               size="sm"
                               variant="outline"
-                              className="flex-1 text-xs gap-1 rounded-xl h-9 border-[#007A87]/20 text-[#007A87] hover:bg-[#007A87]/5"
+                              className="flex-1 text-[10px] sm:text-xs gap-0.5 sm:gap-1 rounded-lg sm:rounded-xl h-7 sm:h-9 border-[#007A87]/20 text-[#007A87] hover:bg-[#007A87]/5"
                             >
                               <Link to={`/medicines/${m.id}`}>
-                                <Info className="h-3.5 w-3.5" /> View Details
+                                <Info className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                <span className="hidden sm:inline">View Details</span>
+                                <span className="sm:hidden">Details</span>
                               </Link>
                             </Button>
                             <DropdownMenu>
@@ -2206,7 +2208,7 @@ export default function MedicinesCatalogPage() {
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  className="h-9 w-9 p-0 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                                  className="h-7 w-7 sm:h-9 sm:w-9 p-0 flex items-center justify-center rounded-lg sm:rounded-xl text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>

@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Link, useParams } from "react-router";
+import { Link, useParams, useNavigate } from "react-router";
 import { useDb } from "@/hooks/useDb";
 import { useWishlist } from "@/hooks/useWishlist";
 import {
@@ -19,6 +19,7 @@ import {
   Info,
   Archive,
   ArrowRight,
+  ArrowLeft,
   Minus,
   Plus,
   History,
@@ -140,6 +141,7 @@ function formatHistoryDate(iso) {
 
 export default function MedicineDetailPage() {
   const { medicineId } = useParams();
+  const navigate = useNavigate();
   const data = useDb((d) => d);
 
   // States
@@ -248,23 +250,35 @@ export default function MedicineDetailPage() {
 
         {/* ── 1. BREADCRUMB ────────────────────────────────────────── */}
         <div className="flex items-center justify-between">
-          <nav className="flex items-center space-x-2 text-xs md:text-sm text-slate-500 font-medium">
-            <Link to="/" className="hover:text-[#006BFF] transition-colors">
-              Home
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <Link to="/medicines" className="hover:text-[#006BFF] transition-colors">
-              Medicines
-            </Link>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <span className="hover:text-[#006BFF] transition-colors cursor-pointer">
-              {categoryName}
-            </span>
-            <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
-            <span className="text-[#0D1835] font-semibold">
-              {med.name}
-            </span>
-          </nav>
+          <div className="flex items-center gap-2">
+            {/* Back Button */}
+            <button
+              type="button"
+              onClick={() => navigate(-1)}
+              className="flex items-center justify-center w-7 h-7 rounded-lg border border-[#E5EDF7] bg-white hover:bg-[#EEF7FF] text-slate-600 hover:text-[#006BFF] shadow-[0_1px_3px_rgba(13,24,53,0.04)] transition-all hover:border-[#006BFF] cursor-pointer shrink-0"
+              title="Go back"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+            </button>
+
+            <nav className="flex items-center space-x-1.5 sm:space-x-2 text-xs md:text-sm text-slate-500 font-medium">
+              <Link to="/" className="hover:text-[#006BFF] transition-colors hidden sm:inline">
+                Home
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
+              <Link to="/medicines" className="hover:text-[#006BFF] transition-colors">
+                Medicines
+              </Link>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+              <span className="hover:text-[#006BFF] transition-colors cursor-pointer hidden sm:inline">
+                {categoryName}
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
+              <span className="text-[#0D1835] font-semibold truncate max-w-[120px] sm:max-w-none">
+                {med.name}
+              </span>
+            </nav>
+          </div>
 
           {/* History Button */}
           <button
