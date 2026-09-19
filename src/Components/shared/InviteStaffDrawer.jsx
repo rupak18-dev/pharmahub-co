@@ -24,6 +24,11 @@ import {
   ClipboardCheck,
   CheckCircle2,
   Loader2,
+  RotateCcw,
+  Truck,
+  Download,
+  Bell,
+  SlidersHorizontal,
 } from "lucide-react";
 import { toast } from "sonner";
 import { invitationService } from "@/lib/invitationService";
@@ -31,6 +36,7 @@ import { listRoles } from "@/lib/rolesService";
 import { ALL_ROLES, ALL_MODULES, DEFAULT_PERMISSIONS } from "@/lib/permissions";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
+import { PhoneInput } from "@/Components/ui/phone-input";
 import { Label } from "@/Components/ui/label";
 import { Switch } from "@/Components/ui/switch";
 import { Badge } from "@/Components/ui/badge";
@@ -49,15 +55,92 @@ import {
   SheetTitle,
   SheetDescription,
 } from "@/Components/ui/sheet";
+import { cn } from "@/lib/utils";
 
-const DEPARTMENTS = [
-  "Pharmacy Operations",
-  "Sales & POS",
-  "Inventory & Stock",
-  "Purchasing & Supply Chain",
-  "Administration & HR",
-  "Accounts & Finance",
-];
+export const ROLE_PRESETS = {
+  Pharmacist: {
+    department: "Pharmacy Operations",
+    designation: "Staff Pharmacist",
+    description: "Dispenses medications, verifies prescriptions, and manages drug batches and expiry tracking.",
+    coreModules: ["sales", "medicines", "batches", "expiry", "dashboard"],
+    coreFeatures: { processSales: true, stockAudit: true, notifications: true },
+  },
+  Cashier: {
+    department: "Sales & POS",
+    designation: "Cashier / Billing Counter",
+    description: "Processes POS checkout transactions, sales billing, customer invoices, and medicine lookups.",
+    coreModules: ["sales", "dashboard"],
+    coreFeatures: { processSales: true, notifications: false },
+  },
+  "Store Keeper": {
+    department: "Inventory & Stock",
+    designation: "Store Keeper",
+    description: "Receives supplier inward stock, monitors warehouse shelves, and manages batch expiry dates.",
+    coreModules: ["batches", "medicines", "expiry", "audit", "shortbook"],
+    coreFeatures: { stockAudit: true, notifications: true },
+  },
+  "Inventory Manager": {
+    department: "Inventory & Stock",
+    designation: "Inventory Manager",
+    description: "Oversees the entire inventory lifecycle: purchase orders, stock reconciliations, and reporting.",
+    coreModules: ["medicines", "batches", "expiry", "audit", "purchases", "dashboard", "reports"],
+    coreFeatures: { stockAudit: true, purchasing: true, dataExport: true, notifications: true },
+  },
+  Admin: {
+    department: "Administration & HR",
+    designation: "System Administrator",
+    description: "Administrative access to staff management, security settings, audit logs, and reports.",
+    coreModules: [
+      "dashboard",
+      "medicines",
+      "batches",
+      "expiry",
+      "audit",
+      "purchases",
+      "sales",
+      "shortbook",
+      "reports",
+      "users",
+      "admin",
+      "integrations",
+    ],
+    coreFeatures: {
+      processSales: true,
+      stockAudit: true,
+      purchasing: true,
+      dataExport: true,
+      notifications: true,
+      userAdmin: true,
+    },
+  },
+  Owner: {
+    department: "Administration & HR",
+    designation: "Store Owner",
+    description: "Full store ownership with unrestricted permissions across all modules, settings, and team access.",
+    coreModules: [
+      "dashboard",
+      "medicines",
+      "batches",
+      "expiry",
+      "audit",
+      "purchases",
+      "sales",
+      "shortbook",
+      "reports",
+      "users",
+      "admin",
+      "integrations",
+    ],
+    coreFeatures: {
+      processSales: true,
+      stockAudit: true,
+      purchasing: true,
+      dataExport: true,
+      notifications: true,
+      userAdmin: true,
+    },
+  },
+};
 
 const MODULE_ICONS = {
   dashboard: LayoutDashboard,
@@ -112,7 +195,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
   const [workEmail, setWorkEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [role, setRole] = useState("Pharmacist");
-  const [department, setDepartment] = useState("Pharmacy Operations");
 
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
@@ -164,7 +246,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
       setWorkEmail("");
       setPhoneNumber("");
       setRole("Pharmacist");
-      setDepartment("Pharmacy Operations");
       setErrors({});
       setSubmitting(false);
       submittingRef.current = false;
@@ -209,15 +290,17 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
     setModuleAccess(moduleDefaultsFor(role));
   }, [roleConfigs, isOpen, moduleDefaultsFor, role]);
 
-  // When Role changes in Step 1, auto update default perms
+  // When Role changes in Step 1, auto update defaults
   const handleRoleChange = (newRole) => {
     setRole(newRole);
+    const preset = ROLE_PRESETS[newRole];
     moduleTouchedRef.current = false;
     setModuleAccess(moduleDefaultsFor(newRole));
 
     const isAdminRole = newRole === "Owner" || newRole === "Admin";
     setFeatures((prev) => ({
       ...prev,
+      ...(preset?.coreFeatures ?? {}),
       userAdmin: isAdminRole,
     }));
   };
@@ -290,7 +373,6 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
         name: fullName.trim(),
         email: workEmail.trim().toLowerCase(),
         phone: phoneNumber.trim() || undefined,
-        department: department?.trim() || undefined,
         role,
         permissions: {},
         featureAccess: features,
@@ -413,6 +495,7 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
             <div className="space-y-4">
               {/* Form Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Full Name */}
                 <div className="space-y-1.5">
                   <Label htmlFor="staff-name" className="text-xs font-semibold">
                     Full Name *
@@ -423,7 +506,12 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                       id="staff-name"
                       placeholder="e.g. Dr. Ananya Sharma"
                       value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
+                      onChange={(e) => {
+                        setFullName(e.target.value);
+                        if (errors.fullName) {
+                          setErrors((prev) => ({ ...prev, fullName: undefined }));
+                        }
+                      }}
                       className={`pl-9 text-xs rounded-xl ${errors.fullName ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
                     />
                   </div>
@@ -432,6 +520,7 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   )}
                 </div>
 
+                {/* Work Email */}
                 <div className="space-y-1.5">
                   <Label htmlFor="staff-email" className="text-xs font-semibold">
                     Work Email *
@@ -443,7 +532,12 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                       type="email"
                       placeholder="ananya@pharmahub.com"
                       value={workEmail}
-                      onChange={(e) => setWorkEmail(e.target.value)}
+                      onChange={(e) => {
+                        setWorkEmail(e.target.value);
+                        if (errors.workEmail) {
+                          setErrors((prev) => ({ ...prev, workEmail: undefined }));
+                        }
+                      }}
                       className={`pl-9 text-xs rounded-xl ${errors.workEmail ? "border-destructive focus-visible:ring-destructive/30" : ""}`}
                     />
                   </div>
@@ -452,30 +546,23 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   )}
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label htmlFor="staff-phone" className="text-xs font-semibold">
-                    Phone Number
-                  </Label>
-                  <div className="relative">
-                    <Phone className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      id="staff-phone"
-                      placeholder="+91 98765 43210"
-                      value={phoneNumber}
-                      onChange={(e) => setPhoneNumber(e.target.value)}
-                      className="pl-9 text-xs rounded-xl"
-                    />
-                  </div>
-                </div>
-
+                {/* Role */}
                 <div className="space-y-1.5">
                   <Label className="text-xs font-semibold">Role *</Label>
-                  <Select value={role} onValueChange={handleRoleChange}>
+                  <Select
+                    value={role}
+                    onValueChange={(val) => {
+                      handleRoleChange(val);
+                      if (errors.role) {
+                        setErrors((prev) => ({ ...prev, role: undefined }));
+                      }
+                    }}
+                  >
                     <SelectTrigger className="h-9 text-xs rounded-xl">
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
                     <SelectContent className="rounded-xl">
-                      {ALL_ROLES.map((r) => (
+                      {ALL_ROLES.filter((r) => r !== "Owner").map((r) => (
                         <SelectItem key={r} value={r} className="text-xs">
                           {r}
                         </SelectItem>
@@ -485,153 +572,293 @@ export function InviteStaffDrawer({ open: controlledOpen, onOpenChange: controll
                   {errors.role && <p className="text-[11px] text-destructive">{errors.role}</p>}
                 </div>
 
+                {/* Phone Number */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">Department</Label>
-                  <Select value={department} onValueChange={setDepartment}>
-                    <SelectTrigger className="h-9 text-xs rounded-xl">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent className="rounded-xl">
-                      {DEPARTMENTS.map((d) => (
-                        <SelectItem key={d} value={d} className="text-xs">
-                          {d}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="staff-phone" className="text-xs font-semibold">
+                    Phone Number
+                  </Label>
+                  <PhoneInput
+                    id="staff-phone"
+                    value={phoneNumber}
+                    onChange={setPhoneNumber}
+                  />
                 </div>
               </div>
             </div>
           )}
 
           {/* STEP 2: PERMISSIONS */}
-          {step === 2 && (
-            <div className="space-y-4">
-              {/* Information Box */}
-              <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
-                <Info className="h-4 w-4 shrink-0 mt-0.5" />
-                <div>
-                  <p className="font-semibold text-foreground">
-                    Select pages this role will have access to.
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                    Toggle module access for <strong>{fullName || "this staff member"}</strong>{" "}
-                    (Role: {role}).
-                  </p>
-                </div>
-              </div>
+          {step === 2 && (() => {
+            const currentPreset = ROLE_PRESETS[role] || {
+              coreModules: ["dashboard", "sales"],
+              description: "Standard role permissions",
+            };
+            const coreSet = new Set(currentPreset.coreModules || []);
+            const coreModules = ALL_MODULES.filter((m) => coreSet.has(m.key));
+            const additionalModules = ALL_MODULES.filter((m) => !coreSet.has(m.key));
 
-              {/* Permission Cards List */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {ALL_MODULES.map((mod) => {
-                  const Icon = MODULE_ICONS[mod.key] || ShieldCheck;
-                  const isEnabled = moduleAccess[mod.key] ?? true;
-                  return (
-                    <div
-                      key={mod.key}
-                      className={`flex items-center justify-between p-3.5 rounded-xl border transition-all ${
-                        isEnabled
-                          ? "border-primary/30 bg-card shadow-2xs"
-                          : "border-border/60 bg-muted/20 opacity-70"
-                      }`}
-                    >
-                      <div className="flex items-center gap-3 min-w-0 pr-2">
-                        <div
-                          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border ${
-                            isEnabled
-                              ? "border-primary/20 bg-primary/10 text-primary"
-                              : "border-border bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          <Icon className="h-4 w-4" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-xs font-bold text-foreground truncate">{mod.label}</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {isEnabled ? "Access Enabled" : "Access Disabled"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <Switch
-                        checked={isEnabled}
-                        onCheckedChange={() => toggleModule(mod.key)}
-                        className="data-[state=checked]:bg-primary"
-                      />
+            return (
+              <div className="space-y-5">
+                {/* Information & Reset Box */}
+                <div className="flex items-start justify-between gap-3 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
+                  <div className="flex items-start gap-2.5">
+                    <Info className="h-4 w-4 shrink-0 mt-0.5" />
+                    <div>
+                      <p className="font-semibold text-foreground">
+                        Module Permissions for {role}
+                      </p>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+                        Required modules for <strong>{role}</strong> are pre-enabled below. You can freely edit other modules to customize access for <strong>{fullName || "this staff member"}</strong>.
+                      </p>
                     </div>
-                  );
-                })}
+                  </div>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      moduleTouchedRef.current = false;
+                      setModuleAccess(moduleDefaultsFor(role));
+                      toast.info(`Reset permissions to ${role} defaults`);
+                    }}
+                    className="h-7 px-2.5 text-[11px] rounded-lg shrink-0 gap-1 bg-background"
+                  >
+                    <RotateCcw className="h-3 w-3" /> Reset
+                  </Button>
+                </div>
+
+                {/* 1. Core Modules Required for Role */}
+                {coreModules.length > 0 && (
+                  <div className="space-y-2.5">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-foreground">
+                          Core Modules for {role}
+                        </span>
+                        <Badge className="text-[10px] bg-primary/15 text-primary border-primary/30">
+                          {coreModules.length} Required
+                        </Badge>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        Pre-enabled for role
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {coreModules.map((mod) => {
+                        const Icon = MODULE_ICONS[mod.key] || ShieldCheck;
+                        const isEnabled = moduleAccess[mod.key] ?? true;
+                        return (
+                          <div
+                            key={mod.key}
+                            className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                              isEnabled
+                                ? "border-primary/40 bg-primary/5 shadow-2xs"
+                                : "border-border/60 bg-muted/20 opacity-70"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                              <div
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                                  isEnabled
+                                    ? "border-primary/25 bg-primary/15 text-primary"
+                                    : "border-border bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5">
+                                  <p className="text-xs font-bold text-foreground truncate">{mod.label}</p>
+                                  <span className="text-[9px] font-medium text-primary bg-primary/10 px-1 rounded">
+                                    Core
+                                  </span>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {isEnabled ? "Active" : "Disabled"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={() => toggleModule(mod.key)}
+                              className="data-[state=checked]:bg-primary scale-90"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* 2. Additional Modules (Optional & Editable) */}
+                {additionalModules.length > 0 && (
+                  <div className="space-y-2.5 pt-2 border-t border-border/60">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-foreground">
+                          Additional Modules
+                        </span>
+                        <Badge variant="outline" className="text-[10px] text-muted-foreground border-border/60">
+                          {additionalModules.length} Optional & Editable
+                        </Badge>
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">
+                        Customize access
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {additionalModules.map((mod) => {
+                        const Icon = MODULE_ICONS[mod.key] || ShieldCheck;
+                        const isEnabled = moduleAccess[mod.key] ?? false;
+                        return (
+                          <div
+                            key={mod.key}
+                            className={`flex items-center justify-between p-3 rounded-xl border transition-all ${
+                              isEnabled
+                                ? "border-primary/30 bg-card shadow-2xs"
+                                : "border-border/60 bg-muted/10 opacity-75"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                              <div
+                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border ${
+                                  isEnabled
+                                    ? "border-primary/20 bg-primary/10 text-primary"
+                                    : "border-border bg-muted text-muted-foreground"
+                                }`}
+                              >
+                                <Icon className="h-4 w-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-medium text-foreground truncate">{mod.label}</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                  {isEnabled ? "Access Granted" : "No Access"}
+                                </p>
+                              </div>
+                            </div>
+
+                            <Switch
+                              checked={isEnabled}
+                              onCheckedChange={() => toggleModule(mod.key)}
+                              className="data-[state=checked]:bg-primary scale-90"
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* STEP 3: FEATURES */}
           {step === 3 && (
             <div className="space-y-4">
-              {/* Information Box */}
-              <div className="flex items-start gap-2.5 rounded-xl border border-primary/20 bg-primary/10 p-3.5 text-xs text-primary">
-                <Sparkles className="h-4 w-4 shrink-0 mt-0.5 text-primary" />
-                <div>
-                  <p className="font-semibold text-foreground">Configure Feature Capabilities</p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
-                    Enable or disable specific operational capabilities and special privileges for{" "}
-                    {fullName || "staff"}.
+              {/* Refined Information Panel */}
+              <div className="flex items-center gap-3 rounded-xl border border-border/70 bg-muted/30 p-3 text-xs">
+                <div className="h-8 w-8 rounded-lg bg-background border border-border/80 flex items-center justify-center text-muted-foreground shrink-0 shadow-2xs">
+                  <SlidersHorizontal className="h-4 w-4 text-primary" />
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-foreground text-xs">Configure Operational Capabilities</p>
+                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                    Toggle feature capabilities and special privileges for {fullName || "this staff member"}.
                   </p>
                 </div>
               </div>
 
               {/* Feature Cards Grid */}
-              <div className="space-y-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   {
                     key: "processSales",
-                    title: "Process Sales & Refunds",
-                    desc: "Allow checkout in POS billing, processing transactions, and issuing customer refunds.",
+                    icon: ShoppingBag,
+                    title: "Process Sales",
+                    desc: "Allow checkout in POS billing, processing customer transactions, and issuing refunds.",
                   },
                   {
                     key: "stockAudit",
-                    title: "Stock Audit & Adjustments",
+                    icon: ClipboardCheck,
+                    title: "Stock Audit",
                     desc: "Allow physical inventory audit logging, batch stock updates, and expiry write-offs.",
                   },
                   {
                     key: "purchasing",
-                    title: "Supplier Purchase Orders",
+                    icon: Truck,
+                    title: "Purchase Orders",
                     desc: "Allow creating purchase orders, logging supplier deliveries, and receiving stock.",
                   },
                   {
                     key: "dataExport",
-                    title: "Data Export & Reports",
-                    desc: "Allow downloading sales analytics, stock sheets, and financial reports as PDF or Excel.",
+                    icon: Download,
+                    title: "Data Export",
+                    desc: "Allow exporting sales analytics, inventory sheets, and financial reports to CSV and Excel.",
                   },
                   {
                     key: "notifications",
-                    title: "Automated Expiry & Stock Alerts",
-                    desc: "Receive real-time email and push notifications for critical stock levels & batch expiries.",
+                    icon: Bell,
+                    title: "Stock Alerts",
+                    desc: "Receive real-time notifications for critical stock levels, low supplies, and batch expiries.",
                   },
                   {
                     key: "userAdmin",
-                    title: "Staff & Security Administration",
+                    icon: ShieldCheck,
+                    title: "Administration",
                     desc: "Allow inviting new team members, changing roles, and configuring system security.",
                   },
                 ].map((feat) => {
+                  const Icon = feat.icon;
                   const isChecked = features[feat.key] ?? false;
+                  const isRoleDefault = ROLE_PRESETS[role]?.coreFeatures?.[feat.key] ?? false;
+
                   return (
                     <div
                       key={feat.key}
-                      className="flex items-start justify-between p-4 rounded-xl border border-border/80 bg-card gap-4"
+                      onClick={() => toggleFeature(feat.key)}
+                      className={cn(
+                        "flex flex-col p-4 rounded-xl border transition-all duration-200 gap-3 relative cursor-pointer group",
+                        isChecked
+                          ? "border-primary bg-primary/5 shadow-sm"
+                          : "border-border/60 bg-card hover:border-primary/40 hover:bg-muted/20",
+                      )}
                     >
-                      <div className="space-y-1 min-w-0 flex-1">
-                        <p className="text-xs font-bold text-foreground">{feat.title}</p>
-                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                      <div className="flex items-start justify-between">
+                        <div
+                          className={cn(
+                            "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border transition-colors",
+                            isChecked
+                              ? "border-primary/30 bg-primary/10 text-primary"
+                              : "border-border bg-muted text-muted-foreground group-hover:text-primary/70",
+                          )}
+                        >
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <Switch
+                          checked={isChecked}
+                          onCheckedChange={() => toggleFeature(feat.key)}
+                          onClick={(e) => e.stopPropagation()}
+                          className="data-[state=checked]:bg-primary"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5 flex-1 flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-foreground">{feat.title}</span>
+                          {isRoleDefault && (
+                            <span className="inline-flex items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium bg-primary/10 text-primary">
+                              Default
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground leading-relaxed line-clamp-3">
                           {feat.desc}
                         </p>
                       </div>
-
-                      <Switch
-                        checked={isChecked}
-                        onCheckedChange={() => toggleFeature(feat.key)}
-                        className="mt-0.5 data-[state=checked]:bg-primary"
-                      />
                     </div>
                   );
                 })}

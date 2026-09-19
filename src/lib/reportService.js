@@ -335,6 +335,15 @@ export const reportService = {
       method: "POST",
     });
   },
+
+  /**
+   * Seed demo bills in database for this user/org
+   */
+  async seedDemoBills() {
+    return apiRequest(`${REPORTS}/data/seed-demo`, {
+      method: "POST",
+    });
+  },
 };
 
 /**

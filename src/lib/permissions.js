@@ -23,6 +23,7 @@ export const ALL_MODULES = [
   { key: "users", label: "Users & Roles" },
   { key: "admin", label: "Profile" },
   { key: "integrations", label: "Integrations" },
+  { key: "support", label: "Support" },
 ];
 export const ALL_ACTIONS = ["view", "create", "update", "delete", "approve", "export"];
 const all = () => ({
@@ -57,12 +58,13 @@ export const DEFAULT_PERMISSIONS = {
   }),
   Cashier: role((m) => {
     if (m === "sales") return { ...none(), view: true, create: true };
-    if (["dashboard", "medicines", "batches", "shortbook"].includes(m)) return view();
+    if (["dashboard", "medicines", "batches", "shortbook", "support"].includes(m)) return view();
     return none();
   }),
   "Store Keeper": role((m) => {
     if (m === "batches") return { ...view(), create: true, update: true };
-    if (["dashboard", "medicines", "expiry", "audit", "shortbook"].includes(m)) return view();
+    if (["dashboard", "medicines", "expiry", "audit", "shortbook", "support"].includes(m))
+      return view();
     return none();
   }),
   "Inventory Manager": role((m) => {
@@ -125,9 +127,6 @@ export function buildPermissionOverrides({ role, accessIds = [], features = {} }
     for (const mod of ALL_MODULES) {
       if (overrides[mod.key]) overrides[mod.key].export = false;
     }
-  }
-  if (features.notifications === false) {
-    overrides.notifications = { ...(overrides.notifications ?? {}), view: false };
   }
   if (features.userAdmin === false) {
     overrides.users = {

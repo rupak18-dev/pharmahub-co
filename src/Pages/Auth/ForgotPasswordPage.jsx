@@ -14,17 +14,24 @@ const emailSchema = z.object({
   email: z.string().trim().email("Enter a valid email"),
 });
 
-// Mirrors the backend's passwordSchema so users get feedback before the API call.
+const PASSWORD_RULES = [
+  { label: "at least 8 characters", test: (v) => v.length >= 8 },
+  { label: "a lowercase letter", test: (v) => /[a-z]/.test(v) },
+  { label: "a number", test: (v) => /[0-9]/.test(v) },
+  { label: "a special character", test: (v) => /[^A-Za-z0-9]/.test(v) },
+];
+
+// Mirrors the SignupPage password policy so users get the same feedback.
 const resetSchema = z
   .object({
     code: z.string().regex(/^\d{6}$/, "Enter the 6-digit code"),
     newPassword: z
       .string()
-      .min(8, "At least 8 characters")
-      .regex(/[A-Z]/, "Include an uppercase letter")
-      .regex(/[a-z]/, "Include a lowercase letter")
-      .regex(/[0-9]/, "Include a number")
-      .regex(/[^A-Za-z0-9]/, "Include a special character"),
+      .min(1)
+      .refine((v) => PASSWORD_RULES.filter((r) => r.test(v)).length >= 3, {
+        message:
+          "Use at least 8 characters with a lowercase letter, a number, and a special character.",
+      }),
     confirmPassword: z.string().min(1, "Confirm your password"),
   })
   .refine((v) => v.newPassword === v.confirmPassword, {

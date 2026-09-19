@@ -79,7 +79,6 @@ export default function ReportsPage() {
   const [savedReports, setSavedReports] = useState([]);
   const [scheduledReports, setScheduledReports] = useState([]);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isSavedOpen, setIsSavedOpen] = useState(false);
   const [exportLogs, setExportLogs] = useState([]);
 
   const loadSavedData = useCallback(async () => {
@@ -199,7 +198,7 @@ export default function ReportsPage() {
               size="sm"
               variant="outline"
               className="h-9 text-xs font-medium gap-1.5"
-              onClick={() => setIsSavedOpen(true)}
+              onClick={() => navigate("/reports/saved")}
             >
               <Save className="h-3.5 w-3.5 text-muted-foreground" />
               Saved Reports
@@ -299,7 +298,7 @@ export default function ReportsPage() {
             <button
               type="button"
               className="text-[11px] text-primary hover:underline"
-              onClick={() => setIsSavedOpen(true)}
+              onClick={() => navigate("/reports/saved")}
             >
               Manage
             </button>
@@ -479,143 +478,6 @@ export default function ReportsPage() {
         onOpenChange={setIsModulePickerOpen}
         onSelect={openModuleBuilder}
       />
-
-      {/* Saved Reports Dialog */}
-      <Dialog open={isSavedOpen} onOpenChange={setIsSavedOpen}>
-        <DialogContent className="sm:max-w-2xl max-h-[80vh] flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-base font-semibold flex items-center gap-2">
-              <Save className="h-4 w-4 text-primary" />
-              Saved Reports
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground">
-              Your saved custom report configurations. Click any to re-open in the builder.
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="flex-1 overflow-y-auto -mx-6 px-6">
-            {savedReports.length === 0 && scheduledReports.length === 0 ? (
-              <div className="py-12 text-center space-y-2">
-                <FileBarChart2 className="mx-auto h-9 w-9 text-muted-foreground/25" />
-                <p className="text-sm font-medium text-foreground">No saved reports</p>
-                <p className="text-xs text-muted-foreground">
-                  Build and save a custom report to see it here.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4 py-2">
-                {savedReports.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                      Custom Reports ({savedReports.length})
-                    </p>
-                    <ul className="divide-y divide-border rounded-lg border border-border overflow-hidden">
-                      {savedReports.map((cfg) => {
-                        const mod = getModule(cfg.module || cfg.moduleId);
-                        return (
-                          <li
-                            key={cfg.id}
-                            className="flex items-center gap-3 px-4 py-3 hover:bg-muted/30 cursor-pointer transition-colors"
-                            onClick={() => {
-                              setIsSavedOpen(false);
-                              openSaved(cfg);
-                            }}
-                          >
-                            <div className="h-8 w-8 shrink-0 rounded-md border border-border bg-muted/50 flex items-center justify-center">
-                              <BarChart3 className="h-4 w-4 text-primary" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-sm font-semibold text-foreground truncate">
-                                {cfg.name}
-                              </p>
-                              <p className="text-xs text-muted-foreground truncate">
-                                {mod?.title ?? cfg.module}
-                                {cfg.fields?.length > 0 &&
-                                  ` · ${cfg.fields.length} field${cfg.fields.length > 1 ? "s" : ""}`}
-                                {cfg.fields?.length > 0 &&
-                                  ` · ${cfg.fields.length} field${cfg.fields.length > 1 ? "s" : ""}`}
-                                {(cfg.summarizeBy?.length > 0 || cfg.measures?.length > 0) &&
-                                  ` · ${cfg.summarizeBy?.length ?? cfg.measures?.length} metric${(cfg.summarizeBy?.length ?? cfg.measures?.length) > 1 ? "s" : ""}`}
-                              </p>
-                            </div>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive shrink-0"
-                              onClick={(e) => handleDeleteSaved(cfg.id, e)}
-                              aria-label="Delete saved report"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </Button>
-                          </li>
-                        );
-                      })}
-                    </ul>
-                  </div>
-                )}
-
-                {scheduledReports.length > 0 && (
-                  <div>
-                    <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground mb-2">
-                      Scheduled Alerts ({scheduledReports.length})
-                    </p>
-                    <ul className="divide-y divide-border rounded-lg border border-border overflow-hidden">
-                      {scheduledReports.map((sched) => (
-                        <li
-                          key={sched.id}
-                          className="flex items-center justify-between px-4 py-3 text-xs"
-                        >
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold text-foreground truncate">
-                              {sched.reportName}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                              {sched.frequency} at {sched.time}
-                              {sched.recipients?.length > 0 &&
-                                ` · ${sched.recipients.length} recipient${sched.recipients.length > 1 ? "s" : ""}`}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2 shrink-0 ml-3">
-                            <span
-                              className={cn(
-                                "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium",
-                                sched.status === "active"
-                                  ? "bg-emerald-50 text-emerald-700"
-                                  : "bg-muted text-muted-foreground",
-                              )}
-                            >
-                              {sched.status ?? "active"}
-                            </span>
-                            <button
-                              type="button"
-                              className="p-1 rounded text-muted-foreground hover:text-destructive transition-colors"
-                              onClick={(e) => handleDeleteSchedule(sched.id, e)}
-                              aria-label="Delete schedule"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <DialogFooter className="border-t border-border pt-4">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-8 text-xs"
-              onClick={() => setIsSavedOpen(false)}
-            >
-              Close
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
       {/* Export History Dialog */}
       <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>

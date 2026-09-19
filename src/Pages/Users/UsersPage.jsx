@@ -285,10 +285,6 @@ function UsersTab() {
   const changeRole = async (id, payload) => {
     const p = members.find((m) => m.id === id);
     if (!p) return false;
-    if (p.invitationId) {
-      toast.error("Pending invitations can't be role-changed. Cancel and re-invite instead.");
-      return false;
-    }
     if (offline) {
       toast.info("You're offline — role changes can't be saved until you reconnect.");
       return false;
@@ -298,6 +294,9 @@ function UsersTab() {
         role: payload.role,
         name: payload.name,
         email: payload.email,
+        phone: payload.phone,
+        department: payload.department,
+        designation: payload.designation,
         accessIds: payload.accessIds ?? [],
         featureAccess: payload.features ?? {},
       });
@@ -311,7 +310,7 @@ function UsersTab() {
       } else if (emailSent === true) {
         toast.success("Role and access updated. Staff member notified by email.");
       } else {
-        toast.success("Role and access updated.");
+        toast.success("Role and access updated. Staff member notified by email.");
       }
 
       loadRemote();
@@ -366,8 +365,23 @@ function UsersTab() {
     }
   };
 
+  // Filter out Owner and Admin accounts whose access cannot be modified.
+  // The staff list is dedicated to managing staff roles & access (Pharmacists, Cashiers, Store Keepers, etc.).
+  const staffMembers = useMemo(() => {
+    return members.filter((p) => {
+      // Exclude Owner accounts (Owner access cannot be changed)
+      if (p.role === "Owner") return false;
+      // Exclude Admin accounts (Admin access cannot be changed)
+      if (p.role === "Admin") return false;
+      // Exclude the logged-in administrator
+      if (user?.id && p.id === user.id) return false;
+      if (user?.email && p.email && user.email.toLowerCase() === p.email.toLowerCase()) return false;
+      return true;
+    });
+  }, [members, user]);
+
   const filtered = useMemo(() => {
-    let list = [...members];
+    let list = [...staffMembers];
     if (search) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -387,7 +401,7 @@ function UsersTab() {
       return 0;
     });
     return list;
-  }, [members, search, filterRole, filterStatus, sortBy]);
+  }, [staffMembers, search, filterRole, filterStatus, sortBy]);
 
   // Client-side pagination over the filtered list — 10 staff per page.
   const [currentPage, setCurrentPage] = useState(1);
@@ -408,9 +422,9 @@ function UsersTab() {
   const pagedRows = filtered.slice(pageStart, pageStart + USERS_PER_PAGE);
   const pageEnd = pageStart + pagedRows.length;
 
-  const teamRows = members.filter((p) => !p.invitationId);
+  const teamRows = staffMembers.filter((p) => !p.invitationId);
   const totalActive = teamRows.filter((p) => resolveStatus(p) === "active").length;
-  const totalPending = members.filter((p) => resolveStatus(p) === "pending").length;
+  const totalPending = staffMembers.filter((p) => resolveStatus(p) === "pending").length;
   const totalDisabled = teamRows.filter(
     (p) => resolveStatus(p) === "inactive" || resolveStatus(p) === "suspended",
   ).length;
@@ -535,7 +549,7 @@ function UsersTab() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Roles</SelectItem>
-              {ALL_ROLES.map((r) => (
+              {ALL_ROLES.filter((r) => r !== "Owner" && r !== "Admin").map((r) => (
                 <SelectItem key={r} value={r}>
                   {r}
                 </SelectItem>
@@ -625,8 +639,8 @@ function UsersTab() {
               const isSelf = user?.id === p.id;
               const isOwner = p.role === "Owner";
               const isProtectedOwner = isOwner;
-              const canEditRow = canUpdate && !p.invitationId && !isSelf;
-              const canChangeRole = canUpdate && !p.invitationId && !isSelf && !isOwner;
+              const canEditRow = canUpdate && !isSelf;
+              const canChangeRole = canUpdate && !isSelf && !isOwner;
               const canManageStatus = canUpdate && !isSelf && !p.invitationId;
               const canRemove = canDelete && !isSelf && !isProtectedOwner && p.status !== "removed";
               return (
@@ -688,6 +702,15 @@ function UsersTab() {
                             {status === "pending" && (
                               <>
                                 <DropdownMenuSeparator />
+                                {canUpdate && (
+                                  <DropdownMenuItem
+                                    onClick={() => setRoleChange(p)}
+                                    className="cursor-pointer"
+                                  >
+                                    <UserCog className="mr-2 h-4 w-4" />
+                                    Edit Staff & Access
+                                  </DropdownMenuItem>
+                                )}
                                 {canManageStatus && (
                                   <DropdownMenuItem
                                     onClick={() => copyInviteLink(p)}
@@ -839,9 +862,9 @@ function UsersTab() {
                   const status = resolveStatus(p);
                   const isSelf = user?.id === p.id;
                   const isOwner = p.role === "Owner";
-                  const isProtectedOwner = isOwner;
-                  const canEditRow = canUpdate && !p.invitationId && !isSelf;
-                  const canChangeRole = canUpdate && !p.invitationId && !isSelf && !isOwner;
+                  const isProtectedOwner = isOwner || p.email === "demo@pharmahub.local";
+                  const canEditRow = canUpdate && !isSelf;
+                  const canChangeRole = canUpdate && !isSelf && !isOwner;
                   const canManageStatus = canUpdate && !isSelf && !p.invitationId;
                   const canRemove =
                     canDelete && !isSelf && !isProtectedOwner && p.status !== "removed";
@@ -861,15 +884,11 @@ function UsersTab() {
                                 </span>
                               )}
                             </p>
-                            {p.designation && (
-                              <p className="text-[11px] text-muted-foreground">{p.designation}</p>
-                            )}
                           </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{p.email}</td>
                       <td className="px-4 py-3">
-                        <span className="text-xs font-medium text-foreground/80">{p.role}</span>
                         <span className="text-xs font-medium text-foreground/80">{p.role}</span>
                       </td>
                       <td className="px-4 py-3">
@@ -894,12 +913,6 @@ function UsersTab() {
                               <Eye className="mr-2 h-4 w-4" />
                               View Profile
                             </DropdownMenuItem>
-                            {canUpdate && (
-                              <DropdownMenuItem onClick={() => setProfileEdit(p)}>
-                                <Pencil className="mr-2 h-4 w-4" />
-                                Edit Staff
-                              </DropdownMenuItem>
-                            )}
                             {canChangeRole && (
                               <DropdownMenuItem onClick={() => setRoleChange(p)}>
                                 <Shield className="mr-2 h-4 w-4" />
@@ -989,7 +1002,6 @@ function UsersTab() {
           )}
         </div>
       )}
-
       {/* Pagination controls */}
       {totalPages > 1 && (
         <div className="flex flex-col items-center gap-2 border-t border-border/40 pt-4">

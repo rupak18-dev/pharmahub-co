@@ -1,8 +1,11 @@
 // Fetch wrapper for the pharmahub-server Express API (`/api/v1`).
-// Auth is session-cookie based: the server sets an httpOnly cookie at login
-// and the browser sends it automatically via `credentials: "include"`.
-// No token is ever exposed to JavaScript — nothing is stored in
-// localStorage/sessionStorage or visible in DevTools storage panes.
+// Auth uses a JWT bearer token stored in localStorage (PharmaHub_session_v2),
+// sent as `Authorization: Bearer <token>` on every request. The cookie
+// `credentials: "include"` is also sent for cross-origin requests where the
+// server may use httpOnly cookies (e.g. Google OAuth callback).
+//
+// CSRF protection: mutating requests include a custom `X-PharmaHub-Client`
+// header that cross-site form posts cannot add without a preflight.
 //
 // Backend envelope: `{ success, message, data, meta }` on success and
 // `{ success: false, error: { message, details } }` on failure.
@@ -55,6 +58,24 @@ function withLimit(url) {
 // cookie session.
 const CLIENT_HEADER = { "X-PharmaHub-Client": "web" };
 
+const SESSION_KEY = "PharmaHub_session_v2";
+
+export function getAuthToken() {
+  return getSessionToken();
+}
+
+function getSessionToken() {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw =
+      window.localStorage.getItem(SESSION_KEY) ?? window.sessionStorage.getItem(SESSION_KEY);
+    const parsed = raw ? JSON.parse(raw) : null;
+    return parsed?.token || null;
+  } catch {
+    return null;
+  }
+}
+
 const DEFAULT_TIMEOUT_MS = 30000;
 
 async function request(path, options = {}) {
@@ -64,6 +85,11 @@ async function request(path, options = {}) {
     ...CLIENT_HEADER,
     ...(options.headers ?? {}),
   };
+
+  const token = getSessionToken();
+  if (token && !headers["Authorization"]) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   // Never set Content-Type header when sending FormData, Blob, or ArrayBuffer.
   // The browser fetch API must automatically generate the multipart boundary.
@@ -154,6 +180,25 @@ function setCachedResponse(path, data) {
   }
 }
 
+export function clearApiCache(prefix = "") {
+  if (typeof window === "undefined") return;
+  try {
+    const p = `${API_CACHE_PREFIX}${prefix}`;
+    const toRemove = [];
+    for (let i = 0; i < window.sessionStorage.length; i++) {
+      const key = window.sessionStorage.key(i);
+      if (key && key.startsWith(p)) {
+        toRemove.push(key);
+      }
+    }
+    for (const k of toRemove) {
+      window.sessionStorage.removeItem(k);
+    }
+  } catch {
+    // ignore
+  }
+}
+
 // Fires GETs for the given paths once, warming the server and filling the
 // response cache so pages hydrate instantly on visit.
 export function prefetch(paths) {
@@ -183,8 +228,10 @@ export async function apiRequest(path, options = {}) {
   } else {
     data = json;
   }
-  if (method === "GET") {
+  if (method === "GET" && !options.noCache) {
     setCachedResponse(path, data);
+  } else {
+    clearApiCache();
   }
   return data;
 }

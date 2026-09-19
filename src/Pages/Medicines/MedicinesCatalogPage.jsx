@@ -1,6 +1,17 @@
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Pencil, Power, PowerOff, Eye, Filter, FileSpreadsheet } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Power,
+  PowerOff,
+  Eye,
+  Filter,
+  FileSpreadsheet,
+  Info,
+} from "lucide-react";
+import { getImageForMedicine } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,7 +24,9 @@ import { logActivity } from "@/lib/stock";
 import { useAuth } from "@/lib/auth";
 import { PageHeader } from "@/Components/shared/PageHeader";
 import { EmptyState } from "@/Components/shared/EmptyState";
+import { NoMedicinesFound } from "@/Components/shared/NoMedicinesFound";
 import { StatusBadge } from "@/Components/shared/StatusBadge";
+import { getCategoryBadgeClasses } from "@/lib/utils";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
 import { Label } from "@/Components/ui/label";
@@ -451,7 +464,7 @@ export default function MedicinesCatalogPage() {
 
         {/* Dropdown Filters (collapsible on mobile) */}
         <div
-          className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 ${showMobileFilters ? "grid" : "hidden md:grid"}`}
+          className={`grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3 ${showMobileFilters ? "grid" : "hidden md:grid"}`}
         >
           <Select value={catFilter} onValueChange={setCatFilter}>
             <SelectTrigger className="bg-white">
@@ -562,23 +575,25 @@ export default function MedicinesCatalogPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          title="No medicines matched filters"
-          description="Refine your criteria or add a new medicine configuration to the master catalog."
-          action={
-            has("medicines", "create") && (
-              <Button onClick={openCreate} className="bg-[#2563EB] hover:bg-blue-700">
-                <Plus className="mr-1 h-4 w-4" /> Add medicine
-              </Button>
-            )
-          }
+        <NoMedicinesFound
+          onClearSearch={() => {
+            handleSearchChange("");
+            setCatFilter("all");
+            setBrandFilter("all");
+            setGenericFilter("all");
+            setSupplierFilter("all");
+            setRackFilter("all");
+            setStockStatusFilter("all");
+            setExpiryStatusFilter("all");
+            setActiveFilter("all");
+          }}
         />
       ) : (
         <>
           {/* Desktop table view */}
           <div className="hidden md:block overflow-x-auto border border-border/80 rounded-2xl shadow-sm bg-white">
             <table className="w-full text-[13px] border-collapse min-w-[2000px]">
-              <thead className="border-b border-border/80 bg-muted/30 text-left text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              <thead className="border-b border-[#A0D2CD] bg-[#E8F3F1] text-left text-[11px] font-bold uppercase tracking-wider text-[#005B60]">
                 <tr>
                   <th className="px-4 py-3">Medicine Info</th>
                   <th className="px-4 py-3">Brand</th>
@@ -600,7 +615,7 @@ export default function MedicinesCatalogPage() {
                   <th className="px-4 py-3">Rack</th>
                   <th className="px-4 py-3">Supplier</th>
                   <th className="px-4 py-3">Availability</th>
-                  <th className="px-4 py-3 text-center sticky right-0 bg-white shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.05)] border-l border-border/80">
+                  <th className="px-4 py-3 text-center sticky right-0 bg-[#E8F3F1] shadow-[-8px_0_12px_-4px_rgba(0,0,0,0.05)] border-l border-[#A0D2CD] text-[#005B60]">
                     Actions
                   </th>
                 </tr>
@@ -651,8 +666,17 @@ export default function MedicinesCatalogPage() {
                       </td>
 
                       {/* Category */}
-                      <td className="px-4 py-3 text-muted-foreground">
-                        {categories.find((c) => c.id === m.categoryId)?.name ?? "—"}
+                      <td className="px-4 py-3">
+                        {(() => {
+                          const catName = categories.find((c) => c.id === m.categoryId)?.name;
+                          return (
+                            <span
+                              className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-xs font-semibold border ${getCategoryBadgeClasses(catName)}`}
+                            >
+                              {catName ?? "—"}
+                            </span>
+                          );
+                        })()}
                       </td>
 
                       {/* Strength */}
@@ -812,8 +836,14 @@ export default function MedicinesCatalogPage() {
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded bg-muted/60 flex items-center justify-center text-sm border shrink-0">
-                        {m.dosageForm?.charAt(0) || "💊"}
+                      <div className="w-9 h-9 rounded bg-slate-50 flex items-center justify-center border border-border/40 shrink-0 overflow-hidden">
+                        <img
+                          src={getImageForMedicine(m.id, m.dosageForm)}
+                          alt={m.name}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="min-w-0">
                         <Link
