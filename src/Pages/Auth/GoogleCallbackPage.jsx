@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { isOnboarded } from "@/lib/onboardingApi";
 import { CapsuleLoader } from "@/Components/shared/CapsuleLoader";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 
@@ -16,8 +17,9 @@ export default function GoogleCallbackPage() {
     if (ranRef.current) return;
     ranRef.current = true;
 
-    // The backend sets the session as an httpOnly cookie before redirecting
-    // here. No token ever appears in the URL — hydrate the user via /auth/me.
+    // For Google OAuth the server sets the session cookie before redirecting
+    // here. For non-OAuth flows the JWT is returned in the response body.
+    // Hydrate the authoritative identity via /auth/me in all cases.
     restoreSession()
       .then(() => {
         toast.success("Successfully logged in!");
@@ -48,10 +50,10 @@ export default function GoogleCallbackPage() {
 
   return (
     <CapsuleLoader
-      minimumMs={1200}
-      variant="circular"
-      message="Signing you in…"
-      onDone={() => navigate(user?.onboarded ? "/dashboard" : "/onboarding")}
+      minimumMs={isOnboarded(user) ? 1600 : 1200}
+      variant={isOnboarded(user) ? "capsule" : "circular"}
+      message={isOnboarded(user) ? "Preparing your dashboard…" : "Signing you in…"}
+      onDone={() => navigate(isOnboarded(user) ? "/dashboard" : "/onboarding")}
     />
   );
 }

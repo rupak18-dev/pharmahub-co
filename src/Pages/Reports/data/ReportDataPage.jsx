@@ -18,6 +18,7 @@ import {
   MessageCircle,
   Check,
   AlertTriangle,
+  Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router";
@@ -228,6 +229,20 @@ export default function ReportDataPage() {
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting, setDeleting] = useState(false);
   const [sendingWhatsAppId, setSendingWhatsAppId] = useState(null);
+  const [seeding, setSeeding] = useState(false);
+
+  const handleSeedDemo = async () => {
+    setSeeding(true);
+    try {
+      const res = await reportService.seedDemoBills();
+      toast.success(res?.message || "Demo bills generated in database!");
+      await Promise.all([loadBills(), loadSummary()]);
+    } catch (err) {
+      toast.error(err?.message || "Failed to load demo data.");
+    } finally {
+      setSeeding(false);
+    }
+  };
 
   const loadBills = useCallback(async () => {
     setLoading(true);
@@ -465,6 +480,20 @@ export default function ReportDataPage() {
             <Button
               size="sm"
               variant="outline"
+              className="h-9 text-xs font-medium gap-1.5 border-dashed text-primary hover:text-primary hover:bg-primary/5"
+              disabled={seeding}
+              onClick={handleSeedDemo}
+            >
+              {seeding ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Sparkles className="h-3.5 w-3.5 text-primary" />
+              )}
+              {seeding ? "Loading Demo..." : "Load Demo Data"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
               className="h-9 text-xs font-medium gap-1.5"
               onClick={() => setIsImportOpen(true)}
             >
@@ -532,9 +561,9 @@ export default function ReportDataPage() {
         </div>
 
         <div className="relative w-full">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-foreground/60" />
           <Input
-            className="pl-9 bg-white"
+            className="pl-9 bg-white text-xs text-foreground placeholder:text-foreground/70 font-normal border-border/80 hover:border-slate-400 focus-visible:border-primary transition-colors"
             placeholder="Search bill/invoice no, party, medicine, batch…"
             value={search}
             onChange={(e) => {
@@ -562,7 +591,7 @@ export default function ReportDataPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="h-9 text-xs bg-white">
+            <SelectTrigger className="h-9 text-xs bg-white font-medium text-foreground border-border/80 hover:border-slate-400 [&>span]:font-medium [&>span]:text-foreground transition-colors">
               <SelectValue placeholder="All types" />
             </SelectTrigger>
             <SelectContent>
@@ -584,7 +613,7 @@ export default function ReportDataPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="h-9 text-xs bg-white">
+            <SelectTrigger className="h-9 text-xs bg-white font-medium text-foreground border-border/80 hover:border-slate-400 [&>span]:font-medium [&>span]:text-foreground transition-colors">
               <SelectValue placeholder="All sources" />
             </SelectTrigger>
             <SelectContent>
@@ -606,7 +635,7 @@ export default function ReportDataPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="h-9 text-xs bg-white">
+            <SelectTrigger className="h-9 text-xs bg-white font-medium text-foreground border-border/80 hover:border-slate-400 [&>span]:font-medium [&>span]:text-foreground transition-colors">
               <SelectValue placeholder="All payment modes" />
             </SelectTrigger>
             <SelectContent>
@@ -628,7 +657,7 @@ export default function ReportDataPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="h-9 text-xs bg-white">
+            <SelectTrigger className="h-9 text-xs bg-white font-medium text-foreground border-border/80 hover:border-slate-400 [&>span]:font-medium [&>span]:text-foreground transition-colors">
               <SelectValue placeholder="Any status" />
             </SelectTrigger>
             <SelectContent>
@@ -650,7 +679,7 @@ export default function ReportDataPage() {
               setPage(1);
             }}
           >
-            <SelectTrigger className="h-9 text-xs bg-white">
+            <SelectTrigger className="h-9 text-xs bg-white font-medium text-foreground border-border/80 hover:border-slate-400 [&>span]:font-medium [&>span]:text-foreground transition-colors">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -673,7 +702,8 @@ export default function ReportDataPage() {
             separator="–"
             placeholder={["From date", "To date"]}
             allowClear
-            style={{ width: "100%", fontSize: 12 }}
+            className="[&_.ant-picker-input_input]:text-xs [&_.ant-picker-input_input]:font-medium [&_.ant-picker-input_input::placeholder]:text-foreground/70 [&_.ant-picker-input_input]:text-foreground border-border/80 hover:border-slate-400 transition-colors"
+            style={{ width: "100%", height: 36, fontSize: 12, backgroundColor: "#fff" }}
           />
         </div>
       </div>
@@ -719,6 +749,20 @@ export default function ReportDataPage() {
                     </Button>
                   ) : (
                     <>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs gap-1.5"
+                        disabled={seeding}
+                        onClick={handleSeedDemo}
+                      >
+                        {seeding ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Sparkles className="h-3.5 w-3.5 text-primary" />
+                        )}
+                        Load Demo Data
+                      </Button>
                       <Button
                         size="sm"
                         variant="outline"

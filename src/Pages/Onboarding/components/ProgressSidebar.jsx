@@ -15,11 +15,11 @@ export function ProgressSidebar({ currentStep }) {
       }}
     >
       <div className="relative z-10">
-        <Logo isWhite tagline={null} />
+        <Logo tagline={null} />
 
         <div className="mt-[40px]">
           <h2 className="text-3xl font-bold tracking-tight text-white">Create your workspace</h2>
-          <p className="mt-[16px] text-base font-medium text-white/80 leading-relaxed">
+          <p className="mt-[16px] text-base font-normal text-white/80 leading-relaxed">
             Select your organization type to personalize your PharmaHub workspace.
           </p>
         </div>
@@ -113,6 +113,8 @@ export function ProgressSidebar({ currentStep }) {
         <span className="mb-1">Need help?</span>
         <a
           href="mailto:support@pharmahub.com"
+          target="_blank"
+          rel="noopener noreferrer"
           className="text-white hover:underline transition-all"
         >
           Contact Support &rarr;

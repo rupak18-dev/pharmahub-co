@@ -3,7 +3,6 @@ import { Outlet, isRouteErrorResponse, useLocation, useMatches, useRouteError } 
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Toaster } from "@/Components/ui/sonner";
-import { AuthProvider } from "@/lib/auth";
 import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
 
 const DEFAULT_TITLE = "PharmaHub — Modern Pharmacy Management System";
@@ -23,14 +22,14 @@ export function AppRoot() {
     document.title = resolveTitle(matches);
   }, [matches]);
   return (
-    <AuthProvider>
+    <>
       <Suspense fallback={<FullScreenSkeleton />}>
         <Outlet />
       </Suspense>
       <Toaster richColors position="top-right" />
       <Analytics />
       <SpeedInsights route={pathname} />
-    </AuthProvider>
+    </>
   );
 }
 
@@ -84,15 +83,15 @@ export function AppRootErrorBoundary(props) {
           <button
             onClick={() => {
               try {
-                // Auth is cookie-based now; clear legacy localStorage sessions
-                // and any older version of the local mock database so a refresh
-                // starts clean.
+                // Remove PharmaHub-specific localStorage keys only.
+                // Do NOT call localStorage.clear() — it wipes every key for
+                // the entire origin, including unrelated apps on the same
+                // subdomain.
                 localStorage.removeItem("PharmaHub_db_v2");
                 localStorage.removeItem("PharmaHub_db_v3");
                 localStorage.removeItem("PharmaHub_db_v4");
                 localStorage.removeItem("PharmaHub_session_v1");
                 localStorage.removeItem("PharmaHub_session_v2");
-                localStorage.clear();
               } catch {
                 // ignore
               }

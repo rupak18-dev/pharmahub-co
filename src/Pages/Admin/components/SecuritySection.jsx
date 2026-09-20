@@ -1,8 +1,6 @@
 import { useState } from "react";
 import { Check, KeyRound, Lock, MonitorSmartphone, Settings2, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
-import { useDb } from "@/hooks/useDb";
-import { db } from "@/lib/db";
 import { useAuth } from "@/lib/auth";
 import { usePermission } from "@/hooks/usePermission";
 import { Badge } from "@/Components/ui/badge";
@@ -40,17 +38,18 @@ function SecurityRow({ icon: Icon, label, children }) {
 }
 
 function PasswordDialog({ open, onOpenChange }) {
-  const { user } = useAuth();
+  const { changePassword } = useAuth();
   const has = usePermission();
   const canEdit = has("admin", "update");
   const [form, setForm] = useState({ current: "", next: "", confirm: "" });
   const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
   const setField = (key, value) => {
     setForm((f) => ({ ...f, [key]: value }));
     setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
-  const changePassword = () => {
+  const handleSave = async () => {
     const nextErrors = {};
     if (!form.current) nextErrors.current = "Enter your current password.";
     if (!form.next) nextErrors.next = "Enter a new password.";
@@ -61,24 +60,17 @@ function PasswordDialog({ open, onOpenChange }) {
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length > 0) return;
 
-    db.set((d) => {
-      const p = d.profiles.find((x) => x.id === user?.id);
-      if (p) {
-        p.password = form.next;
-        p.passwordChangedAt = new Date().toISOString();
-      }
-      d.activityLogs.unshift({
-        id: db.uid(),
-        userId: user?.id ?? "",
-        userName: user?.name ?? "",
-        action: "Updated password",
-        entityType: "security",
-        createdAt: new Date().toISOString(),
-      });
-    });
-    setForm({ current: "", next: "", confirm: "" });
-    onOpenChange(false);
-    toast.success("Password updated");
+    setSaving(true);
+    try {
+      await changePassword(form.current, form.next);
+      setForm({ current: "", next: "", confirm: "" });
+      onOpenChange(false);
+      toast.success("Password updated");
+    } catch (err) {
+      setErrors({ current: err?.message || "Incorrect current password" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -97,7 +89,7 @@ function PasswordDialog({ open, onOpenChange }) {
               autoComplete="current-password"
               value={form.current}
               onChange={(e) => setField("current", e.target.value)}
-              disabled={!canEdit}
+              disabled={!canEdit || saving}
             />
             {errors.current && <p className="text-xs text-destructive">{errors.current}</p>}
           </div>
@@ -110,7 +102,7 @@ function PasswordDialog({ open, onOpenChange }) {
                 autoComplete="new-password"
                 value={form.next}
                 onChange={(e) => setField("next", e.target.value)}
-                disabled={!canEdit}
+                disabled={!canEdit || saving}
               />
               {errors.next && <p className="text-xs text-destructive">{errors.next}</p>}
             </div>
@@ -122,7 +114,7 @@ function PasswordDialog({ open, onOpenChange }) {
                 autoComplete="new-password"
                 value={form.confirm}
                 onChange={(e) => setField("confirm", e.target.value)}
-                disabled={!canEdit}
+                disabled={!canEdit || saving}
               />
               {errors.confirm && <p className="text-xs text-destructive">{errors.confirm}</p>}
             </div>
@@ -165,10 +157,10 @@ function PasswordDialog({ open, onOpenChange }) {
           <Button
             size="sm"
             className="h-9 text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 gap-1.5"
-            onClick={changePassword}
-            disabled={!canEdit}
+            onClick={handleSave}
+            disabled={!canEdit || saving}
           >
-            <KeyRound className="h-3.5 w-3.5" /> Change Password
+            <KeyRound className="h-3.5 w-3.5" /> {saving ? "Saving…" : "Change Password"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -179,7 +171,7 @@ function PasswordDialog({ open, onOpenChange }) {
 export function SecuritySection() {
   const { user } = useAuth();
   const [open, setOpen] = useState(false);
-  const passwordSet = Boolean(user?.password);
+  const passwordSet = Boolean(user);
 
   return (
     <ProfileSectionCard

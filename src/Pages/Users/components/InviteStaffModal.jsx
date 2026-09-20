@@ -5,6 +5,7 @@ import { useDb } from "@/hooks/useDb";
 import { db } from "@/lib/db";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
+import { PhoneInput } from "@/Components/ui/phone-input";
 import { Label } from "@/Components/ui/label";
 import {
   Dialog,
@@ -155,10 +156,9 @@ export function InviteStaffModal({ open, onOpenChange, onInvited }) {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Phone Number</Label>
-                <Input
-                  placeholder="+91 98765 43210"
+                <PhoneInput
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={setPhone}
                 />
               </div>
               <div className="space-y-1.5">
@@ -170,7 +170,7 @@ export function InviteStaffModal({ open, onOpenChange, onInvited }) {
                     <SelectValue placeholder="Select role" />
                   </SelectTrigger>
                   <SelectContent>
-                    {ALL_ROLES.map((r) => {
+                    {ALL_ROLES.filter((r) => r !== "Owner").map((r) => {
                       const rm = getRoleMeta(r);
                       const Icon = rm.icon;
                       return (
