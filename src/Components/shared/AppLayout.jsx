@@ -73,7 +73,7 @@ export default function AppLayout() {
     <SidebarProvider>
       <div className="flex flex-1 h-full w-full bg-background [overflow-x:clip]">
         <AppSidebar />
-        <div className="flex min-w-0 flex-1 flex-col">
+        <div className="flex min-w-0 flex-1 flex-col [overflow-x:clip]">
           <header className="sticky top-0 z-30 shrink-0 flex h-16 items-center gap-4 border-b border-border bg-background px-4 sm:px-6 shadow-sm">
             <SidebarTrigger />
             <div className="ml-auto flex items-center gap-2">
@@ -94,7 +94,7 @@ export default function AppLayout() {
               </Button>
             </div>
           </header>
-          <main className="flex-1 min-w-0 px-4 py-6 sm:px-6 lg:px-8">
+          <main className="flex-1 min-w-0 px-4 py-6 sm:px-6 lg:px-8 w-full max-w-full">
             <Suspense fallback={<RouteSkeleton pathname={pathname} />}>
               <Outlet />
             </Suspense>
