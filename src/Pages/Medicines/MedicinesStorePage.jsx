@@ -32,6 +32,7 @@ import {
   X,
   CheckSquare,
   MoreHorizontal,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Checkbox } from "@/Components/ui/checkbox";
 import { Popover, PopoverTrigger, PopoverContent } from "@/Components/ui/popover";
@@ -213,7 +214,6 @@ export default function MedicinesCatalogPage() {
   const [therapeuticFilter, setTherapeuticFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
-  const [visibleFields, setVisibleFields] = useState([]);
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
   // Header column priority filters — selected value floats to top, rest shown below
   const [headerBrandPriority, setHeaderBrandPriority] = useState(null);
@@ -244,7 +244,9 @@ export default function MedicinesCatalogPage() {
     { id: "supplier", label: "Supplier" },
     { id: "availability", label: "Availability" },
   ];
-  const isFieldVisible = (id) => visibleFields.length === 0 || visibleFields.includes(id);
+  const ALL_COLUMN_IDS = useMemo(() => CUSTOMIZABLE_FILTERS.map((f) => f.id), []);
+  const [visibleFields, setVisibleFields] = useState(ALL_COLUMN_IDS);
+  const isFieldVisible = (id) => visibleFields.includes(id);
   const toggleField = (id) => {
     setVisibleFields((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
   };
@@ -1277,49 +1279,62 @@ export default function MedicinesCatalogPage() {
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="outline"
-                        className="hidden sm:flex h-7 sm:h-8 px-2 sm:px-2.5 text-[10px] sm:text-xs bg-white text-slate-700 border-border/80 rounded-lg gap-1 cursor-pointer shadow-xs"
+                        className="hidden sm:flex h-7 sm:h-8 px-2 sm:px-2.5 text-[10px] sm:text-xs bg-white text-slate-700 border-border/80 rounded-lg gap-1.5 cursor-pointer shadow-xs hover:bg-slate-50"
                         title="Manage visible columns"
                       >
-                        <Filter className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
-                        <span>Columns</span>
-                        {visibleFields.length > 0 && (
-                          <span className="rounded-full bg-[#007A87]/10 px-1 py-0.2 text-[9px] text-[#007A87] font-bold">
+                        <SlidersHorizontal className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
+                        <span>Manage Columns</span>
+                        {visibleFields.length < CUSTOMIZABLE_FILTERS.length && (
+                          <span className="rounded-full bg-[#007A87]/10 px-1.5 py-0.2 text-[9px] text-[#007A87] font-bold">
                             {visibleFields.length}
                           </span>
                         )}
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end">
-                      <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40">
+                    <DropdownMenuContent className="w-56 z-50 p-1.5 shadow-xl border border-border/60 rounded-xl" align="end">
+                      <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40 mb-1">
                         <span className="text-xs font-bold text-slate-900">Manage Columns</span>
-                        {visibleFields.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setVisibleFields([])}
-                            className="text-[11px] text-[#007A87] hover:underline font-semibold cursor-pointer"
-                          >
-                            Clear
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {visibleFields.length < CUSTOMIZABLE_FILTERS.length ? (
+                            <button
+                              type="button"
+                              onClick={() => setVisibleFields(ALL_COLUMN_IDS)}
+                              className="text-[11px] text-[#007A87] hover:underline font-semibold cursor-pointer"
+                            >
+                              Select All
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setVisibleFields([])}
+                              className="text-[11px] text-muted-foreground hover:text-slate-900 font-semibold cursor-pointer"
+                            >
+                              Clear All
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="max-h-64 overflow-y-auto py-1">
+                      <div className="max-h-64 overflow-y-auto py-0.5 space-y-0.5">
                         {CUSTOMIZABLE_FILTERS.map((f) => (
                           <DropdownMenuCheckboxItem
                             key={f.id}
                             checked={visibleFields.includes(f.id)}
                             onCheckedChange={() => toggleField(f.id)}
                             onSelect={(e) => e.preventDefault()}
+                            className="text-xs py-1.5 pl-7 pr-2 rounded-md cursor-pointer hover:bg-slate-50 focus:bg-slate-100/80"
+                            boxClassName="h-3.5 w-3.5 left-2 rounded-[3px] border-slate-300"
+                            iconClassName="h-2.5 w-2.5"
                           >
-                            {f.label}
+                            <span className="text-slate-700 font-medium">{f.label}</span>
                           </DropdownMenuCheckboxItem>
                         ))}
                       </div>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="my-1" />
                       <DropdownMenuItem
-                        onSelect={() => setVisibleFields([])}
-                        className="justify-center text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                        onSelect={() => setVisibleFields(ALL_COLUMN_IDS)}
+                        className="justify-center text-xs font-semibold text-[#007A87] hover:bg-[#E8F3F1] rounded-md cursor-pointer py-1.5"
                       >
-                        Clear & show all columns
+                        Reset & show all columns
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1469,11 +1484,13 @@ export default function MedicinesCatalogPage() {
                               />
                             </th>
                           )}
-                          <th className="px-4 py-3">
-                            <div className="flex items-center gap-1">
-                              Medicine Name <ArrowDownUp className="w-3 h-3 opacity-60" />
-                            </div>
-                          </th>
+                          {isFieldVisible("name") && (
+                            <th className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                Medicine Name <ArrowDownUp className="w-3 h-3 opacity-60" />
+                              </div>
+                            </th>
+                          )}
                           {isFieldVisible("brand") && (
                             <th className="px-4 py-3">
                               <div className="flex items-center gap-1">
@@ -1788,30 +1805,32 @@ export default function MedicinesCatalogPage() {
                                 </td>
                               )}
                               {/* Medicine Info */}
-                              <td className="px-4 py-3 font-semibold text-foreground group-hover:text-[#007A87] transition-colors">
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <div className="shrink-0 w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-border/40 select-none overflow-hidden">
-                                    <img
-                                      src={getImageForMedicine(m.id, m.dosageForm)}
-                                      alt={`${m.name} packaging`}
-                                      loading="lazy"
-                                      decoding="async"
-                                      className="w-full h-full object-cover"
-                                    />
+                              {isFieldVisible("name") && (
+                                <td className="px-4 py-3 font-semibold text-foreground group-hover:text-[#007A87] transition-colors">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="shrink-0 w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-border/40 select-none overflow-hidden">
+                                      <img
+                                        src={getImageForMedicine(m.id, m.dosageForm)}
+                                        alt={`${m.name} packaging`}
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <Link
+                                        to={`/medicines/${m.id}`}
+                                        className="truncate block text-sm font-medium text-slate-950 hover:text-[#007A87] transition-colors"
+                                      >
+                                        {m.name}
+                                      </Link>
+                                      <span className="text-[10px] text-muted-foreground block">
+                                        {m.id.slice(0, 8).toUpperCase()}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <div className="min-w-0">
-                                    <Link
-                                      to={`/medicines/${m.id}`}
-                                      className="truncate block text-sm font-medium text-slate-950 hover:text-[#007A87] transition-colors"
-                                    >
-                                      {m.name}
-                                    </Link>
-                                    <span className="text-[10px] text-muted-foreground block">
-                                      {m.id.slice(0, 8).toUpperCase()}
-                                    </span>
-                                  </div>
-                                </div>
-                              </td>
+                                </td>
+                              )}
 
                               {/* Brand */}
                               {isFieldVisible("brand") && (
