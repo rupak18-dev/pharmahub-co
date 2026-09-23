@@ -76,6 +76,31 @@ export function AuthProvider({ children }) {
     } catch {
       // ignore
     }
+    // When /auth/me fails only because the backend is sleeping/unreachable,
+    // re-attempt hydration in the background a few times so a cold start
+    // doesn't silently end the session. Works alongside the focus/storage
+    // listeners below, which cover recovery on later tab activity.
+    const hydrateAfterTransientFailure = async () => {
+      for (const delay of [4000, 12000, 30000]) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        if (cancelled) return;
+        try {
+          const me = await apiRequest("/auth/me", { noCache: true });
+          if (cancelled) return;
+          const stored = readSession();
+          if (stored?.token) writeSession({ token: stored.token, user: me });
+          setUser(me);
+          return;
+        } catch (retryErr) {
+          if (retryErr?.status === 401 || retryErr?.status === 403) {
+            writeSession(null);
+            setUser(null);
+            return;
+          }
+        }
+      }
+    };
+
     (async () => {
       // Hydrate the user from the server via GET /auth/me.
       // Note: the JWT token is stored in localStorage (sent as Bearer header).
@@ -88,13 +113,21 @@ export function AuthProvider({ children }) {
         const stored = readSession();
         if (stored?.token) writeSession({ token: stored.token, user: me });
         setUser(me);
-      } catch {
-        // No valid backend session (missing/expired token/cookie or server
-        // unreachable) — stay signed out. Never fall back to a cached user:
-        // stale identities must not masquerade as the logged-in account.
+      } catch (err) {
         if (cancelled) return;
-        writeSession(null);
+        const invalidSession = err?.status === 401 || err?.status === 403;
+        if (invalidSession) {
+          writeSession(null);
+          setUser(null);
+          return;
+        }
+        // Transient failure (cold start, connection closed, 5xx). Keep the
+        // stored token so a valid login isn't destroyed by a waking server,
+        // but never render a stale cached identity as the logged-in account.
+        const stored = readSession();
+        if (stored?.token) writeSession({ token: stored.token, user: null });
         setUser(null);
+        hydrateAfterTransientFailure();
       } finally {
         if (!cancelled) setLoading(false);
       }
