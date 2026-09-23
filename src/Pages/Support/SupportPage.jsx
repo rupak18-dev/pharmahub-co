@@ -324,6 +324,10 @@ export default function SupportPage() {
       toast.error("Please enter a short issue title.");
       return;
     }
+    if (title.trim().length < 2) {
+      toast.error("Issue title must be at least 2 characters.");
+      return;
+    }
     if (!issueType) {
       toast.error("Please select an issue category from the dropdown.");
       return;
@@ -334,6 +338,10 @@ export default function SupportPage() {
     }
     if (!description.trim()) {
       toast.error("Please provide a description of the issue.");
+      return;
+    }
+    if (description.trim().length < 5) {
+      toast.error("Description must be at least 5 characters.");
       return;
     }
 
@@ -377,34 +385,36 @@ export default function SupportPage() {
   const selectedTypeInfo = ISSUE_TYPES.find((t) => t.id === issueType);
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6 pb-12">
+    <div className="mx-auto max-w-6xl space-y-6 pb-12 w-full min-w-0">
       {/* Top Header */}
       <PageHeader
         title="Help & Support Desk"
         description="Submit support tickets, report technical or inventory issues, and monitor active ticket resolution."
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 border-emerald-200 text-emerald-800 bg-emerald-50/50 hover:bg-emerald-100/60 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300"
+              className="h-8 sm:h-9 px-2.5 sm:px-3 text-xs gap-1.5 border-emerald-200 text-emerald-800 bg-emerald-50/50 hover:bg-emerald-100/60 dark:bg-emerald-950/30 dark:border-emerald-800 dark:text-emerald-300 shrink-0"
               onClick={() => {
                 window.location.href = "mailto:support@pharmahub.co?subject=Urgent%20PharmaHub%20Assistance";
               }}
             >
-              <Mail className="h-4 w-4 text-emerald-600" />
-              Email Desk
+              <Mail className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-600" />
+              <span className="hidden sm:inline">Email Desk</span>
+              <span className="sm:hidden">Email</span>
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 border-border"
+              className="h-8 sm:h-9 px-2.5 sm:px-3 text-xs gap-1.5 border-border shrink-0"
               onClick={() => {
                 window.open("tel:18007427622");
               }}
             >
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              1800-PHARMA-HELP
+              <Phone className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
+              <span className="hidden sm:inline">1800-PHARMA-HELP</span>
+              <span className="sm:hidden">Call</span>
             </Button>
           </div>
         }
@@ -456,21 +466,33 @@ export default function SupportPage() {
       </div>
 
       {/* Tabs Navigation */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/80 p-1 border border-border">
-          <TabsTrigger value="raise" className="gap-2 data-[state=active]:bg-background data-[state=active]:text-emerald-700 font-medium">
-            <LifeBuoy className="h-4 w-4" />
-            Raise a Ticket
-          </TabsTrigger>
-          <TabsTrigger value="tickets" className="gap-2 data-[state=active]:bg-background data-[state=active]:text-emerald-700 font-medium">
-            <TbTicket className="h-4 w-4" />
-            My Tickets ({dbTickets.length})
-          </TabsTrigger>
-          <TabsTrigger value="faq" className="gap-2 data-[state=active]:bg-background data-[state=active]:text-emerald-700 font-medium">
-            <HelpCircle className="h-4 w-4" />
-            Common Solutions & FAQ
-          </TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6 w-full min-w-0">
+        <div className="w-full overflow-x-auto no-scrollbar py-0.5 touch-pan-x">
+          <TabsList className="inline-flex w-auto min-w-full sm:min-w-0 sm:w-auto h-11 items-center justify-start sm:justify-center p-1 bg-muted/80 border border-border rounded-xl gap-1">
+            <TabsTrigger
+              value="raise"
+              className="shrink-0 gap-2 whitespace-nowrap px-3.5 py-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm font-medium rounded-lg transition-all"
+            >
+              <LifeBuoy className="h-4 w-4 shrink-0" />
+              <span>Raise a Ticket</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="tickets"
+              className="shrink-0 gap-2 whitespace-nowrap px-3.5 py-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm font-medium rounded-lg transition-all"
+            >
+              <TbTicket className="h-4 w-4 shrink-0" />
+              <span>My Tickets ({dbTickets.length})</span>
+            </TabsTrigger>
+            <TabsTrigger
+              value="faq"
+              className="shrink-0 gap-2 whitespace-nowrap px-3.5 py-1.5 text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:text-emerald-700 data-[state=active]:shadow-sm font-medium rounded-lg transition-all"
+            >
+              <HelpCircle className="h-4 w-4 shrink-0" />
+              <span className="hidden sm:inline">Common Solutions & FAQs</span>
+              <span className="sm:hidden">Solutions & FAQs</span>
+            </TabsTrigger>
+          </TabsList>
+        </div>
 
         {/* Tab 1: Raise a Ticket Form or Success State */}
         <TabsContent value="raise" className="space-y-6">
@@ -497,8 +519,8 @@ export default function SupportPage() {
                   <div className="text-xs uppercase tracking-wider font-semibold text-emerald-800 dark:text-emerald-400">
                     Generated Ticket Number
                   </div>
-                  <div className="mt-1.5 flex items-center justify-center gap-3">
-                    <span className="font-mono text-2xl sm:text-3xl font-bold tracking-tight text-emerald-900 dark:text-emerald-200 select-all">
+                  <div className="mt-1.5 flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+                    <span className="font-mono text-xl sm:text-3xl font-bold tracking-tight text-emerald-900 dark:text-emerald-200 select-all break-all">
                       {latestRaisedTicket.ticketId}
                     </span>
                     <Button
@@ -660,6 +682,7 @@ export default function SupportPage() {
                           placeholder="e.g. Barcode scanner not detecting Paracetamol batch expiry QR"
                           value={title}
                           onChange={(e) => setTitle(e.target.value)}
+                          minLength={2}
                           maxLength={120}
                           className="h-10 text-sm focus-visible:ring-emerald-500"
                           required
@@ -833,6 +856,7 @@ export default function SupportPage() {
                           rows={4}
                           value={description}
                           onChange={(e) => setDescription(e.target.value)}
+                          minLength={5}
                           maxLength={1500}
                           className="text-sm focus-visible:ring-emerald-500 leading-relaxed"
                           required
@@ -868,7 +892,7 @@ export default function SupportPage() {
                     </form>
                   </CardContent>
 
-                  <CardFooter className="flex items-center justify-between border-t border-border pt-4 bg-muted/10">
+                  <CardFooter className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-t border-border pt-4 bg-muted/10">
                     <p className="text-xs text-muted-foreground">
                       A unique ticket ID will be generated upon submission.
                     </p>
@@ -876,7 +900,7 @@ export default function SupportPage() {
                       type="submit"
                       form="raise-ticket-form"
                       disabled={submitting}
-                      className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 font-medium px-5 shadow-sm"
+                      className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white gap-2 font-medium px-5 shadow-sm"
                     >
                       {submitting ? (
                         <>
@@ -906,26 +930,26 @@ export default function SupportPage() {
             />
           ) : (
             <Card className="border-border shadow-sm">
-            <CardHeader className="pb-4">
+            <CardHeader className="p-4 sm:p-6 pb-4">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                  <CardTitle className="text-lg">Raised Ticket History</CardTitle>
-                  <CardDescription>
+                  <CardTitle className="text-base sm:text-lg">Raised Ticket History</CardTitle>
+                  <CardDescription className="text-xs sm:text-sm">
                     All support requests submitted from your pharmacy store.
                   </CardDescription>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
-                  <div className="relative">
+                  <div className="relative flex-1 sm:flex-initial min-w-[140px]">
                     <Search className="h-4 w-4 absolute left-2.5 top-2.5 text-muted-foreground" />
                     <Input
                       placeholder="Search ticket ID or title..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-9 pl-8 w-44 sm:w-60 text-xs"
+                      className="h-9 pl-8 w-full sm:w-60 text-xs"
                     />
                   </div>
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="h-9 w-32 text-xs">
+                    <SelectTrigger className="h-9 w-32 text-xs shrink-0">
                       <SelectValue placeholder="All Status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -998,7 +1022,7 @@ export default function SupportPage() {
                           </p>
                         </div>
 
-                        <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
+                        <div className="flex flex-wrap items-center gap-2 shrink-0 self-start sm:self-end md:self-center">
                           {ticket.screenshot && (
                             <Button
                               variant="outline"
@@ -1054,36 +1078,36 @@ export default function SupportPage() {
         </TabsContent>
 
         {/* Tab 3: FAQ & Troubleshooting */}
-        <TabsContent value="faq" className="space-y-4">
-          <Card className="border-border shadow-sm">
-            <CardHeader>
-              <CardTitle className="text-lg">Frequently Asked Questions & Quick Solutions</CardTitle>
-              <CardDescription>
+        <TabsContent value="faq" className="space-y-4 min-w-0 w-full">
+          <Card className="border-border shadow-sm overflow-hidden">
+            <CardHeader className="p-4 sm:p-6 pb-2 sm:pb-4">
+              <CardTitle className="text-base sm:text-lg">Frequently Asked Questions & Quick Solutions</CardTitle>
+              <CardDescription className="text-xs sm:text-sm">
                 Quick answers to common questions about PharmaHub store operations.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <CardContent className="p-4 sm:p-6 pt-2 space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                 {FAQS.map((faq, idx) => (
-                  <div key={idx} className="rounded-xl border border-border bg-card p-4 space-y-2">
+                  <div key={idx} className="rounded-xl border border-border bg-card p-3.5 sm:p-4 space-y-2">
                     <div className="text-sm font-semibold text-foreground flex items-start gap-2">
                       <HelpCircle className="h-4 w-4 text-emerald-600 mt-0.5 shrink-0" />
-                      <span>{faq.q}</span>
+                      <span className="leading-snug">{faq.q}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground leading-relaxed pl-6">
+                    <p className="text-xs text-muted-foreground leading-relaxed pl-0 sm:pl-6 mt-1">
                       {faq.a}
                     </p>
                   </div>
                 ))}
               </div>
             </CardContent>
-            <CardFooter className="bg-muted/20 border-t border-border flex items-center justify-between">
+            <CardFooter className="bg-muted/20 border-t border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:p-6">
               <span className="text-xs text-muted-foreground">
                 Still have unanswered questions or complex integrations?
               </span>
               <Button
                 size="sm"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5"
+                className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 shrink-0"
                 onClick={() => {
                   resetForm();
                   setActiveTab("raise");

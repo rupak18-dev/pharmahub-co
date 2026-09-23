@@ -18,7 +18,7 @@ function resolveApiBase() {
     // meaningful when the app itself is opened from localhost. Browsing via a
     // LAN IP / tunnel would otherwise try to reach the wrong host.
     if (fromEnv && isLocal) return fromEnv;
-    if (isLocal) return "http://localhost:5000/api/v1";
+    if (isLocal) return "http://localhost:5050/api/v1";
     // Dev served over another hostname: go same-origin so the Vite proxy
     // routes the call (never wakes the sleeping production server).
     if (import.meta.env.DEV) return "/api/v1";
@@ -164,26 +164,29 @@ async function request(path, options = {}) {
       }
     }
 
-    if (!res.ok) {
-      const message =
+  if (!res.ok) {
+    let message = null;
+    const details = json?.error?.details || json?.details;
+    if (Array.isArray(details) && details.length > 0) {
+      message = details
+        .map((d) => (typeof d === "string" ? d : d.message || d.msg || `${d.field}: invalid`))
+        .filter(Boolean)
+        .join("; ");
+    }
+    if (!message) {
+      message =
         json?.error?.message ??
         json?.error ??
         (typeof json?.error === "string" ? json.error : null) ??
         json?.message ??
         (text && text.length < 200 && !text.includes("<!DOCTYPE") ? text : null) ??
         `Request failed (${res.status})`;
-      const error = new Error(message);
-      error.status = res.status;
-      error.data = json;
-      error.kind = res.status >= 500 && res.status < 600 ? "server" : "http";
-      const is5xx = error.kind === "server";
-      if (canRetry && is5xx && attempt < GET_RETRIES) {
-        const delay = RETRY_BACKOFF_MS[attempt] ?? RETRY_BACKOFF_MS[GET_RETRIES - 1];
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        continue;
-      }
-      throw error;
     }
+    const error = new Error(message);
+    error.status = res.status;
+    error.data = json;
+    throw error;
+  }
 
     return { status: res.status, json, text };
   }

@@ -40,6 +40,39 @@ import { SecuritySection } from "@/Pages/Admin/components/SecuritySection";
 
 export const handle = { title: "Edit Profile · PharmaHub" };
 
+const MAX_IMAGE_DIMENSION = 512;
+
+function fileToDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function downscaleImage(file, maxDim = MAX_IMAGE_DIMENSION) {
+  if (file.type === "image/svg+xml") {
+    return fileToDataUrl(file);
+  }
+  const dataUrl = await fileToDataUrl(file);
+  const img = new Image();
+  await new Promise((resolve, reject) => {
+    img.onload = resolve;
+    img.onerror = reject;
+    img.src = dataUrl;
+  });
+  const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+  const w = Math.max(1, Math.round(img.width * scale));
+  const h = Math.max(1, Math.round(img.height * scale));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0, w, h);
+  return canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", 0.9);
+}
+
 const BUSINESS_CATEGORIES = [
   "Independent Retail Pharmacy",
   "Pharmacy Chain Store",
@@ -220,12 +253,15 @@ export default function EditProfilePage() {
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (ev) => handleInputChange("avatarUrl", ev.target?.result);
-                          reader.readAsDataURL(file);
+                          try {
+                            const dataUrl = await downscaleImage(file);
+                            handleInputChange("avatarUrl", dataUrl);
+                          } catch (err) {
+                            toast.error("Failed to process image");
+                          }
                         }
                       }}
                     />
@@ -280,17 +316,18 @@ export default function EditProfilePage() {
                       type="file"
                       accept="image/*"
                       className="hidden"
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const file = e.target.files?.[0];
                         if (file) {
-                          const reader = new FileReader();
-                          reader.onload = (ev) => {
-                            handleInputChange("logoUrl", ev.target?.result);
+                          try {
+                            const dataUrl = await downscaleImage(file);
+                            handleInputChange("logoUrl", dataUrl);
                             if (!formData.avatarUrl) {
-                              handleInputChange("avatarUrl", ev.target?.result);
+                              handleInputChange("avatarUrl", dataUrl);
                             }
-                          };
-                          reader.readAsDataURL(file);
+                          } catch (err) {
+                            toast.error("Failed to process logo");
+                          }
                         }
                       }}
                     />

@@ -1,6 +1,17 @@
 import { Link, useNavigate, useSearchParams } from "react-router";
 import { useState, useMemo, useEffect } from "react";
-import { Plus, Search, Pencil, Power, PowerOff, Eye, Filter, FileSpreadsheet, Info } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Pencil,
+  Power,
+  PowerOff,
+  Eye,
+  Filter,
+  FileSpreadsheet,
+  Info,
+} from "lucide-react";
+import { getImageForMedicine } from "@/lib/utils";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,6 +24,7 @@ import { logActivity } from "@/lib/stock";
 import { useAuth } from "@/lib/auth";
 import { PageHeader } from "@/Components/shared/PageHeader";
 import { EmptyState } from "@/Components/shared/EmptyState";
+import { NoMedicinesFound } from "@/Components/shared/NoMedicinesFound";
 import { StatusBadge } from "@/Components/shared/StatusBadge";
 import { getCategoryBadgeClasses } from "@/lib/utils";
 import { Button } from "@/Components/ui/button";
@@ -563,16 +575,18 @@ export default function MedicinesCatalogPage() {
       </div>
 
       {filtered.length === 0 ? (
-        <EmptyState
-          title="No medicines matched filters"
-          description="Refine your criteria or add a new medicine configuration to the master catalog."
-          action={
-            has("medicines", "create") && (
-              <Button onClick={openCreate} className="bg-[#2563EB] hover:bg-blue-700">
-                <Plus className="mr-1 h-4 w-4" /> Add medicine
-              </Button>
-            )
-          }
+        <NoMedicinesFound
+          onClearSearch={() => {
+            handleSearchChange("");
+            setCatFilter("all");
+            setBrandFilter("all");
+            setGenericFilter("all");
+            setSupplierFilter("all");
+            setRackFilter("all");
+            setStockStatusFilter("all");
+            setExpiryStatusFilter("all");
+            setActiveFilter("all");
+          }}
         />
       ) : (
         <>
@@ -822,8 +836,14 @@ export default function MedicinesCatalogPage() {
                 >
                   <div className="flex justify-between items-start">
                     <div className="flex items-center gap-2">
-                      <div className="w-9 h-9 rounded bg-muted/60 flex items-center justify-center text-sm border shrink-0">
-                        {m.dosageForm?.charAt(0) || "💊"}
+                      <div className="w-9 h-9 rounded bg-slate-50 flex items-center justify-center border border-border/40 shrink-0 overflow-hidden">
+                        <img
+                          src={getImageForMedicine(m.id, m.dosageForm)}
+                          alt={m.name}
+                          loading="lazy"
+                          decoding="async"
+                          className="w-full h-full object-cover"
+                        />
                       </div>
                       <div className="min-w-0">
                         <Link

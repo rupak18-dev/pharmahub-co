@@ -32,6 +32,7 @@ import {
   X,
   CheckSquare,
   MoreHorizontal,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Checkbox } from "@/Components/ui/checkbox";
 import { Popover, PopoverTrigger, PopoverContent } from "@/Components/ui/popover";
@@ -47,6 +48,7 @@ import { logActivity } from "@/lib/stock";
 import { useAuth } from "@/lib/auth";
 import { PageHeader } from "@/Components/shared/PageHeader";
 import { EmptyState } from "@/Components/shared/EmptyState";
+import { NoMedicinesFound } from "@/Components/shared/NoMedicinesFound";
 import { StatusBadge } from "@/Components/shared/StatusBadge";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
@@ -212,7 +214,6 @@ export default function MedicinesCatalogPage() {
   const [therapeuticFilter, setTherapeuticFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   const [sortBy, setSortBy] = useState("newest");
-  const [visibleFields, setVisibleFields] = useState([]);
   const [dateRangeFilter, setDateRangeFilter] = useState("all");
   // Header column priority filters — selected value floats to top, rest shown below
   const [headerBrandPriority, setHeaderBrandPriority] = useState(null);
@@ -243,7 +244,9 @@ export default function MedicinesCatalogPage() {
     { id: "supplier", label: "Supplier" },
     { id: "availability", label: "Availability" },
   ];
-  const isFieldVisible = (id) => visibleFields.length === 0 || visibleFields.includes(id);
+  const ALL_COLUMN_IDS = useMemo(() => CUSTOMIZABLE_FILTERS.map((f) => f.id), []);
+  const [visibleFields, setVisibleFields] = useState(ALL_COLUMN_IDS);
+  const isFieldVisible = (id) => visibleFields.includes(id);
   const toggleField = (id) => {
     setVisibleFields((prev) => (prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]));
   };
@@ -1252,7 +1255,7 @@ export default function MedicinesCatalogPage() {
                 </Button>
 
                 {/* Clear Active Filters Pill (if any active) */}
-                {(catFilter !== "all" || (statusFilter !== "all" && statusFilter !== "draft") || q) && (
+                {(catFilter !== "all" || statusFilter !== "all" || q) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -1276,49 +1279,62 @@ export default function MedicinesCatalogPage() {
                     <DropdownMenuTrigger asChild>
                       <Button
                         variant="outline"
-                        className="hidden sm:flex h-7 sm:h-8 px-2 sm:px-2.5 text-[10px] sm:text-xs bg-white text-slate-700 border-border/80 rounded-lg gap-1 cursor-pointer shadow-xs"
+                        className="hidden sm:flex h-7 sm:h-8 px-2 sm:px-2.5 text-[10px] sm:text-xs bg-white text-slate-700 border-border/80 rounded-lg gap-1.5 cursor-pointer shadow-xs hover:bg-slate-50"
                         title="Manage visible columns"
                       >
-                        <Filter className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
-                        <span>Columns</span>
-                        {visibleFields.length > 0 && (
-                          <span className="rounded-full bg-[#007A87]/10 px-1 py-0.2 text-[9px] text-[#007A87] font-bold">
+                        <SlidersHorizontal className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-muted-foreground" />
+                        <span>Manage Columns</span>
+                        {visibleFields.length < CUSTOMIZABLE_FILTERS.length && (
+                          <span className="rounded-full bg-[#007A87]/10 px-1.5 py-0.2 text-[9px] text-[#007A87] font-bold">
                             {visibleFields.length}
                           </span>
                         )}
                       </Button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent className="w-56" align="end">
-                      <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40">
+                    <DropdownMenuContent className="w-56 z-50 p-1.5 shadow-xl border border-border/60 rounded-xl" align="end">
+                      <div className="flex items-center justify-between px-2 py-1.5 border-b border-border/40 mb-1">
                         <span className="text-xs font-bold text-slate-900">Manage Columns</span>
-                        {visibleFields.length > 0 && (
-                          <button
-                            type="button"
-                            onClick={() => setVisibleFields([])}
-                            className="text-[11px] text-[#007A87] hover:underline font-semibold cursor-pointer"
-                          >
-                            Clear
-                          </button>
-                        )}
+                        <div className="flex items-center gap-2">
+                          {visibleFields.length < CUSTOMIZABLE_FILTERS.length ? (
+                            <button
+                              type="button"
+                              onClick={() => setVisibleFields(ALL_COLUMN_IDS)}
+                              className="text-[11px] text-[#007A87] hover:underline font-semibold cursor-pointer"
+                            >
+                              Select All
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setVisibleFields([])}
+                              className="text-[11px] text-muted-foreground hover:text-slate-900 font-semibold cursor-pointer"
+                            >
+                              Clear All
+                            </button>
+                          )}
+                        </div>
                       </div>
-                      <div className="max-h-64 overflow-y-auto py-1">
+                      <div className="max-h-64 overflow-y-auto py-0.5 space-y-0.5">
                         {CUSTOMIZABLE_FILTERS.map((f) => (
                           <DropdownMenuCheckboxItem
                             key={f.id}
                             checked={visibleFields.includes(f.id)}
                             onCheckedChange={() => toggleField(f.id)}
                             onSelect={(e) => e.preventDefault()}
+                            className="text-xs py-1.5 pl-7 pr-2 rounded-md cursor-pointer hover:bg-slate-50 focus:bg-slate-100/80"
+                            boxClassName="h-3.5 w-3.5 left-2 rounded-[3px] border-slate-300"
+                            iconClassName="h-2.5 w-2.5"
                           >
-                            {f.label}
+                            <span className="text-slate-700 font-medium">{f.label}</span>
                           </DropdownMenuCheckboxItem>
                         ))}
                       </div>
-                      <DropdownMenuSeparator />
+                      <DropdownMenuSeparator className="my-1" />
                       <DropdownMenuItem
-                        onSelect={() => setVisibleFields([])}
-                        className="justify-center text-xs font-semibold text-slate-600 hover:text-slate-900 cursor-pointer"
+                        onSelect={() => setVisibleFields(ALL_COLUMN_IDS)}
+                        className="justify-center text-xs font-semibold text-[#007A87] hover:bg-[#E8F3F1] rounded-md cursor-pointer py-1.5"
                       >
-                        Clear & show all columns
+                        Reset & show all columns
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -1384,22 +1400,23 @@ export default function MedicinesCatalogPage() {
 
         <div className="flex-1 overflow-y-auto p-0">
           {filtered.length === 0 ? (
-            <EmptyState
-              title={
-                showWishlist
-                  ? "Your wishlist is empty"
-                  : statusFilter === "draft"
-                    ? "No medicine found"
-                    : "No medicines matched filters"
-              }
-              description={
-                showWishlist
-                  ? "You haven't added any medicines to your wishlist yet."
-                  : statusFilter === "draft"
-                    ? "No medicines were found that match the draft criteria (only name is stored)."
-                    : "Refine your criteria or add a new medicine configuration to the master catalog."
-              }
-            />
+            showWishlist ? (
+              <EmptyState
+                title="Your wishlist is empty"
+                description="You haven't added any medicines to your wishlist yet."
+              />
+            ) : (
+              <NoMedicinesFound
+                onClearSearch={() => {
+                  setCatFilter("all");
+                  setStatusFilter("all");
+                  handleSearchChange("");
+                  setHeaderBrandPriority(null);
+                  setHeaderGenericPriority(null);
+                  setHeaderExpiryPriority(null);
+                }}
+              />
+            )
           ) : (
             <>
               {viewMode === "list" ? (
@@ -1467,11 +1484,13 @@ export default function MedicinesCatalogPage() {
                               />
                             </th>
                           )}
-                          <th className="px-4 py-3">
-                            <div className="flex items-center gap-1">
-                              Medicine Name <ArrowDownUp className="w-3 h-3 opacity-60" />
-                            </div>
-                          </th>
+                          {isFieldVisible("name") && (
+                            <th className="px-4 py-3">
+                              <div className="flex items-center gap-1">
+                                Medicine Name <ArrowDownUp className="w-3 h-3 opacity-60" />
+                              </div>
+                            </th>
+                          )}
                           {isFieldVisible("brand") && (
                             <th className="px-4 py-3">
                               <div className="flex items-center gap-1">
@@ -1786,30 +1805,32 @@ export default function MedicinesCatalogPage() {
                                 </td>
                               )}
                               {/* Medicine Info */}
-                              <td className="px-4 py-3 font-semibold text-foreground group-hover:text-[#007A87] transition-colors">
-                                <div className="flex items-center gap-3 min-w-0">
-                                  <div className="shrink-0 w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-border/40 select-none overflow-hidden">
-                                    <img
-                                      src={getImageForMedicine(m.id, m.dosageForm)}
-                                      alt={`${m.name} packaging`}
-                                      loading="lazy"
-                                      decoding="async"
-                                      className="w-full h-full object-cover"
-                                    />
+                              {isFieldVisible("name") && (
+                                <td className="px-4 py-3 font-semibold text-foreground group-hover:text-[#007A87] transition-colors">
+                                  <div className="flex items-center gap-3 min-w-0">
+                                    <div className="shrink-0 w-10 h-10 bg-slate-50 rounded-lg flex items-center justify-center border border-border/40 select-none overflow-hidden">
+                                      <img
+                                        src={getImageForMedicine(m.id, m.dosageForm)}
+                                        alt={`${m.name} packaging`}
+                                        loading="lazy"
+                                        decoding="async"
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                    <div className="min-w-0">
+                                      <Link
+                                        to={`/medicines/${m.id}`}
+                                        className="truncate block text-sm font-medium text-slate-950 hover:text-[#007A87] transition-colors"
+                                      >
+                                        {m.name}
+                                      </Link>
+                                      <span className="text-[10px] text-muted-foreground block">
+                                        {m.id.slice(0, 8).toUpperCase()}
+                                      </span>
+                                    </div>
                                   </div>
-                                  <div className="min-w-0">
-                                    <Link
-                                      to={`/medicines/${m.id}`}
-                                      className="truncate block text-sm font-medium text-slate-950 hover:text-[#007A87] transition-colors"
-                                    >
-                                      {m.name}
-                                    </Link>
-                                    <span className="text-[10px] text-muted-foreground block">
-                                      {m.id.slice(0, 8).toUpperCase()}
-                                    </span>
-                                  </div>
-                                </div>
-                              </td>
+                                </td>
+                              )}
 
                               {/* Brand */}
                               {isFieldVisible("brand") && (
@@ -2056,7 +2077,7 @@ export default function MedicinesCatalogPage() {
                 </>
               ) : (
                 /* Grid View */
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 sm:gap-6">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 sm:gap-6 p-2.5 sm:p-0">
                   {paginatedData.map((m) => {
                     const meta = stockByMed.get(m.id);
                     const stockTone =
@@ -2068,13 +2089,13 @@ export default function MedicinesCatalogPage() {
                     return (
                       <div
                         key={m.id}
-                        className={`bg-white border rounded-2xl p-4 sm:p-5 shadow-sm space-y-3 sm:space-y-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative flex flex-col justify-between overflow-hidden group ${
+                        className={`bg-white border rounded-xl sm:rounded-2xl p-2.5 sm:p-5 shadow-sm space-y-2 sm:space-y-4 hover:-translate-y-1 hover:shadow-md transition-all duration-300 relative flex flex-col justify-between overflow-hidden group ${
                           selectedMedIds.includes(m.id)
                             ? "border-[#007A87] ring-2 ring-[#007A87]/20"
                             : "border-border/80"
                         }`}
                       >
-                        <div className="space-y-3 sm:space-y-4">
+                        <div className="space-y-2 sm:space-y-4">
                           {/* Top Actions */}
                           <div className="flex justify-between items-center">
                             <div className="flex items-center gap-2 min-w-0">
@@ -2115,7 +2136,7 @@ export default function MedicinesCatalogPage() {
                           </div>
 
                           {/* Medicine Visual Representation */}
-                          <div className="w-full h-28 sm:h-32 bg-slate-50 rounded-xl flex items-center justify-center border border-border/40 relative overflow-hidden">
+                          <div className="w-full h-20 sm:h-32 bg-slate-50 rounded-lg sm:rounded-xl flex items-center justify-center border border-border/40 relative overflow-hidden">
                             <img
                               src={getImageForMedicine(m.id, m.dosageForm)}
                               alt={`${m.name} packaging`}
@@ -2126,14 +2147,14 @@ export default function MedicinesCatalogPage() {
                           </div>
 
                           {/* Details */}
-                          <div className="space-y-1.5">
+                          <div className="space-y-1">
                             <Link
                               to={`/medicines/${m.id}`}
-                              className="font-medium text-slate-950 hover:underline text-sm block truncate"
+                              className="font-medium text-slate-950 hover:underline text-[11px] sm:text-sm block truncate leading-tight"
                             >
                               {m.name}
                             </Link>
-                            <p className="text-xs text-muted-foreground font-medium truncate">
+                            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate">
                               {m.brandName || "No Brand"}
                             </p>
 
@@ -2143,7 +2164,7 @@ export default function MedicinesCatalogPage() {
                                 const catName = categories.find((c) => c.id === m.categoryId)?.name;
                                 return (
                                   <span
-                                    className={`rounded-md px-2 py-0.5 text-[10px] font-semibold border ${getCategoryBadgeClasses(catName)}`}
+                                    className={`rounded-md px-1.5 py-0.5 text-[9px] sm:text-[10px] font-semibold border ${getCategoryBadgeClasses(catName)}`}
                                   >
                                     {catName ?? "Uncategorized"}
                                   </span>
@@ -2151,30 +2172,30 @@ export default function MedicinesCatalogPage() {
                               })()}
                             </div>
 
-                            <p className="text-xs text-muted-foreground font-medium">
+                            <p className="text-[10px] sm:text-xs text-muted-foreground font-medium hidden sm:block">
                               {m.strength || "—"} | {m.packSize || "—"}
                             </p>
                           </div>
                         </div>
 
-                        <div className="space-y-3">
+                        <div className="space-y-2 sm:space-y-3">
                           {/* Prices & Stocks */}
-                          <div className="flex justify-between items-end border-t border-border/40 pt-3">
+                          <div className="flex justify-between items-end border-t border-border/40 pt-2 sm:pt-3">
                             <div>
-                              <span className="text-[10px] text-muted-foreground block font-medium">
-                                Price (MRP)
+                              <span className="text-[9px] sm:text-[10px] text-muted-foreground block font-medium">
+                                MRP
                               </span>
-                              <span className="font-extrabold text-slate-800 text-sm">
+                              <span className="font-extrabold text-slate-800 text-[11px] sm:text-sm">
                                 {currency}
                                 {meta?.mrp?.toFixed(2) || "0.00"}
                               </span>
                             </div>
                             <div className="text-right">
-                              <span className="text-[10px] text-muted-foreground block font-medium">
-                                Stock Level
+                              <span className="text-[9px] sm:text-[10px] text-muted-foreground block font-medium">
+                                Stock
                               </span>
                               <span
-                                className={`text-xs font-black ${
+                                className={`text-[10px] sm:text-xs font-black ${
                                   stockTone === "out"
                                     ? "text-red-500"
                                     : stockTone === "low"
@@ -2188,15 +2209,17 @@ export default function MedicinesCatalogPage() {
                           </div>
 
                           {/* Card Actions */}
-                          <div className="flex gap-2">
+                          <div className="flex gap-1.5 sm:gap-2">
                             <Button
                               asChild
                               size="sm"
                               variant="outline"
-                              className="flex-1 text-xs gap-1 rounded-xl h-9 border-[#007A87]/20 text-[#007A87] hover:bg-[#007A87]/5"
+                              className="flex-1 text-[10px] sm:text-xs gap-0.5 sm:gap-1 rounded-lg sm:rounded-xl h-7 sm:h-9 border-[#007A87]/20 text-[#007A87] hover:bg-[#007A87]/5"
                             >
                               <Link to={`/medicines/${m.id}`}>
-                                <Info className="h-3.5 w-3.5" /> View Details
+                                <Info className="h-3 w-3 sm:h-3.5 sm:w-3.5" />
+                                <span className="hidden sm:inline">View Details</span>
+                                <span className="sm:hidden">Details</span>
                               </Link>
                             </Button>
                             <DropdownMenu>
@@ -2204,7 +2227,7 @@ export default function MedicinesCatalogPage() {
                                 <Button
                                   variant="outline"
                                   size="icon"
-                                  className="h-9 w-9 p-0 flex items-center justify-center rounded-xl text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
+                                  className="h-7 w-7 sm:h-9 sm:w-9 p-0 flex items-center justify-center rounded-lg sm:rounded-xl text-muted-foreground hover:text-foreground cursor-pointer shrink-0"
                                 >
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
