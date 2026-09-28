@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { describeEmailDelivery } from "@/lib/api";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { Input } from "@/Components/ui/input";
 import { Button } from "@/Components/ui/button";
@@ -22,6 +23,11 @@ export default function VerifyEmailPage() {
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState(null);
   const [cooldown, setCooldown] = useState(0);
+  // Set when the server accepted the request but never sent the code, so the
+  // page can say so instead of implying an email is on its way.
+  const [deliveryWarning, setDeliveryWarning] = useState(() =>
+    describeEmailDelivery(location.state?.emailReason),
+  );
   const cooldownTimer = useRef(null);
 
   const stopCooldown = useCallback(() => {
@@ -58,8 +64,14 @@ export default function VerifyEmailPage() {
     }
     setError(null);
     try {
-      await resendVerification(normalizedEmail);
-      toast.success("If that email needs verification, a new code is on its way");
+      const { emailReason } = await resendVerification(normalizedEmail);
+      const warning = describeEmailDelivery(emailReason);
+      setDeliveryWarning(warning);
+      if (warning) {
+        toast.warning(warning, { duration: 8000 });
+      } else {
+        toast.success("If that email needs verification, a new code is on its way");
+      }
       startCooldown();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not send the code");
@@ -107,12 +119,18 @@ export default function VerifyEmailPage() {
         <div className="mb-10">
           <h1 className="auth-title">Verify your email</h1>
           <p className="auth-subtitle mt-4">
-            We sent a 6-digit code to your email. Enter it below to activate your account, then sign
-            in to continue.
+            {deliveryWarning
+              ? "We couldn't send your verification code, so this account can't be activated yet. Once email delivery is configured on the server, resend the code below."
+              : "We sent a 6-digit code to your email. Enter it below to activate your account, then sign in to continue."}
           </p>
         </div>
 
         <div className="space-y-5">
+          {deliveryWarning && (
+            <p className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+              {deliveryWarning}
+            </p>
+          )}
           <div className="space-y-2">
             <label className="auth-label mb-1.5 block text-sm font-medium text-foreground">
               Email
