@@ -1249,57 +1249,83 @@ export default function SupportPage() {
                         )}
 
                         {/* Level of Severity */}
-                        <div className="space-y-2 pt-2 border-t border-border/60">
+                        <div className="space-y-1.5 pt-2 border-t border-border/60">
                           <label className="text-xs font-semibold text-foreground block">
                             Severity <span className="text-rose-500">*</span>
-                            <span className="ml-2 text-[11px] text-muted-foreground font-normal">Impact on pharmacy operations</span>
+                            <span className="ml-2 text-[11px] text-muted-foreground font-normal">Impact on operations</span>
                           </label>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                             {SEVERITY_LEVELS.map((level) => {
                               const isSelected = severity === level.id;
                               const severityIconProps = {
-                                low: { icon: Minus, color: "text-emerald-600" },
-                                medium: { icon: TrendingDown, color: "text-blue-600" },
-                                high: { icon: AlertTriangle, color: "text-amber-600" },
-                                critical: { icon: AlertOctagon, color: "text-rose-600" },
+                                low: {
+                                  icon: Minus,
+                                  color: "text-emerald-600 dark:text-emerald-400",
+                                  activeBorder: "border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/40 ring-1 ring-emerald-500/20",
+                                  sla: "Minor • 24-48h",
+                                },
+                                medium: {
+                                  icon: TrendingDown,
+                                  color: "text-blue-600 dark:text-blue-400",
+                                  activeBorder: "border-blue-500 bg-blue-50/70 dark:bg-blue-950/40 ring-1 ring-blue-500/20",
+                                  sla: "Partial • 12-24h",
+                                },
+                                high: {
+                                  icon: AlertTriangle,
+                                  color: "text-amber-600 dark:text-amber-400",
+                                  activeBorder: "border-amber-500 bg-amber-50/70 dark:bg-amber-950/40 ring-1 ring-amber-500/20",
+                                  sla: "Major • 4-8h",
+                                },
+                                critical: {
+                                  icon: AlertOctagon,
+                                  color: "text-rose-600 dark:text-rose-400",
+                                  activeBorder: "border-rose-500 bg-rose-50/70 dark:bg-rose-950/40 ring-1 ring-rose-500/20",
+                                  sla: "Urgent • < 1h",
+                                },
                               };
-                              const { icon: SevIcon, color: sevColor } = severityIconProps[level.id] || { icon: Info, color: "text-muted-foreground" };
+                              const { icon: SevIcon, color: sevColor, activeBorder, sla } =
+                                severityIconProps[level.id] || {
+                                  icon: Info,
+                                  color: "text-muted-foreground",
+                                  activeBorder: "border-border",
+                                  sla: level.sla,
+                                };
                               return (
                                 <button
                                   key={level.id}
                                   type="button"
                                   onClick={() => setSeverity(level.id)}
-                                  className={`flex items-start gap-3 rounded-lg border p-3 text-left transition-all duration-150 ${
+                                  className={`flex items-center gap-2 p-2 rounded-xl border text-left transition-all duration-150 group ${
                                     isSelected
-                                      ? "border-emerald-600 bg-emerald-50/60 dark:bg-emerald-950/40 shadow-sm ring-1 ring-emerald-600/20"
-                                      : "border-border bg-card hover:bg-muted/30 hover:border-border"
+                                      ? `${activeBorder} shadow-xs`
+                                      : "border-border/80 bg-card hover:bg-muted/40 hover:border-border"
                                   }`}
                                 >
-                                  <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md border ${
-                                    isSelected
-                                      ? "bg-white dark:bg-card border-emerald-200 dark:border-emerald-800"
-                                      : "bg-muted/40 border-border/60"
-                                  }`}>
-                                    <SevIcon className={`h-4 w-4 ${isSelected ? sevColor : "text-muted-foreground"}`} />
+                                  <div
+                                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border transition-colors ${
+                                      isSelected
+                                        ? "bg-white dark:bg-card border-border/80 shadow-2xs"
+                                        : "bg-muted/50 border-border/60 group-hover:bg-muted"
+                                    }`}
+                                  >
+                                    <SevIcon className={`h-3.5 w-3.5 ${isSelected ? sevColor : "text-muted-foreground group-hover:text-foreground"}`} />
                                   </div>
                                   <div className="min-w-0 flex-1">
-                                    <div className="flex items-center justify-between gap-2">
-                                      <span className={`text-xs font-semibold uppercase tracking-wide ${
-                                        isSelected ? "text-foreground" : "text-foreground/70"
-                                      }`}>{level.label}</span>
+                                    <div className="flex items-center justify-between gap-1">
+                                      <span
+                                        className={`text-xs font-semibold capitalize truncate ${
+                                          isSelected ? "text-foreground" : "text-foreground/80 group-hover:text-foreground"
+                                        }`}
+                                      >
+                                        {level.label}
+                                      </span>
                                       {isSelected && (
-                                        <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
+                                        <Check className={`h-3 w-3 shrink-0 ${sevColor}`} />
                                       )}
                                     </div>
-                                    <p className="text-[11px] text-muted-foreground leading-snug mt-0.5">
-                                      {level.desc.split(".")[0]}.
+                                    <p className="text-[10px] text-muted-foreground truncate">
+                                      {sla}
                                     </p>
-                                    <p className={`text-[10px] mt-1 font-medium ${
-                                      level.id === "critical" ? "text-rose-600 dark:text-rose-400" :
-                                      level.id === "high" ? "text-amber-600 dark:text-amber-400" :
-                                      level.id === "medium" ? "text-blue-600 dark:text-blue-400" :
-                                      "text-emerald-600 dark:text-emerald-400"
-                                    }`}>{level.sla}</p>
                                   </div>
                                 </button>
                               );
