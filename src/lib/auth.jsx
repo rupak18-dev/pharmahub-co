@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { apiRequest } from "./api";
+import { apiRequest, apiRequestEnvelope } from "./api";
 import { resetStoredOnboarding } from "./onboardingApi";
 
 const SESSION_KEY = "PharmaHub_session_v2";
@@ -211,7 +211,12 @@ export function AuthProvider({ children }) {
     // in — register issues NO session (see backend registerUser/loginUser
     // gate). Return the payload (user + optional devCode) and let the caller
     // route the new user to the verify-email step.
-    const data = await apiRequest("/auth/register", {
+    //
+    // The envelope is requested (not just `data`) because the backend still
+    // answers 2xx when the verification mail could not be delivered, and
+    // reports why in `data.emailReason` — a caller that only saw the payload
+    // would send the user to a verify screen that can never succeed.
+    const { data, message } = await apiRequestEnvelope("/auth/register", {
       method: "POST",
       body: JSON.stringify({
         email,
@@ -219,7 +224,12 @@ export function AuthProvider({ children }) {
         name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
       }),
     });
-    return { user: data?.user ?? data ?? null, devCode: data?.devCode ?? null };
+    return {
+      user: data?.user ?? data ?? null,
+      devCode: data?.devCode ?? null,
+      emailReason: data?.emailReason ?? null,
+      message: message ?? null,
+    };
   }, []);
 
   // Handles the token-less case for OAuth/callback flows (no establishSession
@@ -250,10 +260,15 @@ export function AuthProvider({ children }) {
   // Resends the 6-digit verification code to an unverified account (public,
   // pre-login endpoint). Backend enforces a 60s cooldown.
   const resendVerification = useCallback(async (email) => {
-    return apiRequest("/auth/resend-verification", {
+    const { data, message } = await apiRequestEnvelope("/auth/resend-verification", {
       method: "POST",
       body: JSON.stringify({ email }),
     });
+    return {
+      devCode: data?.devCode ?? null,
+      emailReason: data?.emailReason ?? null,
+      message: message ?? null,
+    };
   }, []);
 
   // Re-resolves the authoritative identity from GET /auth/me and replaces the
@@ -320,10 +335,11 @@ export function AuthProvider({ children }) {
   );
 
   const requestPasswordReset = useCallback(async (email) => {
-    await apiRequest("/auth/forgot-password", {
+    const { message } = await apiRequestEnvelope("/auth/forgot-password", {
       method: "POST",
       body: JSON.stringify({ email }),
     });
+    return { message: message ?? null };
   }, []);
 
   const resetPassword = useCallback(async ({ email, code, newPassword }) => {

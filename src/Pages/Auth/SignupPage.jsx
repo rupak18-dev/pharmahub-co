@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
-import { API_BASE } from "@/lib/api";
+import { API_BASE, describeEmailDelivery } from "@/lib/api";
 import { SignupForm } from "./components/Shared/SignupForm";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { AnimatePresence, motion } from "framer-motion";
@@ -58,14 +58,22 @@ export default function SignupPage() {
 
   const onSubmit = async (data) => {
     try {
-      const { devCode } = await signUp({ email: data.email, password: data.password });
+      const { devCode, emailReason } = await signUp({
+        email: data.email,
+        password: data.password,
+      });
+      // The backend accepts the registration even when the verification mail
+      // could not be delivered, so say so up front instead of leaving the user
+      // waiting for an email that was never sent.
+      const deliveryWarning = describeEmailDelivery(emailReason);
+      if (deliveryWarning) toast.warning(deliveryWarning, { duration: 8000 });
       // Keep the button in its "Signing up…" state for a beat before moving on.
       await new Promise((resolve) => setTimeout(resolve, 2000));
       // New self-registered accounts MUST verify their email before first
       // login (the backend issues no session until verified). Route to the
       // verify-email step — never straight to onboarding.
       if (devCode) toast.info(`Dev code (no email configured): ${devCode}`);
-      navigate("/verify-email", { state: { email: data.email, devCode } });
+      navigate("/verify-email", { state: { email: data.email, devCode, emailReason } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Account creation failed");
     }

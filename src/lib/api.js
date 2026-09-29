@@ -164,29 +164,29 @@ async function request(path, options = {}) {
       }
     }
 
-  if (!res.ok) {
-    let message = null;
-    const details = json?.error?.details || json?.details;
-    if (Array.isArray(details) && details.length > 0) {
-      message = details
-        .map((d) => (typeof d === "string" ? d : d.message || d.msg || `${d.field}: invalid`))
-        .filter(Boolean)
-        .join("; ");
+    if (!res.ok) {
+      let message = null;
+      const details = json?.error?.details || json?.details;
+      if (Array.isArray(details) && details.length > 0) {
+        message = details
+          .map((d) => (typeof d === "string" ? d : d.message || d.msg || `${d.field}: invalid`))
+          .filter(Boolean)
+          .join("; ");
+      }
+      if (!message) {
+        message =
+          json?.error?.message ??
+          json?.error ??
+          (typeof json?.error === "string" ? json.error : null) ??
+          json?.message ??
+          (text && text.length < 200 && !text.includes("<!DOCTYPE") ? text : null) ??
+          `Request failed (${res.status})`;
+      }
+      const error = new Error(message);
+      error.status = res.status;
+      error.data = json;
+      throw error;
     }
-    if (!message) {
-      message =
-        json?.error?.message ??
-        json?.error ??
-        (typeof json?.error === "string" ? json.error : null) ??
-        json?.message ??
-        (text && text.length < 200 && !text.includes("<!DOCTYPE") ? text : null) ??
-        `Request failed (${res.status})`;
-    }
-    const error = new Error(message);
-    error.status = res.status;
-    error.data = json;
-    throw error;
-  }
 
     return { status: res.status, json, text };
   }
@@ -252,6 +252,13 @@ export function prefetch(paths) {
   }
 }
 
+function unwrapEnvelope(json) {
+  if (json.success === true || json.data !== undefined) {
+    return json.data ?? null; // legacy handler tolerance
+  }
+  return json;
+}
+
 // Unwraps the envelope to `data` for the callers that want the payload directly.
 // GETs serve cached data instantly (even stale) and revalidate in the
 // background, so a slow/waking server never blocks page rendering.
@@ -267,18 +274,50 @@ export async function apiRequest(path, options = {}) {
   }
   const { status, json } = await request(path, options);
   if (status === 204 || json === null) return null;
-  let data;
-  if (json.success === true || json.data !== undefined) {
-    data = json.data ?? null; // legacy handler tolerance
-  } else {
-    data = json;
-  }
+  const data = unwrapEnvelope(json);
   if (method === "GET" && !options.noCache) {
     setCachedResponse(path, data);
   } else {
     clearApiCache();
   }
   return data;
+}
+
+// Same request and cache behaviour as apiRequest, but resolves the whole
+// envelope instead of just `data`. Required whenever the caller needs the
+// server's `message` alongside the payload — the sign-up / verification
+// endpoints use it to report `data.emailReason` ("email_unconfigured",
+// "delivery_failed"), and unwrapping to `data` would silently discard it.
+export async function apiRequestEnvelope(path, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const { status, json } = await request(path, options);
+  if (status === 204 || json === null) return null;
+  const data = unwrapEnvelope(json);
+  if (method === "GET" && !options.noCache) {
+    setCachedResponse(path, data);
+  } else {
+    clearApiCache();
+  }
+  return {
+    success: json?.success !== false,
+    message: json?.message ?? null,
+    data,
+    meta: json?.meta ?? null,
+  };
+}
+
+// Why the server could not deliver an email, in the caller's own words. The
+// backend answers 2xx even when nothing was sent (it reports the reason
+// instead of failing the request), so the UI has to surface it or a signup
+// silently "succeeds" with no code ever arriving.
+export function describeEmailDelivery(reason) {
+  if (reason === "email_unconfigured") {
+    return "Email delivery isn't configured on the server, so no code was sent. Contact your administrator — nothing will arrive in your inbox until SMTP is configured.";
+  }
+  if (reason === "delivery_failed") {
+    return "The server accepted the request but the email provider rejected it, so no code was sent. Check the server's mail configuration and try again.";
+  }
+  return null;
 }
 
 function revalidate(path) {
