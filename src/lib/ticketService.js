@@ -15,6 +15,7 @@ export function generateTicketId() {
 export const ticketService = {
   async raiseTicket({
     title,
+    issueTitle,
     issueType,
     description,
     severity = "medium",
@@ -24,9 +25,11 @@ export const ticketService = {
     userRole = "Staff",
     orgName = "PharmaHub Pharmacy",
   }) {
+    const isOther = issueType === "Other" || String(issueType).toLowerCase() === "other";
+    const customTitle = (issueTitle || title || "").trim();
+
     const payload = {
-      title: title.trim(),
-      issueType: issueType.trim(),
+      issueType: isOther ? "Other" : issueType.trim(),
       description: description.trim(),
       severity,
       screenshot,
@@ -35,6 +38,13 @@ export const ticketService = {
       userRole,
       orgName,
     };
+
+    if (isOther) {
+      payload.issueTitle = customTitle;
+      payload.title = customTitle;
+    } else {
+      payload.title = (title || issueType).trim();
+    }
 
     try {
       const result = await apiRequest("/tickets", {
@@ -64,6 +74,7 @@ export const ticketService = {
       id: db.uid(),
       ticketId,
       title: payload.title,
+      issueTitle: payload.issueTitle || payload.title,
       issueType: payload.issueType,
       description: payload.description,
       severity: payload.severity,

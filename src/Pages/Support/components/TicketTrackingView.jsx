@@ -17,26 +17,19 @@ import {
   HelpCircle,
   Activity,
   Image as ImageIcon,
+  MessageSquare,
+  Send,
 } from "lucide-react";
 import { TbTicket } from "react-icons/tb";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/Components/ui/card";
 import { Badge } from "@/Components/ui/badge";
 import { Button } from "@/Components/ui/button";
+import { Textarea } from "@/Components/ui/textarea";
 import { ticketService } from "@/lib/ticketService";
+import { supportService } from "@/lib/supportService";
 
-const ISSUE_TYPES_MAP = {
-  billing_pos: { label: "Billing, POS & Invoicing Issue", icon: "💳" },
-  inventory_stock: { label: "Inventory & Stock Discrepancy", icon: "📦" },
-  medicines_batches: { label: "Medicine Catalog & Batch Tracking", icon: "💊" },
-  expiry_returns: { label: "Expiry & Returns Management", icon: "⏳" },
-  purchases_suppliers: { label: "Purchase Orders & Supplier Sync", icon: "🚚" },
-  user_access: { label: "User Access, Roles & Permissions", icon: "🔐" },
-  reports_export: { label: "Reports & PDF/Excel Export", icon: "📊" },
-  hardware_integrations: { label: "Integrations & Hardware Setup", icon: "🖨️" },
-  system_bug: { label: "System Bug / Technical Error", icon: "⚠️" },
-  general_inquiry: { label: "General Inquiry / Feature Feedback", icon: "💬" },
-};
+import { CategoryIcon, getCategoryConfig, SEVERITY_LEVELS as SEVERITY_CONFIG_LIST, STATUS_CONFIG as STATUS_CONFIG_MAP } from "../supportConfig";
 
 const SEVERITY_MAP = {
   low: {
@@ -108,6 +101,26 @@ export function TicketTrackingView({ ticketId, onBack, onOpenScreenshot }) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [userReply, setUserReply] = useState("");
+  const [sendingReply, setSendingReply] = useState(false);
+
+  const handleUserReply = async (e) => {
+    e.preventDefault();
+    if (!userReply.trim() || !ticket) return;
+    setSendingReply(true);
+    try {
+      const updated = await supportService.replyTicket(ticket.ticketId || ticket._id, {
+        message: userReply,
+      });
+      setTicket(updated);
+      setUserReply("");
+      toast.success("Message sent to support team!");
+    } catch (err) {
+      toast.error(err.message || "Failed to send message to support");
+    } finally {
+      setSendingReply(false);
+    }
+  };
 
   const fetchTicket = useCallback(
     async (isRefresh = false) => {
@@ -205,10 +218,7 @@ export function TicketTrackingView({ ticketId, onBack, onOpenScreenshot }) {
     );
   }
 
-  const category = ISSUE_TYPES_MAP[ticket.issueType] || {
-    label: ticket.issueType || "General Inquiry",
-    icon: "📋",
-  };
+  const category = getCategoryConfig(ticket.issueType);
   const sev = SEVERITY_MAP[ticket.severity] || SEVERITY_MAP.medium;
   const statusInfo = STATUS_CONFIG[ticket.status] || {
     label: ticket.status?.replace("_", " ") || "Open",
@@ -345,8 +355,8 @@ export function TicketTrackingView({ ticketId, onBack, onOpenScreenshot }) {
                 <Layers className="h-3.5 w-3.5 text-emerald-600" />
                 <span>Category</span>
               </div>
-              <div className="font-semibold text-foreground mt-0.5 truncate flex items-center gap-1">
-                <span>{category.icon}</span>
+              <div className="font-semibold text-foreground mt-0.5 truncate flex items-center gap-1.5">
+                <CategoryIcon id={ticket.issueType} className="h-3.5 w-3.5 text-emerald-600 shrink-0" />
                 <span className="truncate">{category.label}</span>
               </div>
             </div>
@@ -537,90 +547,186 @@ export function TicketTrackingView({ ticketId, onBack, onOpenScreenshot }) {
 
       {/* Grid: Activity Timeline + Original Issue Details */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Activity Timeline (Dynamic History from Backend) */}
-        <Card className="lg:col-span-7 border-border shadow-sm bg-card">
-          <CardHeader className="pb-3 border-b border-border/70">
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="text-base sm:text-lg flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-emerald-600" />
-                  Activity Timeline
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Full recorded audit history and status updates for this ticket.
-                </CardDescription>
+        {/* Left Column (7 cols): Discussion & Activity Timeline */}
+        <div className="lg:col-span-7 space-y-6">
+          {/* Support Conversation & Replies */}
+          <Card className="border-border shadow-sm bg-card">
+            <CardHeader className="pb-3 border-b border-border/70">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <MessageSquare className="h-5 w-5 text-emerald-600" />
+                    Support Conversation
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Direct communication with the PharmaHub Admin Support team.
+                  </CardDescription>
+                </div>
+                {Array.isArray(ticket.messages) && ticket.messages.length > 0 && (
+                  <Badge variant="secondary" className="text-xs font-mono">
+                    {ticket.messages.length} {ticket.messages.length === 1 ? "Message" : "Messages"}
+                  </Badge>
+                )}
               </div>
-              <Badge variant="secondary" className="text-xs font-mono">
-                {historyEvents.length} {historyEvents.length === 1 ? "Event" : "Events"}
-              </Badge>
-            </div>
-          </CardHeader>
+            </CardHeader>
 
-          <CardContent className="pt-5 pb-6">
-            {historyEvents.length === 0 ? (
-              <div className="text-center py-8 text-muted-foreground text-xs">
-                <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
-                No activity history recorded yet.
-              </div>
-            ) : (
-              <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2.5 before:bottom-2.5 before:w-0.5 before:bg-emerald-200 dark:before:bg-emerald-900/60">
-                {historyEvents.map((act, index) => {
-                  const isLatest = index === historyEvents.length - 1;
-                  const isFirst = index === 0;
-
-                  return (
-                    <div key={act._id || index} className="relative group">
-                      {/* Timeline Dot/Icon */}
+            <CardContent className="pt-4 space-y-4">
+              {Array.isArray(ticket.messages) && ticket.messages.length > 0 ? (
+                <div className="space-y-3 max-h-[280px] overflow-y-auto pr-1">
+                  {ticket.messages.map((m, idx) => {
+                    const isAdmin = m.sender === "admin";
+                    return (
                       <div
-                        className={`absolute -left-6 top-0 flex h-5 w-5 items-center justify-center rounded-full transition-transform ${
-                          isLatest
-                            ? "bg-emerald-600 text-white ring-4 ring-emerald-100 dark:ring-emerald-900/50"
-                            : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
-                        }`}
+                        key={m._id || idx}
+                        className={`flex flex-col ${isAdmin ? "items-start" : "items-end"}`}
                       >
-                        {isLatest ? (
-                          <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
-                        ) : (
-                          <Check className="h-3 w-3 stroke-[3]" />
-                        )}
-                      </div>
-
-                      {/* Event Content Box */}
-                      <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5 space-y-1.5 transition-colors hover:bg-muted/30">
-                        <div className="flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-bold text-foreground">
-                              {act.title || act.event?.replace("_", " ")}
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-1 px-1">
+                          <span className="font-semibold text-foreground">{m.senderName}</span>
+                          <Badge
+                            variant="outline"
+                            className={`text-[9px] py-0 px-1.5 ${
+                              isAdmin
+                                ? "border-emerald-300 text-emerald-700 dark:border-emerald-800 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30"
+                                : "border-border text-muted-foreground"
+                            }`}
+                          >
+                            {isAdmin ? "Admin Support" : "You"}
+                          </Badge>
+                          {m.timestamp && (
+                            <span>
+                              •{" "}
+                              {new Date(m.timestamp).toLocaleTimeString([], {
+                                hour: "numeric",
+                                minute: "2-digit",
+                              })}
                             </span>
-                            {isLatest && (
-                              <Badge className="text-[10px] bg-emerald-600 text-white py-0 px-1.5">
-                                Current
-                              </Badge>
-                            )}
-                          </div>
-                          <span className="text-[11px] font-medium text-muted-foreground">
-                            {formatDateTime(act.timestamp)}
-                          </span>
+                          )}
+                        </div>
+                        <div
+                          className={`rounded-xl px-3.5 py-2 max-w-[85%] text-xs leading-relaxed ${
+                            isAdmin
+                              ? "bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-200 border border-emerald-200 dark:border-emerald-800 rounded-tl-none"
+                              : "bg-muted text-foreground border border-border rounded-tr-none"
+                          }`}
+                        >
+                          <div className="whitespace-pre-wrap">{m.message}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="text-xs text-muted-foreground bg-muted/20 p-3 rounded-lg border border-dashed border-border text-center">
+                  No replies sent yet. Our support team will respond to your ticket shortly.
+                </div>
+              )}
+
+              {/* User Reply Form */}
+              <form onSubmit={handleUserReply} className="pt-3 border-t border-border/70 flex gap-2">
+                <Textarea
+                  rows={2}
+                  placeholder="Reply or provide additional details to the support team..."
+                  value={userReply}
+                  onChange={(e) => setUserReply(e.target.value)}
+                  className="text-xs resize-none"
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={sendingReply || !userReply.trim()}
+                  className="h-auto px-3 bg-emerald-600 hover:bg-emerald-700 text-white shrink-0 gap-1 text-xs"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Send</span>
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+
+          {/* Activity Timeline (Dynamic History from Backend) */}
+          <Card className="border-border shadow-sm bg-card">
+            <CardHeader className="pb-3 border-b border-border/70">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-base sm:text-lg flex items-center gap-2">
+                    <Clock className="h-5 w-5 text-emerald-600" />
+                    Activity Timeline
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Full recorded audit history and status updates for this ticket.
+                  </CardDescription>
+                </div>
+                <Badge variant="secondary" className="text-xs font-mono">
+                  {historyEvents.length} {historyEvents.length === 1 ? "Event" : "Events"}
+                </Badge>
+              </div>
+            </CardHeader>
+
+            <CardContent className="pt-5 pb-6">
+              {historyEvents.length === 0 ? (
+                <div className="text-center py-8 text-muted-foreground text-xs">
+                  <Clock className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
+                  No activity history recorded yet.
+                </div>
+              ) : (
+                <div className="relative pl-6 space-y-6 before:absolute before:left-2.5 before:top-2.5 before:bottom-2.5 before:w-0.5 before:bg-emerald-200 dark:before:bg-emerald-900/60">
+                  {historyEvents.map((act, index) => {
+                    const isLatest = index === historyEvents.length - 1;
+
+                    return (
+                      <div key={act._id || index} className="relative group">
+                        {/* Timeline Dot/Icon */}
+                        <div
+                          className={`absolute -left-6 top-0 flex h-5 w-5 items-center justify-center rounded-full transition-transform ${
+                            isLatest
+                              ? "bg-emerald-600 text-white ring-4 ring-emerald-100 dark:ring-emerald-900/50"
+                              : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800"
+                          }`}
+                        >
+                          {isLatest ? (
+                            <span className="h-1.5 w-1.5 rounded-full bg-white animate-ping" />
+                          ) : (
+                            <Check className="h-3 w-3 stroke-[3]" />
+                          )}
                         </div>
 
-                        <p className="text-xs text-foreground/90 leading-relaxed">
-                          {act.description}
-                        </p>
-
-                        {act.by && (
-                          <div className="text-[10px] text-muted-foreground/80 flex items-center gap-1 pt-1 border-t border-border/40">
-                            <User className="h-3 w-3 text-emerald-600" />
-                            <span>Updated by: {act.by}</span>
+                        {/* Event Content Box */}
+                        <div className="bg-muted/20 border border-border/80 rounded-xl p-3.5 space-y-1.5 transition-colors hover:bg-muted/30">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-foreground">
+                                {act.title || act.event?.replace("_", " ")}
+                              </span>
+                              {isLatest && (
+                                <Badge className="text-[10px] bg-emerald-600 text-white py-0 px-1.5">
+                                  Current
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-[10px] text-muted-foreground">
+                              {act.timestamp ? formatDate(act.timestamp) : "—"}
+                            </span>
                           </div>
-                        )}
+
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {act.description}
+                          </p>
+
+                          {act.by && (
+                            <div className="text-[10px] text-muted-foreground/80 flex items-center gap-1 pt-1 border-t border-border/40">
+                              <User className="h-3 w-3 text-emerald-600" />
+                              <span>Updated by: {act.by}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
         {/* Original Issue Details (User Submitted Payload) */}
         <Card className="lg:col-span-5 border-border shadow-sm bg-card">
@@ -650,7 +756,7 @@ export function TicketTrackingView({ ticketId, onBack, onOpenScreenshot }) {
               <div>
                 <span className="text-muted-foreground block text-[11px]">Issue Type</span>
                 <div className="font-medium text-foreground mt-0.5 flex items-center gap-1.5">
-                  <span className="text-base">{category.icon}</span>
+                  <CategoryIcon id={ticket.issueType} className="h-4 w-4 text-emerald-600 shrink-0" />
                   <span className="truncate">{category.label}</span>
                 </div>
               </div>
