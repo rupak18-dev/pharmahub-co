@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { describeEmailDelivery } from "@/lib/api";
+import { showOtpToast } from "@/lib/otpToast";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { Input } from "@/Components/ui/input";
 import { Button } from "@/Components/ui/button";
@@ -16,15 +17,19 @@ export default function VerifyEmailPage() {
   const navigate = useNavigate();
 
   const initialEmail = location.state?.email ?? "";
-  const devCode = location.state?.devCode ?? null;
 
   const [email, setEmail] = useState(initialEmail);
   const [code, setCode] = useState("");
   const [verifying, setVerifying] = useState(false);
   const [error, setError] = useState(null);
   const [cooldown, setCooldown] = useState(0);
+  // Live copy of the code the server handed back. Seeded from router state on
+  // arrival, then replaced whenever a resend mints a new one — otherwise the
+  // user would be left reading the previous, now-invalid code.
+  const [devCode, setDevCode] = useState(location.state?.devCode ?? null);
   // Set when the server accepted the request but never sent the code, so the
-  // page can say so instead of implying an email is on its way.
+  // page can say so instead of implying an email is on its way. Muted while a
+  // `devCode` is available, because the code is a working alternative to mail.
   const [deliveryWarning, setDeliveryWarning] = useState(() =>
     describeEmailDelivery(location.state?.emailReason),
   );
@@ -64,10 +69,16 @@ export default function VerifyEmailPage() {
     }
     setError(null);
     try {
-      const { emailReason } = await resendVerification(normalizedEmail);
+      // `resendVerification` returns a fresh `devCode` when the server has no
+      // email provider — it used to be dropped here, which left the user with
+      // no way to see the newly-minted code.
+      const { devCode: freshCode, emailReason } = await resendVerification(normalizedEmail);
       const warning = describeEmailDelivery(emailReason);
       setDeliveryWarning(warning);
-      if (warning) {
+      if (freshCode) {
+        setDevCode(freshCode);
+        showOtpToast(freshCode, { title: "New code sent", emailReason });
+      } else if (warning) {
         toast.warning(warning, { duration: 8000 });
       } else {
         toast.success("If that email needs verification, a new code is on its way");
@@ -119,14 +130,18 @@ export default function VerifyEmailPage() {
         <div className="mb-10">
           <h1 className="auth-title">Verify your email</h1>
           <p className="auth-subtitle mt-4">
-            {deliveryWarning
-              ? "We couldn't send your verification code, so this account can't be activated yet. Once email delivery is configured on the server, resend the code below."
-              : "We sent a 6-digit code to your email. Enter it below to activate your account, then sign in to continue."}
+            {devCode
+              ? deliveryWarning
+                ? "Email delivery isn't configured on this server, so the code below was never sent to your inbox. Enter it to activate your account, then sign in to continue."
+                : "Your code is below and was also emailed to you. Enter it to activate your account, then sign in to continue."
+              : deliveryWarning
+                ? "We couldn't send your verification code, so this account can't be activated yet. Once email delivery is configured on the server, resend the code below."
+                : "We sent a 6-digit code to your email. Enter it below to activate your account, then sign in to continue."}
           </p>
         </div>
 
         <div className="space-y-5">
-          {deliveryWarning && (
+          {deliveryWarning && !devCode && (
             <p className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
               {deliveryWarning}
             </p>
@@ -166,11 +181,20 @@ export default function VerifyEmailPage() {
               maxLength={6}
             />
             {error && <p className="text-sm text-destructive mt-2">{error}</p>}
-            {devCode && !code && (
-              <p className="text-sm text-muted-foreground mt-2">
-                Dev code (email delivery not configured):{" "}
-                <span className="font-semibold">{devCode}</span>
-              </p>
+            {devCode && (
+              <div className="mt-3 rounded-2xl border border-[#007A5A]/30 bg-[#E6F4F1] px-5 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#007A5A]">
+                  Your verification code
+                </p>
+                <p className="mt-2 font-mono text-3xl font-bold leading-none tracking-[0.3em] text-[#0B3D31]">
+                  {devCode}
+                </p>
+                <p className="mt-2.5 text-xs leading-relaxed text-[#0B3D31]/70">
+                  {deliveryWarning
+                    ? "Email delivery isn\u2019t configured on this server, so this code was never emailed to you."
+                    : "This code was also emailed to you."}
+                </p>
+              </div>
             )}
           </div>
 

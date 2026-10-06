@@ -6,6 +6,7 @@ import { z } from "zod";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
 import { API_BASE, describeEmailDelivery } from "@/lib/api";
+import { showOtpToast } from "@/lib/otpToast";
 import { SignupForm } from "./components/Shared/SignupForm";
 import { AuthLayout } from "./components/Shared/AuthLayout";
 import { AnimatePresence, motion } from "framer-motion";
@@ -67,12 +68,21 @@ export default function SignupPage() {
       // waiting for an email that was never sent.
       const deliveryWarning = describeEmailDelivery(emailReason);
       if (deliveryWarning) toast.warning(deliveryWarning, { duration: 8000 });
-      // Keep the button in its "Signing up…" state for a beat before moving on.
-      await new Promise((resolve) => setTimeout(resolve, 2000));
       // New self-registered accounts MUST verify their email before first
       // login (the backend issues no session until verified). Route to the
       // verify-email step — never straight to onboarding.
-      if (devCode) toast.info(`Dev code (no email configured): ${devCode}`);
+      //
+      // Fire the code popup BEFORE the artificial delay below: the sign-up
+      // button stays in its "Signing up…" state for a beat before the route
+      // change, and a toast raised after the wait would be discarded the
+      // moment the component unmounts.
+      if (devCode) {
+        showOtpToast(devCode, {
+          title: "Verify this code to continue",
+          emailReason,
+        });
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2000));
       navigate("/verify-email", { state: { email: data.email, devCode, emailReason } });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Account creation failed");
