@@ -66,7 +66,7 @@ export function RecommendationPanel({
               </div>
               <SheetTitle className="text-lg">{row.medicineName}</SheetTitle>
               <SheetDescription>
-                {row.salt} · Batch <span className="font-mono">{row.batchNumber}</span> ·{" "}
+                {row.salt} · Batch <span>{row.batchNumber}</span> ·{" "}
                 {supplierName(row.batch.supplierId)}
               </SheetDescription>
             </SheetHeader>
@@ -86,13 +86,11 @@ export function RecommendationPanel({
                     ? "today"
                     : `in ${row.days} days`}
               </span>
-              <Badge variant="secondary" className="font-mono">
+              <Badge variant="secondary">
                 {currency}
                 {row.stockValue.toLocaleString()} in stock
               </Badge>
-              <Badge variant="outline" className="font-mono">
-                {row.quantity} units
-              </Badge>
+              <Badge variant="outline">{row.quantity} units</Badge>
             </div>
 
             {row.days <= 0 ? (
@@ -171,8 +169,8 @@ function AlternativesBlock({ alternatives, currency, row, medicines, autoSwap, o
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">{alt.medicine?.name}</p>
                       <p className="truncate text-xs text-muted-foreground">
-                        <span className="font-mono">{alt.batch.batchNumber}</span> ·{" "}
-                        {alt.batch.currentStock} units · {currency}
+                        <span>{alt.batch.batchNumber}</span> · {alt.batch.currentStock} units ·{" "}
+                        {currency}
                         {(alt.batch.currentStock * alt.batch.purchasePrice).toLocaleString()}
                       </p>
                     </div>

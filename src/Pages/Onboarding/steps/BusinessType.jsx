@@ -22,8 +22,8 @@ export function BusinessType({ onboarding, updateData, nextStep }) {
         }
       />
 
-      <div className="mt-8">
-        <div className="space-y-6">
+      <div className="mt-4">
+        <div className="space-y-4">
           {BUSINESS_TYPES.map((type) => (
             <BusinessCard
               key={type.id}

@@ -332,7 +332,7 @@ export function LiveAudit({
       <div className="rounded-xl border border-border bg-card p-4">
         <div className="mb-1.5 flex items-center justify-between text-sm">
           <span className="font-medium">Live progress</span>
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             {progress.verified}/{progress.total} counted · {progress.pct}%
           </span>
         </div>
@@ -423,7 +423,7 @@ export function LiveAudit({
                   </p>
                 </div>
                 {current.barcode && (
-                  <Badge variant="outline" className="shrink-0 font-mono text-[10px]">
+                  <Badge variant="outline" className="shrink-0 text-[10px]">
                     {current.barcode}
                   </Badge>
                 )}
@@ -480,7 +480,13 @@ export function LiveAudit({
                 >
                   {photo ? (
                     <span className="flex items-center gap-2">
-                      <img src={photo} alt="" className="h-7 w-7 rounded object-cover" />
+                      <img
+                        src={photo}
+                        alt=""
+                        loading="lazy"
+                        decoding="async"
+                        className="h-7 w-7 rounded object-cover"
+                      />
                       <span className="text-success font-medium">Photo added</span>
                     </span>
                   ) : (
@@ -659,7 +665,7 @@ export function LiveAudit({
                       <span className="min-w-0 truncate">{i.medicineName}</span>
                       <span
                         className={cn(
-                          "shrink-0 font-mono tabular-nums",
+                          "shrink-0 tabular-nums",
                           ok ? "text-success" : "text-warning-foreground",
                         )}
                       >

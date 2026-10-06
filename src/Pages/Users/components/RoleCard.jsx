@@ -1,163 +1,68 @@
-import { useMemo } from "react";
-import {
-  Shield,
-  KeyRound,
-  ShieldCheck,
-  Pill,
-  Receipt,
-  Boxes,
-  Layers,
-  UserCheck,
-  Boxes as ModulesIcon,
-  ChevronRight,
-  Copy,
-  Sliders,
-} from "lucide-react";
-import { ALL_ACTIONS, ALL_MODULES } from "@/lib/permissions";
-import { useDb } from "@/hooks/useDb";
-import { Button } from "@/Components/ui/button";
-import { toast } from "sonner";
-export function getRoleIcon(role) {
-  switch (role) {
-    case "Owner":
-      return KeyRound;
-    case "Admin":
-      return ShieldCheck;
-    case "Pharmacist":
-      return Pill;
-    case "Cashier":
-      return Receipt;
-    case "Store Keeper":
-      return Boxes;
-    case "Inventory Manager":
-      return Layers;
-    default:
-      return Shield;
-  }
-}
-export function getRoleDescription(role) {
-  switch (role) {
-    case "Owner":
-      return "Unrestricted system access across operational, financial, and security modules.";
-    case "Admin":
-      return "Administrative control over inventory master data, user accounts, and settings.";
-    case "Pharmacist":
-      return "Clinical medicine verification, batch lifecycle tracking, and sales billing.";
-    case "Cashier":
-      return "Point-of-sale customer billing, invoice printing, and payment collection.";
-    case "Store Keeper":
-      return "Physical stock receipt, GRN creation, stock adjustments, and inventory audits.";
-    case "Inventory Manager":
-      return "Full inventory valuation, supplier orders, GRN approvals, and dead stock management.";
-    default:
-      return "Custom access policy defined by organizational requirements.";
-  }
-}
-export function RoleCard({ roleName, onConfigure, onClone }) {
-  const profiles = useDb((d) => d.profiles);
-  const permissions = useDb((d) => d.permissions);
-  const RoleIcon = getRoleIcon(roleName);
-  const description = getRoleDescription(roleName);
-  // Compute live factual data directly from DB
-  const assignedUsersCount = useMemo(() => {
-    return profiles.filter((p) => p.role === roleName).length;
-  }, [profiles, roleName]);
-  // Compute human-readable accessible modules summary
-  const moduleSummary = useMemo(() => {
-    const rolePerms = permissions[roleName] || {};
-    const viewable = ALL_MODULES.filter((m) => rolePerms[m.key]?.view === true);
-    if (viewable.length === 0) return "No accessible modules";
-    if (viewable.length === ALL_MODULES.length) return "All 13 system modules accessible";
-    const topNames = viewable.slice(0, 3).map((m) => m.label);
-    const remaining = viewable.length - 3;
-    if (remaining > 0) {
-      return `${topNames.join(", ")} & ${remaining} more`;
-    }
-    return topNames.join(", ");
-  }, [permissions, roleName]);
-  // Total active action permissions
-  const totalActionsCount = useMemo(() => {
-    const rolePerms = permissions[roleName] || {};
-    let count = 0;
-    ALL_MODULES.forEach((m) => {
-      ALL_ACTIONS.forEach((a) => {
-        if (rolePerms[m.key]?.[a]) count++;
-      });
-    });
-    return count;
-  }, [permissions, roleName]);
-  const handleClonePolicy = (e) => {
-    e.stopPropagation();
-    if (onClone) {
-      onClone(roleName);
-    } else {
-      toast.info(`Cloned policy template from ${roleName}`);
-    }
-  };
+import { ChevronRight, Settings, ShieldCheck } from "lucide-react";
+
+export function RoleCard({ role, onConfigure }) {
+  const Icon = role.icon;
+  const visibleModules = role.modules.slice(0, 4);
+  const moreModules = role.modules.length - visibleModules.length;
+  const staffCount = role.assignedUsers.length;
   return (
-    <div
-      onClick={() => onConfigure(roleName)}
-      className="group relative rounded-xl border border-border bg-card p-4 space-y-4 shadow-sm hover:border-primary/40 hover:shadow-md transition-all cursor-pointer flex flex-col justify-between"
-    >
-      {/* Top Header & Role Icon */}
-      <div className="space-y-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-muted/50 group-hover:border-primary/30 group-hover:bg-primary/10 transition-colors">
-              <RoleIcon className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-base text-foreground group-hover:text-primary transition-colors tracking-tight">
-                {roleName}
-              </h4>
-              <span className="text-[11px] font-mono text-muted-foreground">
-                {totalActionsCount} active permissions
-              </span>
-            </div>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-8 w-8 text-muted-foreground hover:text-foreground shrink-0"
-            title="Clone Role Policy"
-            onClick={handleClonePolicy}
-          >
-            <Copy className="h-3.5 w-3.5" />
-          </Button>
+    <div className="group relative flex flex-col rounded-xl border border-border bg-card p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md">
+      <div className="flex items-start justify-between">
+        <div
+          className={`flex h-11 w-11 items-center justify-center rounded-xl border ${role.tileBg} transition-transform group-hover:scale-105`}
+        >
+          <Icon className={`h-5 w-5 ${role.iconColor}`} />
         </div>
-
-        <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2">{description}</p>
-      </div>
-
-      {/* Dynamic Factual Metrics */}
-      <div className="space-y-2 border-t border-border/60 pt-3 text-xs">
-        <div className="flex items-center justify-between">
-          <span className="text-muted-foreground flex items-center gap-1.5">
-            <UserCheck className="h-3.5 w-3.5 text-primary" /> Assigned Users
-          </span>
-          <span className="font-semibold text-foreground font-mono">
-            {assignedUsersCount} active
-          </span>
-        </div>
-
-        <div className="flex items-start justify-between gap-2">
-          <span className="text-muted-foreground flex items-center gap-1.5 shrink-0">
-            <ModulesIcon className="h-3.5 w-3.5 text-primary" /> Scope:
-          </span>
-          <span className="font-medium text-foreground text-right truncate text-[11px]">
-            {moduleSummary}
-          </span>
-        </div>
-      </div>
-
-      {/* Footer Action */}
-      <div className="flex items-center justify-between border-t border-border/40 pt-2.5 text-xs">
-        <span className="inline-flex items-center gap-1 font-medium text-xs text-primary group-hover:underline">
-          <Sliders className="h-3.5 w-3.5" /> Configure Access Policy
+        <span className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/40 px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+          <ShieldCheck className="h-3 w-3" />
+          {role.type === "system" ? "System" : "Custom"}
         </span>
-        <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:translate-x-0.5 group-hover:text-primary transition-all" />
       </div>
+
+      <div className="mt-3 flex-1">
+        <h4 className="font-semibold text-foreground">{role.name}</h4>
+        <p className="mt-1 text-xs leading-relaxed text-muted-foreground line-clamp-2">
+          {role.description}
+        </p>
+      </div>
+
+      <div className="mt-4 space-y-2 border-t border-border/60 pt-3 text-xs">
+        <div className="flex items-start justify-between gap-2">
+          <span className="shrink-0 text-muted-foreground">Module access</span>
+          {role.modules.length === 0 ? (
+            <span className="text-right text-muted-foreground">No module access</span>
+          ) : (
+            <span className="text-right font-medium text-foreground">
+              {visibleModules.map((m) => m.label).join(" · ")}
+              {moreModules > 0 ? ` +${moreModules} more` : ""}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground">Assigned staff</span>
+          <span className="font-medium text-foreground">
+            {staffCount > 0 ? `${staffCount} staff` : "No staff assigned"}
+          </span>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="text-muted-foreground">Permissions</span>
+          <span className="font-medium text-foreground">
+            {role.permissionCount != null
+              ? `${role.permissionCount} configured`
+              : "Permissions not configured"}
+          </span>
+        </div>
+      </div>
+
+      <button
+        type="button"
+        onClick={onConfigure}
+        className="mt-4 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+      >
+        <Settings className="h-3.5 w-3.5" />
+        Configure Access Policy
+        <ChevronRight className="h-3.5 w-3.5" />
+      </button>
     </div>
   );
 }

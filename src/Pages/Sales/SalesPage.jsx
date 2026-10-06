@@ -1276,16 +1276,16 @@ export default function SalesPage() {
                       <td className="py-2.5 px-3 text-muted-foreground">
                         {med.packSize || "1 Strip"}
                       </td>
-                      <td className="py-2.5 px-2 font-mono text-muted-foreground text-[11px]">
+                      <td className="py-2.5 px-2 text-muted-foreground text-[11px]">
                         {med.rack || "A-01"}
                       </td>
-                      <td className="py-2.5 px-3 font-mono font-semibold">
+                      <td className="py-2.5 px-3 font-semibold">
                         {batch?.batchNumber || "BT-2025"}
                       </td>
                       <td className="py-2.5 px-3 text-muted-foreground">
                         {formatExpiry(batch?.expiryDate)}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-muted-foreground">
+                      <td className="py-2.5 px-3 text-right text-muted-foreground">
                         {currency}
                         {mrp.toFixed(2)}
                       </td>
@@ -1310,7 +1310,7 @@ export default function SalesPage() {
                               ),
                             )
                           }
-                          className="w-14 mx-auto text-center font-mono font-bold text-xs text-foreground border-none shadow-none bg-transparent p-0 focus-visible:ring-0 focus-visible:border-none no-spin"
+                          className="w-14 mx-auto text-center font-bold text-xs text-foreground border-none shadow-none bg-transparent p-0 focus-visible:ring-0 focus-visible:border-none no-spin"
                         />
                       </td>
                       <td className="py-2.5 px-3 text-right">
@@ -1334,17 +1334,17 @@ export default function SalesPage() {
                               ),
                             )
                           }
-                          className="w-12 ml-auto text-right font-mono text-xs text-foreground border-none shadow-none bg-transparent p-0 focus-visible:ring-0 focus-visible:border-none no-spin"
+                          className="w-12 ml-auto text-right text-xs text-foreground border-none shadow-none bg-transparent p-0 focus-visible:ring-0 focus-visible:border-none no-spin"
                         />
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono">
+                      <td className="py-2.5 px-3 text-right">
                         {currency}
                         {dPrice.toFixed(2)}
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono text-muted-foreground">
+                      <td className="py-2.5 px-3 text-right text-muted-foreground">
                         {med.gstRate || 0}%
                       </td>
-                      <td className="py-2.5 px-3 text-right font-mono font-bold text-emerald-700">
+                      <td className="py-2.5 px-3 text-right font-bold text-emerald-700">
                         {currency}
                         {lineTotal.toFixed(2)}
                       </td>
@@ -1758,7 +1758,7 @@ export default function SalesPage() {
                           className="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20 transition-colors group"
                         >
                           {/* Bill No */}
-                          <td className="px-3.5 py-2.5 font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                          <td className="px-3.5 py-2.5 font-bold text-emerald-700 dark:text-emerald-400">
                             <Link
                               to={`/sales/${s.id}`}
                               className="hover:underline flex items-center gap-1"
@@ -1769,12 +1769,12 @@ export default function SalesPage() {
                           </td>
 
                           {/* Entry Date */}
-                          <td className="px-3.5 py-2.5 text-muted-foreground font-mono text-[11px]">
+                          <td className="px-3.5 py-2.5 text-muted-foreground text-[11px]">
                             {entryDateStr}
                           </td>
 
                           {/* Bill Date */}
-                          <td className="px-3.5 py-2.5 text-muted-foreground font-mono text-[11px]">
+                          <td className="px-3.5 py-2.5 text-muted-foreground text-[11px]">
                             {billDateStr}
                           </td>
 
@@ -1794,12 +1794,12 @@ export default function SalesPage() {
                           </td>
 
                           {/* Mobile */}
-                          <td className="px-3.5 py-2.5 font-mono text-muted-foreground">
+                          <td className="px-3.5 py-2.5 text-muted-foreground">
                             {s.customerPhone || "—"}
                           </td>
 
                           {/* Bill Amount */}
-                          <td className="px-3.5 py-2.5 text-right font-mono font-bold text-foreground">
+                          <td className="px-3.5 py-2.5 text-right font-bold text-foreground">
                             <div className="flex items-center justify-end gap-1.5">
                               <span>
                                 {currency}
@@ -1866,7 +1866,7 @@ export default function SalesPage() {
             {/* Footer bar showing Total Amount */}
             <div className="bg-emerald-900/90 dark:bg-emerald-950 text-white px-4 py-2 flex items-center justify-between text-xs font-bold">
               <span>Total Records: {filteredHistorySales.length}</span>
-              <span className="font-mono text-sm">
+              <span className="text-sm">
                 Total Amount: {currency}
                 {historyTotalAmount.toLocaleString(undefined, {
                   minimumFractionDigits: 2,
@@ -1903,7 +1903,7 @@ export default function SalesPage() {
               className="flex items-center gap-2 font-bold text-sm bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-1.5 rounded-lg transition-colors"
             >
               Net Payable:{" "}
-              <span className="font-mono">
+              <span>
                 {currency}
                 {totals.grandTotal.toFixed(2)}
               </span>
@@ -2007,7 +2007,7 @@ export default function SalesPage() {
                       </div>
                       <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
                         <span>{entry.totalQty} units bought</span>
-                        <span className="font-mono font-semibold text-slate-700">
+                        <span className="font-semibold text-slate-700">
                           {currency}
                           {entry.totalAmount.toLocaleString(undefined, {
                             minimumFractionDigits: 2,
@@ -2198,7 +2198,7 @@ export default function SalesPage() {
                   if (!keyboardScan.trim()) return;
                   if (addByBarcode(keyboardScan)) setKeyboardScan("");
                 }}
-                className="h-10 text-sm font-mono"
+                className="h-10 text-sm"
               />
               <p className="text-center text-muted-foreground">
                 USB scanners type the code automatically. Scan or type a barcode and press Enter to
@@ -2311,7 +2311,7 @@ export default function SalesPage() {
                     value={tender}
                     onChange={(e) => setTender(e.target.value)}
                     placeholder={String(totals.grandTotal)}
-                    className="h-9 text-xs font-mono no-spin"
+                    className="h-9 text-xs no-spin"
                   />
                 </div>
               )}
@@ -2319,7 +2319,7 @@ export default function SalesPage() {
             <div className="rounded-lg bg-emerald-50/60 dark:bg-emerald-950/20 p-4 space-y-2 border border-emerald-200/50">
               <div className="flex justify-between items-center text-sm">
                 <span className="font-bold">Total Net Payable:</span>
-                <span className="font-mono text-xl font-extrabold text-emerald-700">
+                <span className="text-xl font-extrabold text-emerald-700">
                   {currency}
                   {totals.grandTotal.toFixed(2)}
                 </span>
@@ -2327,7 +2327,7 @@ export default function SalesPage() {
               {payment === "cash" && (
                 <div className="flex justify-between items-center text-xs border-t border-emerald-200/40 pt-2">
                   <span className="text-muted-foreground font-semibold">Change to Return:</span>
-                  <span className="font-mono font-bold text-sm">
+                  <span className="font-bold text-sm">
                     {currency}
                     {Math.max(0, Number(tender || totals.grandTotal) - totals.grandTotal).toFixed(
                       2,

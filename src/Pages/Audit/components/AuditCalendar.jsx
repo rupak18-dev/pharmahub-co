@@ -936,7 +936,7 @@ function AuditDayRow({ audit, now, onSelect, onStart, onView, mobile = false }) 
             className="h-2.5 w-2.5 rounded-full shrink-0"
             style={{ backgroundColor: AUDIT_TYPE_DOT[audit.type] }}
           />
-          <span className="font-mono text-xs font-bold text-muted-foreground uppercase tracking-tight">
+          <span className="text-xs font-bold text-muted-foreground uppercase tracking-tight">
             {audit.auditNumber}
           </span>
         </div>

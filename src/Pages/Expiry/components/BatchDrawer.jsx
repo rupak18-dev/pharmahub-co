@@ -55,7 +55,7 @@ export function BatchDrawer({ row, open, onOpenChange, currency, movements }) {
             </span>
           </div>
           <SheetTitle className="text-lg">
-            Batch <span className="font-mono">{row.batchNumber}</span>
+            Batch <span>{row.batchNumber}</span>
           </SheetTitle>
           <SheetDescription>
             {row.medicineName} · {row.salt}
@@ -109,9 +109,7 @@ export function BatchDrawer({ row, open, onOpenChange, currency, movements }) {
               <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
                 {t.label}
               </div>
-              <div className="mt-0.5 truncate font-mono text-sm tabular-nums text-foreground">
-                {t.value}
-              </div>
+              <div className="mt-0.5 truncate text-sm tabular-nums text-foreground">{t.value}</div>
             </div>
           ))}
         </div>

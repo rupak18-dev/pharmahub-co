@@ -134,12 +134,12 @@ export default function AiPage() {
           {insights.anomaly && (
             <Card icon={Zap} title="Sales anomaly">
               Today's revenue is{" "}
-              <span className="font-mono font-semibold">
+              <span className="font-semibold">
                 {currency}
                 {Math.round(insights.anomaly.today).toLocaleString()}
               </span>{" "}
               vs a 14-day average of{" "}
-              <span className="font-mono">
+              <span>
                 {currency}
                 {Math.round(insights.anomaly.avg).toLocaleString()}
               </span>
@@ -153,7 +153,7 @@ export default function AiPage() {
                 {insights.gainers.map((g) => (
                   <li key={g.id} className="flex items-center justify-between">
                     <span>{medName(g.id)}</span>
-                    <span className="font-mono text-success">
+                    <span className="text-success">
                       +{g.delta === 999 ? "new" : `${g.delta.toFixed(0)}%`}
                     </span>
                   </li>
@@ -170,7 +170,7 @@ export default function AiPage() {
                 {insights.losers.map((g) => (
                   <li key={g.id} className="flex items-center justify-between">
                     <span>{medName(g.id)}</span>
-                    <span className="font-mono text-destructive">{g.delta.toFixed(0)}%</span>
+                    <span className="text-destructive">{g.delta.toFixed(0)}%</span>
                   </li>
                 ))}
               </ul>
@@ -185,7 +185,7 @@ export default function AiPage() {
                 {insights.reorder.map((r) => (
                   <li key={r.m.id} className="flex items-center justify-between">
                     <span>{r.m.name}</span>
-                    <span className="font-mono text-warning-foreground">
+                    <span className="text-warning-foreground">
                       ~{Math.round(r.daysToZero)}d left · {r.stock} u
                     </span>
                   </li>
@@ -204,10 +204,9 @@ export default function AiPage() {
                 {insights.risk.map((r) => (
                   <li key={r.b.id} className="flex items-center justify-between">
                     <span>
-                      {medName(r.b.medicineId)} ·{" "}
-                      <span className="font-mono text-xs">{r.b.batchNumber}</span>
+                      {medName(r.b.medicineId)} · <span className="text-xs">{r.b.batchNumber}</span>
                     </span>
-                    <span className="font-mono text-destructive">
+                    <span className="text-destructive">
                       {r.daysLeft}d vs ~{Math.round(r.daysToSell)}d
                     </span>
                   </li>

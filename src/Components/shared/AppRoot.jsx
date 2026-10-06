@@ -1,7 +1,8 @@
 import { Suspense, useEffect } from "react";
-import { Outlet, isRouteErrorResponse, useMatches, useRouteError } from "react-router";
+import { Outlet, isRouteErrorResponse, useLocation, useMatches, useRouteError } from "react-router";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import { Toaster } from "@/Components/ui/sonner";
-import { AuthProvider } from "@/lib/auth";
 import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
 
 const DEFAULT_TITLE = "PharmaHub — Modern Pharmacy Management System";
@@ -16,16 +17,19 @@ function resolveTitle(matches) {
 
 export function AppRoot() {
   const matches = useMatches();
+  const { pathname } = useLocation();
   useEffect(() => {
     document.title = resolveTitle(matches);
   }, [matches]);
   return (
-    <AuthProvider>
+    <>
       <Suspense fallback={<FullScreenSkeleton />}>
         <Outlet />
       </Suspense>
       <Toaster richColors position="top-right" />
-    </AuthProvider>
+      <Analytics />
+      <SpeedInsights route={pathname} />
+    </>
   );
 }
 
@@ -65,7 +69,7 @@ export function AppRootErrorBoundary(props) {
           below.
         </p>
         {error ? (
-          <pre className="mt-4 max-h-48 overflow-auto rounded-md border border-border bg-muted p-3 text-left font-mono text-[11px] text-destructive leading-relaxed whitespace-pre-wrap break-all">
+          <pre className="mt-4 max-h-48 overflow-auto rounded-md border border-border bg-muted p-3 text-left text-[11px] text-destructive leading-relaxed whitespace-pre-wrap break-all">
             {String(error?.stack || error?.message || error)}
           </pre>
         ) : null}
@@ -79,19 +83,19 @@ export function AppRootErrorBoundary(props) {
           <button
             onClick={() => {
               try {
-                // Auth is cookie-based now; clear legacy localStorage sessions
-                // and any older version of the local mock database so a refresh
-                // starts clean.
+                // Remove PharmaHub-specific localStorage keys only.
+                // Do NOT call localStorage.clear() — it wipes every key for
+                // the entire origin, including unrelated apps on the same
+                // subdomain.
                 localStorage.removeItem("PharmaHub_db_v2");
                 localStorage.removeItem("PharmaHub_db_v3");
                 localStorage.removeItem("PharmaHub_db_v4");
                 localStorage.removeItem("PharmaHub_session_v1");
                 localStorage.removeItem("PharmaHub_session_v2");
-                localStorage.clear();
               } catch {
                 // ignore
               }
-              window.location.href = "/sales";
+              window.location.href = "/dashboard";
             }}
             className="inline-flex items-center justify-center rounded-md border border-destructive/40 bg-destructive/10 px-4 py-2 text-sm font-medium text-destructive transition-colors hover:bg-destructive/20"
           >

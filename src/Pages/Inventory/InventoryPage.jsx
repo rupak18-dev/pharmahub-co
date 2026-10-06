@@ -205,8 +205,8 @@ export default function InventoryPage() {
                       </Link>
                       <div className="text-xs text-muted-foreground">{medicine.genericName}</div>
                     </td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums">{stock}</td>
-                    <td className="px-4 py-3 text-right font-mono tabular-nums">
+                    <td className="px-4 py-3 text-right tabular-nums">{stock}</td>
+                    <td className="px-4 py-3 text-right tabular-nums">
                       {settings.currency}
                       {value.toFixed(2)}
                     </td>
@@ -238,8 +238,8 @@ export default function InventoryPage() {
                   {reorderList.map(({ medicine, stock }) => (
                     <tr key={medicine.id} className="hover:bg-muted/30">
                       <td className="px-4 py-3 font-medium">{medicine.name}</td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums">{stock}</td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums text-muted-foreground">
+                      <td className="px-4 py-3 text-right tabular-nums">{stock}</td>
+                      <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
                         {medicine.reorderThreshold}
                       </td>
                       <td className="px-4 py-3">
@@ -285,7 +285,7 @@ export default function InventoryPage() {
                   {deadStock.map((d) => (
                     <tr key={d.medicine.id} className="hover:bg-muted/30">
                       <td className="px-4 py-3 font-medium">{d.medicine.name}</td>
-                      <td className="px-4 py-3 text-right font-mono tabular-nums">{d.stock}</td>
+                      <td className="px-4 py-3 text-right tabular-nums">{d.stock}</td>
                       <td className="px-4 py-3 text-muted-foreground">
                         {d.last ? format(d.last, "dd MMM yyyy") : "Never"}
                       </td>
@@ -325,7 +325,7 @@ export default function InventoryPage() {
                           {mv.movementType}
                         </td>
                         <td
-                          className={`px-4 py-3 text-right font-mono tabular-nums ${
+                          className={`px-4 py-3 text-right tabular-nums ${
                             mv.quantity > 0
                               ? "text-success"
                               : mv.quantity < 0
@@ -359,12 +359,10 @@ function RankPanel({ title, items }) {
         {items.map((r, i) => (
           <li key={r.medicine.id} className="flex items-center justify-between px-4 py-2 text-sm">
             <span className="flex items-center gap-3">
-              <span className="w-5 text-right font-mono text-xs text-muted-foreground">
-                {i + 1}
-              </span>
+              <span className="w-5 text-right text-xs text-muted-foreground">{i + 1}</span>
               <span>{r.medicine.name}</span>
             </span>
-            <span className="font-mono tabular-nums text-muted-foreground">{r.sold}</span>
+            <span className="tabular-nums text-muted-foreground">{r.sold}</span>
           </li>
         ))}
       </ol>

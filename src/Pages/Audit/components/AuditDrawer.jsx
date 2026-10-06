@@ -151,7 +151,7 @@ export function AuditDrawer({
           <div className="rounded-lg border border-border bg-card p-3">
             <div className="mb-1.5 flex items-center justify-between text-sm">
               <span className="font-medium">Audit progress</span>
-              <span className="font-mono text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground">
                 {progress.verified}/{progress.total} · {progress.pct}%
               </span>
             </div>

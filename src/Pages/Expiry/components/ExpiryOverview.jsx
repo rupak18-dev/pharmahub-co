@@ -333,20 +333,20 @@ function RecoverableTooltip({ active, payload, currency }) {
       <div className="mt-1.5 space-y-1 text-muted-foreground">
         <div className="flex items-center justify-between gap-5">
           <span>Recoverable Value</span>
-          <strong className="font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
+          <strong className="text-emerald-600 dark:text-emerald-400 tabular-nums">
             {currency}
             {p.cumulative.toLocaleString()}
           </strong>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Returnable Batches</span>
-          <strong className="font-mono text-foreground tabular-nums">{p.count}</strong>
+          <strong className="text-foreground tabular-nums">{p.count}</strong>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Change from previous point</span>
           <strong
             className={cn(
-              "font-mono tabular-nums",
+              "tabular-nums",
               change >= 0
                 ? "text-emerald-600 dark:text-emerald-400"
                 : "text-rose-600 dark:text-rose-400",
@@ -379,7 +379,7 @@ function LossTooltip({ active, payload, currency }) {
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PALETTE.warning }} />
             Projected Loss
           </span>
-          <strong className="font-mono text-foreground tabular-nums">
+          <strong className="text-foreground tabular-nums">
             {currency}
             {p.value.toLocaleString()}
           </strong>
@@ -389,18 +389,18 @@ function LossTooltip({ active, payload, currency }) {
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: PALETTE.recovery }} />
             Recoverable
           </span>
-          <strong className="font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
+          <strong className="text-emerald-600 dark:text-emerald-400 tabular-nums">
             {currency}
             {p.recoverable.toLocaleString()}
           </strong>
         </div>
         <div className="flex items-center justify-between gap-5 mt-2 pt-2 border-t border-border/50">
           <span>Affected batches</span>
-          <strong className="font-mono text-foreground tabular-nums">{p.count ?? 0}</strong>
+          <strong className="text-foreground tabular-nums">{p.count ?? 0}</strong>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Affected medicines</span>
-          <strong className="font-mono text-foreground tabular-nums">{p.medCount ?? 0}</strong>
+          <strong className="text-foreground tabular-nums">{p.medCount ?? 0}</strong>
         </div>
       </div>
     </div>
@@ -427,18 +427,18 @@ function DonutTooltip({ active, payload, currency }) {
       <div className="mt-1.5 space-y-1 text-muted-foreground">
         <div className="flex items-center justify-between gap-5">
           <span>Stock Value</span>
-          <strong className="font-mono text-foreground tabular-nums">
+          <strong className="text-foreground tabular-nums">
             {currency}
             {s.value.toLocaleString()}
           </strong>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Share</span>
-          <strong className="font-mono text-foreground tabular-nums">{s.pct}%</strong>
+          <strong className="text-foreground tabular-nums">{s.pct}%</strong>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Medicines</span>
-          <strong className="font-mono text-foreground tabular-nums">{s.count}</strong>
+          <strong className="text-foreground tabular-nums">{s.count}</strong>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Recovery Priority</span>
@@ -489,7 +489,7 @@ function RecoverableTrendCard({
             <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
               Current Value
             </div>
-            <div className="mt-0.5 font-mono font-bold text-foreground tabular-nums">
+            <div className="mt-0.5 font-bold text-foreground tabular-nums">
               {currency}
               {headline.toLocaleString()}
             </div>
@@ -498,7 +498,7 @@ function RecoverableTrendCard({
             <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
               Peak Value
             </div>
-            <div className="mt-0.5 font-mono font-bold text-foreground tabular-nums">
+            <div className="mt-0.5 font-bold text-foreground tabular-nums">
               {currency}
               {peak.toLocaleString()}
             </div>
@@ -507,7 +507,7 @@ function RecoverableTrendCard({
             <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
               Average Value
             </div>
-            <div className="mt-0.5 font-mono font-bold text-foreground tabular-nums">
+            <div className="mt-0.5 font-bold text-foreground tabular-nums">
               {currency}
               {average.toLocaleString()}
             </div>
@@ -617,7 +617,7 @@ function LossProjectionCard({ data, currency, activeMonth, onSelectMonth, topLos
             </div>
             <div className="flex items-center justify-between gap-2">
               <span>Projected loss:</span>
-              <strong className="font-mono text-foreground">
+              <strong className="text-foreground">
                 {currency}
                 {highestRiskMonth.value.toLocaleString()}
               </strong>
@@ -766,7 +766,7 @@ function StatusDonutCard({ data, total, currency, activePill, onDrill, windowLab
           <span className="truncate">
             {top ? `${top.label} holds the largest share (${top.pct}%)` : "No stock to distribute"}
           </span>
-          <strong className="font-mono shrink-0">
+          <strong className="shrink-0">
             {currency}
             {total.toLocaleString()}
           </strong>
@@ -821,6 +821,7 @@ function StatusDonutCard({ data, total, currency, activePill, onDrill, windowLab
                 <ChartTooltip
                   animationDuration={150}
                   content={<DonutTooltip currency={currency} />}
+                  wrapperStyle={{ zIndex: 100 }}
                 />
               </PieChart>
             </ChartContainer>
@@ -829,7 +830,7 @@ function StatusDonutCard({ data, total, currency, activePill, onDrill, windowLab
                 <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
                   Total Stock
                 </div>
-                <div className="text-sm font-black font-mono text-foreground tracking-tight">
+                <div className="text-sm font-black text-foreground tracking-tight">
                   {currency}
                   {total.toLocaleString()}
                 </div>
@@ -862,11 +863,11 @@ function StatusDonutCard({ data, total, currency, activePill, onDrill, windowLab
                   <span className="h-2 w-2 rounded-full" style={{ backgroundColor: s.color }} />
                   {s.label}
                 </span>
-                <span className="font-mono text-[11px] text-muted-foreground">
+                <span className="text-[11px] text-muted-foreground">
                   {currency}
                   {s.value.toLocaleString()} · {s.pct}%
                 </span>
-                <span className="font-mono text-[10px] text-muted-foreground/70">
+                <span className="text-[10px] text-muted-foreground/70">
                   {s.count} medicine{s.count === 1 ? "" : "s"}
                 </span>
               </button>
@@ -948,7 +949,7 @@ function RiskScoreCard({
           <span>Click to review needs-attention stock</span>
           <strong
             className={cn(
-              "font-mono",
+              "",
               color === PALETTE.expired
                 ? "text-rose-600"
                 : color === PALETTE.warning
@@ -989,9 +990,7 @@ function RiskScoreCard({
           </svg>
           <div className="absolute inset-0 grid place-items-center">
             <div className="text-center">
-              <div className="text-4xl font-black font-mono text-foreground tracking-tight">
-                {score}
-              </div>
+              <div className="text-4xl font-black text-foreground tracking-tight">{score}</div>
               <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
                 / 100
               </div>
@@ -1034,12 +1033,12 @@ function RiskScoreCard({
               </span>
               <span className="flex items-center gap-2">
                 {s.value != null && (
-                  <span className="font-mono tabular-nums">
+                  <span className="tabular-nums">
                     {currency}
                     {compact(s.value)}
                   </span>
                 )}
-                <strong className="font-mono text-foreground tabular-nums">{s.count}</strong>
+                <strong className="text-foreground tabular-nums">{s.count}</strong>
               </span>
             </button>
           ))}
@@ -1058,20 +1057,18 @@ function CategoryTooltip({ active, payload, currency }) {
       <div className="mt-1.5 space-y-1 text-muted-foreground">
         <div className="flex items-center justify-between gap-5">
           <span>Exposure</span>
-          <strong className="font-mono text-foreground tabular-nums">
+          <strong className="text-foreground tabular-nums">
             {currency}
             {p.value.toLocaleString()}
           </strong>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Critical Batches</span>
-          <strong className="font-mono text-foreground tabular-nums">{p.critical}</strong>
+          <strong className="text-foreground tabular-nums">{p.critical}</strong>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Expired Batches</span>
-          <strong className="font-mono text-rose-600 dark:text-rose-400 tabular-nums">
-            {p.expired}
-          </strong>
+          <strong className="text-rose-600 dark:text-rose-400 tabular-nums">{p.expired}</strong>
         </div>
       </div>
     </div>
@@ -1192,14 +1189,14 @@ function SupplierTooltip({ active, payload, currency }) {
       <div className="mt-1.5 space-y-1 text-muted-foreground">
         <div className="flex items-center justify-between gap-5">
           <span>Recoverable Value</span>
-          <strong className="font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
+          <strong className="text-emerald-600 dark:text-emerald-400 tabular-nums">
             {currency}
             {p.value.toLocaleString()}
           </strong>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Returnable Batches</span>
-          <strong className="font-mono text-foreground tabular-nums">{p.count}</strong>
+          <strong className="text-foreground tabular-nums">{p.count}</strong>
         </div>
       </div>
     </div>
@@ -1307,16 +1304,14 @@ function RecoveryTrendTooltip({ active, payload, currency }) {
       <div className="mt-1.5 space-y-1 text-muted-foreground">
         <div className="flex items-center justify-between gap-5">
           <span>Recoverable Value</span>
-          <strong className="font-mono text-emerald-600 dark:text-emerald-400 tabular-nums">
+          <strong className="text-emerald-600 dark:text-emerald-400 tabular-nums">
             {currency}
             {p.recoverable.toLocaleString()}
           </strong>
         </div>
         <div className="flex items-center justify-between gap-5">
           <span>Returnable Batches</span>
-          <strong className="font-mono text-foreground tabular-nums">
-            {p.recoverableCount ?? 0}
-          </strong>
+          <strong className="text-foreground tabular-nums">{p.recoverableCount ?? 0}</strong>
         </div>
         {p.topName ? (
           <div className="flex items-center justify-between gap-5">
@@ -1347,7 +1342,7 @@ function RecoveryTrendCard({ data, currency, activeMonth, onSelectMonth, windowL
             <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
               Window Total
             </div>
-            <div className="mt-0.5 font-mono font-bold text-foreground tabular-nums">
+            <div className="mt-0.5 font-bold text-foreground tabular-nums">
               {currency}
               {total.toLocaleString()}
             </div>
@@ -1356,7 +1351,7 @@ function RecoveryTrendCard({ data, currency, activeMonth, onSelectMonth, windowL
             <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
               Peak Month
             </div>
-            <div className="mt-0.5 font-mono font-bold text-foreground tabular-nums">
+            <div className="mt-0.5 font-bold text-foreground tabular-nums">
               {currency}
               {peak.toLocaleString()}
             </div>
@@ -1467,7 +1462,7 @@ function TopAtRiskCard({ top10, currency, windowLabelText, onDrill }) {
         </div>
       </div>
       <div className="w-full overflow-x-auto rounded-xl border border-border">
-        <table className="w-full text-left text-xs min-w-[800px] md:min-w-0">
+        <table className="w-full text-left text-xs min-w-0 md:min-w-0">
           <thead className="bg-muted/70 font-semibold text-muted-foreground border-b border-border">
             <tr>
               <th className="p-2.5 whitespace-nowrap">Medicine</th>
@@ -1493,10 +1488,8 @@ function TopAtRiskCard({ top10, currency, windowLabelText, onDrill }) {
                   <td className="p-2.5 font-semibold text-foreground">
                     <div className="line-clamp-2 max-w-[260px]">{r.medicine}</div>
                   </td>
-                  <td className="p-2.5 font-mono text-muted-foreground whitespace-nowrap">
-                    {r.expiry}
-                  </td>
-                  <td className="p-2.5 font-mono text-right text-rose-600 dark:text-rose-400 tabular-nums whitespace-nowrap">
+                  <td className="p-2.5 text-muted-foreground whitespace-nowrap">{r.expiry}</td>
+                  <td className="p-2.5 text-right text-rose-600 dark:text-rose-400 tabular-nums whitespace-nowrap">
                     {currency}
                     {r.loss.toLocaleString()}
                   </td>
@@ -2208,7 +2201,7 @@ export function ExpiryOverview({
                     <RotateCcw className="h-3.5 w-3.5" />
                   </div>
                 </div>
-                <div className="mt-2 text-2xl font-black font-mono tracking-tight text-emerald-600 dark:text-emerald-400">
+                <div className="mt-2 text-2xl font-black tracking-tight text-emerald-600 dark:text-emerald-400">
                   {currency}
                   {metrics.returnEligibleValue.toLocaleString()}
                 </div>
@@ -2240,7 +2233,7 @@ export function ExpiryOverview({
                     <TrendingDown className="h-3.5 w-3.5" />
                   </div>
                 </div>
-                <div className="mt-2 text-2xl font-black font-mono tracking-tight text-foreground">
+                <div className="mt-2 text-2xl font-black tracking-tight text-foreground">
                   {currency}
                   {metrics.lossProjection.toLocaleString()}
                 </div>
@@ -2272,7 +2265,7 @@ export function ExpiryOverview({
                     <PackageX className="h-3.5 w-3.5" />
                   </div>
                 </div>
-                <div className="mt-2 text-2xl font-black font-mono tracking-tight text-rose-600 dark:text-rose-400">
+                <div className="mt-2 text-2xl font-black tracking-tight text-rose-600 dark:text-rose-400">
                   {currency}
                   {expiredMetrics.value.toLocaleString()}
                 </div>
@@ -2301,7 +2294,7 @@ export function ExpiryOverview({
                     <ShieldAlert className="h-3.5 w-3.5" />
                   </div>
                 </div>
-                <div className="mt-2 text-2xl font-black font-mono tracking-tight text-foreground">
+                <div className="mt-2 text-2xl font-black tracking-tight text-foreground">
                   {currency}
                   {metrics.nearValue.toLocaleString()}
                 </div>
@@ -2741,7 +2734,7 @@ export function ExpiryOverview({
                                   ? row.medicineName
                                   : `Batch ${row.batchNumber}`}
                               </div>
-                              <div className="hidden items-center gap-1.5 mt-1 text-[11px] text-muted-foreground font-mono xl:flex">
+                              <div className="hidden items-center gap-1.5 mt-1 text-[11px] text-muted-foreground xl:flex">
                                 <span>Batch {row.batchNumber}</span>
                                 <span>•</span>
                                 <span>Shelf {row.shelf || "Unassigned"}</span>
@@ -2782,7 +2775,7 @@ export function ExpiryOverview({
                             </td>
 
                             {/* Monetary Prioritization */}
-                            <td className="px-4 py-2.5 text-right align-middle font-mono">
+                            <td className="px-4 py-2.5 text-right align-middle">
                               <div className="flex flex-col items-end gap-[3px] leading-tight">
                                 <div className="flex items-baseline gap-1.5 whitespace-nowrap">
                                   <span className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
@@ -2905,7 +2898,7 @@ export function ExpiryOverview({
                                     <span className="font-bold text-foreground block text-[11px]">
                                       Unit Purchase Cost
                                     </span>
-                                    <span className="font-mono">
+                                    <span>
                                       {currency}
                                       {row.batch.purchasePrice}
                                     </span>
@@ -2914,7 +2907,7 @@ export function ExpiryOverview({
                                     <span className="font-bold text-foreground block text-[11px]">
                                       Batch Stock Value
                                     </span>
-                                    <span className="font-mono font-bold text-foreground">
+                                    <span className="font-bold text-foreground">
                                       {currency}
                                       {row.stockValue.toLocaleString()}
                                     </span>
@@ -3024,7 +3017,7 @@ export function ExpiryOverview({
           exit={{ opacity: 0, y: 20 }}
           className="fixed inset-x-0 bottom-0 z-50 flex items-center gap-2 bg-card/95 px-3 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-2xl backdrop-blur-md border-t border-border text-xs sm:inset-x-auto sm:bottom-6 sm:left-1/2 sm:-translate-x-1/2 sm:w-auto sm:flex-row sm:items-center sm:gap-3 sm:rounded-full sm:border sm:px-5 sm:py-2.5 sm:pb-2.5"
         >
-          <span className="font-extrabold text-foreground font-mono bg-muted px-2.5 py-1 rounded-full border border-border shrink-0">
+          <span className="font-extrabold text-foreground bg-muted px-2.5 py-1 rounded-full border border-border shrink-0">
             {selectedRowIds.size} Selected
           </span>
 
@@ -3192,7 +3185,7 @@ export function ExpiryOverview({
             </div>
 
             <div className="w-full overflow-x-auto rounded-xl border border-border">
-              <table className="w-full text-left text-xs min-w-[800px] md:min-w-0">
+              <table className="w-full text-left text-xs min-w-0 md:min-w-0">
                 <thead className="bg-muted/70 font-semibold text-muted-foreground border-b border-border">
                   <tr>
                     <th className="p-2.5 whitespace-nowrap">Supplier</th>
@@ -3209,11 +3202,11 @@ export function ExpiryOverview({
                         <td className="p-2.5 font-bold text-foreground">
                           <div className="line-clamp-2 max-w-[260px]">{s.supplier}</div>
                         </td>
-                        <td className="p-2.5 font-mono font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                        <td className="p-2.5 font-bold text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
                           {currency}
                           {s.returnableValue.toLocaleString()}
                         </td>
-                        <td className="p-2.5 font-mono text-muted-foreground whitespace-nowrap">
+                        <td className="p-2.5 text-muted-foreground whitespace-nowrap">
                           {s.returnableValue > 0 ? "Eligible" : "None"}
                         </td>
                         <td className="p-2.5 whitespace-nowrap">
@@ -3311,7 +3304,7 @@ export function ExpiryOverview({
             </div>
 
             <div className="w-full overflow-x-auto rounded-xl border border-border">
-              <table className="w-full text-left text-xs min-w-[800px] md:min-w-0">
+              <table className="w-full text-left text-xs min-w-0 md:min-w-0">
                 <thead className="bg-muted/70 font-semibold text-muted-foreground border-b border-border">
                   <tr>
                     <th className="p-2.5 whitespace-nowrap">Category</th>
@@ -3331,13 +3324,13 @@ export function ExpiryOverview({
                           <td className="p-2.5 font-bold text-foreground">
                             <div className="line-clamp-2 max-w-[260px]">{c.category}</div>
                           </td>
-                          <td className="p-2.5 font-mono whitespace-nowrap">
+                          <td className="p-2.5 whitespace-nowrap">
                             <span className="font-bold text-rose-600 dark:text-rose-400">
                               {c.critical}
                             </span>{" "}
                             critical
                           </td>
-                          <td className="p-2.5 font-mono font-bold text-foreground whitespace-nowrap">
+                          <td className="p-2.5 font-bold text-foreground whitespace-nowrap">
                             {currency}
                             {c.totalValue.toLocaleString()}
                           </td>
@@ -3430,7 +3423,7 @@ export function ExpiryOverview({
               Suggested Alternatives
             </SheetTitle>
             {alternativesRow && (
-              <div className="text-xs text-muted-foreground font-mono bg-muted/60 p-2.5 rounded-xl border border-border mt-1">
+              <div className="text-xs text-muted-foreground bg-muted/60 p-2.5 rounded-xl border border-border mt-1">
                 Expired Target:{" "}
                 <strong className="text-foreground">
                   {alternativesRow.medicineName !== "—"
@@ -3496,13 +3489,11 @@ export function ExpiryOverview({
                       </div>
 
                       <div className="text-right shrink-0">
-                        <div className="text-sm font-black font-mono text-foreground">
+                        <div className="text-sm font-black text-foreground">
                           {currency}
                           {price.toLocaleString()}
                         </div>
-                        <div className="text-[10px] font-mono text-muted-foreground">
-                          Shelf: {shelfLoc}
-                        </div>
+                        <div className="text-[10px] text-muted-foreground">Shelf: {shelfLoc}</div>
                       </div>
                     </div>
 
@@ -3675,7 +3666,7 @@ function MedicineCards({
                     </span>
                     {statusPill}
                   </div>
-                  <div className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground">
+                  <div className="mt-0.5 truncate text-[11px] text-muted-foreground">
                     {row.salt !== "—" ? `${row.salt} · ` : ""}
                     Batch {row.batchNumber} · Shelf {row.shelf || "Unassigned"}
                   </div>
@@ -3702,13 +3693,13 @@ function MedicineCards({
                 <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Expiry
                 </dt>
-                <dd className="font-mono text-foreground">{row.expiryDate}</dd>
+                <dd className="text-foreground">{row.expiryDate}</dd>
               </div>
               <div>
                 <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                   Batch
                 </dt>
-                <dd className="font-mono text-foreground">{row.batchNumber}</dd>
+                <dd className="text-foreground">{row.batchNumber}</dd>
               </div>
               <div>
                 <dt className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -3878,7 +3869,7 @@ function MedicineCards({
                     <span className="block text-[11px] font-bold text-foreground">
                       Unit Purchase Cost
                     </span>
-                    <span className="font-mono">
+                    <span>
                       {currency}
                       {row.batch.purchasePrice}
                     </span>
@@ -3887,7 +3878,7 @@ function MedicineCards({
                     <span className="block text-[11px] font-bold text-foreground">
                       Batch Stock Value
                     </span>
-                    <span className="font-mono font-bold text-foreground">
+                    <span className="font-bold text-foreground">
                       {currency}
                       {row.stockValue.toLocaleString()}
                     </span>

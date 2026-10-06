@@ -126,7 +126,7 @@ export function AuditInsights({
               <div key={p.name}>
                 <div className="mb-1 flex items-center justify-between text-xs">
                   <span className="min-w-0 truncate font-medium">{p.name}</span>
-                  <span className="shrink-0 font-mono text-muted-foreground">
+                  <span className="shrink-0 text-muted-foreground">
                     {formatCurrency(p.value, currency)} · {p.pct}% · cum {p.cumulativePct}%
                   </span>
                 </div>

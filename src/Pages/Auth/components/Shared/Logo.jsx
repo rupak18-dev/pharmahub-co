@@ -7,7 +7,14 @@ export function Logo({ tagline = TAGLINE, className, imgClassName, isWhite }) {
   if (isWhite) {
     return (
       <div className={cn("flex flex-col items-start gap-2.5", className)}>
-        <span className="text-2xl font-bold tracking-tight text-white">PharmaHub</span>
+        <img
+          src="/PharmaHub__logo_cropped.webp"
+          alt="PharmaHub Logo"
+          className={cn(
+            "h-12 w-auto object-contain brightness-0 invert",
+            imgClassName,
+          )}
+        />
         {tagline && <p className="text-sm font-medium text-white/80">{tagline}</p>}
       </div>
     );

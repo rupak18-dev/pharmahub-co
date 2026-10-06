@@ -6,10 +6,10 @@ export const BUSINESS_CONFIG = {
     },
     jobTitles: [
       { label: "Owner", icon: "User" },
-      { label: "Pharmacist", icon: "Pill" },
+      { label: "Pharmacist-in-Charge", icon: "Pill" },
       { label: "Store Manager", icon: "Store" },
-      { label: "Cashier", icon: "Receipt" },
-      { label: "Inventory Manager", icon: "Package" },
+      { label: "Billing Staff", icon: "Receipt" },
+      { label: "Inventory Associate", icon: "Package" },
     ],
     quickActions: [
       {
@@ -56,8 +56,8 @@ export const BUSINESS_CONFIG = {
     jobTitles: [
       { label: "Owner", icon: "User" },
       { label: "Warehouse Manager", icon: "Warehouse" },
-      { label: "Purchase Manager", icon: "ShoppingCart" },
-      { label: "Sales Executive", icon: "TrendingUp" },
+      { label: "Procurement Lead", icon: "ShoppingCart" },
+      { label: "Sales Representative", icon: "TrendingUp" },
       { label: "Operations Manager", icon: "Settings" },
     ],
     quickActions: [
@@ -103,11 +103,11 @@ export const BUSINESS_CONFIG = {
       branchName: "e.g. Regional HQ",
     },
     jobTitles: [
-      { label: "Administrator", icon: "Shield" },
-      { label: "Operations Head", icon: "Settings" },
+      { label: "Chief Administrator", icon: "Shield" },
+      { label: "Operations Director", icon: "Settings" },
       { label: "Branch Manager", icon: "Store" },
       { label: "Procurement Manager", icon: "ShoppingCart" },
-      { label: "IT Administrator", icon: "Monitor" },
+      { label: "IT Admin", icon: "Monitor" },
     ],
     quickActions: [
       {
@@ -143,8 +143,8 @@ export const BUSINESS_CONFIG = {
     jobTitles: [
       { label: "Hospital Administrator", icon: "Building" },
       { label: "Chief Pharmacist", icon: "Pill" },
-      { label: "Department Manager", icon: "Users" },
-      { label: "Inventory Officer", icon: "Package" },
+      { label: "Ward In-Charge", icon: "Users" },
+      { label: "Inventory Controller", icon: "Package" },
       { label: "Procurement Officer", icon: "ShoppingCart" },
     ],
     quickActions: [

@@ -1,40 +1,85 @@
 // Fetch wrapper for the pharmahub-server Express API (`/api/v1`).
-// Auth is session-cookie based: the server sets an httpOnly cookie and the
-// browser sends it automatically via `credentials: "include"`. No token is
-// ever stored in localStorage or touched by JS.
+// Auth uses a JWT bearer token stored in localStorage (PharmaHub_session_v2),
+// sent as `Authorization: Bearer <token>` on every request. The cookie
+// `credentials: "include"` is also sent for cross-origin requests where the
+// server may use httpOnly cookies (e.g. Google OAuth callback).
+//
+// CSRF protection: mutating requests include a custom `X-PharmaHub-Client`
+// header that cross-site form posts cannot add without a preflight.
 //
 // Backend envelope: `{ success, message, data, meta }` on success and
 // `{ success: false, error: { message, details } }` on failure.
-
 function resolveApiBase() {
   const fromEnv = import.meta.env.VITE_API_URL;
-  if (fromEnv) return fromEnv;
-  // Hostname-based fallback (not build-mode based): Render serves the app via
-  // the dev server, so `import.meta.env.PROD` is false there. Any host that is
-  // not the local dev machine gets the production backend, which keeps both
-  // Render and Vercel working even if VITE_API_URL is left unset.
   if (typeof window !== "undefined") {
     const host = window.location.hostname;
-    if (host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0") {
-      return "http://localhost:5000/api/v1";
-    }
+    const isLocal = host === "localhost" || host === "127.0.0.1" || host === "0.0.0.0";
+    // The absolute URL in VITE_API_URL targets this machine (:5000) — only
+    // meaningful when the app itself is opened from localhost. Browsing via a
+    // LAN IP / tunnel would otherwise try to reach the wrong host.
+    if (fromEnv && isLocal) return fromEnv;
+    if (isLocal) return "http://localhost:5050/api/v1";
+    // Dev served over another hostname: go same-origin so the Vite proxy
+    // routes the call (never wakes the sleeping production server).
+    if (import.meta.env.DEV) return "/api/v1";
   }
+  if (fromEnv) return fromEnv;
   return "https://pharmahub-server.onrender.com/api/v1";
 }
 
 export const API_BASE = resolveApiBase();
+export const API_BASE_URL = API_BASE;
 
-function withLimit(url) {
-  if (url.includes("?") || /\/([0-9a-fA-F]{24})$/.test(url)) return url;
-  return `${url}${url.includes("?") ? "&" : "?"}limit=100`;
+export function resolveAssetUrl(path) {
+  if (!path) return null;
+  if (/^(https?:)?\/\//.test(path) || path.startsWith("data:") || path.startsWith("blob:"))
+    return path;
+  if (path.startsWith("/")) {
+    const origin = API_BASE.replace(/\/api\/v1\/?$/, "");
+    return `${origin}${path}`;
+  }
+  return path;
 }
 
+export function isNetworkError(err) {
+  return (
+    err instanceof TypeError ||
+    (typeof err?.message === "string" && /fetch|network|load failed/i.test(err.message))
+  );
+}
+
+function withLimit(url) {
+  const [pathname] = url.split("?");
+  if (
+    !pathname ||
+    pathname === "/" ||
+    pathname === "/docs" ||
+    pathname === "/health" ||
+    pathname.startsWith("/auth/") ||
+    url.includes("?") ||
+    /\/([0-9a-fA-F]{24})$/.test(pathname)
+  ) {
+    return url;
+  }
+  return `${url}?limit=100`;
+}
+
+// Custom header required by the server on mutating requests — cross-site
+// form posts cannot add it, which gives lightweight CSRF protection for the
+// cookie session.
+const CLIENT_HEADER = { "X-PharmaHub-Client": "web" };
+
 const SESSION_KEY = "PharmaHub_session_v2";
+
+export function getAuthToken() {
+  return getSessionToken();
+}
 
 function getSessionToken() {
   if (typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(SESSION_KEY);
+    const raw =
+      window.localStorage.getItem(SESSION_KEY) ?? window.sessionStorage.getItem(SESSION_KEY);
     const parsed = raw ? JSON.parse(raw) : null;
     return parsed?.token || null;
   } catch {
@@ -42,46 +87,248 @@ function getSessionToken() {
   }
 }
 
+const DEFAULT_TIMEOUT_MS = 30000;
+const GET_RETRIES = 2;
+const RETRY_BACKOFF_MS = [2000, 6000];
+
+function markNetworkError(err) {
+  if (err && (typeof err === "object" || typeof err === "function")) err.kind = "network";
+  return err;
+}
+
 async function request(path, options = {}) {
   const url = path.startsWith("http") ? path : `${API_BASE}${path}`;
-  const finalUrl = !options.method || options.method === "GET" ? withLimit(url) : url;
-  const headers = { ...(options.headers ?? {}) };
+  const isGet = !options.method || options.method === "GET";
+  const finalUrl = isGet ? withLimit(url) : url;
+  const headers = {
+    ...CLIENT_HEADER,
+    ...(options.headers ?? {}),
+  };
+
   const token = getSessionToken();
   if (token && !headers["Authorization"]) {
     headers["Authorization"] = `Bearer ${token}`;
   }
-  if (options.body && !headers["Content-Type"]) {
+
+  // Never set Content-Type header when sending FormData, Blob, or ArrayBuffer.
+  // The browser fetch API must automatically generate the multipart boundary.
+  const isBinaryOrMultipart =
+    (typeof FormData !== "undefined" && options.body instanceof FormData) ||
+    (typeof Blob !== "undefined" && options.body instanceof Blob) ||
+    (typeof ArrayBuffer !== "undefined" && options.body instanceof ArrayBuffer);
+
+  if (options.body && !headers["Content-Type"] && !isBinaryOrMultipart) {
     headers["Content-Type"] = "application/json";
   }
 
-  const res = await fetch(finalUrl, { ...options, headers, credentials: "include" });
-  const text = await res.text();
-  let json = null;
+  let lastError;
+  for (let attempt = 0; attempt < GET_RETRIES + 1; attempt++) {
+    const canRetry = isGet && !options.signal;
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? DEFAULT_TIMEOUT_MS);
+    let res;
+    try {
+      res = await fetch(finalUrl, {
+        ...options,
+        headers,
+        credentials: "include",
+        signal: options.signal ?? controller.signal,
+      });
+    } catch (err) {
+      clearTimeout(timer);
+      if (controller.signal.aborted && !options.signal) {
+        const timeoutErr = new Error(
+          "Request timed out — the server is unreachable or waking up. Try again.",
+        );
+        timeoutErr.kind = "network";
+        lastError = timeoutErr;
+      } else {
+        lastError = isNetworkError(err) ? markNetworkError(err) : err;
+      }
+      if (canRetry && attempt < GET_RETRIES) {
+        const delay = RETRY_BACKOFF_MS[attempt] ?? RETRY_BACKOFF_MS[GET_RETRIES - 1];
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        continue;
+      }
+      throw lastError;
+    }
+    clearTimeout(timer);
+
+    const text = await res.text();
+    let json = null;
+    if (text && (text.startsWith("{") || text.startsWith("["))) {
+      try {
+        json = JSON.parse(text);
+      } catch {
+        // not JSON
+      }
+    }
+
+    if (!res.ok) {
+      let message = null;
+      const details = json?.error?.details || json?.details;
+      if (Array.isArray(details) && details.length > 0) {
+        message = details
+          .map((d) => (typeof d === "string" ? d : d.message || d.msg || `${d.field}: invalid`))
+          .filter(Boolean)
+          .join("; ");
+      }
+      if (!message) {
+        message =
+          json?.error?.message ??
+          json?.error ??
+          (typeof json?.error === "string" ? json.error : null) ??
+          json?.message ??
+          (text && text.length < 200 && !text.includes("<!DOCTYPE") ? text : null) ??
+          `Request failed (${res.status})`;
+      }
+      const error = new Error(message);
+      error.status = res.status;
+      error.data = json;
+      throw error;
+    }
+
+    return { status: res.status, json, text };
+  }
+  throw lastError;
+}
+
+const API_CACHE_PREFIX = "PharmaHub_apicache_v1:";
+const API_CACHE_TTL_MS = 5 * 60 * 1000;
+
+export function getCachedResponse(path) {
+  if (typeof window === "undefined") return null;
   try {
-    json = text ? JSON.parse(text) : null;
+    const raw = window.sessionStorage.getItem(`${API_CACHE_PREFIX}${path}`);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.ts !== "number") return null;
+    return {
+      data: parsed.data,
+      ts: parsed.ts,
+      stale: Date.now() - parsed.ts > API_CACHE_TTL_MS,
+    };
   } catch {
-    // non-JSON response (e.g. the SPA index.html fallback) — json stays null
+    return null;
   }
+}
 
-  if (!res.ok) {
-    const message =
-      json?.error?.message ??
-      json?.error ??
-      (typeof json?.error === "string" ? json.error : null) ??
-      `Request failed (${res.status})`;
-    throw new Error(message);
+function setCachedResponse(path, data) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(
+      `${API_CACHE_PREFIX}${path}`,
+      JSON.stringify({ ts: Date.now(), data }),
+    );
+  } catch {
+    // best-effort cache; ignore quota/unavailable storage
   }
+}
 
-  return { status: res.status, json };
+export function clearApiCache(prefix = "") {
+  if (typeof window === "undefined") return;
+  try {
+    const p = `${API_CACHE_PREFIX}${prefix}`;
+    const toRemove = [];
+    for (let i = 0; i < window.sessionStorage.length; i++) {
+      const key = window.sessionStorage.key(i);
+      if (key && key.startsWith(p)) {
+        toRemove.push(key);
+      }
+    }
+    for (const k of toRemove) {
+      window.sessionStorage.removeItem(k);
+    }
+  } catch {
+    // ignore
+  }
+}
+
+// Fires GETs for the given paths once, warming the server and filling the
+// response cache so pages hydrate instantly on visit.
+export function prefetch(paths) {
+  for (const p of paths) {
+    apiRequest(p).catch(() => {});
+  }
+}
+
+function unwrapEnvelope(json) {
+  if (json.success === true || json.data !== undefined) {
+    return json.data ?? null; // legacy handler tolerance
+  }
+  return json;
 }
 
 // Unwraps the envelope to `data` for the callers that want the payload directly.
+// GETs serve cached data instantly (even stale) and revalidate in the
+// background, so a slow/waking server never blocks page rendering.
 export async function apiRequest(path, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  if (method === "GET" && !options.noCache) {
+    const cached = getCachedResponse(path);
+    if (cached) {
+      if (!cached.stale) return cached.data;
+      revalidate(path);
+      return cached.data;
+    }
+  }
   const { status, json } = await request(path, options);
   if (status === 204 || json === null) return null;
-  if (json.success === true) return json.data ?? null;
-  if (json.data !== undefined) return json.data ?? null; // legacy handler tolerance
-  return json;
+  const data = unwrapEnvelope(json);
+  if (method === "GET" && !options.noCache) {
+    setCachedResponse(path, data);
+  } else {
+    clearApiCache();
+  }
+  return data;
+}
+
+// Same request and cache behaviour as apiRequest, but resolves the whole
+// envelope instead of just `data`. Required whenever the caller needs the
+// server's `message` alongside the payload — the sign-up / verification
+// endpoints use it to report `data.emailReason` ("email_unconfigured",
+// "delivery_failed"), and unwrapping to `data` would silently discard it.
+export async function apiRequestEnvelope(path, options = {}) {
+  const method = (options.method || "GET").toUpperCase();
+  const { status, json } = await request(path, options);
+  if (status === 204 || json === null) return null;
+  const data = unwrapEnvelope(json);
+  if (method === "GET" && !options.noCache) {
+    setCachedResponse(path, data);
+  } else {
+    clearApiCache();
+  }
+  return {
+    success: json?.success !== false,
+    message: json?.message ?? null,
+    data,
+    meta: json?.meta ?? null,
+  };
+}
+
+// Why the server could not deliver an email, in the caller's own words. The
+// backend answers 2xx even when nothing was sent (it reports the reason
+// instead of failing the request), so the UI has to surface it or a signup
+// silently "succeeds" with no code ever arriving.
+export function describeEmailDelivery(reason) {
+  if (reason === "email_unconfigured") {
+    return "Email delivery isn't configured on the server, so no code was sent. Contact your administrator — nothing will arrive in your inbox until SMTP is configured.";
+  }
+  if (reason === "delivery_failed") {
+    return "The server accepted the request but the email provider rejected it, so no code was sent. Check the server's mail configuration and try again.";
+  }
+  return null;
+}
+
+function revalidate(path) {
+  request(path).then(
+    ({ status, json }) => {
+      if (status === 204 || json === null) return;
+      const data = json.success === true || json.data !== undefined ? (json.data ?? null) : json;
+      setCachedResponse(path, data);
+    },
+    () => {},
+  );
 }
 
 function toJsonBody(body) {

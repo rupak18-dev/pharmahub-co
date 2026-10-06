@@ -8,7 +8,7 @@ export function BusinessCard({ title, description, icon: Icon, selected, onClick
       whileTap={{ scale: 0.98 }}
       onClick={onClick}
       transition={{ duration: 0.2 }}
-      className={`relative px-5 py-4 cursor-pointer rounded-[12px] border transition-all duration-200 flex items-center ${
+      className={`relative px-5 py-3 cursor-pointer rounded-[12px] border transition-all duration-200 flex items-center ${
         selected
           ? "border-primary bg-[#F7FCFA] shadow-sm"
           : "border-border bg-white hover:border-primary hover:shadow-sm group"

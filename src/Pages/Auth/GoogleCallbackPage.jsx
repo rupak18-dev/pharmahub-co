@@ -2,19 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, Link } from "react-router";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/auth";
+import { isOnboarded } from "@/lib/onboardingApi";
 import { CapsuleLoader } from "@/Components/shared/CapsuleLoader";
 import { AuthLayout } from "./components/Shared/AuthLayout";
-
-function decodeUser(raw) {
-  if (!raw) return null;
-  try {
-    const base64 = raw.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
-    return JSON.parse(atob(padded));
-  } catch {
-    return null;
-  }
-}
 
 export default function GoogleCallbackPage() {
   const { restoreSession, user } = useAuth();
@@ -27,17 +17,12 @@ export default function GoogleCallbackPage() {
     if (ranRef.current) return;
     ranRef.current = true;
 
-    const params = new URLSearchParams(window.location.hash.slice(1));
-    const token = params.get("token");
-    if (!token) {
-      setFailed(true);
-      toast.error("Google sign-in did not complete. Please try again.");
-      return;
-    }
-    restoreSession({ token, user: decodeUser(params.get("user")) })
+    // For Google OAuth the server sets the session cookie before redirecting
+    // here. For non-OAuth flows the JWT is returned in the response body.
+    // Hydrate the authoritative identity via /auth/me in all cases.
+    restoreSession()
       .then(() => {
         toast.success("Successfully logged in!");
-        // Don't leave the bearer token lingering in the address bar.
         window.history.replaceState(null, "", "/auth/callback");
       })
       .catch(() => {
@@ -65,8 +50,10 @@ export default function GoogleCallbackPage() {
 
   return (
     <CapsuleLoader
-      message="Signing you in…"
-      onDone={() => navigate(user?.onboarded ? "/dashboard" : "/onboarding")}
+      minimumMs={isOnboarded(user) ? 1600 : 1200}
+      variant={isOnboarded(user) ? "capsule" : "circular"}
+      message={isOnboarded(user) ? "Preparing your dashboard…" : "Signing you in…"}
+      onDone={() => navigate(isOnboarded(user) ? "/dashboard" : "/onboarding")}
     />
   );
 }

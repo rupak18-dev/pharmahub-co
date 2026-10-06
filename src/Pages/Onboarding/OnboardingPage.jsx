@@ -17,7 +17,12 @@ import {
   AlertDialogTitle,
 } from "@/Components/ui/alert-dialog";
 import { FullScreenSkeleton } from "@/Components/shared/PageSkeleton";
-import { getOnboarding, saveOnboarding } from "@/lib/onboardingApi";
+import {
+  getOnboarding,
+  saveOnboarding,
+  isOnboarded,
+  resetOnboardingStorage,
+} from "@/lib/onboardingApi";
 import { useAuth } from "@/lib/auth";
 import { useNavigate } from "react-router";
 
@@ -40,17 +45,39 @@ export default function OnboardingPage() {
   useEffect(() => {
     if (loading) return;
     if (!user) navigate("/login");
-    else if (user.onboarded && onboarding.currentStep < ONBOARDING_STEPS.length - 1)
+    else if (isOnboarded(user) && onboarding.currentStep < ONBOARDING_STEPS.length - 1)
       navigate("/dashboard");
   }, [user, loading, navigate, onboarding.currentStep]);
 
-  // Hydrate from backend — the Mongo `onboardings` collection is the sole store.
+  // Hydrate saved progress — but only for an account that has NOT yet
+  // completed onboarding AND where this is genuinely its own in-progress data
+  // is impossible to know locally once a server is involved. To guarantee the
+  // onboarding form always shows for a fresh account (never inheriting a
+  // previous user's progress, which previously jumped straight to the
+  // dashboard), a non-onboarded user always starts clean at step 0.
+  //
+  // `lastUserIdRef` prevents background user syncs (e.g. window focus →
+  // /auth/me → setUser) from re-running the full hydration and resetting
+  // an in-progress wizard back to step 0. Only initial mount and actual
+  // user-ID changes trigger hydration.
   const hydratedRef = useRef(false);
+  const lastUserIdRef = useRef(null);
   useEffect(() => {
     if (loading) return;
+    // Skip if we've already hydrated for this exact user — the user object
+    // reference changes on every background sync but the ID stays the same.
+    if (hydratedRef.current && lastUserIdRef.current === user?.id) return;
     let cancelled = false;
     (async () => {
       try {
+        if (!isOnboarded(user)) {
+          resetOnboardingStorage();
+          if (cancelled) return;
+          setOnboarding(INITIAL_STATE);
+          hydratedRef.current = true;
+          lastUserIdRef.current = user?.id ?? null;
+          return;
+        }
         const remote = await getOnboarding();
         if (cancelled || !remote) return;
         setOnboarding({
@@ -65,12 +92,13 @@ export default function OnboardingPage() {
         // Backend unreachable — stay on defaults.
       } finally {
         hydratedRef.current = true;
+        lastUserIdRef.current = user?.id ?? null;
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [loading]);
+  }, [loading, user]);
 
   // Auto-save to the backend after a debounce.
   useEffect(() => {

@@ -17,8 +17,12 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { format, subMonths, startOfMonth } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
+
 const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+
 export function DashboardCharts({ db }) {
+  const isMobile = useIsMobile();
   // Process data for Monthly Sales & Purchases & Revenue
   const monthlyData = useMemo(() => {
     const months = Array.from({ length: 6 }, (_, i) => {
@@ -26,6 +30,7 @@ export function DashboardCharts({ db }) {
       return {
         date: startOfMonth(d),
         name: format(d, "MMM yyyy"),
+        short: format(d, "MMM"),
         salesAmt: 0,
         purchasesAmt: 0,
         revenue: 0,
@@ -90,14 +95,43 @@ export function DashboardCharts({ db }) {
     return Object.values(catCounts);
   }, [db]);
   const currency = db.settings.currency;
+
+  // Shared responsive helpers
+  const monthKey = isMobile ? "short" : "name";
+  const axisTick = { fontSize: isMobile ? 10 : 12, fill: "hsl(var(--muted-foreground))" };
+  const compactMoney = (value) => {
+    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `${(value / 1000).toFixed(1)}k`;
+    return `${value}`;
+  };
+  const moneyTick = (value) =>
+    isMobile ? compactMoney(value) : `${currency}${compactMoney(value)}`;
+  const tooltipStyle = {
+    borderRadius: "8px",
+    border: "1px solid hsl(var(--border))",
+    backgroundColor: "hsl(var(--background))",
+    fontSize: "12px",
+  };
+  const chartWrap = {
+    area: "w-full aspect-[16/10] min-h-[180px]",
+    bar: "w-full aspect-[4/3] sm:aspect-[16/10] min-h-[180px]",
+    line: "w-full aspect-[16/10] min-h-[180px]",
+    pie: "w-full aspect-square sm:aspect-[4/3] min-h-[200px]",
+  };
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6">
       {/* Monthly Revenue - Area Chart */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm xl:col-span-2">
-        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">Revenue by Month</h3>
-        <div className="h-[250px] w-full">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm xl:col-span-2 min-w-0">
+        <h3 className="text-sm font-semibold mb-4 flex items-center gap-2 truncate">
+          Revenue by Month
+        </h3>
+        <div className={chartWrap.area}>
           <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <AreaChart
+              data={monthlyData}
+              margin={{ top: 10, right: isMobile ? 5 : 10, left: 0, bottom: 0 }}
+            >
               <defs>
                 <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                   <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
@@ -106,31 +140,28 @@ export function DashboardCharts({ db }) {
               </defs>
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
               <XAxis
-                dataKey="name"
+                dataKey={monthKey}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={axisTick}
+                interval={0}
                 dy={10}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                tickFormatter={(value) =>
-                  `${currency}${value >= 1000 ? (value / 1000).toFixed(1) + "k" : value}`
-                }
+                tick={axisTick}
+                width={isMobile ? 34 : 50}
+                tickFormatter={moneyTick}
               />
               <Tooltip
-                contentStyle={{
-                  borderRadius: "8px",
-                  border: "1px solid hsl(var(--border))",
-                  backgroundColor: "hsl(var(--background))",
-                }}
+                contentStyle={tooltipStyle}
                 formatter={(value) => [`${currency}${value.toFixed(2)}`, "Revenue"]}
               />
               <Area
                 type="monotone"
                 dataKey="revenue"
+                name="Revenue"
                 stroke="#3b82f6"
                 strokeWidth={3}
                 fillOpacity={1}
@@ -142,75 +173,83 @@ export function DashboardCharts({ db }) {
       </div>
 
       {/* Top Selling Medicines - Horizontal Bar */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
-        <h3 className="text-sm font-semibold mb-4">Top Selling Medicines</h3>
-        <div className="h-[250px] w-full">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm min-w-0">
+        <h3 className="text-sm font-semibold mb-4 truncate">Top Selling Medicines</h3>
+        <div className={chartWrap.bar}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={topMedicines}
               layout="vertical"
-              margin={{ top: 0, right: 10, left: 0, bottom: 0 }}
+              margin={{ top: 0, right: isMobile ? 5 : 10, left: 0, bottom: 0 }}
             >
               <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="hsl(var(--border))" />
               <XAxis
                 type="number"
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={axisTick}
+                tickFormatter={(value) => (value >= 1000 ? `${(value / 1000).toFixed(1)}k` : value)}
               />
               <YAxis
                 dataKey="name"
                 type="category"
-                width={100}
+                width={isMobile ? 76 : 110}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 11, fill: "hsl(var(--foreground))" }}
+                tick={{ fontSize: isMobile ? 10 : 11, fill: "hsl(var(--foreground))" }}
+                tickFormatter={(value) =>
+                  isMobile && value?.length > 10 ? `${value.slice(0, 10)}…` : value
+                }
               />
               <Tooltip
                 cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
-                contentStyle={{
-                  borderRadius: "8px",
-                  border: "1px solid hsl(var(--border))",
-                  backgroundColor: "hsl(var(--background))",
-                }}
+                contentStyle={tooltipStyle}
               />
-              <Bar dataKey="quantity" fill="#10b981" radius={[0, 4, 4, 0]} barSize={20} />
+              <Bar
+                dataKey="quantity"
+                name="Units sold"
+                fill="#10b981"
+                radius={[0, 4, 4, 0]}
+                barSize={isMobile ? 14 : 20}
+              />
             </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
 
       {/* Sales vs Purchases - Bar Chart */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm lg:col-span-1 xl:col-span-1">
-        <h3 className="text-sm font-semibold mb-4">Sales vs Purchases</h3>
-        <div className="h-[250px] w-full">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm lg:col-span-1 xl:col-span-1 min-w-0">
+        <h3 className="text-sm font-semibold mb-4 truncate">Sales vs Purchases</h3>
+        <div className={chartWrap.bar}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <BarChart
+              data={monthlyData}
+              margin={{ top: 10, right: isMobile ? 5 : 10, left: 0, bottom: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
               <XAxis
-                dataKey="name"
+                dataKey={monthKey}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={axisTick}
+                interval={0}
                 dy={10}
               />
               <YAxis
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-                tickFormatter={(value) =>
-                  `${currency}${value >= 1000 ? (value / 1000).toFixed(0) + "k" : value}`
-                }
+                tick={axisTick}
+                width={isMobile ? 34 : 50}
+                tickFormatter={moneyTick}
               />
               <Tooltip
                 cursor={{ fill: "hsl(var(--muted))", opacity: 0.4 }}
-                contentStyle={{
-                  borderRadius: "8px",
-                  border: "1px solid hsl(var(--border))",
-                  backgroundColor: "hsl(var(--background))",
-                }}
+                contentStyle={tooltipStyle}
               />
-              <Legend wrapperStyle={{ fontSize: "12px", paddingTop: "10px" }} iconType="circle" />
+              <Legend
+                wrapperStyle={{ fontSize: isMobile ? "11px" : "12px", paddingTop: "10px" }}
+                iconType="circle"
+              />
               <Bar
                 dataKey="revenue"
                 name="Sales"
@@ -231,30 +270,28 @@ export function DashboardCharts({ db }) {
       </div>
 
       {/* Monthly Sales Count - Line Chart */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm lg:col-span-1 xl:col-span-1">
-        <h3 className="text-sm font-semibold mb-4">Total Invoices Generated</h3>
-        <div className="h-[250px] w-full">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm lg:col-span-1 xl:col-span-1 min-w-0">
+        <h3 className="text-sm font-semibold mb-4 truncate">Total Invoices Generated</h3>
+        <div className={chartWrap.line}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={monthlyData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+            <LineChart
+              data={monthlyData}
+              margin={{ top: 10, right: isMobile ? 5 : 10, left: 0, bottom: 0 }}
+            >
               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
               <XAxis
-                dataKey="name"
+                dataKey={monthKey}
                 axisLine={false}
                 tickLine={false}
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
+                tick={axisTick}
+                interval={0}
                 dy={10}
               />
-              <YAxis
-                axisLine={false}
-                tickLine={false}
-                tick={{ fontSize: 12, fill: "hsl(var(--muted-foreground))" }}
-              />
-              <Tooltip
-                contentStyle={{
-                  borderRadius: "8px",
-                  border: "1px solid hsl(var(--border))",
-                  backgroundColor: "hsl(var(--background))",
-                }}
+              <YAxis axisLine={false} tickLine={false} tick={axisTick} width={isMobile ? 30 : 40} />
+              <Tooltip contentStyle={tooltipStyle} />
+              <Legend
+                wrapperStyle={{ fontSize: isMobile ? "11px" : "12px", paddingTop: "10px" }}
+                iconType="circle"
               />
               <Line
                 type="monotone"
@@ -262,7 +299,7 @@ export function DashboardCharts({ db }) {
                 name="Invoices"
                 stroke="#8b5cf6"
                 strokeWidth={3}
-                dot={{ r: 4, strokeWidth: 2 }}
+                dot={{ r: isMobile ? 3 : 4, strokeWidth: 2 }}
                 activeDot={{ r: 6 }}
               />
             </LineChart>
@@ -271,36 +308,31 @@ export function DashboardCharts({ db }) {
       </div>
 
       {/* Category Distribution - Pie Chart */}
-      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm lg:col-span-2 xl:col-span-1">
-        <h3 className="text-sm font-semibold mb-4">Category Distribution</h3>
-        <div className="h-[250px] w-full flex justify-center items-center">
+      <div className="rounded-2xl border border-border bg-card p-4 shadow-sm lg:col-span-1 xl:col-span-1 min-w-0">
+        <h3 className="text-sm font-semibold mb-4 truncate">Category Distribution</h3>
+        <div className={`${chartWrap.pie} flex justify-center items-center`}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={categoryDistribution}
                 cx="50%"
                 cy="50%"
-                innerRadius={60}
-                outerRadius={80}
+                innerRadius={isMobile ? 38 : 60}
+                outerRadius={isMobile ? 55 : 80}
                 paddingAngle={5}
                 dataKey="count"
+                nameKey="name"
               >
                 {categoryDistribution.map((entry, index) => (
                   <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                 ))}
               </Pie>
-              <Tooltip
-                contentStyle={{
-                  borderRadius: "8px",
-                  border: "1px solid hsl(var(--border))",
-                  backgroundColor: "hsl(var(--background))",
-                }}
-              />
+              <Tooltip contentStyle={tooltipStyle} />
               <Legend
-                layout="vertical"
-                verticalAlign="middle"
-                align="right"
-                wrapperStyle={{ fontSize: "12px" }}
+                layout="horizontal"
+                verticalAlign="bottom"
+                align="center"
+                wrapperStyle={{ fontSize: isMobile ? "10px" : "12px" }}
                 iconType="circle"
               />
             </PieChart>

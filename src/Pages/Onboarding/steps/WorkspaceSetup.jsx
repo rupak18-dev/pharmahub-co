@@ -5,56 +5,34 @@ import { StepNavigation } from "../components/StepNavigation";
 import { InputField } from "@/Pages/Auth/components/Shared/InputField";
 import { LocationAutocomplete } from "../components/LocationAutocomplete";
 import { BUSINESS_CONFIG } from "../config/businessConfig";
-import { ChevronDown, ChevronUp, CheckCircle2 } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export function WorkspaceSetup({ onboarding, updateData, nextStep, prevStep }) {
   const workspace = onboarding.workspace || {};
 
   // Dynamic Content based on Business Type
   const getDynamicContent = (type) => {
-    switch (type) {
-      case "dealer":
-        return {
-          businessNamePlaceholder: "ABC Pharma Distributors",
-          branchLabel: (
-            <span>
-              Primary Warehouse <span className="text-red-500">*</span>
-            </span>
-          ),
-          branchPlaceholder: "Central Warehouse",
-        };
-      case "hospital":
-        return {
-          businessNamePlaceholder: "Sunrise Hospital",
-          branchLabel: (
-            <span>
-              Primary Campus <span className="text-red-500">*</span>
-            </span>
-          ),
-          branchPlaceholder: "Main Campus",
-        };
-      case "enterprise":
-        return {
-          businessNamePlaceholder: "Apollo Healthcare",
-          branchLabel: (
-            <span>
-              Head Office <span className="text-red-500">*</span>
-            </span>
-          ),
-          branchPlaceholder: "Headquarters",
-        };
-      case "retail":
-      default:
-        return {
-          businessNamePlaceholder: "ABC Medical Store",
-          branchLabel: (
-            <span>
-              Main Branch <span className="text-red-500">*</span>
-            </span>
-          ),
-          branchPlaceholder: "Main Branch",
-        };
-    }
+    const placeholderByType = {
+      dealer: "ABC Pharma Distributors",
+      hospital: "Sunrise Hospital",
+      enterprise: "Apollo Healthcare",
+      retail: "ABC Medical Store",
+    };
+    const locationPlaceholderByType = {
+      dealer: "Central Warehouse",
+      hospital: "Main Campus",
+      enterprise: "Headquarters",
+      retail: "Main Branch",
+    };
+    return {
+      businessNamePlaceholder: placeholderByType[type] || "ABC Medical Store",
+      branchLabel: (
+        <span>
+          Location <span className="text-red-500">*</span>
+        </span>
+      ),
+      branchPlaceholder: locationPlaceholderByType[type] || "Main Branch",
+    };
   };
 
   const dynamicContent = getDynamicContent(onboarding.businessType);
@@ -84,19 +62,19 @@ export function WorkspaceSetup({ onboarding, updateData, nextStep, prevStep }) {
 
   return (
     <div>
-      <div className="mb-10">
-        <h1 className="auth-title">Organization Setup</h1>
-        <p className="auth-subtitle mt-4">A few final details before you're ready to go.</p>
-      </div>
+      <StepHeader
+        title="Organization Setup"
+        subtitle="A few final details before you're ready to go."
+      />
 
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="show"
-        className="space-y-8"
+        className="space-y-8 mt-8"
       >
         <motion.div variants={itemVariants}>
-          <div className="bg-white rounded-[18px] border border-[#E5E7EB] shadow-[0_8px_24px_rgba(15,23,42,0.05)] p-[28px] transition-shadow duration-300">
+          <div className="bg-white rounded-[20px] border border-[#E5E7EB] shadow-[0_8px_24px_rgba(15,23,42,0.05)] p-[28px] transition-shadow duration-300">
             <h2 className="auth-section-title mb-6">Organization Details</h2>
 
             <div className="space-y-6">
@@ -112,7 +90,7 @@ export function WorkspaceSetup({ onboarding, updateData, nextStep, prevStep }) {
                   value={workspace.organizationName || ""}
                   onChange={handleChange}
                   placeholder={dynamicContent.businessNamePlaceholder}
-                  className="h-12 rounded-[12px] text-[15px] border-2 shadow-sm"
+                  className="h-12 rounded-[18px] text-[15px] border-2 shadow-sm"
                   labelClassName="auth-label mb-1.5 block"
                 />
               </div>
@@ -126,7 +104,7 @@ export function WorkspaceSetup({ onboarding, updateData, nextStep, prevStep }) {
                     updateData({ workspace: { ...workspace, branchName: value } })
                   }
                   placeholder={dynamicContent.branchPlaceholder}
-                  className="h-12 rounded-[12px] text-[15px] border-2 shadow-sm"
+                  className="h-12 rounded-[18px] text-[15px] border-2 shadow-sm"
                   labelClassName="auth-label mb-1.5 block"
                 />
               </div>
@@ -163,7 +141,7 @@ export function WorkspaceSetup({ onboarding, updateData, nextStep, prevStep }) {
                             value={workspace.drugLicenseNumber || ""}
                             onChange={handleChange}
                             placeholder="DL-XXXXXXXX"
-                            className="h-12 rounded-[12px] text-[15px] border-2 shadow-sm"
+                            className="h-12 rounded-[18px] text-[15px] border-2 shadow-sm"
                             labelClassName="auth-label mb-1.5 block"
                           />
                         </div>
@@ -176,7 +154,7 @@ export function WorkspaceSetup({ onboarding, updateData, nextStep, prevStep }) {
                             value={workspace.gstNumber || ""}
                             onChange={handleChange}
                             placeholder="22AAAAA0000A1Z5"
-                            className="h-12 rounded-[12px] text-[15px] border-2 shadow-sm"
+                            className="h-12 rounded-[18px] text-[15px] border-2 shadow-sm"
                             labelClassName="auth-label mb-1.5 block"
                           />
                         </div>
@@ -191,10 +169,9 @@ export function WorkspaceSetup({ onboarding, updateData, nextStep, prevStep }) {
       </motion.div>
 
       <div className="mt-8 flex flex-col space-y-5">
-        <div className="flex items-center text-[14px] font-medium text-primary bg-primary/5 px-4 py-2.5 rounded-[12px] border border-primary/10 self-start">
-          <CheckCircle2 className="w-4 h-4 mr-2" />
+        <p className="text-[14px] text-muted-foreground">
           You can update these details later in Settings.
-        </div>
+        </p>
 
         <StepNavigation
           onBack={prevStep}

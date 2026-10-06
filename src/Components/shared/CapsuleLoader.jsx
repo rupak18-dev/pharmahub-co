@@ -17,6 +17,7 @@ export function CapsuleLoader({
   stages = [],
   error = null,
   onDone,
+  variant = "bar",
 }) {
   const onDoneRef = useRef(onDone);
   onDoneRef.current = onDone;
@@ -104,7 +105,13 @@ export function CapsuleLoader({
         <div className="text-3xl font-bold tracking-tight">
           Pharma<span className="text-primary">Hub</span>
         </div>
-        <p className="text-sm font-medium text-muted-foreground">{message}</p>
+        <p
+          className={
+            variant === "capsule" ? "loader-label" : "text-sm font-medium text-muted-foreground"
+          }
+        >
+          {message}
+        </p>
 
         {stages.length > 0 && (
           <ul className="w-full space-y-2.5 text-left">
@@ -141,19 +148,35 @@ export function CapsuleLoader({
           </ul>
         )}
 
-        <div
-          className="h-2.5 w-full overflow-hidden rounded-full bg-muted"
-          role="progressbar"
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={progress}
-        >
+        {variant === "capsule" ? (
+          <div className="pharmacy-loader-container">
+            <div className="capsule-glow" />
+            <div className="capsule-wrapper" role="progressbar" aria-label={message}>
+              <div className="capsule-half top-half" />
+              <div className="capsule-half bottom-half" />
+            </div>
+          </div>
+        ) : variant === "circular" ? (
+          <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+            <Loader2 className="h-14 w-14 animate-spin text-primary" />
+          </div>
+        ) : (
           <div
-            className="h-full rounded-full bg-gradient-to-r from-emerald-700 to-emerald-500 transition-[width] duration-100 ease-linear"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-        <div className="text-2xl font-bold tabular-nums text-primary">{progress}%</div>
+            className="h-2.5 w-full overflow-hidden rounded-full bg-muted"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={progress}
+          >
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-emerald-700 to-emerald-500 transition-[width] duration-100 ease-linear"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+        )}
+        {variant !== "capsule" && (
+          <div className="text-2xl font-bold tabular-nums text-primary">{progress}%</div>
+        )}
         {error && <p className="text-sm font-medium text-destructive">{error}</p>}
       </div>
     </div>

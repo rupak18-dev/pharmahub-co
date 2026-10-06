@@ -78,6 +78,8 @@ export function MedicineDrawer({
             <img
               src={medicine.imageUrl}
               alt={medicine.name}
+              loading="lazy"
+              decoding="async"
               className="h-20 w-20 shrink-0 rounded-xl border border-border object-cover"
             />
           ) : (
@@ -129,7 +131,7 @@ export function MedicineDrawer({
                   <li key={b.id} className="flex items-center justify-between gap-3 px-4 py-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium">
-                        <span className="font-mono">{b.batchNumber}</span>
+                        <span>{b.batchNumber}</span>
                         <span className="ml-1.5 text-xs text-muted-foreground">
                           {b.currentStock} units · {supplierName(b.supplierId)}
                         </span>
@@ -149,7 +151,7 @@ export function MedicineDrawer({
                             ? "today"
                             : `${days}d`}
                       </span>
-                      <span className="font-mono text-xs tabular-nums text-muted-foreground">
+                      <span className="text-xs tabular-nums text-muted-foreground">
                         {currency}
                         {(b.currentStock * b.purchasePrice).toLocaleString()}
                       </span>

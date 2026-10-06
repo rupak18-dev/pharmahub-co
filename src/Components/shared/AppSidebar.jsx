@@ -13,6 +13,7 @@ import {
   TbStack2,
   TbListDetails,
   TbPlugConnected,
+  TbHeadset,
 } from "react-icons/tb";
 import { ChevronRight } from "lucide-react";
 import {
@@ -71,7 +72,7 @@ const groups = [
       {
         key: "admin",
         title: "Profile",
-        url: "/admin",
+        url: "/profile",
         icon: TbSettings,
         children: [
           {
@@ -82,6 +83,12 @@ const groups = [
           },
         ],
       },
+    ],
+  },
+  {
+    label: "Support",
+    items: [
+      { key: "support", title: "Support", url: "/support", icon: TbHeadset },
     ],
   },
 ];

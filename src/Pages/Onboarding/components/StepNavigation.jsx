@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 
 export function StepNavigation({ onBack, onContinue, isNextDisabled, nextLabel = "Continue" }) {
   return (
-    <div className="flex items-center justify-between mt-8 pt-6 border-t border-border/50">
+    <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/50">
       <div>
         {onBack && (
           <Button

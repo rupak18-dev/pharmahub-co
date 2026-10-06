@@ -231,7 +231,7 @@ export function AddBatchSheet({
               <Input
                 id="batchNumber"
                 placeholder="e.g. FS-26-C-001"
-                className="font-mono"
+
                 {...register("batchNumber")}
               />
               {errors.batchNumber && (
@@ -261,7 +261,7 @@ export function AddBatchSheet({
                   type="number"
                   min={1}
                   placeholder="e.g. 120"
-                  className="font-mono"
+
                   {...register("quantityReceived")}
                 />
                 <Select value={unit} onValueChange={setUnit}>

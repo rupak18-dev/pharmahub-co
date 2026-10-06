@@ -8,6 +8,7 @@ import {
 } from "@/Components/ui/dialog";
 import { Button } from "@/Components/ui/button";
 import { Input } from "@/Components/ui/input";
+import { PhoneInput } from "@/Components/ui/phone-input";
 import { Label } from "@/Components/ui/label";
 import {
   UserPlus,
@@ -22,8 +23,9 @@ import {
 } from "lucide-react";
 import { db } from "@/lib/db";
 import { useDb } from "@/hooks/useDb";
+import { invitationService } from "@/lib/invitationService";
 import { ALL_MODULES, ALL_ROLES } from "@/lib/permissions";
-import { getRoleDescription, getRoleIcon } from "./RoleCard";
+import { getRoleDescription, getRoleIcon } from "@/lib/roleCatalog";
 import { toast } from "sonner";
 const ACTION_GROUPS = [
   {
@@ -54,8 +56,6 @@ export function InviteUserWizard({ isOpen, onClose }) {
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [department, setDepartment] = useState("");
-  const [designation, setDesignation] = useState("");
   // Step 2 State
   const [selectedRole, setSelectedRole] = useState("Pharmacist");
   // Step 3 & 4 State (Custom permissions initialized from selected role)
@@ -126,33 +126,42 @@ export function InviteUserWizard({ isOpen, onClose }) {
       setStep((s) => s - 1);
     }
   };
+  const [submitting, setSubmitting] = useState(false);
+
   const resetForm = () => {
     setStep(1);
     setFullName("");
     setEmail("");
     setPhone("");
-    setDepartment("");
-    setDesignation("");
     setSelectedRole("Pharmacist");
     setCustomPermissions(structuredClone(permissionsState.Pharmacist));
   };
-  const handleCreateEmployee = () => {
+  const handleCreateEmployee = async () => {
     if (!fullName.trim() || !email.trim()) return;
-    const newUserId = db.uid();
-    db.set((d) => {
-      d.profiles.push({
-        id: newUserId,
+    try {
+      setSubmitting(true);
+      const accessIds = selectedModules.map((m) => m.key);
+      await invitationService.invite({
         name: fullName.trim(),
         email: email.trim(),
+        phone: phone.trim() || undefined,
         role: selectedRole,
-        active: true,
-        orgName: department.trim() ? `${department.trim()} Dept` : undefined,
-        createdAt: new Date().toISOString(),
+        accessIds,
+        permissions: customPermissions,
       });
-    });
-    toast.success(`Successfully provisioned account for ${fullName.trim()}`);
-    resetForm();
-    onClose();
+
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new CustomEvent("pharmahub:invitations-changed"));
+      }
+
+      toast.success(`Successfully sent invitation to ${fullName.trim()} (${email.trim()})`);
+      resetForm();
+      onClose();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to invite employee.");
+    } finally {
+      setSubmitting(false);
+    }
   };
   // Selected modules list for Step 4 & Step 5
   const selectedModules = useMemo(() => {
@@ -172,7 +181,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
                 Provision a new user account, assign security roles, and customize access policies.
               </DialogDescription>
             </div>
-            <span className="text-xs font-mono font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
+            <span className="text-xs font-semibold text-primary bg-primary/10 px-2.5 py-1 rounded-full border border-primary/20">
               Step {step} of 5
             </span>
           </div>
@@ -250,48 +259,11 @@ export function InviteUserWizard({ isOpen, onClose }) {
                 <Label htmlFor="wiz-phone" className="text-xs font-semibold">
                   Phone Number
                 </Label>
-                <div className="relative">
-                  <Phone className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="wiz-phone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    placeholder="+1 (555) 019-2834"
-                    className="pl-9 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="wiz-dept" className="text-xs font-semibold">
-                  Department
-                </Label>
-                <div className="relative">
-                  <Building className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="wiz-dept"
-                    value={department}
-                    onChange={(e) => setDepartment(e.target.value)}
-                    placeholder="e.g. Clinical Pharmacy / Retail"
-                    className="pl-9 text-xs"
-                  />
-                </div>
-              </div>
-
-              <div className="sm:col-span-2 space-y-2">
-                <Label htmlFor="wiz-desig" className="text-xs font-semibold">
-                  Designation / Job Title
-                </Label>
-                <div className="relative">
-                  <Briefcase className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    id="wiz-desig"
-                    value={designation}
-                    onChange={(e) => setDesignation(e.target.value)}
-                    placeholder="e.g. Lead Clinical Pharmacist"
-                    className="pl-9 text-xs"
-                  />
-                </div>
+                <PhoneInput
+                  id="wiz-phone"
+                  value={phone}
+                  onChange={setPhone}
+                />
               </div>
             </div>
           </div>
@@ -305,7 +277,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {ALL_ROLES.map((role) => {
+              {ALL_ROLES.filter((role) => role !== "Owner").map((role) => {
                 const RoleIcon = getRoleIcon(role);
                 const desc = getRoleDescription(role);
                 const isSelected = selectedRole === role;
@@ -349,7 +321,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
               <span className="text-muted-foreground">
                 Click module cards to enable or disable navigation access for this user.
               </span>
-              <span className="font-mono font-medium text-foreground">
+              <span className="font-medium text-foreground">
                 {selectedModules.length} of 13 Selected
               </span>
             </div>
@@ -412,7 +384,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
                       <h4 className="font-semibold text-xs text-foreground">
                         {mod.label} Permissions
                       </h4>
-                      <span className="text-[11px] font-mono text-muted-foreground">
+                      <span className="text-[11px] text-muted-foreground">
                         Module Key: {mod.key}
                       </span>
                     </div>
@@ -468,7 +440,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
                 </div>
                 <div>
                   <span className="text-muted-foreground">Email Address:</span>
-                  <div className="font-mono text-foreground">{email}</div>
+                  <div className="text-foreground">{email}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Assigned Role:</span>
@@ -481,19 +453,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
                 {phone && (
                   <div>
                     <span className="text-muted-foreground">Phone:</span>
-                    <div className="font-mono text-foreground">{phone}</div>
-                  </div>
-                )}
-                {department && (
-                  <div>
-                    <span className="text-muted-foreground">Department:</span>
-                    <div className="text-foreground">{department}</div>
-                  </div>
-                )}
-                {designation && (
-                  <div>
-                    <span className="text-muted-foreground">Designation:</span>
-                    <div className="text-foreground">{designation}</div>
+                    <div className="text-foreground">{phone}</div>
                   </div>
                 )}
               </div>
@@ -503,7 +463,7 @@ export function InviteUserWizard({ isOpen, onClose }) {
             <div className="rounded-xl border border-border bg-card p-4 space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <h4 className="font-semibold text-sm text-foreground">Configured Access Scope</h4>
-                <span className="font-mono text-xs text-muted-foreground">
+                <span className="text-xs text-muted-foreground">
                   {selectedModules.length} Active Modules
                 </span>
               </div>
@@ -542,10 +502,12 @@ export function InviteUserWizard({ isOpen, onClose }) {
           ) : (
             <Button
               size="sm"
+              disabled={submitting}
               onClick={handleCreateEmployee}
               className="gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              <UserPlus className="h-4 w-4" /> Provision & Create Account
+              <UserPlus className="h-4 w-4" />{" "}
+              {submitting ? "Sending Invitation…" : "Provision & Create Account"}
             </Button>
           )}
         </div>

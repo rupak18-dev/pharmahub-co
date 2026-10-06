@@ -1,14 +1,49 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
-import { apiRequest } from "./api";
+import { apiRequest, apiRequestEnvelope } from "./api";
+import { resetStoredOnboarding } from "./onboardingApi";
 
 const SESSION_KEY = "PharmaHub_session_v2";
+// Keys written by older builds. They are swept on boot so they can never
+// influence the authenticated session.
+const LEGACY_STORAGE_KEYS = ["PharmaHub_db_v2", "PharmaHub_db_v3", "PharmaHub_session_v1"];
 const AuthContext = createContext(null);
+
+// Profile fields the backend allows editing via PUT /auth/profile. Role,
+// permissions, and organization membership are deliberately absent — the
+// authenticated identity is owned by the backend, not by client payloads.
+const PROFILE_EDITABLE_FIELDS = [
+  "name",
+  "email",
+  "phone",
+  "avatarUrl",
+  "logoUrl",
+  "orgName",
+  "tagline",
+  "description",
+  "businessEmail",
+  "website",
+  "address",
+  "city",
+  "state",
+  "pincode",
+  "gstin",
+  "licenseNo",
+  "businessType",
+  "services",
+  "businessHours",
+  "metaPixelId",
+  "branches",
+  "onboarded",
+];
 
 function readSession() {
   if (typeof window === "undefined") return null;
   try {
     const raw = window.localStorage.getItem(SESSION_KEY);
-    return raw ? JSON.parse(raw) : null;
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || typeof parsed.token !== "string" || !parsed.token) return null;
+    return parsed;
   } catch {
     return null;
   }
@@ -17,8 +52,12 @@ function readSession() {
 function writeSession(payload) {
   if (typeof window === "undefined") return;
   try {
-    if (payload) window.localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
-    else window.localStorage.removeItem(SESSION_KEY);
+    if (payload) {
+      window.localStorage.setItem(SESSION_KEY, JSON.stringify(payload));
+    } else {
+      window.localStorage.removeItem(SESSION_KEY);
+      window.sessionStorage.removeItem(SESSION_KEY);
+    }
   } catch {
     // ignore
   }
@@ -30,23 +69,65 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     let cancelled = false;
+    try {
+      for (const key of LEGACY_STORAGE_KEYS) {
+        window.localStorage.removeItem(key);
+      }
+    } catch {
+      // ignore
+    }
+    // When /auth/me fails only because the backend is sleeping/unreachable,
+    // re-attempt hydration in the background a few times so a cold start
+    // doesn't silently end the session. Works alongside the focus/storage
+    // listeners below, which cover recovery on later tab activity.
+    const hydrateAfterTransientFailure = async () => {
+      for (const delay of [4000, 12000, 30000]) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        if (cancelled) return;
+        try {
+          const me = await apiRequest("/auth/me", { noCache: true });
+          if (cancelled) return;
+          const stored = readSession();
+          if (stored?.token) writeSession({ token: stored.token, user: me });
+          setUser(me);
+          return;
+        } catch (retryErr) {
+          if (retryErr?.status === 401 || retryErr?.status === 403) {
+            writeSession(null);
+            setUser(null);
+            return;
+          }
+        }
+      }
+    };
+
     (async () => {
+      // Hydrate the user from the server via GET /auth/me.
+      // Note: the JWT token is stored in localStorage (sent as Bearer header).
+      // This is not httpOnly-cookie protected — any XSS can exfiltrate the
+      // token. The backend remains the authority for all real authorization.
       try {
-        const me = await apiRequest("/auth/me");
+        // GET /auth/me is the only source of truth for the signed-in identity.
+        const me = await apiRequest("/auth/me", { noCache: true });
         if (cancelled) return;
         const stored = readSession();
-        // The deployed backend may still run a dev-bypass that returns a
-        // hardcoded demo user on /auth/me. Don't let that clobber a real
-        // stored session (which may carry `onboarded` and the user's profile).
-        const isDevBypass = !!me && me.email === "owner@pharmahub.demo";
-        const nextUser = stored?.token && isDevBypass && stored.user ? stored.user : me;
-        if (stored?.token) writeSession({ token: stored.token, user: nextUser });
-        setUser(nextUser);
-      } catch {
-        // No valid session (token missing/expired) — stay signed out or restore cached.
+        if (stored?.token) writeSession({ token: stored.token, user: me });
+        setUser(me);
+      } catch (err) {
         if (cancelled) return;
+        const invalidSession = err?.status === 401 || err?.status === 403;
+        if (invalidSession) {
+          writeSession(null);
+          setUser(null);
+          return;
+        }
+        // Transient failure (cold start, connection closed, 5xx). Keep the
+        // stored token so a valid login isn't destroyed by a waking server,
+        // but never render a stale cached identity as the logged-in account.
         const stored = readSession();
-        setUser(stored?.user ?? null);
+        if (stored?.token) writeSession({ token: stored.token, user: null });
+        setUser(null);
+        hydrateAfterTransientFailure();
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -56,18 +137,86 @@ export function AuthProvider({ children }) {
     };
   }, []);
 
-  const signIn = useCallback(async (email, password) => {
-    const data = await apiRequest("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-    writeSession({ token: data.token, user: data.user });
-    setUser(data.user);
-    return data.user;
+  // Cross-tab and window-focus session synchronization.
+  // When another tab logs in, logs out, or changes tokens (e.g. accepting an invitation),
+  // immediately update the user state from /auth/me so in-memory user matches the active session.
+  useEffect(() => {
+    const syncSession = async () => {
+      try {
+        const me = await apiRequest("/auth/me", { noCache: true });
+        if (me) {
+          const stored = readSession();
+          if (stored?.token) writeSession({ token: stored.token, user: me });
+          setUser(me);
+        }
+      } catch {
+        // Token/cookie invalid or server unreachable
+      }
+    };
+
+    const handleStorage = (e) => {
+      if (e.key === SESSION_KEY) {
+        if (!e.newValue) {
+          setUser(null);
+        } else {
+          syncSession();
+        }
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    window.addEventListener("focus", syncSession);
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      window.removeEventListener("focus", syncSession);
+    };
   }, []);
 
+  // Establishes a session from a freshly issued credential, then resolves the
+  // authoritative identity from GET /auth/me so role/permissions always come
+  // from the database rather than from whatever an individual endpoint echoed.
+  const establishSession = useCallback(async (token, fallbackUser) => {
+    writeSession({ token, user: fallbackUser ?? null });
+    let resolved = fallbackUser ?? null;
+    try {
+      const me = await apiRequest("/auth/me");
+      if (me) resolved = me;
+    } catch {
+      // Keep the just-issued payload; never merge with any older cached user.
+    }
+    writeSession({ token, user: resolved });
+    setUser(resolved);
+    return resolved;
+  }, []);
+
+  const signIn = useCallback(
+    async (email, password, { remember = true } = {}) => {
+      resetStoredOnboarding();
+      const data = await apiRequest("/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password, remember }),
+      });
+      if (data?.token) {
+        return establishSession(data.token, data.user);
+      }
+      setUser(data.user);
+      return data.user;
+    },
+    [establishSession],
+  );
+
   const signUp = useCallback(async ({ email, password, name }) => {
-    const data = await apiRequest("/auth/register", {
+    resetStoredOnboarding();
+    // Self-registered accounts must verify their email before they can sign
+    // in — register issues NO session (see backend registerUser/loginUser
+    // gate). Return the payload (user + optional devCode) and let the caller
+    // route the new user to the verify-email step.
+    //
+    // The envelope is requested (not just `data`) because the backend still
+    // answers 2xx when the verification mail could not be delivered, and
+    // reports why in `data.emailReason` — a caller that only saw the payload
+    // would send the user to a verify screen that can never succeed.
+    const { data, message } = await apiRequestEnvelope("/auth/register", {
       method: "POST",
       body: JSON.stringify({
         email,
@@ -75,29 +224,69 @@ export function AuthProvider({ children }) {
         name: name ?? (email.split("@")[0]?.trim() || "PharmaHub User"),
       }),
     });
-    writeSession({ token: data.token, user: data.user });
-    setUser(data.user);
-    return data.user;
+    return {
+      user: data?.user ?? data ?? null,
+      devCode: data?.devCode ?? null,
+      emailReason: data?.emailReason ?? null,
+      message: message ?? null,
+    };
   }, []);
 
-  // Used by the Google redirect callback page to restore the session handed
-  // back via the URL fragment.
-  const restoreSession = useCallback(async ({ token, user }) => {
-    writeSession({ token, user });
-    setUser(user);
-    return user;
-  }, []);
+  // Handles the token-less case for OAuth/callback flows (no establishSession
+  // since the caller has no JWT to persist).
+  const restoreSession = useCallback(
+    async (args = {}) => {
+      if (args?.token) {
+        return establishSession(args.token, args.user);
+      }
+      const me = await apiRequest("/auth/me", { noCache: true });
+      setUser(me);
+      return me;
+    },
+    [establishSession],
+  );
 
-  // Final step of a Google sign-up: verify the emailed OTP, then the backend
-  // creates the account and returns a fresh session.
-  const completeGoogleOtp = useCallback(async ({ token, code }) => {
-    const data = await apiRequest("/auth/google/verify-otp", {
+  // Completes email verification for a freshly self-registered account. The
+  // backend consumes the 6-digit code, flips emailVerified=true, and the user
+  // then signs in normally — no session is issued by this call.
+  const verifyEmail = useCallback(async ({ email, code }) => {
+    const data = await apiRequest("/auth/verify-email", {
       method: "POST",
-      body: JSON.stringify({ token, code }),
+      body: JSON.stringify({ email, code }),
     });
-    writeSession({ token: data.token, user: data.user });
-    setUser(data.user);
-    return data.user;
+    return data ?? null;
+  }, []);
+
+  // Resends the 6-digit verification code to an unverified account (public,
+  // pre-login endpoint). Backend enforces a 60s cooldown.
+  const resendVerification = useCallback(async (email) => {
+    const { data, message } = await apiRequestEnvelope("/auth/resend-verification", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+    return {
+      devCode: data?.devCode ?? null,
+      emailReason: data?.emailReason ?? null,
+      message: message ?? null,
+    };
+  }, []);
+
+  // Re-resolves the authoritative identity from GET /auth/me and replaces the
+  // current session user. Used after flows that change role/permissions
+  // server-side (e.g. onboarding completion) so the UI never renders from a
+  // stale identity.
+  const refreshUser = useCallback(async () => {
+    try {
+      const me = await apiRequest("/auth/me", { noCache: true });
+      if (!me) return null;
+      const stored = readSession();
+      if (stored?.token) writeSession({ token: stored.token, user: me });
+      setUser(me);
+      return me;
+    } catch {
+      // Server unreachable or token expired — keep the current identity.
+      return null;
+    }
   }, []);
 
   const signOut = useCallback(async () => {
@@ -107,36 +296,34 @@ export function AuthProvider({ children }) {
       // ignore — session is cleared locally regardless
     } finally {
       writeSession(null);
+      resetStoredOnboarding();
       setUser(null);
     }
   }, []);
 
-  const switchRole = useCallback(
-    (role) => {
-      if (!user) return;
-      setUser({ ...user, role });
-    },
-    [user],
-  );
-
+  // Profile fields the backend allows editing via PUT /auth/profile.
   const updateProfile = useCallback(
-    async ({ name, role, orgName, onboarded } = {}) => {
+    async (changes = {}) => {
       const body = {};
-      if (name !== undefined) body.name = name;
-      if (role !== undefined) body.role = role;
-      if (orgName !== undefined) body.orgName = orgName;
-      if (onboarded !== undefined) body.onboarded = onboarded;
+      for (const key of PROFILE_EDITABLE_FIELDS) {
+        if (changes[key] !== undefined) body[key] = changes[key];
+      }
+      if (Object.keys(body).length === 0) {
+        throw new Error("No editable profile fields provided");
+      }
 
       let me = null;
       try {
-        me = await apiRequest("/auth/profile", {
+        const payload = await apiRequest("/auth/profile", {
           method: "PUT",
           body: JSON.stringify(body),
         });
-      } catch {
-        // Backend may not expose PUT /auth/profile yet — apply locally so the
-        // session (and the `onboarded` flag) still update.
-        me = { ...(user || {}), ...body };
+        me = payload?.user ?? payload;
+        if (me && payload?.profileCompletion) {
+          me.profileCompletion = payload.profileCompletion;
+        }
+      } catch (err) {
+        throw err;
       }
 
       const stored = readSession();
@@ -147,9 +334,26 @@ export function AuthProvider({ children }) {
     [user],
   );
 
-  const requestPasswordReset = useCallback(async () => {
-    // No backend endpoint yet — simulate.
-    await new Promise((r) => setTimeout(r, 400));
+  const requestPasswordReset = useCallback(async (email) => {
+    const { message } = await apiRequestEnvelope("/auth/forgot-password", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
+    return { message: message ?? null };
+  }, []);
+
+  const resetPassword = useCallback(async ({ email, code, newPassword }) => {
+    await apiRequest("/auth/reset-password", {
+      method: "POST",
+      body: JSON.stringify({ email, code, newPassword }),
+    });
+  }, []);
+
+  const changePassword = useCallback(async (currentPassword, newPassword) => {
+    await apiRequest("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
   }, []);
 
   return (
@@ -160,11 +364,15 @@ export function AuthProvider({ children }) {
         signIn,
         signUp,
         signOut,
-        switchRole,
         updateProfile,
+        refreshUser,
         restoreSession,
-        completeGoogleOtp,
+        verifyEmail,
+        resendVerification,
         requestPasswordReset,
+        resetPassword,
+        changePassword,
+        setUser,
       }}
     >
       {children}

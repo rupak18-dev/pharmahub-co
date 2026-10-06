@@ -91,7 +91,7 @@ export default function DashboardHomePage() {
     <div className="space-y-6 pb-12">
       <PageHeader
         title="Dashboard"
-        description="Comprehensive overview of your pharmacy operations and business performance."
+        description="See What Matters. Act When It Matters."
         actions={
           <Button
             variant="outline"
@@ -99,7 +99,8 @@ export default function DashboardHomePage() {
             onClick={() => setShowCharts(!showCharts)}
             className="rounded-lg text-[#2563EB] hover:text-[#2563EB]/80 border-[#2563EB]/30 hover:bg-[#2563EB]/5"
           >
-            {showCharts ? "Hide charts and reports" : "Show charts and reports"}
+            <TrendingUp className="h-4 w-4" />
+            <span className="hidden sm:inline">{showCharts ? "Hide Analytics" : "Analytics"}</span>
           </Button>
         }
       />
@@ -145,7 +146,7 @@ export default function DashboardHomePage() {
         <KpiCard
           label="Low stock count"
           value={stats.lowStock}
-          hint="Below reorder threshold"
+          hint="At or below minimum stock"
           icon={AlertTriangle}
           tone="default"
         />
@@ -157,22 +158,24 @@ export default function DashboardHomePage() {
           tone="default"
         />
         <KpiCard
-          label="Pending orders"
+          label="In Queue"
           value={stats.pendingOrders}
-          hint="PO awaiting fulfillment"
+          hint="Purchase orders awaiting fulfillment"
           icon={PackageOpen}
           tone="default"
         />
       </div>
 
-      {showCharts && <DashboardCharts db={data} />}
-
-      <div className="border-t border-border/40 pt-4">
-        <h3 className="text-sm font-bold text-muted-foreground tracking-wider mb-4">
-          Operations widgets
-        </h3>
-        <DashboardWidgets db={data} />
-      </div>
+      {showCharts ? (
+        <DashboardCharts db={data} />
+      ) : (
+        <div className="border-t border-border/40 pt-4">
+          <h3 className="text-sm font-bold text-muted-foreground tracking-wider mb-4">
+            Operations widgets
+          </h3>
+          <DashboardWidgets db={data} />
+        </div>
+      )}
     </div>
   );
 }

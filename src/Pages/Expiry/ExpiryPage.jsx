@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { useDb } from "@/hooks/useDb";
 import { db } from "@/lib/db";
@@ -10,6 +10,7 @@ import { downloadXls } from "@/lib/xls";
 import { printHtml } from "@/lib/print";
 import { Button } from "@/Components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/Components/ui/tabs";
+import { PageHeader } from "@/Components/shared/PageHeader";
 import { TimeFilter } from "@/Pages/Expiry/components/TimeFilter";
 import { NotificationsPopover } from "@/Pages/Expiry/components/NotificationsPopover";
 import { ExpiryOverview } from "@/Pages/Expiry/components/ExpiryOverview";
@@ -34,10 +35,22 @@ import {
   reportRows,
   windowLabel,
 } from "@/lib/expiry";
+import {
+  useExpiryApi,
+  disposeExpiredBatch,
+  returnExpiredBatch,
+  applyExpiryDiscount,
+  transferExpiredBatch,
+} from "@/hooks/useExpiryApi";
 export const handle = { title: "Medicine Expiry · PharmaHub" };
 export default function ExpiryPage() {
   const { user } = useAuth();
   const has = usePermission();
+
+  // ── Stable timestamp for this render session ─────────────────────────────
+  const now = useMemo(() => Date.now(), []);
+
+  // ── Local mock-db (always available as fallback) ──────────────────────────
   const batches = useDb((d) => d.batches);
   const medicines = useDb((d) => d.medicines);
   const categories = useDb((d) => d.categories);
@@ -49,7 +62,8 @@ export default function ExpiryPage() {
   const creditNotes = useDb((d) => d.creditNotes);
   const readFromStore = useDb((d) => d.notificationsRead);
   const stockMovements = useDb((d) => d.stockMovements);
-  const now = useMemo(() => Date.now(), []);
+
+  // ── UI state ─────────────────────────────────────────────────────────────
   const [view, setView] = useState("overview");
   const [window, setWindow] = useState(DEFAULT_WINDOW);
   const [query, setQuery] = useState("");
@@ -68,6 +82,43 @@ export default function ExpiryPage() {
   const [viewBatchRow, setViewBatchRow] = useState(null);
   const [viewMedicineId, setViewMedicineId] = useState(null);
   const [focusTableToken, setFocusTableToken] = useState(0);
+
+  // ── MongoDB API (used when MONGODB_URI is configured) ────────────────────
+  const apiFilters = useMemo(
+    () => ({
+      window: window.kind === "preset" ? window.preset : undefined,
+      from: window.kind === "custom" ? window.from : undefined,
+      to: window.kind === "custom" ? window.to : undefined,
+      status,
+      category,
+      manufacturer,
+      search: query,
+    }),
+    [window, status, category, manufacturer, query],
+  );
+
+  const {
+    rows: apiRows,
+    loading: apiLoading,
+    error: apiError,
+    refresh: refreshApi,
+  } = useExpiryApi(apiFilters);
+
+  // Use MongoDB rows when they arrive; fall back to local mock-db
+  const usingApi = !!apiRows && !apiError;
+
+  // Log API state to console so it's visible in DevTools
+  useEffect(() => {
+    if (apiLoading) console.log("[ExpiryPage] Loading from MongoDB...");
+  }, [apiLoading]);
+  useEffect(() => {
+    if (apiError) console.warn("[ExpiryPage] MongoDB unavailable, using mock-db:", apiError);
+  }, [apiError]);
+  useEffect(() => {
+    if (apiRows) console.log(`[ExpiryPage] MongoDB returned ${apiRows.length} rows`);
+  }, [apiRows]);
+
+  // ── Lookup maps (from mock-db — used for drawer/label UI) ────────────────
   const medById = useMemo(() => new Map(medicines.map((m) => [m.id, m])), [medicines]);
   const catById = useMemo(() => new Map(categories.map((c) => [c.id, c.name])), [categories]);
   const mfrById = useMemo(() => new Map(manufacturers.map((m) => [m.id, m.name])), [manufacturers]);
@@ -81,37 +132,43 @@ export default function ExpiryPage() {
     [medById, mfrById],
   );
   const supplierName = useCallback((id) => (id ? (supById.get(id) ?? "Unknown") : "—"), [supById]);
-  const rows = useMemo(
+
+  // ── Rows: prefer MongoDB API; fall back to mock-db ────────────────────────
+  const mockRows = useMemo(
     () => reportRows(batches, medicines, categories, manufacturers, suppliers, window, now),
     [batches, medicines, categories, manufacturers, suppliers, window, now],
   );
+  const rows = usingApi ? apiRows : mockRows;
+
+  // Filtering: server-side when using API; client-side from mock-db
   const filteredRows = useMemo(() => {
-    let list = rows;
-    if (status === "all") {
-      list = list.filter((r) => inWindow(r.batch, window, now));
-    } else {
-      list = list.filter((r) => matchesStatusFilter(r, status));
-    }
-    if (category !== "all") {
-      list = list.filter((r) => medById.get(r.batch.medicineId)?.categoryId === category);
-    }
-    if (manufacturer !== "all") {
-      list = list.filter((r) => medById.get(r.batch.medicineId)?.manufacturerId === manufacturer);
-    }
-    if (branch !== "all") {
-      list = list.filter((r) => (r.batch.branch ?? BRANCHES[0]) === branch);
-    }
-    if (shelf !== "all") {
-      list = list.filter((r) => r.shelf === shelf);
-    }
-    const q = query.trim().toLowerCase();
-    if (q) {
-      list = list.filter((r) =>
-        [r.medicineName, r.salt, r.batchNumber, r.manufacturer, r.supplier].some((s) =>
-          s.toLowerCase().includes(q),
-        ),
-      );
-    }
+    let list = usingApi
+      ? (apiRows ?? [])
+      : (() => {
+          let l = mockRows;
+          if (status === "all") {
+            l = l.filter((r) => inWindow(r.batch, window, now));
+          } else {
+            l = l.filter((r) => matchesStatusFilter(r, status));
+          }
+          if (category !== "all")
+            l = l.filter((r) => medById.get(r.batch.medicineId)?.categoryId === category);
+          if (manufacturer !== "all")
+            l = l.filter((r) => medById.get(r.batch.medicineId)?.manufacturerId === manufacturer);
+          const q = query.trim().toLowerCase();
+          if (q)
+            l = l.filter((r) =>
+              [r.medicineName, r.salt, r.batchNumber, r.manufacturer, r.supplier].some(
+                (s) => s && s.toLowerCase().includes(q),
+              ),
+            );
+          return l;
+        })();
+
+    // Branch + shelf always filtered locally
+    if (branch !== "all") list = list.filter((r) => (r.batch?.branch ?? BRANCHES[0]) === branch);
+    if (shelf !== "all") list = list.filter((r) => r.shelf === shelf);
+
     if (sort) {
       const mul = sort.dir === "asc" ? 1 : -1;
       list = [...list].sort((a, b) => {
@@ -122,7 +179,21 @@ export default function ExpiryPage() {
       });
     }
     return list;
-  }, [rows, status, window, category, manufacturer, branch, shelf, query, sort, medById, now]);
+  }, [
+    usingApi,
+    apiRows,
+    mockRows,
+    status,
+    window,
+    category,
+    manufacturer,
+    branch,
+    shelf,
+    query,
+    sort,
+    medById,
+    now,
+  ]);
   const shelves = useMemo(
     () =>
       Array.from(new Set(rows.map((r) => r.shelf).filter(Boolean))).sort((a, b) =>
@@ -213,6 +284,21 @@ export default function ExpiryPage() {
         createdAt: nowIso,
       });
     });
+    // Also persist to MongoDB
+    returnExpiredBatch({
+      batchId: row.batch.id,
+      qty,
+      reason: "Returned to supplier (expiry management)",
+      creditNoteNo,
+      userId: u.id,
+    })
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB return saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB return failed (mock-db still updated):", e.message),
+      );
     setSelected((s) => {
       const n = new Set(s);
       n.delete(row.batch.id);
@@ -237,6 +323,15 @@ export default function ExpiryPage() {
       entityId: row.batch.id,
       details: { pct },
     });
+    // Persist to MongoDB
+    applyExpiryDiscount({ batchId: row.batch.id, discountPct: pct, userId: u.id })
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB discount saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB discount failed (mock-db still updated):", e.message),
+      );
     toast.success(`${pct}% discount will auto-apply at POS for ${row.medicineName}`);
   };
   const clearDiscount = (row) => {
@@ -341,6 +436,15 @@ export default function ExpiryPage() {
       entityId: row.batch.id,
       details: { branch, qty },
     });
+    // Persist to MongoDB
+    transferExpiredBatch({ batchId: row.batch.id, qty, targetBranch: branch, userId: u.id })
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB transfer saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB transfer failed (mock-db still updated):", e.message),
+      );
     toast.success(`${qty} units transferred to ${branch}`);
   };
   const writeOff = (u, row) => {
@@ -384,6 +488,20 @@ export default function ExpiryPage() {
       userName: u.name,
     });
     writeOff(u, row);
+    // Persist to MongoDB
+    disposeExpiredBatch({
+      batchId: row.batch.id,
+      qty: row.quantity,
+      reason: "Expired — disposed via expiry management",
+      userId: u.id,
+    })
+      .then(() => {
+        console.log("[ExpiryPage] MongoDB dispose saved ✓");
+        refreshApi();
+      })
+      .catch((e) =>
+        console.warn("[ExpiryPage] MongoDB dispose failed (mock-db still updated):", e.message),
+      );
     setSelected((s) => {
       const n = new Set(s);
       n.delete(row.batch.id);
@@ -655,55 +773,48 @@ export default function ExpiryPage() {
   };
   return (
     <div className="mx-auto w-full max-w-[1600px] space-y-6 overflow-x-hidden">
-      <div className="flex flex-col gap-4 rounded-xl border border-border bg-card p-4 shadow-xs md:flex-row md:items-center md:justify-between">
-        <div>
-          <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl xl:text-4xl">
-              Medicine Expiry
-            </h1>
-            <span className="rounded-full bg-destructive/10 px-2.5 py-0.5 text-xs font-semibold text-destructive">
+      <PageHeader
+        title={
+          <>
+            Medicine Expiry{" "}
+            <span className="inline-flex translate-y-[-2px] items-center rounded-full bg-destructive/10 px-2.5 py-0.5 align-middle text-xs font-semibold text-destructive">
               {rows.filter((r) => r.days <= 7).length} medicines require attention
             </span>
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Track medicines nearing expiry, reduce losses, and recover eligible stock.
-          </p>
-        </div>
-
-        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
-          <Button
-            size="sm"
-            onClick={() => {
-              setView("inventory");
-              setStatus("return");
-            }}
-            className="h-8 min-h-[44px] flex-1 cursor-pointer text-xs font-semibold shadow-xs sm:min-h-[36px] sm:flex-none"
-          >
-            Start Recovery
-          </Button>
-
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => {
-              setView("overview");
-              setFocusTableToken((t) => t + 1);
-            }}
-            className="h-8 min-h-[44px] flex-1 cursor-pointer text-xs font-semibold shadow-xs sm:min-h-[36px] sm:flex-none"
-          >
-            Review Medicines
-          </Button>
-
-          <NotificationsPopover
-            notifications={notifications}
-            readIds={readIds}
-            onMarkRead={markRead}
-            onMarkAllRead={markAllRead}
-            onJump={jumpToBatch}
-          />
-          <TimeFilter value={window} onChange={setWindow} />
-        </div>
-      </div>
+          </>
+        }
+        description="Track medicines nearing expiry, reduce losses, and recover eligible stock."
+        actions={
+          <>
+            <Button
+              size="sm"
+              onClick={() => {
+                setView("inventory");
+                setStatus("return");
+              }}
+            >
+              Start Recovery
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                setView("overview");
+                setFocusTableToken((t) => t + 1);
+              }}
+            >
+              Review Medicines
+            </Button>
+            <NotificationsPopover
+              notifications={notifications}
+              readIds={readIds}
+              onMarkRead={markRead}
+              onMarkAllRead={markAllRead}
+              onJump={jumpToBatch}
+            />
+            <TimeFilter value={window} onChange={setWindow} />
+          </>
+        }
+      />
 
       <Tabs value={view} onValueChange={(v) => setView(v)}>
         <TabsList className="grid w-full grid-cols-4 sm:inline-flex sm:w-auto">

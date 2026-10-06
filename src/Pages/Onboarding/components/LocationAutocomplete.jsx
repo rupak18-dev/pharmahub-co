@@ -106,6 +106,7 @@ export function LocationAutocomplete({
         {label}
       </Label>
       <div className="relative">
+        <MapPin className="pointer-events-none absolute right-3 top-1/2 h-5 w-5 -translate-y-1/2 text-muted-foreground" />
         <Input
           id={id}
           value={value || ""}
@@ -120,7 +121,7 @@ export function LocationAutocomplete({
             if (e.key === "Escape") setOpen(false);
           }}
           placeholder={placeholder}
-          className={`bg-background focus-visible:ring-primary focus-visible:border-primary transition-all duration-200 shadow-sm ${className || ""}`}
+          className={`bg-background focus-visible:ring-primary focus-visible:border-primary transition-all duration-200 shadow-sm pr-10 ${className || ""}`}
         />
         {open && (
           <div className="absolute left-0 right-0 top-full z-50 mt-1.5 max-h-[220px] overflow-y-auto rounded-[12px] border border-border bg-popover p-1 shadow-xl">
